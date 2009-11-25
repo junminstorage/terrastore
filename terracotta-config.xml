@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+    <servers>
+        <server host="%i" name="server-%i">
+            <dso-port>9510</dso-port>
+            <jmx-port>9520</jmx-port>
+            <data>tc-data/server-data</data>
+            <logs>tc-data/server-logs</logs>
+            <statistics>tc-data/server-statistics</statistics>
+            <dso>
+                <persistence>
+                    <mode>permanent-store</mode>
+                </persistence>
+            </dso>
+        </server>
+    </servers>
+    <clients>
+        <modules>
+            <module name="tim-annotations" version="1.4.1" group-id="org.terracotta.modules"/>
+            <module name="tim-concurrent-collections" version="1.2.1" group-id="org.terracotta.modules"/>
+            <module name="tim-jetty-6.1" version="2.0.1" group-id="org.terracotta.modules"/>
+        </modules>
+        <logs>tc-data/client-logs/%i/%D</logs>
+        <statistics>tc-data/client-statistics/%i/%D</statistics>
+    </clients>
+</tc:tc-config>

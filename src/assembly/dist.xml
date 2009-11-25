@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="MacRoman"?>
+<assembly>
+    <id>dist</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <baseDirectory>terrastore-${project.version}</baseDirectory>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>libs</outputDirectory>
+            <unpack>false</unpack>
+            <scope>runtime</scope>
+            <useProjectArtifact>false</useProjectArtifact>
+        </dependencySet>
+    </dependencySets>
+    <fileSets>
+        <fileSet>
+            <includes>
+                <include>license.txt</include>
+                <include>*-config.xml</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <outputDirectory>libs</outputDirectory>
+            <directory>target</directory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>

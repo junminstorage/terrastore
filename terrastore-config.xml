@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <!-- Server -->
+
+    <bean id="server" class="terrastore.server.impl.JsonHttpServer">
+        <constructor-arg ref="updateService"/>
+        <constructor-arg ref="queryService"/>
+    </bean>
+
+    <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
+    <bean class="terrastore.server.impl.support.JsonValueProvider"/>
+    <bean class="terrastore.server.impl.support.JsonValuesMapProvider"/>
+    <bean class="terrastore.server.impl.support.JsonParametersMapProvider"/>
+    <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
+    
+    <!-- Service -->
+    
+    <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
+        <constructor-arg ref="router"/>
+        <property name="functions">
+            <map>
+                <entry key="replace" value-ref="replaceFunction"/>
+            </map>
+        </property>
+    </bean>
+    
+    <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
+        <constructor-arg ref="router"/>
+        <property name="comparators">
+            <map>
+                <entry key="lexical-asc" value-ref="ascendingLexicalComparator"/>
+                <entry key="lexical-desc" value-ref="descendingLexicalComparator"/>
+                <entry key="numeric-asc" value-ref="ascendingNumberComparator"/>
+                <entry key="numeric-desc" value-ref="descendingNumberComparator"/>
+            </map>
+        </property>
+        <property name="defaultComparator">
+            <ref bean="ascendingLexicalComparator"/>
+        </property>
+    </bean>
+
+    <bean id="ascendingLexicalComparator" class="terrastore.service.comparators.LexicographicalComparator">
+        <constructor-arg value="true"/>
+    </bean>
+    <bean id="descendingLexicalComparator" class="terrastore.service.comparators.LexicographicalComparator">
+        <constructor-arg value="false"/>
+    </bean>
+    <bean id="ascendingNumberComparator" class="terrastore.service.comparators.NumberComparator">
+        <constructor-arg value="true"/>
+    </bean>
+    <bean id="descendingNumberComparator" class="terrastore.service.comparators.NumberComparator">
+        <constructor-arg value="false"/>
+    </bean>
+    <bean id="replaceFunction" class="terrastore.service.functions.ReplaceFunction"/>
+
+    <!-- Router -->
+
+    <bean id="router" class="terrastore.router.impl.HashingRouter">
+        <constructor-arg ref="hashFunction"/>
+        <constructor-arg ref="partitionManager"/>
+    </bean>
+
+    <bean id="hashFunction" class="terrastore.router.impl.SimpleHashFunction"/>
+
+    <!-- PartitionManager -->
+
+    <bean id="partitionManager" class="terrastore.partition.impl.ConsistentPartitionManager">
+        <constructor-arg value="256"/>
+    </bean>
+
+    <!-- Cluster -->
+
+    <bean id="cluster" class="terrastore.cluster.impl.TCCluster" factory-method="getInstance">
+        <property name="router" ref="router"/>
+    </bean>
+
+</beans>
