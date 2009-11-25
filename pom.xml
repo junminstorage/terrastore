@@ -4,7 +4,7 @@
     <groupId>terrastore</groupId>
     <artifactId>terrastore</artifactId>
     <packaging>jar</packaging>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
     <name>terrastore</name>
     <scm>
         <connection>scm:hg:https://terrastore.googlecode.com/hg</connection>
@@ -227,8 +227,8 @@
                             <startServer>false</startServer>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}"/>
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --shutdownPort 8181" jvmargs="-DTERRASTORE_HOME=${basedir}"/>
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --shutdownPort 8181" jvmargs="-DTERRASTORE_HOME=${basedir}" />
                             </processes>
                         </configuration>
                         <executions>
@@ -257,7 +257,7 @@
                                 <phase>initialize</phase>
                                 <configuration>
                                     <tasks>
-                                        <delete dir="${basedir}/tc-data"/>
+                                        <delete dir="${basedir}/tc-data" />
                                     </tasks>
                                 </configuration>
                                 <goals>
@@ -311,7 +311,7 @@
                             <jvmargs>-Xms1024m -Xmx1024m</jvmargs>
                             <activeNodes>node</activeNodes>
                             <processes>
-                                <process nodeName="node" count="1" className="terrastore.startup.Startup" arguments="--httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}  -Xms1024m -Xmx1024m"/>
+                                <process nodeName="node" count="1" className="terrastore.startup.Startup" arguments="--httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir} -Xms1024m -Xmx1024m" />
                             </processes>
                         </configuration>
                         <executions>
@@ -340,7 +340,7 @@
                                 <phase>initialize</phase>
                                 <configuration>
                                     <tasks>
-                                        <delete dir="${basedir}/tc-data"/>
+                                        <delete dir="${basedir}/tc-data" />
                                     </tasks>
                                 </configuration>
                                 <goals>
@@ -415,10 +415,10 @@
                 <configuration>
                     <config>${basedir}/terracotta-config.xml</config>
                     <startServer>false</startServer>
-                    <activeNodes></activeNodes>
+                    <activeNodes />
                     <processes>
-                        <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir} -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9000"/>
-                        <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--httpPort 8081 --shutdownPort 8181" jvmargs="-DTERRASTORE_HOME=${basedir} -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9001"/>
+                        <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir} -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9000" />
+                        <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--httpPort 8081 --shutdownPort 8181" jvmargs="-DTERRASTORE_HOME=${basedir} -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9001" />
                     </processes>
                 </configuration>
             </plugin>
