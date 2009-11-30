@@ -172,7 +172,7 @@ public class JsonHttpServer implements Server {
     @Path("/{bucket}/range")
     @Consumes("application/json")
     @Produces("application/json")
-    public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("comparator") String comparator) throws ServerOperationException {
+    public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("comparator") String comparator, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
         try {
             if (startKey == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");
@@ -182,7 +182,7 @@ public class JsonHttpServer implements Server {
                 throw new ServerOperationException(error);
             }
             LOG.debug("Executing range query on bucket {}", bucket);
-            Range range = new Range(startKey, endKey, comparator);
+            Range range = new Range(startKey, endKey, comparator, timeToLive);
             return new Values(queryService.doRangeQuery(bucket, range));
         } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);

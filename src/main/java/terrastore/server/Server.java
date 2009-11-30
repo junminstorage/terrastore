@@ -94,16 +94,20 @@ public interface Server {
     public Values getAllValues(String bucket) throws ServerOperationException;
 
     /**
-     * Execute a range query returning all key/value entries whose key falls into the given range.
+     * Execute a range query returning all key/value entries whose key falls into the given range.<br/>
+     * Results are not computed over a live view of the data, so the timeToLive parameter determines,
+     * in milliseconds, how fresh the data has to be.
      *
      * @param bucket The bucket to query.
      * @param startKey First key in range.
      * @param endKey Last key in range (comprised).
      * @param comparator Name of the comparator to use for testing if a key is in range.
+     * @param timeToLive Number of milliseconds determining how fresh the retrieved data has to be; if set to 0, the query will be immediately computed
+     * on current data.
      * @return A map containing key/value pairs
      * @throws ServerOperationException If an error occurs.
      */
-    public Values doRangeQuery(String bucket, String startKey, String endKey, String comparator) throws ServerOperationException;
+    public Values doRangeQuery(String bucket, String startKey, String endKey, String comparator, long timeToLive) throws ServerOperationException;
 
     /**
      * Get the {@link terrastore.service.UpdateService} which will actually execute all update operations.

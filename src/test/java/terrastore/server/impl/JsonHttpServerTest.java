@@ -232,7 +232,7 @@ public class JsonHttpServerTest {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
 
-        queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", "order")));
+        queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", "order", 0)));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService);
@@ -240,7 +240,7 @@ public class JsonHttpServerTest {
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
-        GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order");
+        GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
         client.executeMethod(method);
 

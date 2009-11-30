@@ -16,7 +16,6 @@
 package terrastore.store.features;
 
 import java.io.Serializable;
-import java.util.Comparator;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
@@ -30,26 +29,36 @@ public class Range implements Serializable {
     private String startKey;
     private String endKey;
     private String keyComparatorName;
+    private long timeToLive;
 
-    public Range(String startKey, String endKey, String keyComparatorName) {
+    public Range(String startKey, String endKey, String keyComparatorName, long timeToLive) {
         this.startKey = startKey;
         this.endKey = endKey;
         this.keyComparatorName = keyComparatorName;
+        this.timeToLive = timeToLive;
     }
 
+    public String getStartKey() {
+        return startKey;
+    }
+
+    public String getEndKey() {
+        return endKey;
+    }
+    
     public String getKeyComparatorName() {
         return keyComparatorName;
     }
 
-    public boolean isInRange(String key, Comparator<String> keyComparator) {
-        return keyComparator.compare(startKey, key) <= 0 && keyComparator.compare(key, endKey) <= 0;
+    public long getTimeToLive() {
+        return timeToLive;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Range) {
             Range other = (Range) obj;
-            return new EqualsBuilder().append(this.startKey, other.startKey).append(this.endKey, other.endKey).append(this.keyComparatorName, other.keyComparatorName).isEquals();
+            return new EqualsBuilder().append(this.startKey, other.startKey).append(this.endKey, other.endKey).append(this.keyComparatorName, other.keyComparatorName).append(this.timeToLive, other.timeToLive).isEquals();
         } else {
             return false;
         }
@@ -57,6 +66,6 @@ public class Range implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(startKey).append(endKey).append(keyComparatorName).toHashCode();
+        return new HashCodeBuilder().append(startKey).append(endKey).append(keyComparatorName).append(timeToLive).toHashCode();
     }
 }

@@ -15,8 +15,6 @@
  */
 package terrastore.store.impl;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Sets;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
@@ -26,9 +24,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.collections.FinegrainedLock;
+import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
 import terrastore.store.Bucket;
+import terrastore.store.SnapshotManager;
+import terrastore.store.SortedSnapshot;
 import terrastore.store.StoreOperationException;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
@@ -40,10 +41,12 @@ import terrastore.util.JsonUtils;
  * @author Sergio Bossa
  */
 @InstrumentedClass
+@HonorTransient
 public class TCBucket implements Bucket {
 
     private final String name;
     private final ConcurrentDistributedMap<String, Value> bucket;
+    private transient SnapshotManager snapshotManager;
 
     public TCBucket(String name) {
         this.name = name;
@@ -109,11 +112,8 @@ public class TCBucket implements Bucket {
     }
 
     public Set<String> keysInRange(Range keyRange, Comparator<String> keyComparator) {
-        if (keyRange != null && keyComparator != null) {
-            return Sets.filter(bucket.keySet(), new RangePredicate(keyRange, keyComparator));
-        } else {
-            throw new IllegalArgumentException("Range and comparator cannot be null!");
-        }
+        SortedSnapshot snapshot = getSnapshotManager().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), keyRange.getTimeToLive());
+        return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey());
     }
 
     private boolean lock(String key) {
@@ -131,18 +131,10 @@ public class TCBucket implements Bucket {
         lock.unlock();
     }
 
-    private static class RangePredicate implements Predicate<String> {
-
-        private final Range range;
-        private final Comparator<String> keyComparator;
-
-        public RangePredicate(Range range, Comparator<String> keyComparator) {
-            this.range = range;
-            this.keyComparator = keyComparator;
+    private synchronized SnapshotManager getSnapshotManager() {
+        if (snapshotManager == null) {
+            snapshotManager = new LocalSnapshotManager();
         }
-
-        public boolean apply(String key) {
-            return range.isInRange(key, keyComparator);
-        }
+        return snapshotManager;
     }
 }
