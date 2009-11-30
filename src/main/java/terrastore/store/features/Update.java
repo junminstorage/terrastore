@@ -15,7 +15,6 @@
  */
 package terrastore.store.features;
 
-import terrastore.store.function.*;
 import java.io.Serializable;
 import java.util.Map;
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -48,8 +47,8 @@ public class Update implements Serializable {
         return functionName;
     }
 
-    public Map<String, Object> update(Map<String, Object> value, Function function) {
-        return function.apply(value, parameters);
+    public Map<String, Object> getParameters() {
+        return parameters;
     }
 
     @Override

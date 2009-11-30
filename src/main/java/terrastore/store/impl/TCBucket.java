@@ -89,7 +89,7 @@ public class TCBucket implements Bucket {
 
                     @Override
                     public Map<String, Object> call() {
-                        return update.update(JsonUtils.toMap(value), function);
+                        return function.apply(JsonUtils.toMap(value), update.getParameters());
                     }
                 });
                 Map<String, Object> result = task.get(timeout, TimeUnit.MILLISECONDS);
