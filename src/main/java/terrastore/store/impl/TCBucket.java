@@ -131,6 +131,8 @@ public class TCBucket implements Bucket {
         lock.unlock();
     }
 
+    // WARN: use a private getter and direct call to "new" because of TC not supporting injection of transient values:
+    // TODO: use spin locks?
     private synchronized SnapshotManager getSnapshotManager() {
         if (snapshotManager == null) {
             snapshotManager = new LocalSnapshotManager();

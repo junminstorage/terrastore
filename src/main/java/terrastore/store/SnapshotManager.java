@@ -18,9 +18,23 @@ package terrastore.store;
 import java.util.Comparator;
 
 /**
+ * Compute, store and retrieve {@link SortedSnapshot} instances.
+ *
  * @author Sergio Bossa
  */
 public interface SnapshotManager {
 
-    public SortedSnapshot getOrComputeSortedSnapshot(Bucket bucket, Comparator<String> comparator, String order, long timeToLive);
+    /**
+     * Get or compute a snapshot of the given {@link Bucket}, using the given {@link java.util.Comparator} to sort keys.<br/>
+     * Every snapshot is identified and named by the <i>name</i> parameter.<br>
+     * The choice between retrieving an alredy stored snapshot, or computing a new one, is taken based on the <i>timeToLive</i>: snapshots
+     * with expired time to live will be recomputed.
+     *
+     * @param bucket The bucket for which taking a snapshot of the keys.
+     * @param comparator The comparator to use for sorting keys.
+     * @param name Name of the snapshot to retrieve or compute.
+     * @param timeToLive Snapshot required time to live.
+     * @return The {@link SortedSnapshot} instance.
+     */
+    public SortedSnapshot getOrComputeSortedSnapshot(Bucket bucket, Comparator<String> comparator, String name, long timeToLive);
 }

@@ -22,6 +22,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
+ * Sorted snapshot of keys.
+ *
  * @author Sergio Bossa
  */
 public class SortedSnapshot {
