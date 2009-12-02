@@ -87,9 +87,9 @@ public class HashingRouter implements Router {
         stateLock.readLock().lock();
         try {
             String toHash = bucket;
-            int hash = hashFunction.hash(toHash);
             int partitions = partitionManager.getMaxPartitions();
-            Node route = partitionManager.selectNodeAtPartition(hash % partitions);
+            int hash = hashFunction.hash(toHash, partitions);
+            Node route = partitionManager.selectNodeAtPartition(hash);
             LOG.info("Routing to: {}", route);
             return route;
         } finally {
@@ -101,9 +101,9 @@ public class HashingRouter implements Router {
         stateLock.readLock().lock();
         try {
             String toHash = bucket + key;
-            int hash = hashFunction.hash(toHash);
             int partitions = partitionManager.getMaxPartitions();
-            Node route = partitionManager.selectNodeAtPartition(hash % partitions);
+            int hash = hashFunction.hash(toHash, partitions);
+            Node route = partitionManager.selectNodeAtPartition(hash);
             LOG.info("Routing to: {}", route);
             return route;
         } finally {

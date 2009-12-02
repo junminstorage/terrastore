@@ -63,7 +63,7 @@
         <constructor-arg ref="partitionManager"/>
     </bean>
 
-    <bean id="hashFunction" class="terrastore.router.impl.SimpleHashFunction"/>
+    <bean id="hashFunction" class="terrastore.router.impl.DefaultHashFunction"/>
 
     <!-- PartitionManager -->
 

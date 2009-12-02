@@ -20,5 +20,5 @@ package terrastore.router.impl;
  */
 public interface HashFunction {
 
-    public int hash(String value);
+    public int hash(String value, int maxValue);
 }

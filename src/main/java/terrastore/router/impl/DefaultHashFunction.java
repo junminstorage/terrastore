@@ -16,19 +16,29 @@
 package terrastore.router.impl;
 
 /**
- * Hash function based on String hash code.
+ * Hash function based on Bernstein algorithm at: http://www.partow.net/programming/hashfunctions/#DJBHashFunction.
  *
  * @author Sergio Bossa
  */
-public class SimpleHashFunction implements HashFunction {
+public class DefaultHashFunction implements HashFunction {
 
     public int hash(String value, int maxValue) {
-        long hash = value.hashCode();
+        long hash = doDJBHash(value);
         return (int) Math.abs(hash % maxValue);
     }
 
     @Override
     public String toString() {
         return this.getClass().getName();
+    }
+
+    private long doDJBHash(String str) {
+        long hash = 5381;
+
+        for (int i = 0; i < str.length(); i++) {
+            hash = ((hash << 5) + hash) + str.charAt(i);
+        }
+
+        return hash;
     }
 }

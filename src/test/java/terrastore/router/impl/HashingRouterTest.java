@@ -38,11 +38,11 @@ public class HashingRouterTest {
 
         partitionManager.addNode(node);
         expectLastCall().once();
-        fn.hash(bucket);
-        expectLastCall().andReturn(11).once();
+        fn.hash(bucket, 10);
+        expectLastCall().andReturn(1).once();
         partitionManager.getMaxPartitions();
         expectLastCall().andReturn(10).once();
-        partitionManager.selectNodeAtPartition(11 % 10);
+        partitionManager.selectNodeAtPartition(1);
         expectLastCall().andReturn(node).once();
 
         replay(fn, partitionManager, node);
@@ -65,11 +65,11 @@ public class HashingRouterTest {
 
         partitionManager.addNode(node);
         expectLastCall().once();
-        fn.hash(bucket + key);
-        expectLastCall().andReturn(11).once();
+        fn.hash(bucket + key, 10);
+        expectLastCall().andReturn(1).once();
         partitionManager.getMaxPartitions();
         expectLastCall().andReturn(10).once();
-        partitionManager.selectNodeAtPartition(11 % 10);
+        partitionManager.selectNodeAtPartition(1);
         expectLastCall().andReturn(node).once();
 
         replay(fn, partitionManager, node);
