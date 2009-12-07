@@ -18,6 +18,7 @@ package terrastore.store;
 import terrastore.store.features.Update;
 import java.util.Comparator;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
 import terrastore.store.function.Function;
 import terrastore.store.features.Range;
@@ -81,11 +82,11 @@ public interface Bucket {
     public Set<String> keys();
 
     /**
-     * Get all keys falling into the given range as determined by the given comparator.
+     * Get a sorted set of all keys falling into the given range, as determined by the given comparator.
      *
      * @param keyRange The range which keys must be fall into.
      * @param keyComparator The comparator determining if a key falls into range.
-     * @return The set of keys in range.
+     * @return The sorted set of keys in range.
      */
-    public Set<String> keysInRange(Range keyRange, Comparator<String> keyComparator);
+    public SortedSet<String> keysInRange(Range keyRange, Comparator<String> keyComparator);
 }
