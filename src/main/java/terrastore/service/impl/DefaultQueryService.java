@@ -106,6 +106,7 @@ public class DefaultQueryService implements QueryService {
                 Command command = new GetValuesCommand(bucket, keys);
                 allKeyValues.add(node.send(command));
             }
+            // TODO: we may use fork/join to build the final map out of all sub-maps.
             return Maps.drain(allKeyValues, new TreeMap<String, Value>(keyComparator));
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
