@@ -27,7 +27,7 @@ import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
 import terrastore.store.Value;
-import terrastore.store.function.Function;
+import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
 import static org.easymock.classextension.EasyMock.*;
 

@@ -20,8 +20,10 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
-import terrastore.store.function.Function;
+import terrastore.store.features.Predicate;
+import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Condition;
 
 /**
  * Bucket interface collecting and managing key/value entries.
@@ -56,6 +58,18 @@ public interface Bucket {
     public Value get(String key) throws StoreOperationException;
 
     /**
+     * Get the {@link Value} under the given key if satisfying the given {@link terrastore.store.operators.Condition}.
+     *
+     * @param key The key of the value to get.
+     * @param predicate The predicate object containing data about the condition to evaluate.
+     * @param condition The condition to evaluate on the value.
+     * @return The value corresponding to the given key and satisfying the given condition, or null if the value
+     * doesn't satisfy the condition.
+     * @throws StoreOperationException If no value is found for the given key.
+     */
+    public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException;
+
+    /**
      * Remove the {@link Value} under the given key.
      *
      * @param key The key of the value to remove.
@@ -67,7 +81,7 @@ public interface Bucket {
      * Update the {@link Value} under the given key.
      *
      * @param key The key of the value to update.
-     * @param update The update object.
+     * @param update The update object containing data about the function to apply.
      * @param function The function to apply for the update.
      * @param updateExecutor The executor to use for performing the update operation.
      * @throws StoreOperationException If errors occur during updating.

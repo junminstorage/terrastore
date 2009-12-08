@@ -13,18 +13,25 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.functions;
+package terrastore.service.conditions;
 
-import terrastore.store.operators.*;
+import java.util.List;
 import java.util.Map;
+import org.apache.commons.jxpath.JXPathContext;
+import terrastore.store.operators.Condition;
 
 /**
  * @author Sergio Bossa
  */
-public class ReplaceFunction implements Function {
+public class JXPathCondition implements Condition {
+
+    private static final long serialVersionUID = 12345678901L;
 
     @Override
-    public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters) {
-        return parameters;
+    public boolean isSatisfied(Map<String, Object> value, String expression) {
+        JXPathContext context = JXPathContext.newContext(value);
+        context.setLenient(true);
+        List selection = context.selectNodes(expression);
+        return selection != null & selection.size() > 0;
     }
 }

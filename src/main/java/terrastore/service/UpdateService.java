@@ -19,7 +19,7 @@ import java.util.Map;
 import terrastore.router.Router;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
-import terrastore.store.function.Function;
+import terrastore.store.operators.Function;
 
 /**
  * The UpdateService manages the operations of add and removal of buckets and values by interacting with a {@link terrastore.router.Router}

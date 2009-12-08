@@ -33,7 +33,7 @@ import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
-import terrastore.store.function.Function;
+import terrastore.store.operators.Function;
 
 /**
  * @author Sergio Bossa

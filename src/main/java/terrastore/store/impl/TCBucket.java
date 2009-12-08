@@ -32,9 +32,11 @@ import terrastore.store.Bucket;
 import terrastore.store.SnapshotManager;
 import terrastore.store.SortedSnapshot;
 import terrastore.store.StoreOperationException;
+import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
-import terrastore.store.function.Function;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
 import terrastore.util.JsonUtils;
 
@@ -66,6 +68,20 @@ public class TCBucket implements Bucket {
         Value value = bucket.get(key);
         if (value != null) {
             return value;
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
+        }
+    }
+
+    @Override
+    public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException {
+        Value value = bucket.get(key);
+        if (value != null) {
+            if (condition.isSatisfied(JsonUtils.toMap(value), predicate.getConditionExpression())) {
+                return value;
+            } else {
+                return null;
+            }
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
         }

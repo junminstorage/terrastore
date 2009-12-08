@@ -36,6 +36,7 @@ import terrastore.service.QueryService;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.util.JsonUtils;
@@ -172,7 +173,7 @@ public class JsonHttpServer implements Server {
     @Path("/{bucket}/range")
     @Consumes("application/json")
     @Produces("application/json")
-    public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("comparator") String comparator, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
+    public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicate, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
         try {
             if (startKey == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");
@@ -182,8 +183,10 @@ public class JsonHttpServer implements Server {
                 throw new ServerOperationException(error);
             }
             LOG.debug("Executing range query on bucket {}", bucket);
-            Range range = new Range(startKey, endKey, comparator, timeToLive);
-            return new Values(queryService.doRangeQuery(bucket, range));
+            return new Values(
+                    queryService.doRangeQuery(bucket,
+                    new Range(startKey, endKey, comparator, timeToLive),
+                    new Predicate(predicate)));
         } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

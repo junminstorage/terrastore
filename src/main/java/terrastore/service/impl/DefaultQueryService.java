@@ -37,7 +37,9 @@ import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
 import terrastore.service.comparators.LexicographicalComparator;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Condition;
 import terrastore.util.Maps;
 
 /**
@@ -48,6 +50,7 @@ public class DefaultQueryService implements QueryService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultQueryService.class);
     private final Router router;
     private final Map<String, Comparator<String>> comparators = new HashMap<String, Comparator<String>>();
+    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
     private Comparator defaultComparator = new LexicographicalComparator(true);
 
     public DefaultQueryService(Router router) {
@@ -93,17 +96,23 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<String, Value> doRangeQuery(String bucket, Range keyRange) throws QueryOperationException {
+    public Map<String, Value> doRangeQuery(String bucket, Range keyRange, Predicate valuePredicate) throws QueryOperationException {
         try {
             LOG.debug("Getting all values from bucket {}", bucket);
             Comparator<String> keyComparator = getComparator(keyRange.getKeyComparatorName());
+            Condition valueCondition = getCondition(valuePredicate.getConditionName());
             Set<String> storedKeys = getKeyRangeForBucket(bucket, keyRange, keyComparator);
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, storedKeys);
             List<Map<String, Value>> allKeyValues = new ArrayList(nodeToKeys.size());
             for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
                 Node node = nodeToKeysEntry.getKey();
                 Set<String> keys = nodeToKeysEntry.getValue();
-                Command command = new GetValuesCommand(bucket, keys);
+                Command command = null;
+                if (valueCondition == null) {
+                    command = new GetValuesCommand(bucket, keys);
+                } else {
+                    command = new GetValuesCommand(bucket, keys, valuePredicate, valueCondition);
+                }
                 allKeyValues.add(node.send(command));
             }
             // TODO: we may use fork/join to build the final map out of all sub-maps.
@@ -123,6 +132,11 @@ public class DefaultQueryService implements QueryService {
         return comparators;
     }
 
+    @Override
+    public Map<String, Condition> getConditions() {
+        return conditions;
+    }
+
     public Router getRouter() {
         return router;
     }
@@ -134,6 +148,11 @@ public class DefaultQueryService implements QueryService {
     public void setComparators(Map<String, Comparator<String>> comparators) {
         this.comparators.clear();
         this.comparators.putAll(comparators);
+    }
+
+    public void setConditions(Map<String, Condition> conditions) {
+        this.conditions.clear();
+        this.conditions.putAll(conditions);
     }
 
     private Set<String> getAllKeysForBucket(String bucket) throws ProcessingException {
@@ -155,5 +174,12 @@ public class DefaultQueryService implements QueryService {
             return comparators.get(comparatorName);
         }
         return defaultComparator;
+    }
+
+    private Condition getCondition(String conditionName) {
+        if (conditions.containsKey(conditionName)) {
+            return conditions.get(conditionName);
+        }
+        return null;
     }
 }

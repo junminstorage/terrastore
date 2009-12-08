@@ -13,18 +13,24 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.functions;
+package terrastore.store.operators;
 
-import terrastore.store.operators.*;
+import java.io.Serializable;
 import java.util.Map;
 
 /**
+ * Interface to implement for applying functions to bucket values.
+ *
  * @author Sergio Bossa
  */
-public class ReplaceFunction implements Function {
+public interface Function extends Serializable {
 
-    @Override
-    public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters) {
-        return parameters;
-    }
+    /**
+     *  Apply this function to the given value, represented as a map of name -> value pairs (associative array).
+     *
+     * @param value The value to apply the function to.
+     * @param parameters The function parameters.
+     * @return The result of the function as an associative array.
+     */
+    public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters);
 }

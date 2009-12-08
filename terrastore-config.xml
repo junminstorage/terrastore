@@ -37,6 +37,11 @@
                 <entry key="numeric-desc" value-ref="descendingNumberComparator"/>
             </map>
         </property>
+        <property name="conditions">
+            <map>
+                <entry key="jxpath" value-ref="jxpathCondition"/>
+            </map>
+        </property>
         <property name="defaultComparator">
             <ref bean="ascendingLexicalComparator"/>
         </property>
@@ -54,7 +59,10 @@
     <bean id="descendingNumberComparator" class="terrastore.service.comparators.NumberComparator">
         <constructor-arg value="false"/>
     </bean>
+
     <bean id="replaceFunction" class="terrastore.service.functions.ReplaceFunction"/>
+
+    <bean id="jxpathCondition" class="terrastore.service.conditions.JXPathCondition"/>
 
     <!-- Router -->
 

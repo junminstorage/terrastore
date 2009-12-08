@@ -107,7 +107,7 @@ public interface Server {
      * @return A map containing key/value pairs
      * @throws ServerOperationException If an error occurs.
      */
-    public Values doRangeQuery(String bucket, String startKey, String endKey, String comparator, long timeToLive) throws ServerOperationException;
+    public Values doRangeQuery(String bucket, String startKey, String endKey, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
      * Get the {@link terrastore.service.UpdateService} which will actually execute all update operations.

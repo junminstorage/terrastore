@@ -17,10 +17,11 @@ package terrastore.service;
 
 import java.util.Comparator;
 import java.util.Map;
-import java.util.SortedMap;
 import terrastore.router.Router;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Condition;
 
 /**
  * The QueryService manages the operations for finding values in buckets, by interacting with a {@link terrastore.router.Router}
@@ -51,18 +52,24 @@ public interface QueryService {
     public Map<String, Value> getAllValues(String bucket) throws QueryOperationException;
 
     /**
-     * Execute a range query returning all key/value pairs whose key falls into the given range, as determined by the comparator whose
-     * name matches the comparator name reported in the range parameter.<br>
-     * Returned key/value pairs are ordered as determined by the comparator above.<br>
+     * Execute a range query returning all key/value pairs whose key falls into the given range, and whose value satisfies the given predicate (if any).
+     * <br><br>
+     * Returned key/value pairs are ordered as determined by the comparator whose name matches the one contained in the
+     * {@link terrastore.store.features.Range} object, and values satisfy the condition whose name matches the one contained in the
+     * {@link terrastore.store.features.Predicate} object.
+     * <br><br>
      * Comparators are provided by the {@link #getComparators()} method; if no matching comparator is found,
-     * the default one is used (see {@link #getDefaultComparator()}).
+     * the default one is used (see {@link #getDefaultComparator()}).<br>
+     * Conditions are provided by the {@link #getConditions()} method; if no matching condition is found,
+     * no condition will be used hence all values in range will be returned.
      *
      * @param bucket The bucket to query.
      * @param keyRange The range which keys must be fall into.
+     * @param predicate
      * @return An ordered map containing key/value pairs.
      * @throws QueryOperationException If a bucket with the given name doesn't exist.
      */
-    public Map<String, Value> doRangeQuery(String bucket, Range keyRange) throws QueryOperationException;
+    public Map<String, Value> doRangeQuery(String bucket, Range keyRange, Predicate predicate) throws QueryOperationException;
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.
@@ -72,16 +79,23 @@ public interface QueryService {
     public Router getRouter();
 
     /**
-     * Get the default comparator used to compare keys when no other comparator is found.
+     * Get the default {@link java.util.Comparator} used to compare keys when no other comparator is found.
      *
      * @return The default comparator.
      */
     public Comparator<String> getDefaultComparator();
 
     /**
-     * Get all supported comparators by name, used to compare keys.
+     * Get all supported {@link java.util.Comparator} by name.
      *
      * @return A map of supported comparators.
      */
     public Map<String, Comparator<String>> getComparators();
+
+    /**
+     * Get all supported {@link terrastore.store.operators.Condition} by name.
+     *
+     * @return A map of supported conditions.
+     */
+    public Map<String, Condition> getConditions();
 }

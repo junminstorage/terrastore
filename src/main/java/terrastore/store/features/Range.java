@@ -58,7 +58,12 @@ public class Range implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof Range) {
             Range other = (Range) obj;
-            return new EqualsBuilder().append(this.startKey, other.startKey).append(this.endKey, other.endKey).append(this.keyComparatorName, other.keyComparatorName).append(this.timeToLive, other.timeToLive).isEquals();
+            return new EqualsBuilder()
+                    .append(this.startKey, other.startKey)
+                    .append(this.endKey, other.endKey)
+                    .append(this.keyComparatorName, other.keyComparatorName)
+                    .append(this.timeToLive, other.timeToLive)
+                    .isEquals();
         } else {
             return false;
         }
@@ -66,6 +71,11 @@ public class Range implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(startKey).append(endKey).append(keyComparatorName).append(timeToLive).toHashCode();
+        return new HashCodeBuilder()
+                .append(startKey)
+                .append(endKey)
+                .append(keyComparatorName)
+                .append(timeToLive)
+                .toHashCode();
     }
 }

@@ -13,18 +13,20 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.functions;
+package terrastore.store.features;
 
-import terrastore.store.operators.*;
-import java.util.Map;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * @author Sergio Bossa
  */
-public class ReplaceFunction implements Function {
+public class PredicateTest {
 
-    @Override
-    public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters) {
-        return parameters;
+    @Test
+    public void testPredicate() {
+        Predicate predicate = new Predicate("name:expression");
+        assertEquals("name", predicate.getConditionName());
+        assertEquals("expression", predicate.getConditionExpression());
     }
 }

@@ -13,24 +13,20 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.store.function;
+package terrastore.store.operators;
 
 import java.io.Serializable;
 import java.util.Map;
 
 /**
- * Interface to implement for applying functions to bucket values.
+ * Interface to implement for evaluating conditions on bucket values.
  *
  * @author Sergio Bossa
  */
-public interface Function extends Serializable {
+public interface Condition extends Serializable {
 
     /**
-     *  Apply this function to the given value, represented as a map of name -> value pairs (associative array).
-     *
-     * @param value The value to apply the function to.
-     * @param parameters The function parameters.
-     * @return The result of the function as an associative array.
+     *  
      */
-    public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters);
+    public boolean isSatisfied(Map<String, Object> value, String expression);
 }

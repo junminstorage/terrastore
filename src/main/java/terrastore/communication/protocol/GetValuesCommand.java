@@ -22,6 +22,8 @@ import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
+import terrastore.store.operators.Condition;
 
 /**
  * @author Sergio Bossa
@@ -30,19 +32,37 @@ public class GetValuesCommand extends AbstractCommand {
 
     private final String bucketName;
     private final Set<String> keys;
+    private final boolean conditional;
+    private final Predicate predicate;
+    private final Condition valueCondition;
 
     public GetValuesCommand(String bucketName, Set<String> keys) {
         this.bucketName = bucketName;
         this.keys = keys;
+        this.conditional = false;
+        this.predicate = null;
+        this.valueCondition = null;
     }
 
-    
+    public GetValuesCommand(String bucketName, Set<String> keys, Predicate predicate, Condition valueCondition) {
+        this.bucketName = bucketName;
+        this.keys = keys;
+        this.conditional = true;
+        this.predicate = predicate;
+        this.valueCondition = valueCondition;
+    }
+
     public Map<String, Value> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             Map<String, Value> entries = new HashMap<String, Value>();
             for (String key : keys) {
-                Value value = bucket.get(key);
+                Value value = null;
+                if (!conditional) {
+                    value = bucket.get(key);
+                } else {
+                    value = bucket.conditionalGet(key, predicate, valueCondition);
+                }
                 if (value != null) {
                     entries.put(key, value);
                 }

@@ -24,9 +24,11 @@ import org.junit.Before;
 import org.junit.Test;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
-import terrastore.store.function.Function;
+import terrastore.store.features.Predicate;
+import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Condition;
 import static org.junit.Assert.*;
 
 /**
@@ -36,7 +38,6 @@ public class TCBucketTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
     private static final String JSON_UPDATED = "{\"test\":\"value1\"}";
-
     private TCBucket bucket;
 
     @Before
@@ -52,19 +53,53 @@ public class TCBucketTest {
         assertEquals(value, bucket.get(key));
     }
 
-    @Test(expected=StoreOperationException.class)
+    @Test
+    public void testPutAndConditionallyGetValue() throws StoreOperationException {
+        String key = "key";
+        Value value = new Value(JSON_VALUE.getBytes());
+        Predicate predicate = new Predicate("test:test");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(Map<String, Object> value, String expression) {
+                return value.get(expression) != null;
+            }
+        };
+
+        bucket.put(key, value);
+        assertEquals(value, bucket.conditionalGet(key, predicate, condition));
+    }
+
+    @Test
+    public void testPutAndConditionallyGetValue2() throws StoreOperationException {
+        String key = "key";
+        Value value = new Value(JSON_VALUE.getBytes());
+        Predicate predicate = new Predicate("test:notfound");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(Map<String, Object> value, String expression) {
+                return value.get(expression) != null;
+            }
+        };
+
+        bucket.put(key, value);
+        assertEquals(null, bucket.conditionalGet(key, predicate, condition));
+    }
+
+    @Test(expected = StoreOperationException.class)
     public void testGetNullValue() throws StoreOperationException {
         String key = "key";
         bucket.get(key);
     }
 
-    @Test(expected=StoreOperationException.class)
+    @Test(expected = StoreOperationException.class)
     public void testRemoveNullValue() throws StoreOperationException {
         String key = "key";
         bucket.remove(key);
     }
 
-    @Test(expected=StoreOperationException.class)
+    @Test(expected = StoreOperationException.class)
     public void testPutAndRemoveValue() throws StoreOperationException {
         String key = "key";
         Value value = new Value(JSON_VALUE.getBytes());
