@@ -21,6 +21,9 @@ import org.apache.commons.jxpath.JXPathContext;
 import terrastore.store.operators.Condition;
 
 /**
+ * {@link terrastore.store.operators.Condition} implementation evaluating JXPath expressions
+ * (see http://commons.apache.org/jxpath).
+ *
  * @author Sergio Bossa
  */
 public class JXPathCondition implements Condition {

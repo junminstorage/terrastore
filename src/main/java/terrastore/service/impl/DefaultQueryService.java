@@ -100,7 +100,7 @@ public class DefaultQueryService implements QueryService {
         try {
             LOG.debug("Getting all values from bucket {}", bucket);
             Comparator<String> keyComparator = getComparator(keyRange.getKeyComparatorName());
-            Condition valueCondition = getCondition(valuePredicate.getConditionName());
+            Condition valueCondition = valuePredicate.isEmpty() ? null : getCondition(valuePredicate.getConditionType());
             Set<String> storedKeys = getKeyRangeForBucket(bucket, keyRange, keyComparator);
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, storedKeys);
             List<Map<String, Value>> allKeyValues = new ArrayList(nodeToKeys.size());
@@ -176,10 +176,11 @@ public class DefaultQueryService implements QueryService {
         return defaultComparator;
     }
 
-    private Condition getCondition(String conditionName) {
-        if (conditions.containsKey(conditionName)) {
-            return conditions.get(conditionName);
+    private Condition getCondition(String conditionType) throws QueryOperationException {
+        if (conditions.containsKey(conditionType)) {
+            return conditions.get(conditionType);
+        } else {
+            throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong condition type: " + conditionType));
         }
-        return null;
     }
 }

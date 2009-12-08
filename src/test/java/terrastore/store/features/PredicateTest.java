@@ -25,8 +25,25 @@ public class PredicateTest {
 
     @Test
     public void testPredicate() {
-        Predicate predicate = new Predicate("name:expression");
-        assertEquals("name", predicate.getConditionName());
+        Predicate predicate = new Predicate("type:expression");
+        assertEquals("type", predicate.getConditionType());
         assertEquals("expression", predicate.getConditionExpression());
+        assertFalse(predicate.isEmpty());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMalformedPredicate() {
+        Predicate predicate = new Predicate("name-expression");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNullPredicate() {
+        Predicate predicate = new Predicate(null);
+    }
+
+    @Test
+    public void testEmptyPredicate() {
+        Predicate predicate = new Predicate();
+        assertTrue(predicate.isEmpty());
     }
 }

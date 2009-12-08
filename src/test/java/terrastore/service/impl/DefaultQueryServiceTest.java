@@ -29,6 +29,7 @@ import terrastore.communication.protocol.DoRangeQueryCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.router.Router;
+import terrastore.service.QueryOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
@@ -136,7 +137,7 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         service.setComparators(comparators);
 
-        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order", 0), new Predicate(null));
+        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order", 0), new Predicate());
         assertEquals(2, result.size());
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
@@ -189,7 +190,7 @@ public class DefaultQueryServiceTest {
         Map<String, Comparator<String>> comparators = new HashMap<String, Comparator<String>>();
         comparators.put("order", stringComparator);
         Map<String, Condition> conditions = new HashMap<String, Condition>();
-        conditions.put("true", trueCondition);
+        conditions.put("test", trueCondition);
 
         DefaultQueryService service = new DefaultQueryService(router);
         service.setComparators(comparators);
@@ -201,5 +202,59 @@ public class DefaultQueryServiceTest {
         assertEquals("test2", result.keySet().toArray()[1]);
 
         verify(localNode, remoteNode, router);
+    }
+
+    @Test(expected = QueryOperationException.class)
+    public void testDoRangeQueryWithPredicateFailsDueToNotFoundCondition() throws Exception {
+        Comparator<String> stringComparator = new Comparator<String>() {
+
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        };
+
+        Condition trueCondition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(Map<String, Object> value, String expression) {
+                return true;
+            }
+        };
+
+        Map<String, Value> keys = new HashMap<String, Value>();
+        keys.put("test1", null);
+        keys.put("test2", null);
+        Map<String, Value> values = new HashMap<String, Value>();
+        values.put("test1", new Value(JSON_VALUE.getBytes()));
+        values.put("test2", new Value(JSON_VALUE.getBytes()));
+
+        Node localNode = createMock(Node.class);
+        Node remoteNode = createMock(Node.class);
+        Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
+
+        router.getLocalNode();
+        expectLastCall().andReturn(localNode).once();
+        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
+        expectLastCall().andReturn(nodeToKeys).once();
+        localNode.send(EasyMock.<DoRangeQueryCommand>anyObject());
+        expectLastCall().andReturn(keys).once();
+        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values).once();
+
+        replay(localNode, remoteNode, router);
+
+        Map<String, Comparator<String>> comparators = new HashMap<String, Comparator<String>>();
+        comparators.put("order", stringComparator);
+        Map<String, Condition> conditions = new HashMap<String, Condition>();
+        conditions.put("true", trueCondition);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        service.setComparators(comparators);
+        service.setConditions(conditions);
+
+        service.doRangeQuery("bucket", new Range("test1", "test2", "order", 0), new Predicate("notfound:true"));
     }
 }

@@ -20,23 +20,47 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
+ * Predicate object carrying data about the {@link terrastore.store.operators.Condition} to evaluate.<br>
+ * It takes a predicate expression in the form: "type:expression", where "type" is the actual condition type,
+ * and "expression" is the actual expression to evaluate (depending on the condition implementation).<br>
+ * The predicate can be empty, meaning there's no condition to evaluate.
+ *
  * @author Sergio Bossa
  */
 public class Predicate implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
-    private String conditionName;
-    private String conditionExpression;
+
+    private final boolean empty;
+    private final String conditionType;
+    private final String conditionExpression;
 
     public Predicate(String predicate) {
         if (predicate != null && !predicate.isEmpty()) {
-            this.conditionName = predicate.substring(0, predicate.indexOf(":"));
-            this.conditionExpression = predicate.substring(predicate.indexOf(":") + 1);
+            try {
+                this.conditionType = predicate.substring(0, predicate.indexOf(":"));
+                this.conditionExpression = predicate.substring(predicate.indexOf(":") + 1);
+                this.empty = false;
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Wrong predicate format, should be type:expression, actually is: " + predicate);
+            }
+        } else {
+            throw new IllegalArgumentException("Predicate cannot be null!");
         }
     }
 
-    public String getConditionName() {
-        return conditionName;
+    public Predicate() {
+        this.conditionType = null;
+        this.conditionExpression = null;
+        this.empty = true;
+    }
+
+    public boolean isEmpty() {
+        return empty;
+    }
+
+    public String getConditionType() {
+        return conditionType;
     }
 
     public String getConditionExpression() {
@@ -47,7 +71,8 @@ public class Predicate implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof Predicate) {
             Predicate other = (Predicate) obj;
-            return new EqualsBuilder().append(this.conditionExpression, other.conditionExpression).append(this.conditionName, other.conditionName).isEquals();
+            return new EqualsBuilder().append(this.empty, other.empty).append(this.conditionExpression, other.conditionExpression).append(this.conditionType, other.conditionType).
+                    isEquals();
         } else {
             return false;
         }
@@ -55,6 +80,6 @@ public class Predicate implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(conditionExpression).append(conditionName).toHashCode();
+        return new HashCodeBuilder().append(empty).append(conditionExpression).append(conditionType).toHashCode();
     }
 }

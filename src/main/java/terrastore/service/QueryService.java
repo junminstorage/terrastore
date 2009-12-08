@@ -56,18 +56,18 @@ public interface QueryService {
      * <br><br>
      * Returned key/value pairs are ordered as determined by the comparator whose name matches the one contained in the
      * {@link terrastore.store.features.Range} object, and values satisfy the condition whose name matches the one contained in the
-     * {@link terrastore.store.features.Predicate} object.
+     * {@link terrastore.store.features.Predicate} object (if any).
      * <br><br>
      * Comparators are provided by the {@link #getComparators()} method; if no matching comparator is found,
      * the default one is used (see {@link #getDefaultComparator()}).<br>
-     * Conditions are provided by the {@link #getConditions()} method; if no matching condition is found,
-     * no condition will be used hence all values in range will be returned.
+     * Conditions are provided by the {@link #getConditions()} method; if the predicate doesn't specify any condition,
+     * no condition will be used hence all values in range will be returned; if the specified condition is not found, an exception is thrown.
      *
      * @param bucket The bucket to query.
      * @param keyRange The range which keys must be fall into.
      * @param predicate
      * @return An ordered map containing key/value pairs.
-     * @throws QueryOperationException If a bucket with the given name doesn't exist.
+     * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
     public Map<String, Value> doRangeQuery(String bucket, Range keyRange, Predicate predicate) throws QueryOperationException;
 

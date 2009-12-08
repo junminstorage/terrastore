@@ -233,7 +233,7 @@ public class JsonHttpServerTest {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
 
-        queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", "order", 0)), eq(new Predicate(null)));
+        queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", "order", 0)), eq(new Predicate()));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService);

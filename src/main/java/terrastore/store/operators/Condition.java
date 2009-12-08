@@ -26,7 +26,11 @@ import java.util.Map;
 public interface Condition extends Serializable {
 
     /**
-     *  
+     * Evaluate this condition on the given value, represented as a map of name -> value pairs (associative array).
+     *
+     * @param value The value to evaluate condition on.
+     * @param expression The condition expression.
+     * @return True if satisfied, false otherwise.
      */
     public boolean isSatisfied(Map<String, Object> value, String expression);
 }
