@@ -21,14 +21,13 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
- * Update object carrying information about the update function, timeout and parameters.
+ * Update object carrying data about the update function, timeout and parameters.
  *
  * @author Sergio Bossa
  */
 public class Update implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
-
     private final String functionName;
     private final long timeoutInMillis;
     private final Map<String, Object> parameters;
@@ -55,7 +54,8 @@ public class Update implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof Update) {
             Update other = (Update) obj;
-            return new EqualsBuilder().append(this.functionName, other.functionName).append(this.timeoutInMillis, other.timeoutInMillis).append(this.parameters, other.parameters).isEquals();
+            return new EqualsBuilder().append(this.functionName, other.functionName).append(this.timeoutInMillis, other.timeoutInMillis).append(this.parameters, other.parameters).
+                    isEquals();
         } else {
             return false;
         }

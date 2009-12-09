@@ -29,6 +29,12 @@ import terrastore.communication.serialization.Serializer;
 @InstrumentedClass
 public class Pipe<T> {
 
+    /**
+     * TODO
+     * Add (and use) a "batching" take method to speed up retrieving of messages.
+     * Implement by using an array with inner-pointers to try avoiding lock contention?
+     */
+
     private final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
     private final Serializer<T> serializer;
 

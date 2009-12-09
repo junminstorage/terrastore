@@ -20,6 +20,8 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
+ * Range object carrying data about range queries.
+ *
  * @author Sergio Bossa
  */
 public class Range implements Serializable {

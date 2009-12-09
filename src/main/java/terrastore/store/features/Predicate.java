@@ -30,7 +30,6 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public class Predicate implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
-
     private final boolean empty;
     private final String conditionType;
     private final String conditionExpression;
