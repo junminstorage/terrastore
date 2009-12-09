@@ -128,8 +128,8 @@ public class TCBucket implements Bucket {
         return bucket.keySet();
     }
 
-    public SortedSet<String> keysInRange(Range keyRange, Comparator<String> keyComparator) {
-        SortedSnapshot snapshot = getSnapshotManager().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), keyRange.getTimeToLive());
+    public SortedSet<String> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
+        SortedSnapshot snapshot = getSnapshotManager().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey());
     }
 

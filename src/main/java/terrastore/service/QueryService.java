@@ -62,14 +62,20 @@ public interface QueryService {
      * the default one is used (see {@link #getDefaultComparator()}).<br>
      * Conditions are provided by the {@link #getConditions()} method; if the predicate doesn't specify any condition,
      * no condition will be used hence all values in range will be returned; if the specified condition is not found, an exception is thrown.
+     * <br><br>
+     * The query is executed over a snapshot view of the bucket keys, so the timeToLive parameter determines,
+     * in milliseconds, the max snapshot age: if the snapshot is older than the given time, it's recomputed,
+     * otherwise it will be actually used for the query.
      *
      * @param bucket The bucket to query.
-     * @param keyRange The range which keys must be fall into.
-     * @param predicate
+     * @param range The range which keys must be fall into.
+     * @param predicate The predicate to evaluate on values.
+     * @param timeToLive Number of milliseconds specifying the snapshot age; if set to 0, a new snapshot will be immediately computed
+     * and the query executed on the fresh snasphot.
      * @return An ordered map containing key/value pairs.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
-    public Map<String, Value> doRangeQuery(String bucket, Range keyRange, Predicate predicate) throws QueryOperationException;
+    public Map<String, Value> doRangeQuery(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException;
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.

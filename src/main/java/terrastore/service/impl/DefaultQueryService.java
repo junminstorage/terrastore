@@ -96,12 +96,12 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<String, Value> doRangeQuery(String bucket, Range keyRange, Predicate valuePredicate) throws QueryOperationException {
+    public Map<String, Value> doRangeQuery(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException {
         try {
             LOG.debug("Getting all values from bucket {}", bucket);
-            Comparator<String> keyComparator = getComparator(keyRange.getKeyComparatorName());
-            Condition valueCondition = valuePredicate.isEmpty() ? null : getCondition(valuePredicate.getConditionType());
-            Set<String> storedKeys = getKeyRangeForBucket(bucket, keyRange, keyComparator);
+            Comparator<String> keyComparator = getComparator(range.getKeyComparatorName());
+            Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
+            Set<String> storedKeys = getKeyRangeForBucket(bucket, range, keyComparator, timeToLive);
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, storedKeys);
             List<Map<String, Value>> allKeyValues = new ArrayList(nodeToKeys.size());
             for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
@@ -111,7 +111,7 @@ public class DefaultQueryService implements QueryService {
                 if (valueCondition == null) {
                     command = new GetValuesCommand(bucket, keys);
                 } else {
-                    command = new GetValuesCommand(bucket, keys, valuePredicate, valueCondition);
+                    command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
                 }
                 allKeyValues.add(node.send(command));
             }
@@ -162,9 +162,9 @@ public class DefaultQueryService implements QueryService {
         return storedKeys;
     }
 
-    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator<String> keyComparator) throws ProcessingException {
+    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator<String> keyComparator, long timeToLive) throws ProcessingException {
         Node node = router.getLocalNode();
-        Command command = new DoRangeQueryCommand(bucket, keyRange, keyComparator);
+        Command command = new DoRangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
         Set<String> storedKeys = node.send(command).keySet();
         return storedKeys;
     }

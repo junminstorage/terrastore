@@ -137,7 +137,7 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         service.setComparators(comparators);
 
-        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order", 0), new Predicate());
+        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order"), new Predicate(), 0);
         assertEquals(2, result.size());
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
@@ -196,7 +196,7 @@ public class DefaultQueryServiceTest {
         service.setComparators(comparators);
         service.setConditions(conditions);
 
-        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order", 0), new Predicate("test:true"));
+        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order"), new Predicate("test:true"), 0);
         assertEquals(2, result.size());
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
@@ -255,6 +255,6 @@ public class DefaultQueryServiceTest {
         service.setComparators(comparators);
         service.setConditions(conditions);
 
-        service.doRangeQuery("bucket", new Range("test1", "test2", "order", 0), new Predicate("notfound:true"));
+        service.doRangeQuery("bucket", new Range("test1", "test2", "order"), new Predicate("notfound:true"), 0);
     }
 }

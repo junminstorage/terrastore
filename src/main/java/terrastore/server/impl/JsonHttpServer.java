@@ -183,12 +183,13 @@ public class JsonHttpServer implements Server {
                 throw new ServerOperationException(error);
             }
             LOG.debug("Executing range query on bucket {}", bucket);
-            Range range = new Range(startKey, endKey, comparator, timeToLive);
+            Range range = new Range(startKey, endKey, comparator);
             Predicate predicate = predicateExpression == null ? new Predicate() : new Predicate(predicateExpression);
             return new Values(
                     queryService.doRangeQuery(bucket,
                     range,
-                    predicate));
+                    predicate,
+                    timeToLive));
         } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

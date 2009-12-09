@@ -33,18 +33,20 @@ public class DoRangeQueryCommand extends AbstractCommand {
     private final String bucketName;
     private final Range range;
     private final Comparator<String> keyComparator;
+    private final long timeToLive;
 
-    public DoRangeQueryCommand(String bucketName, Range range, Comparator<String> keyComparator) {
+    public DoRangeQueryCommand(String bucketName, Range range, Comparator<String> keyComparator, long timeToLive) {
         this.bucketName = bucketName;
         this.range = range;
         this.keyComparator = keyComparator;
+        this.timeToLive = timeToLive;
     }
 
     public Map<String, Value> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             Map<String, Value> entries = new HashMap<String, Value>();
-            Set<String> keys = bucket.keysInRange(range, keyComparator);
+            Set<String> keys = bucket.keysInRange(range, keyComparator, timeToLive);
             for (String key : keys) {
                 entries.put(key, null);
             }

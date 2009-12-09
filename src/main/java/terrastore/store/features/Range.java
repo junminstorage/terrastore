@@ -25,17 +25,14 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public class Range implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
-
     private String startKey;
     private String endKey;
     private String keyComparatorName;
-    private long timeToLive;
 
-    public Range(String startKey, String endKey, String keyComparatorName, long timeToLive) {
+    public Range(String startKey, String endKey, String keyComparatorName) {
         this.startKey = startKey;
         this.endKey = endKey;
         this.keyComparatorName = keyComparatorName;
-        this.timeToLive = timeToLive;
     }
 
     public String getStartKey() {
@@ -45,25 +42,19 @@ public class Range implements Serializable {
     public String getEndKey() {
         return endKey;
     }
-    
+
     public String getKeyComparatorName() {
         return keyComparatorName;
-    }
-
-    public long getTimeToLive() {
-        return timeToLive;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Range) {
             Range other = (Range) obj;
-            return new EqualsBuilder()
-                    .append(this.startKey, other.startKey)
-                    .append(this.endKey, other.endKey)
-                    .append(this.keyComparatorName, other.keyComparatorName)
-                    .append(this.timeToLive, other.timeToLive)
-                    .isEquals();
+            return new EqualsBuilder().append(this.startKey, other.startKey).
+                    append(this.endKey, other.endKey).
+                    append(this.keyComparatorName, other.keyComparatorName).
+                    isEquals();
         } else {
             return false;
         }
@@ -71,11 +62,9 @@ public class Range implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-                .append(startKey)
-                .append(endKey)
-                .append(keyComparatorName)
-                .append(timeToLive)
-                .toHashCode();
+        return new HashCodeBuilder().append(startKey).
+                append(endKey).
+                append(keyComparatorName).
+                toHashCode();
     }
 }
