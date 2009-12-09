@@ -129,8 +129,12 @@ public class TCBucket implements Bucket {
     }
 
     public SortedSet<String> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
-        SortedSnapshot snapshot = getSnapshotManager().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
+        SortedSnapshot snapshot = getOrCreateSnapshotManager().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey());
+    }
+
+    public SnapshotManager getSnapshotManager() {
+        return snapshotManager;
     }
 
     private boolean lock(String key) {
@@ -150,7 +154,7 @@ public class TCBucket implements Bucket {
 
     // WARN: use a private getter and direct call to "new" because of TC not supporting injection of transient values:
     // TODO: use spin locks?
-    private synchronized SnapshotManager getSnapshotManager() {
+    private synchronized SnapshotManager getOrCreateSnapshotManager() {
         if (snapshotManager == null) {
             snapshotManager = new LocalSnapshotManager();
         }
