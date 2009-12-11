@@ -34,6 +34,8 @@ import org.terracotta.modules.annotations.InstrumentedClass;
 import org.terracotta.modules.annotations.Root;
 import terrastore.communication.Node;
 import terrastore.cluster.Cluster;
+import terrastore.cluster.FlushCondition;
+import terrastore.cluster.FlushStrategy;
 import terrastore.communication.local.LocalNode;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
@@ -73,6 +75,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private volatile transient ExecutorService workerExecutor;
     //
     private volatile transient Router router;
+    private volatile transient FlushStrategy flushStrategy;
+    private volatile transient FlushCondition flushCondition;
 
     private TCCluster() {
     }
@@ -95,12 +99,28 @@ public class TCCluster implements Cluster, DsoClusterListener {
         return workerExecutor;
     }
 
+    public Router getRouter() {
+        return router;
+    }
+
+    public FlushStrategy getFlushStrategy() {
+        return flushStrategy;
+    }
+
+    public FlushCondition getFlushCondition() {
+        return flushCondition;
+    }
+
     public void setRouter(Router router) {
         this.router = router;
     }
 
-    public Router getRouter() {
-        return router;
+    public void setFlushStrategy(FlushStrategy flushStrategy) {
+        this.flushStrategy = flushStrategy;
+    }
+
+    public void setFlushCondition(FlushCondition flushCondition) {
+        this.flushCondition = flushCondition;
     }
 
     public void start() {
@@ -163,7 +183,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         stateLock.lock();
         try {
             if (!isThisNode(joinedNodeName)) {
-                setupRemoteNode(joinedNodeName);
+                setupRemoteNode(joinedNodeName, true);
             }
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
@@ -211,11 +231,14 @@ public class TCCluster implements Cluster, DsoClusterListener {
         LOG.info("Set up this node {}", thisNodeName);
     }
 
-    private void setupRemoteNode(String remoteNodeName) {
+    private void setupRemoteNode(String remoteNodeName, boolean flush) {
         Node remoteNode = new RemoteNode(remoteNodeName, pipes, nodeTimeout);
         remoteNode.connect();
         nodes.put(remoteNodeName, remoteNode);
         router.addRouteTo(remoteNode);
+        if (flush) {
+            flushStrategy.flush(store, flushCondition);
+        }
         LOG.info("Set up remote node {}", remoteNodeName);
     }
 
@@ -225,7 +248,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         for (DsoNode dsoNode : dsoTopology.getNodes()) {
             if (!dsoNode.getId().equals(currentNode.getId())) {
                 String remoteNodeName = dsoNode.getId();
-                setupRemoteNode(remoteNodeName);
+                setupRemoteNode(remoteNodeName, false);
             }
         }
     }

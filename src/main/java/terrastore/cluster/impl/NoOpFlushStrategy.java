@@ -13,29 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster;
+package terrastore.cluster.impl;
 
-import java.util.concurrent.ExecutorService;
-import terrastore.router.Router;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import terrastore.cluster.FlushCondition;
+import terrastore.cluster.FlushStrategy;
+import terrastore.store.Store;
 
 /**
  * @author Sergio Bossa
  */
-public interface Cluster {
+public class NoOpFlushStrategy implements FlushStrategy {
 
-    public void start();
+    private static final Logger LOG = LoggerFactory.getLogger(NoOpFlushStrategy.class);
 
-    public void stop();
-
-    public void setNodeTimeout(long nodeTimeout);
-
-    public void setWokerThreads(int workerThreads);
-
-    public ExecutorService getWorkerExecutor();
-
-    public Router getRouter();
-
-    public FlushStrategy getFlushStrategy();
-
-    public FlushCondition getFlushCondition();
+    @Override
+    public void flush(Store store, FlushCondition flushCondition) {
+        LOG.warn("Flush is disabled!");
+    }
 }

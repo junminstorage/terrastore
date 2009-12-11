@@ -109,6 +109,11 @@ public interface Bucket {
     public SortedSet<String> keysInRange(Range range, Comparator<String> keyComparator, long timeToLive);
 
     /**
+     * Flush the given keys, with related values, to an external storage.
+     */
+    public void flush(Set<String> keys);
+
+    /**
      * Get the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.
      *
      * @return The {@link SnapshotManager} used by this bucket.

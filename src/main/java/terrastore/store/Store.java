@@ -15,6 +15,8 @@
  */
 package terrastore.store;
 
+import java.util.Collection;
+
 /**
  * Store interface for managing {@link Bucket} instances.
  *
@@ -47,4 +49,11 @@ public interface Store {
      * @throws StoreOperationException If the bucket doesn't exist.
      */
     public Bucket get(String bucket) throws StoreOperationException;
+
+    /**
+     *
+     * 
+     * @return
+     */
+    public Collection<Bucket> buckets();
 }

@@ -15,27 +15,12 @@
  */
 package terrastore.cluster;
 
-import java.util.concurrent.ExecutorService;
-import terrastore.router.Router;
+import terrastore.store.Bucket;
 
 /**
  * @author Sergio Bossa
  */
-public interface Cluster {
+public interface FlushCondition {
 
-    public void start();
-
-    public void stop();
-
-    public void setNodeTimeout(long nodeTimeout);
-
-    public void setWokerThreads(int workerThreads);
-
-    public ExecutorService getWorkerExecutor();
-
-    public Router getRouter();
-
-    public FlushStrategy getFlushStrategy();
-
-    public FlushCondition getFlushCondition();
+    public boolean isSatisfied(Bucket bucket, String key);
 }

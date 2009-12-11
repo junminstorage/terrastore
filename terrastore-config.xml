@@ -83,6 +83,13 @@
 
     <bean id="cluster" class="terrastore.cluster.impl.TCCluster" factory-method="getInstance">
         <property name="router" ref="router"/>
+        <property name="flushStrategy" ref="flushStrategy"/>
+        <property name="flushCondition" ref="flushCondition"/>
+    </bean>
+
+    <bean id="flushStrategy" class="terrastore.cluster.impl.SequentialFlushStrategy"/>
+    <bean id="flushCondition" class="terrastore.cluster.impl.RoutingBasedFlushCondition">
+        <constructor-arg ref="router"/>
     </bean>
 
 </beans>

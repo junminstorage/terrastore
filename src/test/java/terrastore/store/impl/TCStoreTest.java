@@ -39,6 +39,15 @@ public class TCStoreTest {
         assertNotNull(store.get(bucket));
     }
 
+    @Test
+    public void testGetAllBuckets() throws StoreOperationException {
+        String bucket1 = "bucket1";
+        String bucket2 = "bucket2";
+        store.add(bucket1);
+        store.add(bucket2);
+        assertEquals(2, store.buckets().size());
+    }
+
     @Test(expected=StoreOperationException.class)
     public void testGetNullBucket() throws StoreOperationException {
         String bucket = "bucket";

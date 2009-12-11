@@ -15,6 +15,7 @@
  */
 package terrastore.store.impl;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.modules.annotations.InstrumentedClass;
@@ -56,5 +57,10 @@ public class TCStore implements Store {
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Bucket not found: " + bucket));
         }
+    }
+
+    @Override
+    public Collection<Bucket> buckets() {
+        return buckets.values();
     }
 }

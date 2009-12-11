@@ -15,27 +15,12 @@
  */
 package terrastore.cluster;
 
-import java.util.concurrent.ExecutorService;
-import terrastore.router.Router;
+import terrastore.store.Store;
 
 /**
  * @author Sergio Bossa
  */
-public interface Cluster {
+public interface FlushStrategy {
 
-    public void start();
-
-    public void stop();
-
-    public void setNodeTimeout(long nodeTimeout);
-
-    public void setWokerThreads(int workerThreads);
-
-    public ExecutorService getWorkerExecutor();
-
-    public Router getRouter();
-
-    public FlushStrategy getFlushStrategy();
-
-    public FlushCondition getFlushCondition();
+    public void flush(Store store, FlushCondition flushCondition);
 }

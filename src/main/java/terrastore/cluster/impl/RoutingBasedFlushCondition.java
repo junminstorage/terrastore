@@ -13,29 +13,28 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster;
+package terrastore.cluster.impl;
 
-import java.util.concurrent.ExecutorService;
+import terrastore.cluster.FlushCondition;
+import terrastore.communication.Node;
 import terrastore.router.Router;
+import terrastore.store.Bucket;
 
 /**
  * @author Sergio Bossa
  */
-public interface Cluster {
+public class RoutingBasedFlushCondition implements FlushCondition {
 
-    public void start();
+    private final Router router;
 
-    public void stop();
+    public RoutingBasedFlushCondition(Router router) {
+        this.router = router;
+    }
 
-    public void setNodeTimeout(long nodeTimeout);
-
-    public void setWokerThreads(int workerThreads);
-
-    public ExecutorService getWorkerExecutor();
-
-    public Router getRouter();
-
-    public FlushStrategy getFlushStrategy();
-
-    public FlushCondition getFlushCondition();
+    @Override
+    public boolean isSatisfied(Bucket bucket, String key) {
+        Node localNode = router.getLocalNode();
+        Node actual = router.routeToNodeFor(bucket.getName(), key);
+        return actual.equals(localNode);
+    }
 }

@@ -133,6 +133,14 @@ public class TCBucket implements Bucket {
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey());
     }
 
+    @Override
+    public void flush(Set<String> keys) {
+        for (String key : keys) {
+            Value value = bucket.get(key);
+            bucket.flush(key, value);
+        }
+    }
+
     public SnapshotManager getSnapshotManager() {
         return snapshotManager;
     }
