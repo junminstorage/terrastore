@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+    <import resource="comparators-config.xml"/>
+    <import resource="conditions-config.xml"/>
+    <import resource="functions-config.xml"/>
 
     <!-- Server -->
 
@@ -20,49 +27,15 @@
     
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
-        <property name="functions">
-            <map>
-                <entry key="replace" value-ref="replaceFunction"/>
-            </map>
-        </property>
+        <property name="functions" ref="update-functions"/>
     </bean>
     
     <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
         <constructor-arg ref="router"/>
-        <property name="comparators">
-            <map>
-                <entry key="lexical-asc" value-ref="ascendingLexicalComparator"/>
-                <entry key="lexical-desc" value-ref="descendingLexicalComparator"/>
-                <entry key="numeric-asc" value-ref="ascendingNumberComparator"/>
-                <entry key="numeric-desc" value-ref="descendingNumberComparator"/>
-            </map>
-        </property>
-        <property name="conditions">
-            <map>
-                <entry key="jxpath" value-ref="jxpathCondition"/>
-            </map>
-        </property>
-        <property name="defaultComparator">
-            <ref bean="ascendingLexicalComparator"/>
-        </property>
+        <property name="comparators" ref="comparators"/>
+        <property name="conditions" ref="conditions"/>
+        <property name="defaultComparator" ref="defaultComparator"/>
     </bean>
-
-    <bean id="ascendingLexicalComparator" class="terrastore.service.comparators.LexicographicalComparator">
-        <constructor-arg value="true"/>
-    </bean>
-    <bean id="descendingLexicalComparator" class="terrastore.service.comparators.LexicographicalComparator">
-        <constructor-arg value="false"/>
-    </bean>
-    <bean id="ascendingNumberComparator" class="terrastore.service.comparators.NumberComparator">
-        <constructor-arg value="true"/>
-    </bean>
-    <bean id="descendingNumberComparator" class="terrastore.service.comparators.NumberComparator">
-        <constructor-arg value="false"/>
-    </bean>
-
-    <bean id="replaceFunction" class="terrastore.service.functions.ReplaceFunction"/>
-
-    <bean id="jxpathCondition" class="terrastore.service.conditions.JXPathCondition"/>
 
     <!-- Router -->
 
