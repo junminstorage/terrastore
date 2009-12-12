@@ -51,9 +51,9 @@ public interface Store {
     public Bucket get(String bucket) throws StoreOperationException;
 
     /**
-     *
+     *Get all {@link Bucket}s of this store.
      * 
-     * @return
+     * @return A collection of {@link Bucket}s.
      */
     public Collection<Bucket> buckets();
 }

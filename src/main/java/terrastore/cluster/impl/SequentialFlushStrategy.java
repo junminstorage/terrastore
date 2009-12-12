@@ -25,6 +25,10 @@ import terrastore.store.Bucket;
 import terrastore.store.Store;
 
 /**
+ * Sequentially flush all key/value entries of all buckets in the store.<br>
+ * This flush strategy has a O(n) complexity, where n is the total number of
+ * entries in all store buckets.
+ *
  * @author Sergio Bossa
  */
 public class SequentialFlushStrategy implements FlushStrategy {

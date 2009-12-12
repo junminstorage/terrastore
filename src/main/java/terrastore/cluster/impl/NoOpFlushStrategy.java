@@ -22,6 +22,8 @@ import terrastore.cluster.FlushStrategy;
 import terrastore.store.Store;
 
 /**
+ * Strategy to use when no flushing is desired.
+ *
  * @author Sergio Bossa
  */
 public class NoOpFlushStrategy implements FlushStrategy {

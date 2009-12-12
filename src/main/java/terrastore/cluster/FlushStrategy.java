@@ -18,9 +18,20 @@ package terrastore.cluster;
 import terrastore.store.Store;
 
 /**
+ * Define a flush strategy to apply for flushing key/value entries of all buckets contained into
+ * the store.
+ *
  * @author Sergio Bossa
  */
 public interface FlushStrategy {
 
+    /**
+     * Flush all key/value entries of all buckets contained into the given store.
+     * <br>
+     * The actual decision whether the key must be flushed or not, is left to the given {@link FlushCondition}.
+     *
+     * @param store The store whose entries should be flushed.
+     * @param flushCondition The condition to evaluate for key flushing.
+     */
     public void flush(Store store, FlushCondition flushCondition);
 }

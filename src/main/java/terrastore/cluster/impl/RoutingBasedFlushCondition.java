@@ -21,6 +21,9 @@ import terrastore.router.Router;
 import terrastore.store.Bucket;
 
 /**
+ * Flush condition based on the routing path: keys whose routing path doesn't belong
+ * to the local node (meaning they belong to remote nodes), will be locally flushed.
+ *
  * @author Sergio Bossa
  */
 public class RoutingBasedFlushCondition implements FlushCondition {

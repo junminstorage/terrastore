@@ -18,9 +18,19 @@ package terrastore.cluster;
 import terrastore.store.Bucket;
 
 /**
+ * Predicate-style interface to implement for defining if a key (and related value),
+ * belonging to a given bucket, should be flushed.
+ *
  * @author Sergio Bossa
  */
 public interface FlushCondition {
 
+    /**
+     * Define if the key shoud be flushed.
+     *
+     * @param bucket The bucket containing the key/value to flush.
+     * @param key The key to eventually flush.
+     * @return True if to be flushed, false otherwise.
+     */
     public boolean isSatisfied(Bucket bucket, String key);
 }
