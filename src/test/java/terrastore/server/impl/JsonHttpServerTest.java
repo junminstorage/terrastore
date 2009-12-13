@@ -225,6 +225,38 @@ public class JsonHttpServerTest {
     }
 
     @Test
+    public void testDoRangeQueryWithNoComparator() throws Exception {
+        SortedMap<String, Value> values = new TreeMap<String, Value>();
+        values.put("test1", new Value(JSON_VALUE.getBytes()));
+        values.put("test2", new Value(JSON_VALUE.getBytes()));
+
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+
+        queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", "")), eq(new Predicate()), eq(0L));
+        expectLastCall().andReturn(values).once();
+
+        replay(updateService, queryService);
+
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
+        HttpClient client = new HttpClient();
+        GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&timeToLive=0");
+        method.setRequestHeader("Content-Type", "application/json");
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals(JSON_VALUES_x2, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService);
+    }
+
+    @Test
     public void testDoRangeQueryWithNoPredicate() throws Exception {
         SortedMap<String, Value> values = new TreeMap<String, Value>();
         values.put("test1", new Value(JSON_VALUE.getBytes()));

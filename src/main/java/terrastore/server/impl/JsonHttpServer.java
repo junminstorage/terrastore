@@ -181,6 +181,9 @@ public class JsonHttpServer implements Server {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No endKey provided!");
                 throw new ServerOperationException(error);
             }
+            if (comparator == null) {
+                comparator = "";
+            }
             LOG.debug("Executing range query on bucket {}", bucket);
             Range range = new Range(startKey, endKey, comparator);
             Predicate predicate = predicateExpression == null ? new Predicate() : new Predicate(predicateExpression);
