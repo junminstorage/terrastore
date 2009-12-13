@@ -289,6 +289,38 @@ public class JsonHttpServerTest {
     }
 
     @Test
+    public void testDoPredicateQuery() throws Exception {
+        Map<String, Value> values = new HashMap<String, Value>();
+        values.put("test1", new Value(JSON_VALUE.getBytes()));
+        values.put("test2", new Value(JSON_VALUE.getBytes()));
+
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+
+        queryService.doPredicateQuery(eq("bucket"), eq(new Predicate("test:condition")));
+        expectLastCall().andReturn(values).once();
+
+        replay(updateService, queryService);
+
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
+        HttpClient client = new HttpClient();
+        GetMethod method = new GetMethod("http://localhost:8080/bucket/predicate?predicate=test:condition");
+        method.setRequestHeader("Content-Type", "application/json");
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals(JSON_VALUES_x2, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService);
+    }
+
+    @Test
     public void testUpdateValue() throws Exception {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("p1", "v1");

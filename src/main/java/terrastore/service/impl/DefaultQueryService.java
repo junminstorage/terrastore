@@ -98,7 +98,7 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Map<String, Value> doRangeQuery(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException {
         try {
-            LOG.debug("Getting all values from bucket {}", bucket);
+            LOG.debug("Range query on bucket {}", bucket);
             Comparator<String> keyComparator = getComparator(range.getKeyComparatorName());
             Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
             Set<String> storedKeys = getKeyRangeForBucket(bucket, range, keyComparator, timeToLive);
@@ -117,6 +117,32 @@ public class DefaultQueryService implements QueryService {
             }
             // TODO: we may use fork/join to build the final map out of all sub-maps.
             return Maps.drain(allKeyValues, new TreeMap<String, Value>(keyComparator));
+        } catch (ProcessingException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
+        }
+    }
+
+    @Override
+    public Map<String, Value> doPredicateQuery(String bucket, Predicate predicate) throws QueryOperationException {
+        try {
+            LOG.debug("Predicate-based query on bucket {}", bucket);
+            Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
+            if (valueCondition != null) {
+                Set<String> storedKeys = getAllKeysForBucket(bucket);
+                Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, storedKeys);
+                List<Map<String, Value>> allKeyValues = new ArrayList(nodeToKeys.size());
+                for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
+                    Node node = nodeToKeysEntry.getKey();
+                    Set<String> keys = nodeToKeysEntry.getValue();
+                    Command command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
+                    allKeyValues.add(node.send(command));
+                }
+                return Maps.union(allKeyValues);
+            } else {
+                throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong predicate!"));
+            }
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

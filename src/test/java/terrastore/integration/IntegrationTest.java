@@ -236,6 +236,36 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testPredicateQuery() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        GetMethod doRangeQuery = makeGetMethodWithPredicate(NODE2_PORT, bucket + "/predicate", "jxpath:/stringField[.='value2']");
+        HTTP_CLIENT.executeMethod(doRangeQuery);
+        assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doRangeQuery.getResponseBodyAsString());
+        System.err.println(doRangeQuery.getResponseBodyAsString());
+        doRangeQuery.releaseConnection();
+        assertEquals(1, values.size());
+        assertEquals("valuec", values.keySet().toArray()[0]);
+    }
+
+    @Test
     public void testUpdateValue() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
@@ -300,6 +330,16 @@ public class IntegrationTest {
         try {
             GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?startKey=" + URLEncoder.encode(startKey, "UTF-8") + "&endKey=" + URLEncoder.
                     encode(endKey, "UTF-8") + "&comparator=" + URLEncoder.encode(comparator, "UTF-8") + "&predicate=" + URLEncoder.encode(predicate, "UTF-8"));
+            method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private GetMethod makeGetMethodWithPredicate(int nodePort, String path, String predicate) {
+        try {
+            GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?predicate=" + URLEncoder.encode(predicate, "UTF-8"));
             method.setRequestHeader("Content-Type", "application/json");
             return method;
         } catch (UnsupportedEncodingException ex) {

@@ -205,7 +205,7 @@ public class DefaultQueryServiceTest {
     }
 
     @Test(expected = QueryOperationException.class)
-    public void testDoRangeQueryWithPredicateFailsDueToNotFoundCondition() throws Exception {
+    public void testDoRangeQueryWithPredicateFailsDueToNoConditionFound() throws Exception {
         Comparator<String> stringComparator = new Comparator<String>() {
 
             @Override
@@ -256,5 +256,96 @@ public class DefaultQueryServiceTest {
         service.setConditions(conditions);
 
         service.doRangeQuery("bucket", new Range("test1", "test2", "order"), new Predicate("notfound:true"), 0);
+    }
+
+    @Test
+    public void testDoPredicateQuery() throws Exception {
+        Condition trueCondition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(Map<String, Object> value, String expression) {
+                return true;
+            }
+        };
+
+        Map<String, Value> keys = new HashMap<String, Value>();
+        keys.put("test1", null);
+        keys.put("test2", null);
+        Map<String, Value> values = new HashMap<String, Value>();
+        values.put("test1", new Value(JSON_VALUE.getBytes()));
+        values.put("test2", new Value(JSON_VALUE.getBytes()));
+
+        Node localNode = createMock(Node.class);
+        Node remoteNode = createMock(Node.class);
+        Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
+
+        router.getLocalNode();
+        expectLastCall().andReturn(localNode).once();
+        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
+        expectLastCall().andReturn(nodeToKeys).once();
+        localNode.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(keys).once();
+        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values).once();
+
+        replay(localNode, remoteNode, router);
+
+        Map<String, Condition> conditions = new HashMap<String, Condition>();
+        conditions.put("test", trueCondition);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        service.setConditions(conditions);
+
+        Map<String, Value> result = service.doPredicateQuery("bucket", new Predicate("test:true"));
+        assertEquals(2, result.size());
+        assertEquals("test1", result.keySet().toArray()[0]);
+        assertEquals("test2", result.keySet().toArray()[1]);
+
+        verify(localNode, remoteNode, router);
+    }
+
+    @Test(expected = QueryOperationException.class)
+    public void testDoPredicateQueryFailsDueToNoConditionFound() throws Exception {
+        Condition trueCondition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(Map<String, Object> value, String expression) {
+                return true;
+            }
+        };
+
+        Map<String, Value> keys = new HashMap<String, Value>();
+        keys.put("test1", null);
+        keys.put("test2", null);
+        Map<String, Value> values = new HashMap<String, Value>();
+        values.put("test1", new Value(JSON_VALUE.getBytes()));
+        values.put("test2", new Value(JSON_VALUE.getBytes()));
+
+        Node localNode = createMock(Node.class);
+        Node remoteNode = createMock(Node.class);
+        Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
+
+        router.getLocalNode();
+        expectLastCall().andReturn(localNode).once();
+        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
+        expectLastCall().andReturn(nodeToKeys).once();
+        localNode.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(keys).once();
+        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values).once();
+
+        replay(localNode, remoteNode, router);
+
+        Map<String, Condition> conditions = new HashMap<String, Condition>();
+        conditions.put("test", trueCondition);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        service.setConditions(conditions);
+
+        service.doPredicateQuery("bucket", new Predicate("notfound:true"));
     }
 }

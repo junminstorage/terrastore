@@ -78,6 +78,22 @@ public interface QueryService {
     public Map<String, Value> doRangeQuery(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException;
 
     /**
+     * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
+     * <br><br>
+     * Returned key/value pairs, in no particular order, satisfy the condition whose name matches the one contained in the
+     * {@link terrastore.store.features.Predicate} object.
+     * <br><br>
+     * Conditions are provided by the {@link #getConditions()} method; if the predicate doesn't specify any condition,
+     * or the condition is not found, an exception is thrown.
+     *
+     * @param bucket The bucket to query.
+     * @param predicate The predicate to evaluate on values.
+     * @return A map containing key/value pairs.
+     * @throws QueryOperationException If a bucket with the given name doesn't exist, or no condition is specified or no matching is found.
+     */
+    public Map<String, Value> doPredicateQuery(String bucket, Predicate predicate) throws QueryOperationException;
+
+    /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.
      *
      * @return The router instance.

@@ -113,6 +113,16 @@ public interface Server {
     public Values doRangeQuery(String bucket, String startKey, String endKey, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
+     * Execute a predicate-based query returning all key/value pairs whosevalue satisfies the given predicate.
+     *
+     * @param bucket The bucket to query.
+     * @param predicate The predicate to evaluate.
+     * @return A map containing key/value pairs
+     * @throws ServerOperationException If an error occurs.
+     */
+    public Values doPredicateQuery(String bucket, String predicate) throws ServerOperationException;
+
+    /**
      * Get the {@link terrastore.service.UpdateService} which will actually execute all update operations.
      *
      * @return The {@link terrastore.service.UpdateService} instance.

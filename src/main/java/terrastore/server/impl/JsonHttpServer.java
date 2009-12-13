@@ -171,7 +171,6 @@ public class JsonHttpServer implements Server {
 
     @GET
     @Path("/{bucket}/range")
-    @Consumes("application/json")
     @Produces("application/json")
     public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
         try {
@@ -190,6 +189,25 @@ public class JsonHttpServer implements Server {
                     range,
                     predicate,
                     timeToLive));
+        } catch (QueryOperationException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new ServerOperationException(error);
+        }
+    }
+
+    @GET
+    @Path("/{bucket}/predicate")
+    @Produces("application/json")
+    public Values doPredicateQuery(@PathParam("bucket") String bucket, @QueryParam("predicate") String predicateExpression) throws ServerOperationException {
+        try {
+            if (predicateExpression == null) {
+                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No predicate provided!");
+                throw new ServerOperationException(error);
+            }
+            LOG.debug("Executing predicate-based query on bucket {}", bucket);
+            Predicate predicate = new Predicate(predicateExpression);
+            return new Values(queryService.doPredicateQuery(bucket, predicate));
         } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
