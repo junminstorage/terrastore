@@ -31,19 +31,14 @@ public class PredicateTest {
         assertFalse(predicate.isEmpty());
     }
 
+    @Test
+    public void testEmptyPredicate() {
+        Predicate predicate = new Predicate(null);
+        assertTrue(predicate.isEmpty());
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testMalformedPredicate() {
         Predicate predicate = new Predicate("name-expression");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNullPredicate() {
-        Predicate predicate = new Predicate(null);
-    }
-
-    @Test
-    public void testEmptyPredicate() {
-        Predicate predicate = new Predicate();
-        assertTrue(predicate.isEmpty());
     }
 }

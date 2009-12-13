@@ -137,7 +137,7 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         service.setComparators(comparators);
 
-        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order"), new Predicate(), 0);
+        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", "order"), new Predicate(null), 0);
         assertEquals(2, result.size());
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);

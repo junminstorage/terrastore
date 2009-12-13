@@ -35,7 +35,7 @@ public class Predicate implements Serializable {
     private final String conditionExpression;
 
     public Predicate(String predicate) {
-        if (predicate != null && !predicate.isEmpty()) {
+        if (predicate != null) {
             try {
                 this.conditionType = predicate.substring(0, predicate.indexOf(":"));
                 this.conditionExpression = predicate.substring(predicate.indexOf(":") + 1);
@@ -44,14 +44,10 @@ public class Predicate implements Serializable {
                 throw new IllegalArgumentException("Wrong predicate format, should be type:expression, actually is: " + predicate);
             }
         } else {
-            throw new IllegalArgumentException("Predicate cannot be null!");
+            this.conditionType = null;
+            this.conditionExpression = null;
+            this.empty = true;
         }
-    }
-
-    public Predicate() {
-        this.conditionType = null;
-        this.conditionExpression = null;
-        this.empty = true;
     }
 
     public boolean isEmpty() {

@@ -186,7 +186,7 @@ public class JsonHttpServer implements Server {
             }
             LOG.debug("Executing range query on bucket {}", bucket);
             Range range = new Range(startKey, endKey, comparator);
-            Predicate predicate = predicateExpression == null ? new Predicate() : new Predicate(predicateExpression);
+            Predicate predicate = new Predicate(predicateExpression);
             return new Values(
                     queryService.doRangeQuery(bucket,
                     range,
