@@ -96,13 +96,18 @@ public interface Server {
     /**
      * Execute a range query returning all key/value pairs whose key falls into the given range, and whose value satisfies the given predicate (if any).
      * <br><br>
+     * The selected range goes from start key to end key, with the max number of elements equal to the provided limit.<br>
+     * If the limit is zero, all the elements in the range will be selected.<br>
+     * If no end key is provided, all elements starting from start key and up to the limit will be selected.
+     * <br><br>
      * The range query is executed over a snapshot view of the bucket keys, so the timeToLive parameter determines,
      * in milliseconds, the snapshot max age: if the snapshot is older than the given time, it's recomputed,
      * otherwise it will be actually used for the query.
      *
      * @param bucket The bucket to query.
      * @param startKey First key in range.
-     * @param endKey Last key in range (comprised).
+     * @param endKey Last key in range (inclusive); if null, all elements starting from start key and up to the limit will be selected.
+     * @param limit Max number of elements to retrieve (even if not reaching the end of the range); if zero, all elements in range will be selected.
      * @param comparator Name of the comparator to use for testing if a key is in range.
      * @param predicate The predicate to evaluate (if any).
      * @param timeToLive Number of milliseconds specifying the snapshot age; if set to 0, a new snapshot will be immediately computed
