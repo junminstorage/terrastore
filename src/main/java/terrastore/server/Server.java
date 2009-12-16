@@ -110,7 +110,7 @@ public interface Server {
      * @return A map containing key/value pairs
      * @throws ServerOperationException If an error occurs.
      */
-    public Values doRangeQuery(String bucket, String startKey, String endKey, String comparator, String predicate, long timeToLive) throws ServerOperationException;
+    public Values doRangeQuery(String bucket, String startKey, String endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whosevalue satisfies the given predicate.

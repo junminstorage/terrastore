@@ -29,11 +29,13 @@ public class Range implements Serializable {
     private static final long serialVersionUID = 12345678901L;
     private String startKey;
     private String endKey;
+    private int limit;
     private String keyComparatorName;
 
-    public Range(String startKey, String endKey, String keyComparatorName) {
+    public Range(String startKey, String endKey, int limit, String keyComparatorName) {
         this.startKey = startKey;
         this.endKey = endKey;
+        this.limit = limit;
         this.keyComparatorName = keyComparatorName;
     }
 
@@ -43,6 +45,10 @@ public class Range implements Serializable {
 
     public String getEndKey() {
         return endKey;
+    }
+
+    public int getLimit() {
+        return limit;
     }
 
     public String getKeyComparatorName() {

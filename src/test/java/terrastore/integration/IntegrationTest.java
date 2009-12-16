@@ -44,7 +44,7 @@ public class IntegrationTest {
     private static final int NODE2_PORT = 8081;
     private static final int NODE1_SHUTDOWN_PORT = 8180;
     private static final int NODE2_SHUTDOWN_PORT = 8181;
-    private static final int SETUP_TIME = 25000;
+    private static final int SETUP_TIME = 30000;
     private HttpClient HTTP_CLIENT = new HttpClient();
 
     @BeforeClass
@@ -238,6 +238,68 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testRangeQueryWithLimit() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valueb", "valued", 2, "lexical-asc");
+        HTTP_CLIENT.executeMethod(doRangeQuery);
+        assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doRangeQuery.getResponseBodyAsString());
+        System.err.println(doRangeQuery.getResponseBodyAsString());
+        doRangeQuery.releaseConnection();
+        assertEquals(2, values.size());
+        assertEquals("valueb", values.keySet().toArray()[0]);
+        assertEquals("valuec", values.keySet().toArray()[1]);
+    }
+
+    @Test
+    public void testRangeQueryWithNoEndKeyAndNoLimit() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valuej", 2, "lexical-asc");
+        HTTP_CLIENT.executeMethod(doRangeQuery);
+        assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doRangeQuery.getResponseBodyAsString());
+        System.err.println(doRangeQuery.getResponseBodyAsString());
+        doRangeQuery.releaseConnection();
+        assertEquals(2, values.size());
+        assertEquals("valuej", values.keySet().toArray()[0]);
+        assertEquals("valuek", values.keySet().toArray()[1]);
+    }
+
+    @Test
     public void testRangeQueryWithPredicate() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
@@ -362,6 +424,29 @@ public class IntegrationTest {
         try {
             GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?startKey=" + URLEncoder.encode(startKey, "UTF-8") + "&endKey=" + URLEncoder.
                     encode(endKey, "UTF-8") + "&comparator=" + URLEncoder.encode(comparator, "UTF-8"));
+            method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private GetMethod makeGetMethodWithRange(int nodePort, String path, String startKey, String endKey, int limit, String comparator) {
+        try {
+            GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?startKey=" + URLEncoder.encode(startKey, "UTF-8") + "&endKey=" + URLEncoder.
+                    encode(endKey, "UTF-8") + "&comparator=" + URLEncoder.encode(comparator, "UTF-8") + "&limit=" + URLEncoder.encode(new Integer(limit).
+                    toString(), "UTF-8"));
+            method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private GetMethod makeGetMethodWithRange(int nodePort, String path, String startKey, int limit, String comparator) {
+        try {
+            GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?startKey=" + URLEncoder.encode(startKey, "UTF-8") + "&comparator=" + URLEncoder.
+                    encode(comparator, "UTF-8") + "&limit=" + URLEncoder.encode(new Integer(limit).toString(), "UTF-8"));
             method.setRequestHeader("Content-Type", "application/json");
             return method;
         } catch (UnsupportedEncodingException ex) {

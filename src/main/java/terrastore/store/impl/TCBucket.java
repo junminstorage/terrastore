@@ -18,7 +18,6 @@ package terrastore.store.impl;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -128,9 +127,9 @@ public class TCBucket implements Bucket {
         return bucket.keySet();
     }
 
-    public SortedSet<String> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
+    public Set<String> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
         SortedSnapshot snapshot = getOrCreateSnapshotManager().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
-        return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey());
+        return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
     }
 
     @Override

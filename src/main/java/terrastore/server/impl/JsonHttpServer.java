@@ -172,20 +172,17 @@ public class JsonHttpServer implements Server {
     @GET
     @Path("/{bucket}/range")
     @Produces("application/json")
-    public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
+    public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
         try {
             if (startKey == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");
-                throw new ServerOperationException(error);
-            } else if (endKey == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No endKey provided!");
                 throw new ServerOperationException(error);
             }
             if (comparator == null) {
                 comparator = "";
             }
             LOG.debug("Executing range query on bucket {}", bucket);
-            Range range = new Range(startKey, endKey, comparator);
+            Range range = new Range(startKey, endKey, limit, comparator);
             Predicate predicate = new Predicate(predicateExpression);
             return new Values(
                     queryService.doRangeQuery(bucket,

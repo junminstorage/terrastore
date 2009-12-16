@@ -96,7 +96,7 @@ public interface Bucket {
     public Set<String> keys();
 
     /**
-     * Get a sorted set of all keys falling into the given range, as determined by the given comparator.<br>
+     * Get a set of all keys falling into the given range, sorted as determined by the given comparator.<br>
      * The range is always computed over a snapshot of all keys: however, if the snapshot is older than the given timeToLive (in milliseconds),
      * a new one will be created with current keys.<br>
      * The snapshot is computed (and managed) by using the configured {@link SnapshotManager} (see {@link #getSnapshotManager()}).
@@ -106,7 +106,7 @@ public interface Bucket {
      * @param timeToLive Number of milliseconds determining the snapshot max age.
      * @return The sorted set of keys in range.
      */
-    public SortedSet<String> keysInRange(Range range, Comparator<String> keyComparator, long timeToLive);
+    public Set<String> keysInRange(Range range, Comparator<String> keyComparator, long timeToLive);
 
     /**
      * Flush the given keys, with related values, to an external storage.

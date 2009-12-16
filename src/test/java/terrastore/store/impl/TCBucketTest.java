@@ -140,9 +140,33 @@ public class TCBucketTest {
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
-        assertEquals(2, bucket.keysInRange(new Range("key2", "key3", "order"), stringComparator, 0).size());
+        assertEquals(2, bucket.keysInRange(new Range("key2", "key3", 0, "order"), stringComparator, 0).size());
         assertTrue(bucket.keys().contains(key2));
         assertTrue(bucket.keys().contains(key3));
+    }
+
+    @Test
+    public void testKeysInRangeWithLimit() throws StoreOperationException {
+        Comparator<String> stringComparator = new Comparator<String>() {
+
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        };
+
+        String key1 = "key1";
+        Value value1 = new Value(JSON_VALUE.getBytes());
+        String key2 = "key2";
+        Value value2 = new Value(JSON_VALUE.getBytes());
+        String key3 = "key3";
+        Value value3 = new Value(JSON_VALUE.getBytes());
+        bucket.put(key1, value1);
+        bucket.put(key2, value2);
+        bucket.put(key3, value3);
+        assertEquals(2, bucket.keysInRange(new Range("key1", "key3", 2, "order"), stringComparator, 0).size());
+        assertTrue(bucket.keys().contains(key1));
+        assertTrue(bucket.keys().contains(key2));
     }
 
     @Test
@@ -158,7 +182,7 @@ public class TCBucketTest {
         String key1 = "key1";
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(0, bucket.keysInRange(new Range("key2", "key3", "order"), stringComparator, 0).size());
+        assertEquals(0, bucket.keysInRange(new Range("key2", "key3", 0, "order"), stringComparator, 0).size());
     }
 
     @Test
@@ -174,7 +198,7 @@ public class TCBucketTest {
         String key1 = "key1";
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range("key1", "key2", "order"), stringComparator, 0).size());
+        assertEquals(1, bucket.keysInRange(new Range("key1", "key2", 0, "order"), stringComparator, 0).size());
     }
 
     @Test
@@ -190,7 +214,7 @@ public class TCBucketTest {
         String key1 = "key1";
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range("key0", "key1", "order"), stringComparator, 0).size());
+        assertEquals(1, bucket.keysInRange(new Range("key0", "key1", 0, "order"), stringComparator, 0).size());
     }
 
     @Test
@@ -206,7 +230,7 @@ public class TCBucketTest {
         String key1 = "key1";
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range("key1", "key1", "order"), stringComparator, 0).size());
+        assertEquals(1, bucket.keysInRange(new Range("key1", "key1", 0, "order"), stringComparator, 0).size());
     }
 
     @Test()

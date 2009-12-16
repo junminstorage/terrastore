@@ -18,7 +18,6 @@ package terrastore.store;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.SortedSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -36,10 +35,40 @@ public class SortedSnapshotTest {
         keys.add("b");
 
         SortedSnapshot snapshot = new SortedSnapshot(keys, new StringComparator());
-        SortedSet<String> sorted = snapshot.keysInRange("b", "c");
+        Set<String> sorted = snapshot.keysInRange("b", "c", 0);
         assertEquals(2, sorted.size());
-        assertEquals("b", sorted.first());
-        assertEquals("c", sorted.last());
+        assertEquals("b", sorted.toArray()[0]);
+        assertEquals("c", sorted.toArray()[1]);
+    }
+
+    @Test
+    public void testKeysInRangeWithStartOnly() {
+        Set<String> keys = new HashSet<String>();
+        keys.add("v");
+        keys.add("a");
+        keys.add("c");
+        keys.add("b");
+
+        SortedSnapshot snapshot = new SortedSnapshot(keys, new StringComparator());
+        Set<String> sorted = snapshot.keysInRange("c", null, 0);
+        assertEquals(2, sorted.size());
+        assertEquals("c", sorted.toArray()[0]);
+        assertEquals("v", sorted.toArray()[1]);
+    }
+
+    @Test
+    public void testKeysInRangeWithLimit() {
+        Set<String> keys = new HashSet<String>();
+        keys.add("v");
+        keys.add("a");
+        keys.add("c");
+        keys.add("b");
+
+        SortedSnapshot snapshot = new SortedSnapshot(keys, new StringComparator());
+        Set<String> sorted = snapshot.keysInRange("a", "c", 2);
+        assertEquals(2, sorted.size());
+        assertEquals("a", sorted.toArray()[0]);
+        assertEquals("b", sorted.toArray()[1]);
     }
 
     @Test
