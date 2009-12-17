@@ -288,7 +288,7 @@ public class IntegrationTest {
             putValue.releaseConnection();
         }
 
-        GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valuej", 2, "lexical-asc");
+        GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valuej", 0, "lexical-asc");
         HTTP_CLIENT.executeMethod(doRangeQuery);
         assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
         Map<String, Object> values = fromJsonToMap(doRangeQuery.getResponseBodyAsString());
