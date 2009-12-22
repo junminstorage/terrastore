@@ -15,6 +15,7 @@
  */
 package terrastore.server.impl.support;
 
+import terrastore.server.io.ThreadLocalByteBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
+import terrastore.server.io.InputReader;
 import terrastore.store.Value;
 
 /**
@@ -39,18 +41,15 @@ import terrastore.store.Value;
 @Produces("application/json")
 public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyWriter<Value> {
 
+    private final InputReader reader = new InputReader();
+
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type.equals(Value.class);
     }
 
     public Value readFrom(Class<Value> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        ByteArrayOutputStream valueStream = new ByteArrayOutputStream();
-        int read = entityStream.read();
-        while (read != -1) {
-            valueStream.write(read);
-            read = entityStream.read();
-        }
-        Value result = new Value(valueStream.toByteArray());
+        byte[] bytes = reader.read(entityStream);
+        Value result = new Value(bytes);
         return result;
     }
 
