@@ -1,17 +1,11 @@
 #!/bin/bash
 
 if [ "${TERRASTORE_HOME}" = "" ]; then
-    echo "ERROR: TERRASTORE_HOME environment variable is not found."
-    exit 1
+    export TERRASTORE_HOME=`dirname "$0"`/..
 fi
 
-if [ "${TERRACOTTA_HOME}" = "" ]; then
-    echo "ERROR: TERRACOTTA_HOME environment variable is not found."
-    exit 1
-fi
-
-if [ "${TERRACOTTA_SERVER}" = "" ]; then
-    echo "ERROR: TERRACOTTA_SERVER environment variable is not found."
+if [ "${TERRASTORE_MASTER}" = "" ]; then
+    echo "ERROR: TERRASTORE_MASTER environment variable is not found."
     exit 1
 fi
 
@@ -20,8 +14,8 @@ do
   CLASSPATH=$file:$CLASSPATH
 done
 
-export TC_INSTALL_DIR=${TERRACOTTA_HOME}
-export TC_CONFIG_PATH=${TERRACOTTA_SERVER}
+export TC_INSTALL_DIR=${TERRASTORE_HOME}/terrastore-master-libs
+export TC_CONFIG_PATH=${TERRASTORE_MASTER}
 . ${TC_INSTALL_DIR}/bin/dso-env.sh -q
 export JAVA_OPTS="$TC_JAVA_OPTS $JAVA_OPTS"
 

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="terrastore-install" basedir=".">
+
+    <target name="server" if="INSTALL_DIR">
+
+        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install">
+        </unzip>
+
+        <copy todir="${INSTALL_DIR}">
+            <fileset dir="terrastore-server/"/>
+        </copy>
+
+        <copy todir="${INSTALL_DIR}/terrastore-master-libs">
+            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/">
+                <include name="*.txt"/>
+                <include name="bin/**"/>
+                <include name="lib/**"/>
+                <include name="modules/**"/>
+            </fileset>
+        </copy>
+
+        <chmod dir="${INSTALL_DIR}/bin" perm="ugo+x" includes="**/*.sh"/>
+
+        <chmod dir="${INSTALL_DIR}/terrastore-master-libs/bin" perm="ugo+x" includes="**/*.sh"/>
+
+    </target>
+
+    <target name="master" if="INSTALL_DIR">
+
+        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install">
+        </unzip>
+
+        <copy todir="${INSTALL_DIR}">
+            <fileset file="terrastore-server/terracotta-config.xml"/>
+        </copy>
+
+        <copy todir="${INSTALL_DIR}">
+            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
+        </copy>
+
+        <chmod dir="${INSTALL_DIR}/bin" perm="ugo+x" includes="**/*.sh"/>
+
+    </target>
+
+</project>
