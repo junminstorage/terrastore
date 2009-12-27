@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="terrastore-install" basedir=".">
 
-    <target name="server" if="INSTALL_DIR">
+    <target name="server" if="INSTALL_DIR" description="Install Terrastore server.">
 
         <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
 
@@ -24,66 +24,47 @@
 
     </target>
 
-    <target name="single-master" if="INSTALL_DIR">
+    <target name="single-master" if="INSTALL_DIR" description="Install single Terrastore master">
 
-        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
-
-        <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/bin/start.sh">
-            <replacefilter
-                token="@master.config@"
-                value="terracotta-config.xml"/>
-            <replacefilter
-                token="@master.name@"
-                value="terrastore-single-master"/>
-        </replace>
-
-        <copy file="terrastore-master/terracotta-config.xml" todir="${INSTALL_DIR}"/>
-
-        <copy todir="${INSTALL_DIR}">
-            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
-        </copy>
-
-        <chmod dir="${INSTALL_DIR}/bin" perm="ugo+x" includes="**/*.sh"/>
+        <antcall target="common-master">
+            <param name="config" value="terracotta-config.xml"/>
+            <param name="master" value="terrastore-single-master"/>
+        </antcall>
 
     </target>
 
-    <target name="ha-master-1" if="INSTALL_DIR">
+    <target name="ha-master-1" if="INSTALL_DIR" description="Install Terrastore ha master 1.">
 
-        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
-
-        <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/bin/start.sh">
-            <replacefilter
-                token="@master.config@"
-                value="terracotta-config-ha.xml"/>
-            <replacefilter
-                token="@master.name@"
-                value="terrastore-ha-master-1"/>
-        </replace>
-
-        <copy file="terrastore-master/terracotta-config-ha.xml" todir="${INSTALL_DIR}"/>
-
-        <copy todir="${INSTALL_DIR}">
-            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
-        </copy>
-
-        <chmod dir="${INSTALL_DIR}/bin" perm="ugo+x" includes="**/*.sh"/>
+        <antcall target="common-master">
+            <param name="config" value="terracotta-config-ha.xml"/>
+            <param name="master" value="terrastore-ha-master-1"/>
+        </antcall>
 
     </target>
 
-    <target name="ha-master-2" if="INSTALL_DIR">
+    <target name="ha-master-2" if="INSTALL_DIR" description="Install Terrastore ha master 2.">
+
+        <antcall target="common-master">
+            <param name="config" value="terracotta-config-ha.xml"/>
+            <param name="master" value="terrastore-ha-master-2"/>
+        </antcall>
+
+    </target>
+
+    <target name="common-master">
 
         <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
 
         <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/bin/start.sh">
             <replacefilter
                 token="@master.config@"
-                value="terracotta-config-ha.xml"/>
+                value="${config}"/>
             <replacefilter
                 token="@master.name@"
-                value="terrastore-ha-master-2"/>
+                value="${master}"/>
         </replace>
 
-        <copy file="terrastore-master/terracotta-config-ha.xml" todir="${INSTALL_DIR}"/>
+        <copy file="terrastore-master/${config}" todir="${INSTALL_DIR}"/>
 
         <copy todir="${INSTALL_DIR}">
             <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
