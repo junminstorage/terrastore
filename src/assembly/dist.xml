@@ -23,6 +23,13 @@
         <fileSet>
             <outputDirectory>terrastore-master</outputDirectory>
             <includes>
+                <include>terracotta-config.xml</include>
+                <include>terracotta-config-ha.xml</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <outputDirectory>terrastore-master</outputDirectory>
+            <includes>
                 <include>terrastore-master.zip</include>
             </includes>
         </fileSet>
@@ -30,7 +37,10 @@
             <outputDirectory>terrastore-server</outputDirectory>
             <includes>
                 <include>license.txt</include>
-                <include>*-config.xml</include>
+                <include>comparators-config.xml</include>
+                <include>conditions-config.xml</include>
+                <include>functions-config.xml</include>
+                <include>terrastore-config.xml</include>
             </includes>
         </fileSet>
         <fileSet>

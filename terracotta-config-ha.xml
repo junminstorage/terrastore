@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config">
     <servers>
-        <server host="%i" name="terrastore-single-master">
+        <server host="%i" name="terrastore-ha-master-1">
             <dso-port>9510</dso-port>
             <jmx-port>9520</jmx-port>
+            <l2-group-port>9530</l2-group-port>
             <data>tc-data/server-data</data>
             <logs>tc-data/server-logs</logs>
             <statistics>tc-data/server-statistics</statistics>
@@ -13,6 +14,25 @@
                 </persistence>
             </dso>
         </server>
+        <server host="%i" name="terrastore-ha-master-2">
+            <dso-port>9510</dso-port>
+            <jmx-port>9520</jmx-port>
+            <l2-group-port>9530</l2-group-port>
+            <data>tc-data/server-data</data>
+            <logs>tc-data/server-logs</logs>
+            <statistics>tc-data/server-statistics</statistics>
+            <dso>
+                <persistence>
+                    <mode>permanent-store</mode>
+                </persistence>
+            </dso>
+        </server>
+        <ha>
+            <mode>networked-active-passive</mode>
+            <networked-active-passive>
+                <election-time>5</election-time>
+            </networked-active-passive>
+        </ha>
     </servers>
     <clients>
         <modules>
