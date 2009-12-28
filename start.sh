@@ -29,7 +29,7 @@ do
 done
 
 export TC_INSTALL_DIR=${TERRASTORE_HOME}/terrastore-master-libs
-export TC_CONFIG_PATH=$terrastore_master:9510
+export TC_CONFIG_PATH=$terrastore_master
 . ${TC_INSTALL_DIR}/bin/dso-env.sh -q
 export JAVA_OPTS="$TC_JAVA_OPTS $JAVA_OPTS"
 

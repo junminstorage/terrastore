@@ -2,8 +2,8 @@
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config">
     <servers>
         <server host="%i" name="terrastore-single-master">
-            <dso-port>9510</dso-port>
-            <jmx-port>9520</jmx-port>
+            <dso-port>@master.server.port@</dso-port>
+            <jmx-port>@master.jmx.port@</jmx-port>
             <data>tc-data/server-data</data>
             <logs>tc-data/server-logs</logs>
             <statistics>tc-data/server-statistics</statistics>

@@ -3,6 +3,8 @@
 
     <target name="server" if="install.dir" description="Install Terrastore server.">
 
+        <delete dir="${java.io.tmpdir}/terrastore-install"/>
+
         <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
 
         <copy todir="${install.dir}">
@@ -55,7 +57,27 @@
 
     <target name="common-master">
 
+        <property name="master.server.port" value="9510"/>
+        <property name="master.jmx.port" value="9520"/>
+        <property name="master.ha.port" value="9530"/>
+
+        <delete dir="${java.io.tmpdir}/terrastore-install"/>
+
         <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
+
+        <copy file="terrastore-master/${config}" todir="${java.io.tmpdir}/terrastore-install/terrastore-master"/>
+
+        <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/${config}">
+            <replacefilter
+                token="@master.server.port@"
+                value="${master.server.port}"/>
+            <replacefilter
+                token="@master.jmx.port@"
+                value="${master.jmx.port}"/>
+            <replacefilter
+                token="@master.ha.port@"
+                value="${master.ha.port}"/>
+        </replace>
 
         <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/bin/start.sh">
             <replacefilter
@@ -65,8 +87,6 @@
                 token="@master.name@"
                 value="${master}"/>
         </replace>
-
-        <copy file="terrastore-master/${config}" todir="${install.dir}"/>
 
         <copy todir="${install.dir}">
             <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
