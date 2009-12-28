@@ -467,7 +467,7 @@ public class JsonHttpServerTest {
         verify(updateService, queryService);
     }
 
-    private TJWSEmbeddedJaxrsServer startServerWith(JsonHttpServer resource) {
+    private TJWSEmbeddedJaxrsServer startServerWith(JsonHttpServer resource) throws Exception {
         TJWSEmbeddedJaxrsServer server = new TJWSEmbeddedJaxrsServer();
         server.getDeployment().setRegisterBuiltin(true);
         server.getDeployment().setProviderClasses(Arrays.asList(
@@ -479,11 +479,16 @@ public class JsonHttpServerTest {
         server.getDeployment().setResources(Arrays.<Object>asList(resource));
         server.setPort(8080);
         server.start();
+
+        Thread.sleep(1000);
+
         return server;
     }
 
-    private void stopServer(TJWSEmbeddedJaxrsServer server) {
+    private void stopServer(TJWSEmbeddedJaxrsServer server) throws Exception {
         server.stop();
+
+        Thread.sleep(1000);
     }
 
     private String toJson(ErrorMessage errorMessage) throws Exception {
