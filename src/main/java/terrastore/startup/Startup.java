@@ -95,6 +95,11 @@ public class Startup {
     private int workerThreads = DEFAULT_WORKER_THREADS;
     private String configFile = DEFAULT_CONFIG_FILE;
 
+    @Option(name = "--master", required = false)
+    public void setMaster(String toIgnore) {
+        // Ignore this, here just to let the master to be passed by command line.
+    }
+
     @Option(name = "--httpPort", required = false)
     public void setHttpPort(int httpPort) {
         this.httpPort = httpPort;
