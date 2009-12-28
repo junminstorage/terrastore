@@ -49,7 +49,7 @@
     <!-- PartitionManager -->
 
     <bean id="partitionManager" class="terrastore.partition.impl.ConsistentPartitionManager">
-        <constructor-arg value="256"/>
+        <constructor-arg value="1024"/>
     </bean>
 
     <!-- Cluster -->
