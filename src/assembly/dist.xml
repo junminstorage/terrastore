@@ -18,6 +18,9 @@
             <outputDirectory></outputDirectory>
             <includes>
                 <include>terrastore-install.xml</include>
+                <include>terrastore_license.txt</include>
+                <include>terracotta_license.txt</include>
+                <include>README.txt</include>
             </includes>
         </fileSet>
         <fileSet>
@@ -36,7 +39,6 @@
         <fileSet>
             <outputDirectory>terrastore-server</outputDirectory>
             <includes>
-                <include>license.txt</include>
                 <include>comparators-config.xml</include>
                 <include>conditions-config.xml</include>
                 <include>functions-config.xml</include>
