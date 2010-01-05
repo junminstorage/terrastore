@@ -92,6 +92,10 @@
             <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
         </copy>
 
+        <delete file="${install.dir}/bin/dso-env.sh"/>
+        <delete file="${install.dir}/bin/boot-jar-path.sh"/>
+        <delete file="${install.dir}/bin/make-boot-jar.sh"/>
+
         <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
 
     </target>
