@@ -22,7 +22,8 @@ import terrastore.store.operators.Condition;
 
 /**
  * {@link terrastore.store.operators.Condition} implementation evaluating JXPath expressions
- * (see http://commons.apache.org/jxpath).
+ * (see http://commons.apache.org/jxpath) over bucket values.<br/>
+ * Keys are ignored.
  *
  * @author Sergio Bossa
  */
@@ -31,7 +32,7 @@ public class JXPathCondition implements Condition {
     private static final long serialVersionUID = 12345678901L;
 
     @Override
-    public boolean isSatisfied(Map<String, Object> value, String expression) {
+    public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
         JXPathContext context = JXPathContext.newContext(value);
         context.setLenient(true);
         List selection = context.selectNodes(expression);

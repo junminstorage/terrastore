@@ -158,7 +158,7 @@ public class DefaultQueryServiceTest {
         Condition trueCondition = new Condition() {
 
             @Override
-            public boolean isSatisfied(Map<String, Object> value, String expression) {
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return true;
             }
         };
@@ -217,7 +217,7 @@ public class DefaultQueryServiceTest {
         Condition trueCondition = new Condition() {
 
             @Override
-            public boolean isSatisfied(Map<String, Object> value, String expression) {
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return true;
             }
         };
@@ -263,7 +263,7 @@ public class DefaultQueryServiceTest {
         Condition trueCondition = new Condition() {
 
             @Override
-            public boolean isSatisfied(Map<String, Object> value, String expression) {
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return true;
             }
         };
@@ -311,7 +311,7 @@ public class DefaultQueryServiceTest {
         Condition trueCondition = new Condition() {
 
             @Override
-            public boolean isSatisfied(Map<String, Object> value, String expression) {
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return true;
             }
         };

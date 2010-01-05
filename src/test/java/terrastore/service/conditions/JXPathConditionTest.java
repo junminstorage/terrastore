@@ -34,7 +34,7 @@ public class JXPathConditionTest {
         Map<String, Object> json = JsonUtils.toMap(new Value(JSON_VALUE.getBytes("UTF-8")));
         String jxpath = "/key[.='value']";
         JXPathCondition condition = new JXPathCondition();
-        assertTrue(condition.isSatisfied(json, jxpath));
+        assertTrue(condition.isSatisfied("ignored", json, jxpath));
     }
 
     @Test
@@ -42,6 +42,6 @@ public class JXPathConditionTest {
         Map<String, Object> json = JsonUtils.toMap(new Value(JSON_VALUE.getBytes("UTF-8")));
         String jxpath = "/key[.='wrong']";
         JXPathCondition condition = new JXPathCondition();
-        assertFalse(condition.isSatisfied(json, jxpath));
+        assertFalse(condition.isSatisfied("ignored", json, jxpath));
     }
 }

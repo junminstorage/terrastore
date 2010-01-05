@@ -115,7 +115,7 @@ public class DefaultUpdateServiceTest {
         Function function = new Function() {
 
             @Override
-            public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters) {
+            public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
                 return value;
             }
         };

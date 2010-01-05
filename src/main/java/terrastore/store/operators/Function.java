@@ -28,9 +28,10 @@ public interface Function extends Serializable {
     /**
      *  Apply this function to the given value, represented as a map of name -> value pairs (associative array).
      *
+     * @param key The key of the value.
      * @param value The value to apply the function to.
      * @param parameters The function parameters.
      * @return The result of the function as an associative array.
      */
-    public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters);
+    public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters);
 }

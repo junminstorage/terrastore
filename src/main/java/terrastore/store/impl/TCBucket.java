@@ -76,7 +76,7 @@ public class TCBucket implements Bucket {
     public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException {
         Value value = bucket.get(key);
         if (value != null) {
-            if (condition.isSatisfied(JsonUtils.toMap(value), predicate.getConditionExpression())) {
+            if (condition.isSatisfied(key, JsonUtils.toMap(value), predicate.getConditionExpression())) {
                 return value;
             } else {
                 return null;
@@ -105,7 +105,7 @@ public class TCBucket implements Bucket {
 
                     @Override
                     public Map<String, Object> call() {
-                        return function.apply(JsonUtils.toMap(value), update.getParameters());
+                        return function.apply(key, JsonUtils.toMap(value), update.getParameters());
                     }
                 });
                 Map<String, Object> result = task.get(timeout, TimeUnit.MILLISECONDS);

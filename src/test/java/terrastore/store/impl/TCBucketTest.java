@@ -61,8 +61,28 @@ public class TCBucketTest {
         Condition condition = new Condition() {
 
             @Override
-            public boolean isSatisfied(Map<String, Object> value, String expression) {
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return value.get(expression) != null;
+            }
+        };
+
+        bucket.put(key, value);
+        assertEquals(value, bucket.conditionalGet(key, predicate, condition));
+    }
+    @Test
+    public void testPutAndConditionallyGetValueOnKey() throws StoreOperationException {
+        final String key = "key";
+        Value value = new Value(JSON_VALUE.getBytes());
+        Predicate predicate = new Predicate("test:test");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                if (key.equals("key")) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         };
 
@@ -71,14 +91,14 @@ public class TCBucketTest {
     }
 
     @Test
-    public void testPutAndConditionallyGetValue2() throws StoreOperationException {
+    public void testPutAndConditionallyGetValueNotFound() throws StoreOperationException {
         String key = "key";
         Value value = new Value(JSON_VALUE.getBytes());
         Predicate predicate = new Predicate("test:notfound");
         Condition condition = new Condition() {
 
             @Override
-            public boolean isSatisfied(Map<String, Object> value, String expression) {
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return value.get(expression) != null;
             }
         };
@@ -242,7 +262,7 @@ public class TCBucketTest {
         Function function = new Function() {
 
             @Override
-            public Map<String, Object> apply(Map<String, Object> value, Map<String, Object> parameters) {
+            public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
                 value.put("test", parameters.get("p1"));
                 return value;
             }
