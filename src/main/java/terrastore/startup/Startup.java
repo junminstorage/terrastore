@@ -46,6 +46,7 @@ import terrastore.cluster.Cluster;
 public class Startup {
 
     private static final Logger LOG = LoggerFactory.getLogger(Startup.class);
+    private static final String DEFAULT_HTTP_HOST = "0.0.0.0";
     private static final int DEFAULT_HTTP_PORT = 8080;
     private static final int DEFAULT_SHUTDOWN_PORT = 8180;
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
@@ -89,15 +90,21 @@ public class Startup {
             }
         }
     }
+    private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private int shutdownPort = DEFAULT_SHUTDOWN_PORT;
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
     private int workerThreads = DEFAULT_WORKER_THREADS;
-    private String configFile = DEFAULT_CONFIG_FILE;
+    private String configFile;
 
     @Option(name = "--master", required = false)
     public void setMaster(String toIgnore) {
         // Ignore this, here just to let the master to be passed by command line.
+    }
+
+    @Option(name = "--httpHost", required = false)
+    public void setHttpHost(String httpHost) {
+        this.httpHost = httpHost;
     }
 
     @Option(name = "--httpPort", required = false)
@@ -129,6 +136,7 @@ public class Startup {
         try {
             LOG.info(WELCOME_MESSAGE);
             LOG.info(POWEREDBY_MESSAGE);
+            LOG.info("Listening on {}:{}", httpHost, httpPort);
             Context context = startServer();
             startMonitor();
             startCluster(context);
@@ -146,6 +154,7 @@ public class Startup {
         context.addEventListener(new ResteasyBootstrap());
         context.addEventListener(new SpringContextLoaderListener());
         context.addServlet(new ServletHolder(new HttpServletDispatcher()), "/*");
+        connector.setHost(httpHost);
         connector.setPort(httpPort);
         server.setConnectors(new Connector[]{connector});
         server.start();
@@ -193,13 +202,18 @@ public class Startup {
     }
 
     private String getConfigFileLocation() {
-        String homeDir = System.getenv(TERRASTORE_HOME_DIR) != null ? System.getenv(TERRASTORE_HOME_DIR) : System.getProperty(TERRASTORE_HOME_DIR);
-        if (homeDir != null) {
-            String separator = System.getProperty("file.separator");
-            String url = "file:" + homeDir + separator + configFile;
-            return url;
+        String location = null;
+        if (configFile != null) {
+            location = "file:" + configFile;
         } else {
-            throw new IllegalStateException("TCStore home directory is not set!");
+            String homeDir = System.getenv(TERRASTORE_HOME_DIR) != null ? System.getenv(TERRASTORE_HOME_DIR) : System.getProperty(TERRASTORE_HOME_DIR);
+            if (homeDir != null) {
+                String separator = System.getProperty("file.separator");
+                location = "file:" + homeDir + separator + DEFAULT_CONFIG_FILE;
+            } else {
+                throw new IllegalStateException("TCStore home directory is not set!");
+            }
         }
+        return location;
     }
 }

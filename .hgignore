@@ -3,5 +3,4 @@ nbproject
 terrastore-master
 tc-data
 target
-src/test/resources/integration/tc-data
-src/test/resources/metrics/tc-data
+src/test/resources/config/tc-data
