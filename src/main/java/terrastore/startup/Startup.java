@@ -158,7 +158,6 @@ public class Startup {
         LOG.info("Listening on {}:{}", httpHost, httpPort);
         LOG.info("Number of http threads: {}", httpThreads);
         LOG.info("Number of worker threads: {}", workerThreads);
-        LOG.info("Configuration file location: {}", configFile);
     }
 
     private Context startServer() throws Exception {
