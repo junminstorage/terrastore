@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -42,7 +43,7 @@ public class PerformanceTest {
     private static final int NODE_PORT = 8080;
     private static final int NODE_SHUTDOWN_PORT = 8180;
     private static final int SETUP_TIME = 20000;
-    private static final int CONCURRENCY = 16;
+    private static final int CONCURRENCY = 8;
     private static final HttpClient HTTP_CLIENT = new HttpClient();
 
     @BeforeClass
@@ -62,7 +63,7 @@ public class PerformanceTest {
         final String bucket = UUID.randomUUID().toString();
 
         int warmup = 1000;
-        int writes = 10000;
+        int writes = 1000;
 
         final ExecutorService threadPool = Executors.newFixedThreadPool(CONCURRENCY);
         final CountDownLatch termination = new CountDownLatch(writes);
@@ -106,6 +107,76 @@ public class PerformanceTest {
         System.err.println("Elapsed time in millis: " + elapsed);
     }
 
+    @Test
+    public void writeThenRead() throws Exception {
+        final String bucket = UUID.randomUUID().toString();
+        final String payload = getPayload();
+
+        int warmup = 1000;
+        int writes = 1000;
+
+        PutMethod addBucket = makePutMethod(NODE_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        warmUp(warmup, bucket, payload);
+
+        System.err.println("Starting writeThenRead performance test.");
+
+        ExecutorService threadPool = Executors.newFixedThreadPool(CONCURRENCY);
+        long start = System.currentTimeMillis();
+        for (int i = warmup; i < warmup + writes; i++) {
+            final int index = i;
+            threadPool.execute(new Runnable() {
+
+                public void run() {
+                    try {
+                        PutMethod putValue = null;
+                        putValue = makePutMethod(NODE_PORT, bucket + "/value" + index);
+                        putValue.setRequestEntity(new StringRequestEntity(payload, "application/json", null));
+                        HTTP_CLIENT.executeMethod(putValue);
+                        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+                        putValue.releaseConnection();
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            });
+
+        }
+        threadPool.shutdown();
+        threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+        long elapsed = System.currentTimeMillis() - start;
+        System.err.println("Elapsed write time in millis: " + elapsed);
+
+        threadPool = Executors.newFixedThreadPool(CONCURRENCY);
+        start = System.currentTimeMillis();
+        for (int i = warmup; i < warmup + writes; i++) {
+            final int index = i;
+            
+            threadPool.execute(new Runnable() {
+
+                public void run() {
+                    try {
+                        GetMethod getValue = null;
+                        getValue = makeGetMethod(NODE_PORT, bucket + "/value" + index);
+                        HTTP_CLIENT.executeMethod(getValue);
+                        assertEquals(HttpStatus.SC_OK, getValue.getStatusCode());
+                        getValue.releaseConnection();
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            });
+        }
+
+        threadPool.shutdown();
+        threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+        elapsed = System.currentTimeMillis() - start;
+        System.err.println("Elapsed read time in millis: " + elapsed);
+    }
+
     private String getPayload() throws Exception {
         final String payload = toJson(new TestValue("value", 1));
         System.err.println("Payload bytes length: " + payload.getBytes().length);
@@ -130,6 +201,12 @@ public class PerformanceTest {
 
     private PutMethod makePutMethod(int nodePort, String path) {
         PutMethod method = new PutMethod("http://" + HOST + ":" + nodePort + "/" + path);
+        method.setRequestHeader("Content-Type", "application/json");
+        return method;
+    }
+
+    private GetMethod makeGetMethod(int nodePort, String path) {
+        GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path);
         method.setRequestHeader("Content-Type", "application/json");
         return method;
     }

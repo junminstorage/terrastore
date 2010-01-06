@@ -24,6 +24,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.collections.FinegrainedLock;
+import org.terracotta.collections.HashcodeLockStrategy;
+import org.terracotta.collections.LockType;
 import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
@@ -52,7 +54,7 @@ public class TCBucket implements Bucket {
 
     public TCBucket(String name) {
         this.name = name;
-        this.bucket = new ConcurrentDistributedMap<String, Value>();
+        this.bucket = new ConcurrentDistributedMap<String, Value>(LockType.WRITE, new HashcodeLockStrategy(false, true));
     }
 
     public String getName() {

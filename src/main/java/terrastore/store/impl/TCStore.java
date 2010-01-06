@@ -16,8 +16,9 @@
 package terrastore.store.impl;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentMap;
 import org.terracotta.collections.ConcurrentDistributedMap;
+import org.terracotta.collections.HashcodeLockStrategy;
+import org.terracotta.collections.LockType;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
 import terrastore.store.Bucket;
@@ -30,10 +31,10 @@ import terrastore.store.StoreOperationException;
 @InstrumentedClass
 public class TCStore implements Store {
 
-    private final ConcurrentMap<String, Bucket> buckets;
+    private final ConcurrentDistributedMap<String, Bucket> buckets;
 
     public TCStore() {
-        buckets = new ConcurrentDistributedMap<String, Bucket>();
+        buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy(false, true));
     }
 
     public void add(String bucket) throws StoreOperationException {
