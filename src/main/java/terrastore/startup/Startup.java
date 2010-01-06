@@ -34,6 +34,7 @@ import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.start.Monitor;
+import org.mortbay.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -51,6 +52,7 @@ public class Startup {
     private static final int DEFAULT_SHUTDOWN_PORT = 8180;
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
     private static final long DEFAULT_NODE_TIMEOUT = 1000;
+    private static final int DEFAULT_HTTP_THREADS = 100;
     private static final int DEFAULT_WORKER_THREADS = Runtime.getRuntime().availableProcessors() * 10;
     private static final String DEFAULT_CONFIG_FILE = "terrastore-config.xml";
     private static final String TERRASTORE_HOME_DIR = "TERRASTORE_HOME";
@@ -94,6 +96,7 @@ public class Startup {
     private int httpPort = DEFAULT_HTTP_PORT;
     private int shutdownPort = DEFAULT_SHUTDOWN_PORT;
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
+    private int httpThreads = DEFAULT_HTTP_THREADS;
     private int workerThreads = DEFAULT_WORKER_THREADS;
     private String configFile;
 
@@ -122,6 +125,11 @@ public class Startup {
         this.nodeTimeout = nodeTimeout;
     }
 
+    @Option(name = "--httpThreads", required = false)
+    public void setHttpThreads(int httpThreads) {
+        this.httpThreads = httpThreads;
+    }
+
     @Option(name = "--workerThreads", required = false)
     public void setWorkerThreads(int workerThreads) {
         this.workerThreads = workerThreads;
@@ -134,9 +142,7 @@ public class Startup {
 
     public void start() {
         try {
-            LOG.info(WELCOME_MESSAGE);
-            LOG.info(POWEREDBY_MESSAGE);
-            LOG.info("Listening on {}:{}", httpHost, httpPort);
+            printInfo();
             Context context = startServer();
             startMonitor();
             startCluster(context);
@@ -146,9 +152,19 @@ public class Startup {
         }
     }
 
+    private void printInfo() {
+        LOG.info(WELCOME_MESSAGE);
+        LOG.info(POWEREDBY_MESSAGE);
+        LOG.info("Listening on {}:{}", httpHost, httpPort);
+        LOG.info("Number of http threads: {}", httpThreads);
+        LOG.info("Number of worker threads: {}", workerThreads);
+        LOG.info("Configuration file location: {}", configFile);
+    }
+
     private Context startServer() throws Exception {
         Server server = new Server();
-        Connector connector = new SelectChannelConnector();
+        SelectChannelConnector connector = new SelectChannelConnector();
+        QueuedThreadPool threadPool = new QueuedThreadPool();
         Context context = new Context(server, "/", Context.NO_SESSIONS);
         context.setInitParams(getContextParams());
         context.addEventListener(new ResteasyBootstrap());
@@ -156,7 +172,9 @@ public class Startup {
         context.addServlet(new ServletHolder(new HttpServletDispatcher()), "/*");
         connector.setHost(httpHost);
         connector.setPort(httpPort);
+        threadPool.setMaxThreads(httpThreads);
         server.setConnectors(new Connector[]{connector});
+        server.setThreadPool(threadPool);
         server.start();
         return context;
     }
