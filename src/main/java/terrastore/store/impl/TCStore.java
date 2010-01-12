@@ -34,7 +34,7 @@ public class TCStore implements Store {
     private final ConcurrentDistributedMap<String, Bucket> buckets;
 
     public TCStore() {
-        buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy(false, true));
+        buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy(false, false));
     }
 
     public void add(String bucket) throws StoreOperationException {

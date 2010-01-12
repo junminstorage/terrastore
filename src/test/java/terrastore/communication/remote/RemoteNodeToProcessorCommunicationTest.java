@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
 public class RemoteNodeToProcessorCommunicationTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
-    private Topology pipes;
+/*    private Topology pipes;
 
     @Before
     public void onSetUp() {
@@ -125,4 +125,5 @@ public class RemoteNodeToProcessorCommunicationTest {
             }
         }
     }
+ * */
 }

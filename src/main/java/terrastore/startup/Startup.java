@@ -188,7 +188,7 @@ public class Startup {
         Cluster cluster = getClusterFromServletContext(context);
         cluster.setNodeTimeout(nodeTimeout);
         cluster.setWokerThreads(workerThreads);
-        cluster.start();
+        cluster.start(httpHost, httpPort + 25);
     }
 
     private void setupClusterShutdownHook(Context context) throws BeansException {
