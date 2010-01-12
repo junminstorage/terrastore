@@ -54,7 +54,7 @@ public class TCBucket implements Bucket {
 
     public TCBucket(String name) {
         this.name = name;
-        this.bucket = new ConcurrentDistributedMap<String, Value>(LockType.WRITE, new HashcodeLockStrategy(false, true));
+        this.bucket = new ConcurrentDistributedMap<String, Value>(LockType.WRITE, new HashcodeLockStrategy(false, false));
     }
 
     public String getName() {
