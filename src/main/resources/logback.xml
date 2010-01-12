@@ -8,7 +8,7 @@
 
     <appender name="MESSAGE" class="ch.qos.logback.core.ConsoleAppender">
        <layout class="ch.qos.logback.classic.PatternLayout">
-           <Pattern>Terrastore - %msg%n</Pattern>
+           <Pattern>%d{HH:mm:ss.SSS} Terrastore - %msg%n</Pattern>
        </layout>
    </appender>
     
@@ -19,7 +19,7 @@
 
     <logger name="terrastore.cluster" additivity="false">
        <level value="INFO"/>
-       <appender-ref ref="STANDARD"/>
+       <appender-ref ref="MESSAGE"/>
    </logger>
 
     <logger name="terrastore.startup" additivity="false">

@@ -42,8 +42,8 @@ public class PerformanceTest {
     private static final String HOST = "127.0.0.1";
     private static final int NODE1_PORT = 8080;
     private static final int NODE2_PORT = 8081;
-    private static final int NODE1_SHUTDOWN_PORT = 8180;
-    private static final int NODE2_SHUTDOWN_PORT = 8181;
+    private static final int NODE1_SHUTDOWN_PORT = 8280;
+    private static final int NODE2_SHUTDOWN_PORT = 8281;
     private static final int SETUP_TIME = 30000;
     private static final int CONCURRENCY = 8;
     private static final HttpClient HTTP_CLIENT = new HttpClient();

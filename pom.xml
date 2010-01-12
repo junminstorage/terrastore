@@ -264,8 +264,8 @@
                             <startServer>false</startServer>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --shutdownPort 8181" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
                             </processes>
                         </configuration>
                         <executions>
@@ -349,8 +349,8 @@
                             <jvmargs>-Xms1024m -Xmx1024m</jvmargs>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xms1024m -Xmx1024m" />
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --shutdownPort 8181" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config  -Xms1024m -Xmx1024m" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xms1024m -Xmx1024m" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config  -Xms1024m -Xmx1024m" />
                             </processes>
                         </configuration>
                         <executions>

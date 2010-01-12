@@ -18,15 +18,11 @@ package terrastore.communication.remote;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import org.junit.Before;
 import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.remote.pipe.Topology;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.GetValueCommand;
-import terrastore.communication.protocol.Response;
-import terrastore.communication.serialization.JavaSerializer;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -40,13 +36,7 @@ import static org.junit.Assert.*;
 public class RemoteNodeToProcessorCommunicationTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
-/*    private Topology pipes;
-
-    @Before
-    public void onSetUp() {
-        pipes = new Topology(new JavaSerializer<Command>(), new JavaSerializer<Response>());
-    }
-
+   
     @Test
     public void testSendProcessAndReceive() throws StoreOperationException, ProcessingException {
         String nodeName = "node";
@@ -66,13 +56,13 @@ public class RemoteNodeToProcessorCommunicationTest {
 
         replay(store, bucket);
 
-        Node sender = new RemoteNode(nodeName, pipes, 1000);
-        RemoteProcessor processor = new RemoteProcessor(nodeName, pipes, store, Executors.newCachedThreadPool());
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, Executors.newCachedThreadPool());
+        Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
         Command command = new GetValueCommand(bucketName, valueKey);
 
         try {
-            sender.connect();
             processor.start();
+            sender.connect();
 
             Map<String, Value> result = sender.send(command);
             assertEquals(1, result.size());
@@ -106,14 +96,14 @@ public class RemoteNodeToProcessorCommunicationTest {
 
         replay(store, bucket);
 
-        Node sender = new RemoteNode(nodeName, pipes, 1000);
-        RemoteProcessor processor = new RemoteProcessor(nodeName, pipes, store, Executors.newCachedThreadPool());
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, Executors.newCachedThreadPool());
+        Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
         Command command = new GetValueCommand(bucketName, valueKey);
 
         try {
+            processor.start();
             sender.connect();
 
-            processor.start();
             processor.stop();
             
             sender.send(command);
@@ -125,5 +115,4 @@ public class RemoteNodeToProcessorCommunicationTest {
             }
         }
     }
- * */
 }

@@ -33,8 +33,8 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.serialization.ObjectDecoder;
-import org.jboss.netty.handler.codec.serialization.ObjectEncoder;
+import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
+import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
@@ -42,6 +42,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.Response;
+import terrastore.communication.serialization.JavaSerializer;
 import terrastore.store.Value;
 
 /**
@@ -66,9 +67,11 @@ public class RemoteNode implements Node {
         this.name = name;
         this.timeoutInMillis = timeoutInMillis;
         client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newSingleThreadExecutor(), Executors.newSingleThreadExecutor()));
-        client.getPipeline().addLast(ObjectEncoder.class.getName(), new ObjectEncoder());
-        client.getPipeline().addLast(ObjectDecoder.class.getName(), new ObjectDecoder());
-        client.getPipeline().addLast(ClientHandler.class.getName(), new ClientHandler());
+        client.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
+        client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(3145728, 0, 4, 0, 4));
+        client.getPipeline().addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
+        client.getPipeline().addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<Response>()));
+        client.getPipeline().addLast("HANDLER", new ClientHandler());
     }
 
     public void connect() {

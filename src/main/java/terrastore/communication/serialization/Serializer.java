@@ -15,12 +15,16 @@
  */
 package terrastore.communication.serialization;
 
+import java.io.InputStream;
+
 /**
  * @author Sergio Bossa
  */
 public interface Serializer<T> {
 
-    String serialize(T object);
+    byte[] serialize(T object);
 
-    T deserialize(String serialized);
+    T deserialize(byte[] serialized);
+
+    T deserialize(InputStream serialized);
 }

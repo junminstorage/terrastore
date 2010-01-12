@@ -32,12 +32,13 @@ import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.serialization.ObjectDecoder;
-import org.jboss.netty.handler.codec.serialization.ObjectEncoder;
+import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
+import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.Response;
+import terrastore.communication.serialization.JavaSerializer;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
@@ -65,11 +66,13 @@ public class RemoteProcessor {
         this.store = store;
         this.commandExecutor = commandExecutor;
         acceptedChannels = new DefaultChannelGroup(this.toString());
-        server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newSingleThreadExecutor(), commandExecutor));
+        server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newSingleThreadExecutor(), Executors.newSingleThreadExecutor()));
         server.setOption("reuseAddress", true);
-        server.getPipeline().addLast(ObjectEncoder.class.getName(), new ObjectEncoder());
-        server.getPipeline().addLast(ObjectDecoder.class.getName(), new ObjectDecoder());
-        server.getPipeline().addLast(ServerHandler.class.getName(), new ServerHandler());
+        server.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
+        server.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(2097152, 0, 4, 0, 4));
+        server.getPipeline().addLast("RESPONSE_ENCODER", new SerializerEncoder(new JavaSerializer<Response>()));
+        server.getPipeline().addLast("COMMAND_DECODER", new SerializerDecoder(new JavaSerializer<Command>()));
+        server.getPipeline().addLast("HANDLER", new ServerHandler());
     }
 
     public void start() {
@@ -114,13 +117,20 @@ public class RemoteProcessor {
         @Override
         public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
             try {
-                Command command = (Command) event.getMessage();
-                try {
-                    Map<String, Value> entries = command.executeOn(store);
-                    event.getChannel().write(new Response(command.getId(), entries));
-                } catch (StoreOperationException ex) {
-                    event.getChannel().write(new Response(command.getId(), ex.getErrorMessage()));
-                }
+                final Channel channel = event.getChannel();
+                final Command command = (Command) event.getMessage();
+                commandExecutor.execute(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            Map<String, Value> entries = command.executeOn(store);
+                            channel.write(new Response(command.getId(), entries));
+                        } catch (StoreOperationException ex) {
+                            channel.write(new Response(command.getId(), ex.getErrorMessage()));
+                        }
+                    }
+                });
             } catch (ClassCastException ex) {
                 LOG.warn("Unexpected command of type: " + event.getMessage().getClass());
                 throw new IllegalStateException("Unexpected message of type: " + event.getMessage().getClass());
