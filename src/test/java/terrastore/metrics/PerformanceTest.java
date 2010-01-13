@@ -40,9 +40,11 @@ import static org.junit.Assert.*;
 public class PerformanceTest {
 
     private static final String HOST = "127.0.0.1";
-    private static final int NODE_PORT = 8080;
-    private static final int NODE_SHUTDOWN_PORT = 8180;
-    private static final int SETUP_TIME = 20000;
+    private static final int NODE1_PORT = 8080;
+    private static final int NODE2_PORT = 8081;
+    private static final int NODE1_SHUTDOWN_PORT = 8280;
+    private static final int NODE2_SHUTDOWN_PORT = 8281;
+    private static final int SETUP_TIME = 30000;
     private static final int CONCURRENCY = 8;
     private static final HttpClient HTTP_CLIENT = new HttpClient();
 
@@ -55,7 +57,8 @@ public class PerformanceTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        Startup.shutdown(HOST, NODE_SHUTDOWN_PORT);
+        Startup.shutdown(HOST, NODE1_SHUTDOWN_PORT);
+        Startup.shutdown(HOST, NODE2_SHUTDOWN_PORT);
     }
 
     @Test
@@ -68,7 +71,7 @@ public class PerformanceTest {
         final ExecutorService threadPool = Executors.newFixedThreadPool(CONCURRENCY);
         final CountDownLatch termination = new CountDownLatch(writes);
 
-        PutMethod addBucket = makePutMethod(NODE_PORT, bucket);
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
         HTTP_CLIENT.executeMethod(addBucket);
         assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
         addBucket.releaseConnection();
@@ -86,7 +89,7 @@ public class PerformanceTest {
                 public void run() {
                     try {
                         PutMethod putValue = null;
-                        putValue = makePutMethod(NODE_PORT, bucket + "/value" + index);
+                        putValue = makePutMethod(NODE1_PORT, bucket + "/value" + index);
                         putValue.setRequestEntity(new StringRequestEntity(payload, "application/json", null));
                         HTTP_CLIENT.executeMethod(putValue);
                         assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
@@ -115,7 +118,7 @@ public class PerformanceTest {
         int warmup = 1000;
         int writes = 1000;
 
-        PutMethod addBucket = makePutMethod(NODE_PORT, bucket);
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
         HTTP_CLIENT.executeMethod(addBucket);
         assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
         addBucket.releaseConnection();
@@ -133,7 +136,7 @@ public class PerformanceTest {
                 public void run() {
                     try {
                         PutMethod putValue = null;
-                        putValue = makePutMethod(NODE_PORT, bucket + "/value" + index);
+                        putValue = makePutMethod(NODE1_PORT, bucket + "/value" + index);
                         putValue.setRequestEntity(new StringRequestEntity(payload, "application/json", null));
                         HTTP_CLIENT.executeMethod(putValue);
                         assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
@@ -154,13 +157,13 @@ public class PerformanceTest {
         start = System.currentTimeMillis();
         for (int i = warmup; i < warmup + writes; i++) {
             final int index = i;
-            
+
             threadPool.execute(new Runnable() {
 
                 public void run() {
                     try {
                         GetMethod getValue = null;
-                        getValue = makeGetMethod(NODE_PORT, bucket + "/value" + index);
+                        getValue = makeGetMethod(NODE1_PORT, bucket + "/value" + index);
                         HTTP_CLIENT.executeMethod(getValue);
                         assertEquals(HttpStatus.SC_OK, getValue.getStatusCode());
                         getValue.releaseConnection();
@@ -188,7 +191,7 @@ public class PerformanceTest {
         for (int i = 0; i < warmup; i++) {
             try {
                 PutMethod putValue = null;
-                putValue = makePutMethod(NODE_PORT, bucket + "/value" + i);
+                putValue = makePutMethod(NODE1_PORT, bucket + "/value" + i);
                 putValue.setRequestEntity(new StringRequestEntity(payload, "application/json", null));
                 HTTP_CLIENT.executeMethod(putValue);
                 assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());

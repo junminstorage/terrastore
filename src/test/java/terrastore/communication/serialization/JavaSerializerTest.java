@@ -25,7 +25,7 @@ public class JavaSerializerTest {
     public void testSerializeDeserialize() {
         Value value = new Value(new String("test").getBytes());
         Serializer<Value> serializer = new JavaSerializer();
-        String serialized = serializer.serialize(value);
+        byte[] serialized = serializer.serialize(value);
         Value deserialized = serializer.deserialize(serialized);
         assertEquals(value, deserialized);
     }

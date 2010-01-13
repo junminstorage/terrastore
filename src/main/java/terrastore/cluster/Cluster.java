@@ -23,7 +23,7 @@ import terrastore.router.Router;
  */
 public interface Cluster {
 
-    public void start();
+    public void start(String host, int port);
 
     public void stop();
 

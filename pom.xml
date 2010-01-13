@@ -17,6 +17,11 @@
             <version>2.0.14</version>
         </dependency>
         <dependency>
+            <groupId>org.jboss.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>3.1.5.GA</version>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>jaxrs-api</artifactId>
             <version>1.2.GA</version>
@@ -134,7 +139,7 @@
         <dependency>
             <groupId>org.terracotta.modules</groupId>
             <artifactId>tim-jetty-6.1</artifactId>
-            <version>2.0.1</version>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.terracotta.modules</groupId>
@@ -197,6 +202,24 @@
             <artifactId>log4j</artifactId>
             <version>1.2.15</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.jdmk</groupId>
+                    <artifactId>jmxtools</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.jmx</groupId>
+                    <artifactId>jmxri</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.mail</groupId>
+                    <artifactId>mail</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.jms</groupId>
+                    <artifactId>jms</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     <profiles>
@@ -259,8 +282,8 @@
                             <startServer>false</startServer>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --shutdownPort 8181" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
                             </processes>
                         </configuration>
                         <executions>
@@ -342,9 +365,10 @@
                             <config>${basedir}/src/test/resources/config/terracotta-config.xml</config>
                             <startServer>false</startServer>
                             <jvmargs>-Xms1024m -Xmx1024m</jvmargs>
-                            <activeNodes>node</activeNodes>
+                            <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node" count="1" className="terrastore.startup.Startup" arguments="--httpPort 8080 --shutdownPort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xms1024m -Xmx1024m" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xms1024m -Xmx1024m" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config  -Xms1024m -Xmx1024m" />
                             </processes>
                         </configuration>
                         <executions>

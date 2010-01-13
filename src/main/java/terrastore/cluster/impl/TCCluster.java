@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +40,10 @@ import terrastore.cluster.FlushStrategy;
 import terrastore.communication.local.LocalNode;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
-import terrastore.communication.remote.pipe.Topology;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.Response;
 import terrastore.communication.serialization.JavaSerializer;
+import terrastore.communication.serialization.Serializer;
 import terrastore.router.Router;
 import terrastore.store.Store;
 import terrastore.store.impl.TCStore;
@@ -62,13 +63,15 @@ public class TCCluster implements Cluster, DsoClusterListener {
     @InjectedDsoInstance
     private DsoCluster dsoCluster;
     //
-    // TODO: cleanup unused pipes
-    private Topology pipes = new Topology(new JavaSerializer<Command>(), new JavaSerializer<Response>());
     private Store store = new TCStore();
     private ReentrantLock stateLock = new ReentrantLock();
+    private Condition waitAddressCondition = stateLock.newCondition();
+    private Map<String, Address> addressTable = new HashMap<String, Address>();
     //
     private volatile transient Map<String, Node> nodes;
     private volatile transient RemoteProcessor processor;
+    private volatile Serializer<Command> commandSerializer;
+    private volatile Serializer<Response> responseSerializer;
     //
     private volatile transient long nodeTimeout;
     private volatile transient int workerThreads;
@@ -123,12 +126,14 @@ public class TCCluster implements Cluster, DsoClusterListener {
         this.flushCondition = flushCondition;
     }
 
-    public void start() {
+    public void start(String host, int port) {
         String thisNodeName = dsoCluster.getCurrentNode().getId();
         stateLock.lock();
         try {
             LOG.info("Setting up cluster node {}", thisNodeName);
             workerExecutor = Executors.newFixedThreadPool(workerThreads);
+            addressTable.put(thisNodeName, new Address(host, port));
+            waitAddressCondition.signalAll();
             getDsoCluster().addClusterListener(this);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
@@ -157,6 +162,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
         stateLock.lock();
         try {
             nodes = new HashMap<String, Node>();
+            commandSerializer = new JavaSerializer<Command>();
+            responseSerializer = new JavaSerializer<Response>();
             setupThisNode(thisNodeName);
             setupRemoteProcessor(thisNodeName);
             setupRemoteNodes();
@@ -196,6 +203,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         String leftNodeKey = event.getNode().getId();
         stateLock.lock();
         try {
+            addressTable.remove(leftNodeKey);
             discardRemoteNode(leftNodeKey);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
@@ -217,7 +225,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     private void setupRemoteProcessor(String thisNodeName) {
-        processor = new RemoteProcessor(thisNodeName, pipes, store, workerExecutor);
+        Address thisNodeAddress = addressTable.get(thisNodeName);
+        processor = new RemoteProcessor(thisNodeAddress.getHost(), thisNodeAddress.getPort(), store, workerExecutor);
         processor.start();
         LOG.info("Set up processor for {}", thisNodeName);
     }
@@ -231,18 +240,26 @@ public class TCCluster implements Cluster, DsoClusterListener {
         LOG.info("Set up this node {}", thisNodeName);
     }
 
-    private void setupRemoteNode(String remoteNodeName, boolean flush) {
-        Node remoteNode = new RemoteNode(remoteNodeName, pipes, nodeTimeout);
-        remoteNode.connect();
-        nodes.put(remoteNodeName, remoteNode);
-        router.addRouteTo(remoteNode);
-        if (flush) {
-            flushStrategy.flush(store, flushCondition);
+    private void setupRemoteNode(String remoteNodeName, boolean flush) throws InterruptedException {
+        while (!addressTable.containsKey(remoteNodeName)) {
+            waitAddressCondition.await();
         }
-        LOG.info("Set up remote node {}", remoteNodeName);
+        Address remoteNodeAddress = addressTable.get(remoteNodeName);
+        if (remoteNodeAddress != null) {
+            Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, nodeTimeout);
+            remoteNode.connect();
+            nodes.put(remoteNodeName, remoteNode);
+            router.addRouteTo(remoteNode);
+            if (flush) {
+                flushStrategy.flush(store, flushCondition);
+            }
+            LOG.info("Set up remote node {}", remoteNodeName);
+        } else {
+            LOG.warn("Cannot set up remote node {}", remoteNodeName);
+        }
     }
 
-    private void setupRemoteNodes() {
+    private void setupRemoteNodes() throws InterruptedException {
         DsoNode currentNode = getDsoCluster().getCurrentNode();
         DsoClusterTopology dsoTopology = getDsoCluster().getClusterTopology();
         for (DsoNode dsoNode : dsoTopology.getNodes()) {
@@ -268,5 +285,25 @@ public class TCCluster implements Cluster, DsoClusterListener {
         nodes.clear();
         router.cleanup();
         LOG.info("Disconnected everything.");
+    }
+
+    @InstrumentedClass
+    private static class Address {
+
+        private String host;
+        private int port;
+
+        public Address(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+
+        public String getHost() {
+            return host;
+        }
+
+        public int getPort() {
+            return port;
+        }
     }
 }
