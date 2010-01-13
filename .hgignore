@@ -1,0 +1,6 @@
+.DS_Store
+nbproject
+terrastore-master
+tc-data
+target
+src/test/resources/config/tc-data

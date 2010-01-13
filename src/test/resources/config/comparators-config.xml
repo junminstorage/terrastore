@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+    <!-- 
+        Configure here your comparators, used to define how to sort keys in range queries.
+
+        Each entry key is the comparator name that will be used in Terrastore query string for range queries, e.g.:
+        http://localhost:8080/bucket/range?comparator=name&...
+    -->
+
+    <util:map id="comparators">
+
+        <entry key="lexical-asc">
+            <bean class="terrastore.service.comparators.LexicographicalComparator">
+                <constructor-arg value="true"/>
+            </bean>
+        </entry>
+
+        <entry key="lexical-desc">
+            <bean class="terrastore.service.comparators.LexicographicalComparator">
+                <constructor-arg value="false"/>
+            </bean>
+        </entry>
+
+        <entry key="numeric-asc">
+            <bean class="terrastore.service.comparators.NumberComparator">
+                <constructor-arg value="true"/>
+            </bean>
+        </entry>
+
+        <entry key="numeric-desc">
+            <bean class="terrastore.service.comparators.NumberComparator">
+                <constructor-arg value="false"/>
+            </bean>
+        </entry>
+        
+    </util:map>
+
+    <!--
+        Configure the default comparator that will be used if no matching comparator is found in range queries.
+    -->
+
+    <bean id="defaultComparator" class="terrastore.service.comparators.LexicographicalComparator">
+        <constructor-arg value="true"/>
+    </bean>
+
+</beans>
