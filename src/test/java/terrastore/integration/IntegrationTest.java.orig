@@ -42,8 +42,8 @@ public class IntegrationTest {
     private static final String HOST = "127.0.0.1";
     private static final int NODE1_PORT = 8080;
     private static final int NODE2_PORT = 8081;
-    private static final int NODE1_SHUTDOWN_PORT = 8280;
-    private static final int NODE2_SHUTDOWN_PORT = 8281;
+    private static final int NODE1_SHUTDOWN_PORT = 8180;
+    private static final int NODE2_SHUTDOWN_PORT = 8181;
     private static final int SETUP_TIME = 30000;
     private HttpClient HTTP_CLIENT = new HttpClient();
 
@@ -61,7 +61,7 @@ public class IntegrationTest {
 
     @Test
     public void testCreateBucketPutValueAndGetOnOtherNode() throws Exception {
-        String bucket = UUID.randomUUID().toString();
+        String bucket = "testCreateBucketPutValueAndGetOnOtherNode";
 
         PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
         HTTP_CLIENT.executeMethod(addBucket);
@@ -85,7 +85,7 @@ public class IntegrationTest {
 
     @Test
     public void testCreateBucketPutValueAndDeleteBothOnOtherNode() throws Exception {
-        String bucket = UUID.randomUUID().toString();
+        String bucket = "testCreateBucketPutValueAndDeleteBothOnOtherNode";
 
         PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
         HTTP_CLIENT.executeMethod(addBucket);
@@ -112,7 +112,7 @@ public class IntegrationTest {
 
     @Test
     public void testGetAllValues() throws Exception {
-        String bucket = UUID.randomUUID().toString();
+        String bucket = "testGetAllValues";
 
         PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
         HTTP_CLIENT.executeMethod(addBucket);
@@ -144,7 +144,7 @@ public class IntegrationTest {
 
     @Test
     public void testRangeQueryWithDefaultComparator() throws Exception {
-        String bucket = UUID.randomUUID().toString();
+        String bucket = "testRangeQueryWithDefaultComparator";
 
         PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
         HTTP_CLIENT.executeMethod(addBucket);
@@ -173,7 +173,7 @@ public class IntegrationTest {
         assertEquals("valuec", values.keySet().toArray()[1]);
         assertEquals("valued", values.keySet().toArray()[2]);
     }
-
+/*
     @Test
     public void testRangeQueryWithStringKeys() throws Exception {
         String bucket = UUID.randomUUID().toString();
@@ -390,7 +390,7 @@ public class IntegrationTest {
         assertEquals(2, returned.getNumField());
         getValue.releaseConnection();
     }
-
+*/
     private PutMethod makePutMethod(int nodePort, String path) {
         PutMethod method = new PutMethod("http://" + HOST + ":" + nodePort + "/" + path);
         method.setRequestHeader("Content-Type", "application/json");

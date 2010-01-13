@@ -47,11 +47,13 @@ import terrastore.cluster.Cluster;
 public class Startup {
 
     private static final Logger LOG = LoggerFactory.getLogger(Startup.class);
-    private static final String DEFAULT_HTTP_HOST = "0.0.0.0";
+    private static final String DEFAULT_HTTP_HOST = "127.0.0.1";
     private static final int DEFAULT_HTTP_PORT = 8080;
+    private static final String DEFAULT_NODE_HOST = "127.0.0.1";
+    private static final int DEFAULT_NODE_PORT = 8226;
     private static final int DEFAULT_SHUTDOWN_PORT = 8180;
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
-    private static final long DEFAULT_NODE_TIMEOUT = 1000;
+    private static final long DEFAULT_NODE_TIMEOUT = 10000;
     private static final int DEFAULT_HTTP_THREADS = 100;
     private static final int DEFAULT_WORKER_THREADS = Runtime.getRuntime().availableProcessors() * 10;
     private static final String DEFAULT_CONFIG_FILE = "terrastore-config.xml";
@@ -92,8 +94,11 @@ public class Startup {
             }
         }
     }
+
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
+    private String nodeHost = DEFAULT_NODE_HOST;
+    private int nodePort = DEFAULT_NODE_PORT;
     private int shutdownPort = DEFAULT_SHUTDOWN_PORT;
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
     private int httpThreads = DEFAULT_HTTP_THREADS;
@@ -113,6 +118,16 @@ public class Startup {
     @Option(name = "--httpPort", required = false)
     public void setHttpPort(int httpPort) {
         this.httpPort = httpPort;
+    }
+
+    @Option(name = "--nodeHost", required = false)
+    public void setNodeHost(String nodeHost) {
+        this.nodeHost = nodeHost;
+    }
+
+    @Option(name = "--nodePort", required = false)
+    public void setNodePort(int nodePort) {
+        this.nodePort = nodePort;
     }
 
     @Option(name = "--shutdownPort", required = false)
@@ -155,7 +170,9 @@ public class Startup {
     private void printInfo() {
         LOG.info(WELCOME_MESSAGE);
         LOG.info(POWEREDBY_MESSAGE);
-        LOG.info("Listening on {}:{}", httpHost, httpPort);
+        LOG.info("Listening for HTTP requests on {}:{}", httpHost, httpPort);
+        LOG.info("Listening for node requests on {}:{}", nodeHost, nodePort);
+        LOG.info("Node communication timeout (in milliseconds) set to {}", nodeTimeout);
         LOG.info("Number of http threads: {}", httpThreads);
         LOG.info("Number of worker threads: {}", workerThreads);
     }
@@ -188,7 +205,7 @@ public class Startup {
         Cluster cluster = getClusterFromServletContext(context);
         cluster.setNodeTimeout(nodeTimeout);
         cluster.setWokerThreads(workerThreads);
-        cluster.start();
+        cluster.start(nodeHost, nodePort);
     }
 
     private void setupClusterShutdownHook(Context context) throws BeansException {

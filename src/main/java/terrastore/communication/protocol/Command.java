@@ -40,8 +40,4 @@ public interface Command extends Serializable {
     public void setId(String id);
 
     public String getId();
-
-    public void setSender(String sender);
-
-    public String getSender();
 }

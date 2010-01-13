@@ -17,12 +17,12 @@ package terrastore.communication.serialization;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.modules.annotations.InstrumentedClass;
-import terrastore.communication.serialization.support.Base64;
 
 /**
  * @author Sergio Bossa
@@ -32,7 +32,7 @@ public class JavaSerializer<T> implements Serializer<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaSerializer.class);
 
-    public String serialize(T object) {
+    public byte[] serialize(T object) {
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         ObjectOutputStream objectStream = null;
         try {
@@ -50,15 +50,19 @@ public class JavaSerializer<T> implements Serializer<T> {
             }
         }
         try {
-            return Base64.encodeToString(byteStream.toByteArray(), false);
+            return byteStream.toByteArray();
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
             throw new IllegalStateException(ex.getMessage(), ex);
         }
     }
 
-    public T deserialize(String serialized) {
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(Base64.decodeFast(serialized));
+    public T deserialize(byte[] serialized) {
+        ByteArrayInputStream byteStream = new ByteArrayInputStream(serialized);
+        return deserialize(byteStream);
+    }
+
+    public T deserialize(InputStream byteStream) {
         ObjectInputStream objectStream = null;
         try {
             objectStream = new ObjectInputStream(byteStream);

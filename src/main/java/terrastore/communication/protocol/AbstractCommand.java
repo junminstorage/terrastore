@@ -21,7 +21,6 @@ package terrastore.communication.protocol;
 public abstract class AbstractCommand implements Command {
 
     private String id;
-    private String sender;
 
     public void setId(String id) {
         this.id = id;
@@ -29,13 +28,5 @@ public abstract class AbstractCommand implements Command {
 
     public String getId() {
         return id;
-    }
-
-    public void setSender(String sender) {
-        this.sender = sender;
-    }
-
-    public String getSender() {
-        return sender;
     }
 }
