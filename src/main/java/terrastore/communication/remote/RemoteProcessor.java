@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.Response;
-import terrastore.communication.serialization.JavaSerializer;
+import terrastore.communication.remote.serialization.JavaSerializer;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
