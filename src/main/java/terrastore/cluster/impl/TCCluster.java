@@ -40,10 +40,6 @@ import terrastore.cluster.FlushStrategy;
 import terrastore.communication.local.LocalNode;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
-import terrastore.communication.protocol.Command;
-import terrastore.communication.protocol.Response;
-import terrastore.communication.serialization.JavaSerializer;
-import terrastore.communication.serialization.Serializer;
 import terrastore.router.Router;
 import terrastore.store.Store;
 import terrastore.store.impl.TCStore;
@@ -70,8 +66,6 @@ public class TCCluster implements Cluster, DsoClusterListener {
     //
     private volatile transient Map<String, Node> nodes;
     private volatile transient RemoteProcessor processor;
-    private volatile Serializer<Command> commandSerializer;
-    private volatile Serializer<Response> responseSerializer;
     //
     private volatile transient long nodeTimeout;
     private volatile transient int workerThreads;
@@ -130,7 +124,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         String thisNodeName = dsoCluster.getCurrentNode().getId();
         stateLock.lock();
         try {
-            LOG.info("Setting up cluster node {}", thisNodeName);
+            nodes = new HashMap<String, Node>();
             workerExecutor = Executors.newFixedThreadPool(workerThreads);
             addressTable.put(thisNodeName, new Address(host, port));
             waitAddressCondition.signalAll();
@@ -142,28 +136,11 @@ public class TCCluster implements Cluster, DsoClusterListener {
         }
     }
 
-    @Override
-    public void stop() {
-        String thisNodeName = dsoCluster.getCurrentNode().getId();
-        stateLock.lock();
-        try {
-            LOG.info("Stopping cluster node {}", thisNodeName);
-            getDsoCluster().removeClusterListener(this);
-            workerExecutor.shutdown();
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-        } finally {
-            stateLock.unlock();
-        }
-    }
-
     public void operationsEnabled(DsoClusterEvent event) {
         String thisNodeName = dsoCluster.getCurrentNode().getId();
         stateLock.lock();
         try {
-            nodes = new HashMap<String, Node>();
-            commandSerializer = new JavaSerializer<Command>();
-            responseSerializer = new JavaSerializer<Response>();
+            LOG.info("Setting up cluster node {}", thisNodeName);
             setupThisNode(thisNodeName);
             setupRemoteProcessor(thisNodeName);
             setupRemoteNodes();
@@ -175,9 +152,12 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     public void operationsDisabled(DsoClusterEvent event) {
+        String thisNodeName = dsoCluster.getCurrentNode().getId();
         stateLock.lock();
         try {
+            LOG.info("Disabling cluster node {}", thisNodeName);
             disconnectEverything();
+            cleanupEverything();
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         } finally {
@@ -278,13 +258,16 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     private void disconnectEverything() {
-        processor.stop();
         for (Node node : nodes.values()) {
             node.disconnect();
         }
+        processor.stop();
+    }
+
+    private void cleanupEverything() {
         nodes.clear();
         router.cleanup();
-        LOG.info("Disconnected everything.");
+        workerExecutor.shutdownNow();
     }
 
     @InstrumentedClass

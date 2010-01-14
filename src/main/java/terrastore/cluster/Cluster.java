@@ -25,8 +25,6 @@ public interface Cluster {
 
     public void start(String host, int port);
 
-    public void stop();
-
     public void setNodeTimeout(long nodeTimeout);
 
     public void setWokerThreads(int workerThreads);

@@ -161,7 +161,6 @@ public class Startup {
             Context context = startServer();
             startMonitor();
             startCluster(context);
-            setupClusterShutdownHook(context);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -191,6 +190,8 @@ public class Startup {
         threadPool.setMaxThreads(httpThreads);
         server.setConnectors(new Connector[]{connector});
         server.setThreadPool(threadPool);
+        server.setGracefulShutdown(500);
+        server.setStopAtShutdown(true);
         server.start();
         return context;
     }
@@ -206,17 +207,6 @@ public class Startup {
         cluster.setNodeTimeout(nodeTimeout);
         cluster.setWokerThreads(workerThreads);
         cluster.start(nodeHost, nodePort);
-    }
-
-    private void setupClusterShutdownHook(Context context) throws BeansException {
-        final Cluster cluster = getClusterFromServletContext(context);
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-
-            @Override
-            public void run() {
-                cluster.stop();
-            }
-        });
     }
 
     private Cluster getClusterFromServletContext(Context context) throws BeansException {
