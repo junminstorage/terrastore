@@ -13,20 +13,18 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.serialization;
+package terrastore.communication.remote.serialization;
 
-import org.junit.Test;
-import terrastore.store.Value;
-import static org.junit.Assert.*;
+import java.io.InputStream;
 
-public class JavaSerializerTest {
+/**
+ * @author Sergio Bossa
+ */
+public interface Serializer<T> {
 
-    @Test
-    public void testSerializeDeserialize() {
-        Value value = new Value(new String("test").getBytes());
-        Serializer<Value> serializer = new JavaSerializer();
-        byte[] serialized = serializer.serialize(value);
-        Value deserialized = serializer.deserialize(serialized);
-        assertEquals(value, deserialized);
-    }
+    byte[] serialize(T object);
+
+    T deserialize(byte[] serialized);
+
+    T deserialize(InputStream serialized);
 }

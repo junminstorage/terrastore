@@ -42,10 +42,12 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.Response;
-import terrastore.communication.serialization.JavaSerializer;
+import terrastore.communication.remote.serialization.JavaSerializer;
 import terrastore.store.Value;
 
 /**
+ * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes.
+ *
  * @author Sergio Bossa
  */
 public class RemoteNode implements Node {
