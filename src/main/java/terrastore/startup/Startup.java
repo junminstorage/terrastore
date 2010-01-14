@@ -49,7 +49,7 @@ public class Startup {
     private static final Logger LOG = LoggerFactory.getLogger(Startup.class);
     private static final String DEFAULT_HTTP_HOST = "127.0.0.1";
     private static final int DEFAULT_HTTP_PORT = 8080;
-    private static final String DEFAULT_NODE_HOST = "127.0.0.1";
+    private static final String DEFAULT_NODE_HOST = "NULL";
     private static final int DEFAULT_NODE_PORT = 8226;
     private static final int DEFAULT_SHUTDOWN_PORT = 8180;
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
@@ -157,12 +157,19 @@ public class Startup {
 
     public void start() {
         try {
+            verifyNodeHost();
             printInfo();
             Context context = startServer();
             startMonitor();
             startCluster(context);
         } catch (Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    private void verifyNodeHost() {
+        if (nodeHost.equals(DEFAULT_NODE_HOST)) {
+            nodeHost = httpHost;
         }
     }
 
