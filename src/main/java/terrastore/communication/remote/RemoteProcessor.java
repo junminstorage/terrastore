@@ -94,7 +94,7 @@ public class RemoteProcessor {
         stateLock.lock();
         try {
             if (serverChannel != null) {
-                acceptedChannels.close().awaitUninterruptibly();
+                acceptedChannels.close();
                 server.releaseExternalResources();
                 serverChannel = null;
                 LOG.info("Unbound channel from: {}:{}", host, port);
