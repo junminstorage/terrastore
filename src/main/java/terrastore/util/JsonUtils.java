@@ -18,12 +18,21 @@ package terrastore.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
+import java.util.Set;
+import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import terrastore.common.ErrorMessage;
+import terrastore.server.Parameters;
+import terrastore.server.Values;
 import terrastore.store.Value;
+import terrastore.store.types.JsonValue;
 
 /**
  * @author Sergio Bossa
@@ -32,7 +41,7 @@ public class JsonUtils {
 
     private static ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    public static Map<String, Object> toMap(Value value) {
+    public static Map<String, Object> toMap(JsonValue value) {
         try {
             return JSON_MAPPER.readValue(new ByteArrayInputStream(value.getBytes()), Map.class);
         } catch (Exception ex) {
@@ -40,17 +49,17 @@ public class JsonUtils {
         }
     }
 
-    public static Value fromMap(Map<String, Object> value) {
+    public static JsonValue fromMap(Map<String, Object> value) {
         try {
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             JSON_MAPPER.writeValue(output, value);
-            return new Value(output.toByteArray());
+            return new JsonValue(output.toByteArray());
         } catch (Exception ex) {
             throw new IllegalStateException("Value should have been already validated!");
         }
     }
 
-    public static void validate(Value value) throws IOException {
+    public static void validate(JsonValue value) throws IOException {
         JsonParser parser = new JsonFactory().createJsonParser(value.getBytes());
         JsonToken currentToken = parser.nextToken();
         if (currentToken.equals(JsonToken.START_ARRAY)) {
@@ -60,6 +69,28 @@ public class JsonUtils {
         } else {
             throw new IOException("Expected object/array start, found: " + currentToken.toString());
         }
+    }
+
+    public static void write(ErrorMessage errorMessage, OutputStream stream) throws IOException {
+        JSON_MAPPER.writeValue(stream, errorMessage);
+    }
+
+    public static void write(Values values, OutputStream stream) throws IOException {
+        JsonGenerator jsonGenerator = new JsonFactory().createJsonGenerator(stream, JsonEncoding.UTF8);
+        Set<Map.Entry<String, Value>> entries = values.entrySet();
+        jsonGenerator.writeStartObject();
+        for (Map.Entry<String, Value> entry : entries) {
+            String key = entry.getKey();
+            Value value = entry.getValue();
+            jsonGenerator.writeFieldName(key);
+            jsonGenerator.writeRawValue(new String(value.getBytes(), "UTF-8"));
+        }
+        jsonGenerator.writeEndObject();
+        jsonGenerator.close();
+    }
+
+    public static Parameters read(InputStream stream) throws IOException {
+        return JSON_MAPPER.readValue(stream, Parameters.class);
     }
 
     private static void validateObject(JsonParser parser) throws IOException {

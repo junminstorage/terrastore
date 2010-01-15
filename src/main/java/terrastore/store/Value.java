@@ -16,8 +16,11 @@
 package terrastore.store;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import org.terracotta.modules.annotations.InstrumentedClass;
+import terrastore.store.features.Predicate;
+import terrastore.store.features.Update;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
 
 /**
  * Generic value object contained by {@link Bucket} instances.
@@ -25,32 +28,11 @@ import org.terracotta.modules.annotations.InstrumentedClass;
  * @author Sergio Bossa
  */
 @InstrumentedClass
-public class Value implements Serializable {
+public interface Value extends Serializable {
 
-    private static final long serialVersionUID = 12345678901L;
+    public byte[] getBytes();
 
-    private final byte[] bytes;
+    public Value dispatch(String key, Update update, Function function);
 
-    public Value(byte[] bytes) {
-        this.bytes = bytes;
-    }
-
-    public byte[] getBytes() {
-        return bytes;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Value) {
-            Value other = (Value) obj;
-            return Arrays.equals(other.bytes, this.bytes);
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public int hashCode() {
-        return bytes.hashCode();
-    }
+    public boolean dispatch(String key, Predicate predicate, Condition condition);
 }

@@ -16,7 +16,6 @@
 package terrastore.store.impl;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -39,7 +38,6 @@ import terrastore.store.Value;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
-import terrastore.util.JsonUtils;
 
 /**
  * @author Sergio Bossa
@@ -78,7 +76,7 @@ public class TCBucket implements Bucket {
     public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException {
         Value value = bucket.get(key);
         if (value != null) {
-            if (condition.isSatisfied(key, JsonUtils.toMap(value), predicate.getConditionExpression())) {
+            if (value.dispatch(key, predicate, condition)) {
                 return value;
             } else {
                 return null;
@@ -100,18 +98,18 @@ public class TCBucket implements Bucket {
         long timeout = update.getTimeoutInMillis();
         boolean locked = lock(key);
         if (locked) {
-            Future<Map<String, Object>> task = null;
+            Future<Value> task = null;
             try {
                 final Value value = bucket.get(key);
-                task = updateExecutor.submit(new Callable<Map<String, Object>>() {
+                task = updateExecutor.submit(new Callable<Value>() {
 
                     @Override
-                    public Map<String, Object> call() {
-                        return function.apply(key, JsonUtils.toMap(value), update.getParameters());
+                    public Value call() {
+                        return value.dispatch(key, update, function);
                     }
                 });
-                Map<String, Object> result = task.get(timeout, TimeUnit.MILLISECONDS);
-                bucket.put(key, JsonUtils.fromMap(result));
+                Value result = task.get(timeout, TimeUnit.MILLISECONDS);
+                bucket.put(key, result);
             } catch (Exception ex) {
                 task.cancel(true);
             } finally {

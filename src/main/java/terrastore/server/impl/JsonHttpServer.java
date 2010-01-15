@@ -39,7 +39,6 @@ import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
-import terrastore.util.JsonUtils;
 
 /**
  * {@link terrastore.server.Server} implementation running a json-over-http server.
@@ -92,15 +91,10 @@ public class JsonHttpServer implements Server {
     public void putValue(@PathParam("bucket") String bucket, @PathParam("key") String key, Value value) throws ServerOperationException {
         try {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
-            JsonUtils.validate(value);
             updateService.putValue(bucket, key, value);
         } catch (UpdateOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
-            throw new ServerOperationException(error);
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json value: " + new String(value.getBytes()));
             throw new ServerOperationException(error);
         }
     }

@@ -29,6 +29,7 @@ import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Condition;
+import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
 
 /**
@@ -48,7 +49,7 @@ public class TCBucketTest {
     @Test
     public void testPutAndGetValue() throws StoreOperationException {
         String key = "key";
-        Value value = new Value(JSON_VALUE.getBytes());
+        Value value = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key, value);
         assertEquals(value, bucket.get(key));
     }
@@ -56,7 +57,7 @@ public class TCBucketTest {
     @Test
     public void testPutAndConditionallyGetValue() throws StoreOperationException {
         String key = "key";
-        Value value = new Value(JSON_VALUE.getBytes());
+        Value value = new JsonValue(JSON_VALUE.getBytes());
         Predicate predicate = new Predicate("test:test");
         Condition condition = new Condition() {
 
@@ -72,7 +73,7 @@ public class TCBucketTest {
     @Test
     public void testPutAndConditionallyGetValueOnKey() throws StoreOperationException {
         final String key = "key";
-        Value value = new Value(JSON_VALUE.getBytes());
+        Value value = new JsonValue(JSON_VALUE.getBytes());
         Predicate predicate = new Predicate("test:test");
         Condition condition = new Condition() {
 
@@ -93,7 +94,7 @@ public class TCBucketTest {
     @Test
     public void testPutAndConditionallyGetValueNotFound() throws StoreOperationException {
         String key = "key";
-        Value value = new Value(JSON_VALUE.getBytes());
+        Value value = new JsonValue(JSON_VALUE.getBytes());
         Predicate predicate = new Predicate("test:notfound");
         Condition condition = new Condition() {
 
@@ -122,7 +123,7 @@ public class TCBucketTest {
     @Test(expected = StoreOperationException.class)
     public void testPutAndRemoveValue() throws StoreOperationException {
         String key = "key";
-        Value value = new Value(JSON_VALUE.getBytes());
+        Value value = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key, value);
         bucket.remove(key);
         bucket.get(key);
@@ -131,9 +132,9 @@ public class TCBucketTest {
     @Test
     public void testKeys() throws StoreOperationException {
         String key1 = "key1";
-        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
         String key2 = "key2";
-        Value value2 = new Value(JSON_VALUE.getBytes());
+        Value value2 = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         assertEquals(2, bucket.keys().size());
@@ -152,11 +153,11 @@ public class TCBucketTest {
         };
 
         String key1 = "key1";
-        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
         String key2 = "key2";
-        Value value2 = new Value(JSON_VALUE.getBytes());
+        Value value2 = new JsonValue(JSON_VALUE.getBytes());
         String key3 = "key3";
-        Value value3 = new Value(JSON_VALUE.getBytes());
+        Value value3 = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
@@ -176,11 +177,11 @@ public class TCBucketTest {
         };
 
         String key1 = "key1";
-        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
         String key2 = "key2";
-        Value value2 = new Value(JSON_VALUE.getBytes());
+        Value value2 = new JsonValue(JSON_VALUE.getBytes());
         String key3 = "key3";
-        Value value3 = new Value(JSON_VALUE.getBytes());
+        Value value3 = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
@@ -200,7 +201,7 @@ public class TCBucketTest {
         };
 
         String key1 = "key1";
-        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
         assertEquals(0, bucket.keysInRange(new Range("key2", "key3", 0, "order"), stringComparator, 0).size());
     }
@@ -216,7 +217,7 @@ public class TCBucketTest {
         };
 
         String key1 = "key1";
-        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
         assertEquals(1, bucket.keysInRange(new Range("key1", "key2", 0, "order"), stringComparator, 0).size());
     }
@@ -232,7 +233,7 @@ public class TCBucketTest {
         };
 
         String key1 = "key1";
-        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
         assertEquals(1, bucket.keysInRange(new Range("key0", "key1", 0, "order"), stringComparator, 0).size());
     }
@@ -248,7 +249,7 @@ public class TCBucketTest {
         };
 
         String key1 = "key1";
-        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
         assertEquals(1, bucket.keysInRange(new Range("key1", "key1", 0, "order"), stringComparator, 0).size());
     }
@@ -269,7 +270,7 @@ public class TCBucketTest {
         };
 
         String key = "key";
-        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        Value value = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
         bucket.put(key, value);
         bucket.update(key, update, function, Executors.newCachedThreadPool());
         assertEquals(new String(JSON_UPDATED.getBytes("UTF-8")), new String(bucket.get(key).getBytes()));

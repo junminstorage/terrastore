@@ -15,11 +15,17 @@
  */
 package terrastore.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
+import terrastore.common.ErrorMessage;
+import terrastore.server.Parameters;
+import terrastore.server.Values;
 import terrastore.store.Value;
+import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
 
 /**
@@ -34,22 +40,25 @@ public class JsonUtilsTest {
             "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], " +
             "\"key\" : {\"bad\":value}}";
     private static final String SIMPLE_JSON_VALUE = "{\"key\":\"value\"}";
+    private static final String ERROR_MESSAGE = "{\"message\":\"test\",\"code\":0}";
+    private static final String VALUES = "{\"value\":{\"key\":\"value\"}}";
+     private static final String PARAMETERS = "{\"key\":\"value\"}";
 
     @Test
     public void testValidate() throws Exception {
-        Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
+        JsonValue json = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
         JsonUtils.validate(json);
     }
 
     @Test(expected = IOException.class)
     public void testValidateWithBadJson() throws Exception {
-        Value json = new Value(BAD_JSON_VALUE.getBytes("UTF-8"));
+        JsonValue json = new JsonValue(BAD_JSON_VALUE.getBytes("UTF-8"));
         JsonUtils.validate(json);
     }
 
     @Test
     public void testToMap() throws Exception {
-        Value json = new Value(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
+        JsonValue json = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> map = JsonUtils.toMap(json);
         assertNotNull(map);
         assertEquals(1, map.size());
@@ -61,7 +70,35 @@ public class JsonUtilsTest {
     public void testFromMap() throws Exception {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("key", "value");
-        Value value = JsonUtils.fromMap(map);
+        JsonValue value = JsonUtils.fromMap(map);
         assertArrayEquals(SIMPLE_JSON_VALUE.getBytes("UTF-8"), value.getBytes());
+    }
+
+    @Test
+    public void testWriteErrorMessage() throws Exception {
+        ErrorMessage message = new ErrorMessage(0, "test");
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        JsonUtils.write(message, stream);
+        assertEquals(ERROR_MESSAGE, new String(stream.toByteArray()));
+    }
+
+    @Test
+    public void testWriteValues() throws Exception {
+        JsonValue value = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
+        Map<String, Value> map = new HashMap<String, Value>();
+        map.put("value", value);
+        Values values = new Values(map);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        JsonUtils.write(values, stream);
+        assertEquals(VALUES, new String(stream.toByteArray()));
+    }
+
+    @Test
+    public void testReadParameters() throws Exception {
+        ByteArrayInputStream stream = new ByteArrayInputStream(PARAMETERS.getBytes("UTF-8"));
+        Parameters params = JsonUtils.read(stream);
+        assertEquals(1, params.size());
+        assertEquals("key", params.keySet().toArray()[0]);
+        assertEquals("value", params.values().toArray()[0]);
     }
 }

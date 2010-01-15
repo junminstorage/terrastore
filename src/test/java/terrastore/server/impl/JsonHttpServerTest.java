@@ -15,7 +15,7 @@
  */
 package terrastore.server.impl;
 
-import java.io.StringWriter;
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +28,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.classextension.EasyMock;
 import org.jboss.resteasy.plugins.server.tjws.TJWSEmbeddedJaxrsServer;
 import org.junit.Test;
@@ -45,6 +44,8 @@ import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
+import terrastore.store.types.JsonValue;
+import terrastore.util.JsonUtils;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -171,7 +172,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
 
         queryService.getValue("bucket", "test1");
-        expectLastCall().andReturn(new Value(JSON_VALUE.getBytes())).once();
+        expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
         replay(updateService, queryService);
 
@@ -196,7 +197,7 @@ public class JsonHttpServerTest {
     @Test
     public void testGetAllValues() throws Exception {
         SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test", new Value(JSON_VALUE.getBytes()));
+        values.put("test", new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -227,8 +228,8 @@ public class JsonHttpServerTest {
     @Test
     public void testDoRangeQueryWithNoComparator() throws Exception {
         SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -259,8 +260,8 @@ public class JsonHttpServerTest {
     @Test
     public void testDoRangeQueryWithLimit() throws Exception {
         SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -291,8 +292,8 @@ public class JsonHttpServerTest {
     @Test
     public void testDoRangeQueryWithNoPredicate() throws Exception {
         SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -323,8 +324,8 @@ public class JsonHttpServerTest {
     @Test
     public void testDoRangeQueryWithPredicate() throws Exception {
         SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -355,8 +356,8 @@ public class JsonHttpServerTest {
     @Test
     public void testDoPredicateQuery() throws Exception {
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -458,7 +459,6 @@ public class JsonHttpServerTest {
         client.executeMethod(method);
 
         assertEquals(400, method.getStatusCode());
-        assertTrue(fromJson(method.getResponseBodyAsString()) instanceof ErrorMessage);
 
         method.releaseConnection();
 
@@ -492,14 +492,8 @@ public class JsonHttpServerTest {
     }
 
     private String toJson(ErrorMessage errorMessage) throws Exception {
-        ObjectMapper jsonMapper = new ObjectMapper();
-        StringWriter result = new StringWriter();
-        jsonMapper.writeValue(result, errorMessage);
-        return result.toString();
-    }
-
-    private ErrorMessage fromJson(String content) throws Exception {
-        ObjectMapper jsonMapper = new ObjectMapper();
-        return jsonMapper.<ErrorMessage>readValue(content, ErrorMessage.class);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        JsonUtils.write(errorMessage, stream);
+        return new String(stream.toByteArray());
     }
 }

@@ -15,8 +15,7 @@
  */
 package terrastore.server.impl.support;
 
-import terrastore.server.io.ThreadLocalByteBuffer;
-import java.io.ByteArrayOutputStream;
+import terrastore.util.JsonUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,11 +26,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import terrastore.common.ErrorMessage;
 import terrastore.server.io.InputReader;
 import terrastore.store.Value;
+import terrastore.store.types.JsonValue;
 
 /**
  * @author Sergio Bossa
@@ -41,16 +45,26 @@ import terrastore.store.Value;
 @Produces("application/json")
 public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyWriter<Value> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JsonValueProvider.class);
     private final InputReader reader = new InputReader();
 
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type.equals(Value.class);
     }
 
-    public Value readFrom(Class<Value> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        byte[] bytes = reader.read(entityStream);
-        Value result = new Value(bytes);
-        return result;
+    public JsonValue readFrom(Class<Value> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+        byte[] bytes = null;
+        try {
+            bytes = reader.read(entityStream);
+            JsonValue result = new JsonValue(bytes);
+            JsonUtils.validate(result);
+            return result;
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+            throw new WebApplicationException(Response.status(ErrorMessage.BAD_REQUEST_ERROR_CODE).
+                    entity(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json value: " + new String(bytes))).
+                    build());
+        }
     }
 
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {

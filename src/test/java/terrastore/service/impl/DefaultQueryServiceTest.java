@@ -34,6 +34,7 @@ import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Condition;
+import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -47,7 +48,7 @@ public class DefaultQueryServiceTest {
     @Test
     public void testGetValue() throws Exception {
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
 
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
@@ -70,7 +71,7 @@ public class DefaultQueryServiceTest {
         Map<String, Value> keys = new HashMap<String, Value>();
         keys.put("test", null);
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test", new Value(JSON_VALUE.getBytes()));
+        values.put("test", new JsonValue(JSON_VALUE.getBytes()));
 
         Node localNode = createMock(Node.class);
         Node remoteNode = createMock(Node.class);
@@ -92,7 +93,7 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         Map<String, Value> result = service.getAllValues("bucket");
         assertEquals(1, result.size());
-        assertEquals(JSON_VALUE, new String(result.values().toArray(new Value[1])[0].getBytes()));
+        assertEquals(JSON_VALUE, new String(result.values().toArray(new JsonValue[1])[0].getBytes()));
 
         verify(localNode, remoteNode, router);
     }
@@ -111,8 +112,8 @@ public class DefaultQueryServiceTest {
         keys.put("test1", null);
         keys.put("test2", null);
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         Node localNode = createMock(Node.class);
         Node remoteNode = createMock(Node.class);
@@ -167,8 +168,8 @@ public class DefaultQueryServiceTest {
         keys.put("test1", null);
         keys.put("test2", null);
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         Node localNode = createMock(Node.class);
         Node remoteNode = createMock(Node.class);
@@ -226,8 +227,8 @@ public class DefaultQueryServiceTest {
         keys.put("test1", null);
         keys.put("test2", null);
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         Node localNode = createMock(Node.class);
         Node remoteNode = createMock(Node.class);
@@ -272,8 +273,8 @@ public class DefaultQueryServiceTest {
         keys.put("test1", null);
         keys.put("test2", null);
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         Node localNode = createMock(Node.class);
         Node remoteNode = createMock(Node.class);
@@ -320,8 +321,8 @@ public class DefaultQueryServiceTest {
         keys.put("test1", null);
         keys.put("test2", null);
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new Value(JSON_VALUE.getBytes()));
-        values.put("test2", new Value(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         Node localNode = createMock(Node.class);
         Node remoteNode = createMock(Node.class);
