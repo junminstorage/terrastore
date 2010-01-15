@@ -60,6 +60,27 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testCreateBucketsAndGetNamesOnOtherNode() throws Exception {
+        String bucket1 = UUID.randomUUID().toString();
+        String bucket2 = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket1);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+        addBucket = makePutMethod(NODE1_PORT, bucket2);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        GetMethod getBuckets = makeGetMethod(NODE2_PORT, "");
+        HTTP_CLIENT.executeMethod(getBuckets);
+        assertEquals(HttpStatus.SC_OK, getBuckets.getStatusCode());
+        System.err.println(getBuckets.getResponseBodyAsString());
+        getBuckets.releaseConnection();
+    }
+
+    @Test
     public void testCreateBucketPutValueAndGetOnOtherNode() throws Exception {
         String bucket = UUID.randomUUID().toString();
 

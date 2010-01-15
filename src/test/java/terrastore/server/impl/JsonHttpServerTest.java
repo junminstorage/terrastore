@@ -17,6 +17,7 @@ package terrastore.server.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
@@ -32,6 +33,7 @@ import org.easymock.classextension.EasyMock;
 import org.jboss.resteasy.plugins.server.tjws.TJWSEmbeddedJaxrsServer;
 import org.junit.Test;
 import terrastore.common.ErrorMessage;
+import terrastore.server.impl.support.JsonBucketsProvider;
 import terrastore.server.impl.support.JsonErrorMessageProvider;
 import terrastore.server.impl.support.JsonValuesMapProvider;
 import terrastore.server.impl.support.JsonParametersMapProvider;
@@ -59,6 +61,7 @@ public class JsonHttpServerTest {
     private static final String JSON_VALUES = "{\"test\":" + JSON_VALUE + "}";
     private static final String JSON_VALUES_x2 = "{\"test1\":" + JSON_VALUE + ",\"test2\":" + JSON_VALUE + "}";
     private static final String UPDATE_PARAMS = "{\"p1\":\"v1\"}";
+    private static final String BUCKETS = "[\"test1\",\"test2\"]";
 
     @Test
     public void testAddBucket() throws Exception {
@@ -217,6 +220,36 @@ public class JsonHttpServerTest {
         assertEquals(HttpStatus.SC_OK, method.getStatusCode());
         System.err.println(method.getResponseBodyAsString());
         assertEquals(JSON_VALUES, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService);
+    }
+
+    @Test
+    public void testGetBuckets() throws Exception {
+        Collection<String> buckets = Arrays.asList("test1", "test2");
+
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+
+        queryService.getBuckets();
+        expectLastCall().andReturn(buckets).once();
+
+        replay(updateService, queryService);
+
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
+        HttpClient client = new HttpClient();
+        GetMethod method = new GetMethod("http://localhost:8080/");
+        method.setRequestHeader("Content-Type", "application/json");
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals(BUCKETS, method.getResponseBodyAsString());
 
         method.releaseConnection();
 
@@ -473,6 +506,7 @@ public class JsonHttpServerTest {
         server.getDeployment().setProviderClasses(Arrays.asList(
                 JsonErrorMessageProvider.class.getName(),
                 JsonValuesMapProvider.class.getName(),
+                JsonBucketsProvider.class.getName(),
                 JsonParametersMapProvider.class.getName(),
                 JsonValueProvider.class.getName(),
                 JsonServerOperationExceptionMapper.class.getName()));

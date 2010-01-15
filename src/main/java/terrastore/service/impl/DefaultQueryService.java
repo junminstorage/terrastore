@@ -16,6 +16,7 @@
 package terrastore.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.GetKeysCommand;
 import terrastore.communication.protocol.DoRangeQueryCommand;
+import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.router.Router;
@@ -55,6 +57,20 @@ public class DefaultQueryService implements QueryService {
 
     public DefaultQueryService(Router router) {
         this.router = router;
+    }
+
+    public Collection<String> getBuckets() throws QueryOperationException {
+        try {
+            LOG.debug("Getting bucket names.");
+            Node node = router.getLocalNode();
+            Command command = new GetBucketsCommand();
+            Map<String, Value> buckets = node.send(command);
+            return buckets.keySet();
+        } catch (ProcessingException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
+        }
     }
 
     public Value getValue(String bucket, String key) throws QueryOperationException {

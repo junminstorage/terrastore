@@ -16,6 +16,7 @@
 package terrastore.service.impl;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.communication.protocol.GetKeysCommand;
 import terrastore.communication.protocol.DoRangeQueryCommand;
+import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.router.Router;
@@ -44,6 +46,29 @@ import static org.easymock.classextension.EasyMock.*;
 public class DefaultQueryServiceTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
+
+    @Test
+    public void testGetBuckets() throws Exception {
+        Map<String, Value> buckets = new HashMap<String, Value>();
+        buckets.put("test1", null);
+        buckets.put("test2", null);
+
+        Node node = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.getLocalNode();
+        expectLastCall().andReturn(node).once();
+        node.send(EasyMock.<GetBucketsCommand>anyObject());
+        expectLastCall().andReturn(buckets).once();
+
+        replay(node, router);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        Collection<String> result = service.getBuckets();
+        assertEquals(2, result.size());
+
+        verify(node, router);
+    }
 
     @Test
     public void testGetValue() throws Exception {

@@ -18,10 +18,13 @@ package terrastore.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
 import terrastore.common.ErrorMessage;
+import terrastore.server.Buckets;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Value;
@@ -42,7 +45,8 @@ public class JsonUtilsTest {
     private static final String SIMPLE_JSON_VALUE = "{\"key\":\"value\"}";
     private static final String ERROR_MESSAGE = "{\"message\":\"test\",\"code\":0}";
     private static final String VALUES = "{\"value\":{\"key\":\"value\"}}";
-     private static final String PARAMETERS = "{\"key\":\"value\"}";
+    private static final String PARAMETERS = "{\"key\":\"value\"}";
+    private static final String BUCKETS = "[\"1\",\"2\"]";
 
     @Test
     public void testValidate() throws Exception {
@@ -91,6 +95,15 @@ public class JsonUtilsTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonUtils.write(values, stream);
         assertEquals(VALUES, new String(stream.toByteArray()));
+    }
+
+    @Test
+    public void testWriteBuckets() throws Exception {
+        Collection<String> names = Arrays.asList("1", "2");
+        Buckets buckets = new Buckets(names);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        JsonUtils.write(buckets, stream);
+        assertEquals(BUCKETS, new String(stream.toByteArray()));
     }
 
     @Test
