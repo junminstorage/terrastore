@@ -18,7 +18,6 @@ package terrastore.store;
 import terrastore.store.features.Update;
 import java.util.Comparator;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
