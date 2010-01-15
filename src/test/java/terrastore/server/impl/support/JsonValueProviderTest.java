@@ -17,8 +17,9 @@ package terrastore.server.impl.support;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import javax.ws.rs.WebApplicationException;
 import org.junit.Test;
-import terrastore.store.Value;
+import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
 
 /**
@@ -27,22 +28,31 @@ import static org.junit.Assert.*;
 public class JsonValueProviderTest {
 
     private static final String JSON_VALUE = "{\"test1\" : \"test\", \"test2\" : [1, {\"test1\":\"test\"}], \"test3\" : {\"test1\":\"test\"}}";
+    private static final String BAD_JSON_VALUE = "{\"test1\" : \"test\", \"test2\" : [1, {\"test1\": test\"}], \"test3\" : {\"test1\":\"test\"}}";
 
     @Test
     public void testRead() throws Exception {
         JsonValueProvider provider = new JsonValueProvider();
 
         ByteArrayInputStream stream = new ByteArrayInputStream(JSON_VALUE.getBytes());
-        Value value = provider.readFrom(null, null, null, null, null, stream);
+        JsonValue value = provider.readFrom(null, null, null, null, null, stream);
 
         assertArrayEquals(JSON_VALUE.getBytes(), value.getBytes());
+    }
+
+    @Test(expected = WebApplicationException.class)
+    public void testReadBadValue() throws Exception {
+        JsonValueProvider provider = new JsonValueProvider();
+
+        ByteArrayInputStream stream = new ByteArrayInputStream(BAD_JSON_VALUE.getBytes());
+        JsonValue value = provider.readFrom(null, null, null, null, null, stream);
     }
 
     @Test
     public void testWrite() throws Exception {
         JsonValueProvider provider = new JsonValueProvider();
 
-        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        JsonValue value = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         provider.writeTo(value, null, null, null, null, null, stream);
 

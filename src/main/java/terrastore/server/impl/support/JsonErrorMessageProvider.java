@@ -25,8 +25,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
-import org.codehaus.jackson.map.ObjectMapper;
 import terrastore.common.ErrorMessage;
+import terrastore.util.JsonUtils;
 
 /**
  * @author Sergio Bossa
@@ -35,14 +35,12 @@ import terrastore.common.ErrorMessage;
 @Produces("application/json")
 public class JsonErrorMessageProvider implements MessageBodyWriter<ErrorMessage> {
 
-    private final ObjectMapper jsonMapper = new ObjectMapper();
-
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return ErrorMessage.class.isAssignableFrom(type);
     }
 
     public void writeTo(ErrorMessage errorMessage, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        jsonMapper.writeValue(entityStream, errorMessage);
+        JsonUtils.write(errorMessage, entityStream);
     }
 
     public long getSize(ErrorMessage errorMessage, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {

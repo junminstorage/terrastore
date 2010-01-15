@@ -27,6 +27,10 @@ import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
+import terrastore.store.features.Update;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -35,14 +39,14 @@ import static org.junit.Assert.*;
  */
 public class RemoteNodeToProcessorCommunicationTest {
 
-    private static final String JSON_VALUE = "{\"test\":\"test\"}";
-   
+    private static final String VALUE = "test";
+
     @Test
     public void testSendProcessAndReceive() throws StoreOperationException, ProcessingException {
         String nodeName = "node";
         String bucketName = "bucket";
         String valueKey = "key";
-        Value value = new Value(JSON_VALUE.getBytes());
+        Value value = new TestValue(VALUE);
         Map<String, Value> values = new HashMap<String, Value>();
         values.put(valueKey, value);
 
@@ -82,7 +86,7 @@ public class RemoteNodeToProcessorCommunicationTest {
         String nodeName = "node";
         String bucketName = "bucket";
         String valueKey = "key";
-        Value value = new Value(JSON_VALUE.getBytes());
+        Value value = new TestValue(VALUE);
         Map<String, Value> values = new HashMap<String, Value>();
         values.put(valueKey, value);
 
@@ -105,7 +109,7 @@ public class RemoteNodeToProcessorCommunicationTest {
             sender.connect();
 
             processor.stop();
-            
+
             sender.send(command);
         } finally {
             try {
@@ -113,6 +117,34 @@ public class RemoteNodeToProcessorCommunicationTest {
             } finally {
                 verify(store, bucket);
             }
+        }
+    }
+
+    private static class TestValue implements Value {
+
+        private final String content;
+
+        public TestValue(String content) {
+            this.content = content;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            try {
+                return content.getBytes("UTF-8");
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+
+        @Override
+        public Value dispatch(String key, Update update, Function function) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean dispatch(String key, Predicate predicate, Condition condition) {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }

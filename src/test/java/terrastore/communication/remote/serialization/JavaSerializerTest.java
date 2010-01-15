@@ -17,16 +17,50 @@ package terrastore.communication.remote.serialization;
 
 import org.junit.Test;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
+import terrastore.store.features.Update;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
 import static org.junit.Assert.*;
 
 public class JavaSerializerTest {
 
+    private static final String VALUE = "test";
+
     @Test
     public void testSerializeDeserialize() {
-        Value value = new Value(new String("test").getBytes());
+        Value value = new TestValue(VALUE);
         Serializer<Value> serializer = new JavaSerializer();
         byte[] serialized = serializer.serialize(value);
         Value deserialized = serializer.deserialize(serialized);
-        assertEquals(value, deserialized);
+        assertArrayEquals(value.getBytes(), deserialized.getBytes());
+    }
+
+    private static class TestValue implements Value {
+
+        private final String content;
+
+        public TestValue(String content) {
+            this.content = content;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            try {
+                return content.getBytes("UTF-8");
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+
+        @Override
+        public Value dispatch(String key, Update update, Function function) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean dispatch(String key, Predicate predicate, Condition condition) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
     }
 }
