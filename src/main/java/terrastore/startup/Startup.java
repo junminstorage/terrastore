@@ -94,7 +94,6 @@ public class Startup {
             }
         }
     }
-
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private String nodeHost = DEFAULT_NODE_HOST;
@@ -103,7 +102,6 @@ public class Startup {
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
     private int httpThreads = DEFAULT_HTTP_THREADS;
     private int workerThreads = DEFAULT_WORKER_THREADS;
-    private String configFile;
 
     @Option(name = "--master", required = false)
     public void setMaster(String toIgnore) {
@@ -148,11 +146,6 @@ public class Startup {
     @Option(name = "--workerThreads", required = false)
     public void setWorkerThreads(int workerThreads) {
         this.workerThreads = workerThreads;
-    }
-
-    @Option(name = "--configFile", required = false)
-    public void setConfigFile(String configFile) {
-        this.configFile = configFile;
     }
 
     public void start() {
@@ -233,18 +226,13 @@ public class Startup {
     }
 
     private String getConfigFileLocation() {
-        String location = null;
-        if (configFile != null) {
-            location = "file:" + configFile;
+        String homeDir = System.getenv(TERRASTORE_HOME_DIR) != null ? System.getenv(TERRASTORE_HOME_DIR) : System.getProperty(TERRASTORE_HOME_DIR);
+        if (homeDir != null) {
+            String separator = System.getProperty("file.separator");
+            String location = "file:" + homeDir + separator + DEFAULT_CONFIG_FILE;
+            return location;
         } else {
-            String homeDir = System.getenv(TERRASTORE_HOME_DIR) != null ? System.getenv(TERRASTORE_HOME_DIR) : System.getProperty(TERRASTORE_HOME_DIR);
-            if (homeDir != null) {
-                String separator = System.getProperty("file.separator");
-                location = "file:" + homeDir + separator + DEFAULT_CONFIG_FILE;
-            } else {
-                throw new IllegalStateException("TCStore home directory is not set!");
-            }
+            throw new IllegalStateException("TCStore home directory is not set!");
         }
-        return location;
     }
 }
