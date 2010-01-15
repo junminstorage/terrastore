@@ -75,6 +75,14 @@ public interface Server {
     public void updateValue(String bucket, String key, String function, Long timeoutInMillis, Parameters parameters) throws ServerOperationException;
 
     /**
+     * Get the name of all buckets.
+     *
+     * @return A collection of all bucket names.
+     * @throws ServerOperationException If an error occurs.
+     */
+    public Buckets getBuckets() throws ServerOperationException;
+
+    /**
      * Get the value from the given bucket under the given key.
      *
      * @param bucket The name of the bucket containing the value to get.

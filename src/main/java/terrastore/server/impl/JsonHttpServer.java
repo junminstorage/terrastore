@@ -27,6 +27,7 @@ import javax.ws.rs.QueryParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
+import terrastore.server.Buckets;
 import terrastore.server.Parameters;
 import terrastore.server.Server;
 import terrastore.server.ServerOperationException;
@@ -129,6 +130,20 @@ public class JsonHttpServer implements Server {
             Update update = new Update(function, timeout, parameters);
             updateService.executeUpdate(bucket, key, update);
         } catch (UpdateOperationException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new ServerOperationException(error);
+        }
+    }
+
+    @GET
+    @Path("/")
+    @Produces("application/json")
+    public Buckets getBuckets() throws ServerOperationException {
+        try {
+            LOG.debug("Getting buckets.");
+            return new Buckets(queryService.getBuckets());
+        } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new ServerOperationException(error);

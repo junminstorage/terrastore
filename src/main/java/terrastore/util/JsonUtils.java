@@ -29,6 +29,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
 import terrastore.common.ErrorMessage;
+import terrastore.server.Buckets;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Value;
@@ -73,6 +74,10 @@ public class JsonUtils {
 
     public static void write(ErrorMessage errorMessage, OutputStream stream) throws IOException {
         JSON_MAPPER.writeValue(stream, errorMessage);
+    }
+
+    public static void write(Buckets buckets, OutputStream stream) throws IOException {
+        JSON_MAPPER.writeValue(stream, buckets);
     }
 
     public static void write(Values values, OutputStream stream) throws IOException {
