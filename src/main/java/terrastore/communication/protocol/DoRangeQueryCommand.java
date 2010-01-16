@@ -15,20 +15,18 @@
  */
 package terrastore.communication.protocol;
 
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 import terrastore.store.features.Range;
 
 /**
  * @author Sergio Bossa
  */
-public class DoRangeQueryCommand extends AbstractCommand {
+public class DoRangeQueryCommand extends AbstractCommand<Set<String>> {
 
     private final String bucketName;
     private final Range range;
@@ -42,17 +40,13 @@ public class DoRangeQueryCommand extends AbstractCommand {
         this.timeToLive = timeToLive;
     }
 
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException {
+    public Set<String> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            Map<String, Value> entries = new HashMap<String, Value>();
             Set<String> keys = bucket.keysInRange(range, keyComparator, timeToLive);
-            for (String key : keys) {
-                entries.put(key, null);
-            }
-            return entries;
+            return keys;
         } else {
-            return new HashMap<String, Value>(0);
+            return Collections.<String>emptySet();
         }
     }
 }

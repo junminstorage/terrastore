@@ -15,8 +15,6 @@
  */
 package terrastore.communication.protocol;
 
-import java.util.HashMap;
-import java.util.Map;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -25,7 +23,7 @@ import terrastore.store.Value;
 /**
  * @author Sergio Bossa
  */
-public class GetValueCommand extends AbstractCommand {
+public class GetValueCommand extends AbstractCommand<Value> {
 
     private final String bucketName;
     private final String key;
@@ -35,14 +33,12 @@ public class GetValueCommand extends AbstractCommand {
         this.key = key;
     }
 
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException {
+    public Value executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            Map<String, Value> entries = new HashMap<String, Value>(1);
-            entries.put(key, bucket.get(key));
-            return entries;
+            return bucket.get(key);
         } else {
-            return new HashMap<String, Value>(0);
+            return null;
         }
     }
 }

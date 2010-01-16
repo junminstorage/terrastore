@@ -49,9 +49,9 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testGetBuckets() throws Exception {
-        Map<String, Value> buckets = new HashMap<String, Value>();
-        buckets.put("test1", null);
-        buckets.put("test2", null);
+        Set<String> buckets = new HashSet<String>();
+        buckets.add("test1");
+        buckets.add("test2");
 
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
@@ -72,8 +72,7 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testGetValue() throws Exception {
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Value value = new JsonValue(JSON_VALUE.getBytes());
 
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
@@ -81,7 +80,7 @@ public class DefaultQueryServiceTest {
         router.routeToNodeFor("bucket", "test1");
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<GetValueCommand>anyObject());
-        expectLastCall().andReturn(values).once();
+        expectLastCall().andReturn(value).once();
 
         replay(node, router);
 
@@ -93,8 +92,8 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testGetAllValues() throws Exception {
-        Map<String, Value> keys = new HashMap<String, Value>();
-        keys.put("test", null);
+        Set<String> keys = new HashSet<String>();
+        keys.add("test");
         Map<String, Value> values = new HashMap<String, Value>();
         values.put("test", new JsonValue(JSON_VALUE.getBytes()));
 
@@ -133,9 +132,9 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Map<String, Value> keys = new HashMap<String, Value>();
-        keys.put("test1", null);
-        keys.put("test2", null);
+        Set<String> keys = new HashSet<String>();
+        keys.add("test1");
+        keys.add("test2");
         Map<String, Value> values = new HashMap<String, Value>();
         values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
         values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
@@ -189,9 +188,9 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Map<String, Value> keys = new HashMap<String, Value>();
-        keys.put("test1", null);
-        keys.put("test2", null);
+        Set<String> keys = new HashSet<String>();
+        keys.add("test1");
+        keys.add("test2");
         Map<String, Value> values = new HashMap<String, Value>();
         values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
         values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
@@ -248,9 +247,9 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Map<String, Value> keys = new HashMap<String, Value>();
-        keys.put("test1", null);
-        keys.put("test2", null);
+        Set<String> keys = new HashSet<String>();
+        keys.add("test1");
+        keys.add("test2");
         Map<String, Value> values = new HashMap<String, Value>();
         values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
         values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
@@ -294,9 +293,9 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Map<String, Value> keys = new HashMap<String, Value>();
-        keys.put("test1", null);
-        keys.put("test2", null);
+        Set<String> keys = new HashSet<String>();
+        keys.add("test1");
+        keys.add("test2");
         Map<String, Value> values = new HashMap<String, Value>();
         values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
         values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
@@ -342,9 +341,9 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Map<String, Value> keys = new HashMap<String, Value>();
-        keys.put("test1", null);
-        keys.put("test2", null);
+        Set<String> keys = new HashSet<String>();
+        keys.add("test1");
+        keys.add("test2");
         Map<String, Value> values = new HashMap<String, Value>();
         values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
         values.put("test2", new JsonValue(JSON_VALUE.getBytes()));

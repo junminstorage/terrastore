@@ -41,9 +41,7 @@ import terrastore.common.ErrorMessage;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
-import terrastore.communication.protocol.Response;
 import terrastore.communication.remote.serialization.JavaSerializer;
-import terrastore.store.Value;
 
 /**
  * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes.
@@ -55,7 +53,7 @@ public class RemoteNode implements Node {
     private static final transient Logger LOG = LoggerFactory.getLogger(RemoteNode.class);
     private final Lock stateLock = new ReentrantLock();
     private final Map<String, Condition> responseConditions = new HashMap<String, Condition>();
-    private final Map<String, Response> responses = new HashMap<String, Response>();
+    private final Map<String, RemoteResponse> responses = new HashMap<String, RemoteResponse>();
     private final String host;
     private final int port;
     private final String name;
@@ -72,7 +70,7 @@ public class RemoteNode implements Node {
         client.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
         client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(3145728, 0, 4, 0, 4));
         client.getPipeline().addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
-        client.getPipeline().addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<Response>()));
+        client.getPipeline().addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
         client.getPipeline().addLast("HANDLER", new ClientHandler());
     }
 
@@ -110,7 +108,7 @@ public class RemoteNode implements Node {
         }
     }
 
-    public Map<String, Value> send(Command command) throws ProcessingException {
+    public <R> R send(Command<R> command) throws ProcessingException {
         stateLock.lock();
         if (clientChannel != null) {
             try {
@@ -130,10 +128,9 @@ public class RemoteNode implements Node {
                     }
                 }
                 //
-                Response response = responses.remove(commandId);
+                RemoteResponse response = responses.remove(commandId);
                 if (response != null && response.isOk()) {
-                    Map<String, Value> entries = response.getEntries();
-                    return entries;
+                    return (R) response.getResult();
                 } else if (response != null) {
                     throw new ProcessingException(response.getError());
                 } else {
@@ -188,7 +185,7 @@ public class RemoteNode implements Node {
         public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
             stateLock.lock();
             try {
-                Response response = (Response) event.getMessage();
+                RemoteResponse response = (RemoteResponse) event.getMessage();
                 String correlationId = response.getCorrelationId();
                 Condition responseCondition = responseConditions.remove(correlationId);
                 responses.put(correlationId, response);

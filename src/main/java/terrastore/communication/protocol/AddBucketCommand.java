@@ -15,11 +15,8 @@
  */
 package terrastore.communication.protocol;
 
-import java.util.HashMap;
-import java.util.Map;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 
 /**
  * @author Sergio Bossa
@@ -32,8 +29,8 @@ public class AddBucketCommand extends AbstractCommand {
         this.bucketName = bucketName;
     }
 
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException {
+    public Object executeOn(Store store) throws StoreOperationException {
         store.add(bucketName);
-        return new HashMap<String, Value>(0);
+        return null;
     }
 }

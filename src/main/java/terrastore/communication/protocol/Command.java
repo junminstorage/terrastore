@@ -16,26 +16,24 @@
 package terrastore.communication.protocol;
 
 import java.io.Serializable;
-import java.util.Map;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 
 /**
  * Command to be executed on a {@link terrastore.store.Store} instance.
  *
  * @author Sergio Bossa
  */
-public interface Command extends Serializable {
-
+public interface Command<R> extends Serializable {
+    
     /**
      * Execute this command on the given {@link terrastore.store.Store} instance.
      *
      * @param store The store to execute this command on.
-     * @return The result of the executed command, as a map of key/value pairs (if any). This never returns null.
+     * @return The result of the executed command, or null if command doesn't return any result.
      * @throws StoreOperationException If errors occur during command execution.
      */
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException;
+    public R executeOn(Store store) throws StoreOperationException;
 
     public void setId(String id);
 

@@ -16,23 +16,22 @@
 package terrastore.communication.protocol;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 
 /**
  * @author Sergio Bossa
  */
-public class GetBucketsCommand extends AbstractCommand {
+public class GetBucketsCommand extends AbstractCommand<Set<String>> {
 
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException {
+    public Set<String> executeOn(Store store) throws StoreOperationException {
         Collection<Bucket> buckets = store.buckets();
-        Map<String, Value> names = new HashMap<String, Value>();
+        Set<String> names = new HashSet<String>();
         for (Bucket bucket : buckets) {
-            names.put(bucket.getName(), null);
+            names.add(bucket.getName());
         }
         return names;
     }

@@ -46,7 +46,7 @@ public class DefaultUpdateServiceTest {
         router.getLocalNode();
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<AddBucketCommand>anyObject());
-        expectLastCall().andReturn(new HashMap(0)).once();
+        expectLastCall().andReturn(null).once();
 
         replay(node, router);
 
@@ -64,7 +64,7 @@ public class DefaultUpdateServiceTest {
         router.getLocalNode();
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<RemoveBucketCommand>anyObject());
-        expectLastCall().andReturn(new HashMap(0)).once();
+        expectLastCall().andReturn(null).once();
 
         replay(node, router);
 
@@ -82,7 +82,7 @@ public class DefaultUpdateServiceTest {
         router.routeToNodeFor("bucket", "test1");
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<PutValueCommand>anyObject());
-        expectLastCall().andReturn(new HashMap(0)).once();
+        expectLastCall().andReturn(null).once();
 
         replay(node, router);
 
@@ -100,7 +100,7 @@ public class DefaultUpdateServiceTest {
         router.routeToNodeFor("bucket", "test1");
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<RemoveValueCommand>anyObject());
-        expectLastCall().andReturn(new HashMap(0)).once();
+        expectLastCall().andReturn(null).once();
 
         replay(node, router);
 
@@ -126,7 +126,7 @@ public class DefaultUpdateServiceTest {
         router.routeToNodeFor("bucket", "test1");
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<UpdateCommand>anyObject());
-        expectLastCall().andReturn(new HashMap(0)).once();
+        expectLastCall().andReturn(null).once();
 
         replay(node, router);
 
