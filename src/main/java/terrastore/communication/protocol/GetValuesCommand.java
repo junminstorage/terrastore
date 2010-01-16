@@ -28,7 +28,7 @@ import terrastore.store.operators.Condition;
 /**
  * @author Sergio Bossa
  */
-public class GetValuesCommand extends AbstractCommand {
+public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
 
     private final String bucketName;
     private final Set<String> keys;

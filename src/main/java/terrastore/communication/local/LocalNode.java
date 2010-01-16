@@ -15,7 +15,6 @@
  */
 package terrastore.communication.local;
 
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.communication.Node;
@@ -23,7 +22,6 @@ import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 
 /**
  * Local {@link terrastore.communication.Node} implementation representing <b>this</b> cluster node instance.<br>
@@ -47,9 +45,10 @@ public class LocalNode implements Node {
     public void connect() {
     }
 
-    public Map<String, Value> send(Command command) throws ProcessingException {
+    public <R> R send(Command<R> command) throws ProcessingException {
         try {
-            return command.executeOn(store);
+            R result = command.executeOn(store);
+            return result;
         } catch (StoreOperationException ex) {
             throw new ProcessingException(ex.getErrorMessage());
         }

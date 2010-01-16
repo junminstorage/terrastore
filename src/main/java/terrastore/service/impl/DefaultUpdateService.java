@@ -23,7 +23,6 @@ import terrastore.common.ErrorMessage;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.AddBucketCommand;
-import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
@@ -52,7 +51,7 @@ public class DefaultUpdateService implements UpdateService {
         try {
             LOG.debug("Adding bucket {}", bucket);
             Node node = router.getLocalNode();
-            Command command = new AddBucketCommand(bucket);
+            AddBucketCommand command = new AddBucketCommand(bucket);
             node.send(command);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
@@ -65,7 +64,7 @@ public class DefaultUpdateService implements UpdateService {
         try {
             LOG.debug("Removing bucket {}", bucket);
             Node node = router.getLocalNode();
-            Command command = new RemoveBucketCommand(bucket);
+            RemoveBucketCommand command = new RemoveBucketCommand(bucket);
             node.send(command);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
@@ -78,7 +77,7 @@ public class DefaultUpdateService implements UpdateService {
         try {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
-            Command command = new PutValueCommand(bucket, key, value);
+            PutValueCommand command = new PutValueCommand(bucket, key, value);
             node.send(command);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
@@ -91,7 +90,7 @@ public class DefaultUpdateService implements UpdateService {
         try {
             LOG.debug("Removing value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
-            Command command = new RemoveValueCommand(bucket, key);
+            RemoveValueCommand command = new RemoveValueCommand(bucket, key);
             node.send(command);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
@@ -107,7 +106,7 @@ public class DefaultUpdateService implements UpdateService {
             Function function = functions.get(update.getFunctionName());
             if (function != null) {
                 Node node = router.routeToNodeFor(bucket, key);
-                Command command = new UpdateCommand(bucket, key, update, function);
+                UpdateCommand command = new UpdateCommand(bucket, key, update, function);
                 node.send(command);
             } else {
                 throw new UpdateOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "No function found: " + update.getFunctionName()));

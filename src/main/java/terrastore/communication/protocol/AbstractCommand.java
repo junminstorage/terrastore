@@ -18,7 +18,7 @@ package terrastore.communication.protocol;
 /**
  * @author Sergio Bossa
  */
-public abstract class AbstractCommand implements Command {
+public abstract class AbstractCommand<R> implements Command {
 
     private String id;
 

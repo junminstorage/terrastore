@@ -63,9 +63,9 @@ public class DefaultQueryService implements QueryService {
         try {
             LOG.debug("Getting bucket names.");
             Node node = router.getLocalNode();
-            Command command = new GetBucketsCommand();
-            Map<String, Value> buckets = node.send(command);
-            return buckets.keySet();
+            GetBucketsCommand command = new GetBucketsCommand();
+            Set<String> buckets = node.<Set<String>>send(command);
+            return buckets;
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -77,13 +77,9 @@ public class DefaultQueryService implements QueryService {
         try {
             LOG.debug("Getting value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
-            Command command = new GetValueCommand(bucket, key);
-            Map<String, Value> entries = node.send(command);
-            if (entries.size() <= 1) {
-                return entries.get(key);
-            } else {
-                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Illegal: more than one value found for key: " + key));
-            }
+            GetValueCommand command = new GetValueCommand(bucket, key);
+            Value result = node.<Value>send(command);
+            return result;
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -100,8 +96,9 @@ public class DefaultQueryService implements QueryService {
             for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
                 Node node = nodeToKeysEntry.getKey();
                 Set<String> keys = nodeToKeysEntry.getValue();
-                Command command = new GetValuesCommand(bucket, keys);
-                allKeyValues.add(node.send(command));
+                GetValuesCommand command = new GetValuesCommand(bucket, keys);
+                Map<String, Value> partial = node.<Map<String, Value>>send(command);
+                allKeyValues.add(partial);
             }
             return Maps.union(allKeyValues);
         } catch (ProcessingException ex) {
@@ -123,13 +120,14 @@ public class DefaultQueryService implements QueryService {
             for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
                 Node node = nodeToKeysEntry.getKey();
                 Set<String> keys = nodeToKeysEntry.getValue();
-                Command command = null;
+                GetValuesCommand command = null;
                 if (valueCondition == null) {
                     command = new GetValuesCommand(bucket, keys);
                 } else {
                     command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
                 }
-                allKeyValues.add(node.send(command));
+                Map<String, Value> partial = node.<Map<String, Value>>send(command);
+                allKeyValues.add(partial);
             }
             // TODO: we may use fork/join to build the final map out of all sub-maps.
             return Maps.drain(allKeyValues, new TreeMap<String, Value>(keyComparator));
@@ -152,8 +150,9 @@ public class DefaultQueryService implements QueryService {
                 for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
                     Node node = nodeToKeysEntry.getKey();
                     Set<String> keys = nodeToKeysEntry.getValue();
-                    Command command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
-                    allKeyValues.add(node.send(command));
+                    GetValuesCommand command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
+                    Map<String, Value> partial = node.<Map<String, Value>>send(command);
+                    allKeyValues.add(partial);
                 }
                 return Maps.union(allKeyValues);
             } else {
@@ -199,15 +198,15 @@ public class DefaultQueryService implements QueryService {
 
     private Set<String> getAllKeysForBucket(String bucket) throws ProcessingException {
         Node node = router.getLocalNode();
-        Command command = new GetKeysCommand(bucket);
-        Set<String> storedKeys = node.send(command).keySet();
+        GetKeysCommand command = new GetKeysCommand(bucket);
+        Set<String> storedKeys = node.<Set<String>>send(command);
         return storedKeys;
     }
 
     private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator<String> keyComparator, long timeToLive) throws ProcessingException {
         Node node = router.getLocalNode();
         Command command = new DoRangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
-        Set<String> storedKeys = node.send(command).keySet();
+        Set<String> storedKeys = node.<Set<String>>send(command);
         return storedKeys;
     }
 

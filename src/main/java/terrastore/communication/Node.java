@@ -15,9 +15,7 @@
  */
 package terrastore.communication;
 
-import java.util.Map;
 import terrastore.communication.protocol.Command;
-import terrastore.store.Value;
 
 /**
  * Node interface, representing an actual node in the cluster, which can be local
@@ -37,10 +35,10 @@ public interface Node {
      * Send the given {@link terrastore.communication.protocol.Command} message, so that it can be locally or remotely executed.
      *
      * @param command The command to send.
-     * @return The result of the executed command, as a map of key/value pairs (if any). This never returns null.
+     * @return The result of the executed command.
      * @throws ProcessingException If an error occurs during command processing.
      */
-    public Map<String, Value> send(Command command) throws ProcessingException;
+    public <R> R send(Command<R> command) throws ProcessingException;
 
     /**
      * Disconnect from this node.

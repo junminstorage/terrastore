@@ -13,35 +13,33 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.protocol;
+package terrastore.communication.remote;
 
 import java.io.Serializable;
-import java.util.Map;
 import terrastore.common.ErrorMessage;
-import terrastore.store.Value;
 
 /**
  * @author Sergio Bossa
  */
-public class Response implements Serializable {
+public class RemoteResponse implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
 
     private final String correlationId;
-    private final Map<String, Value> entries;
+    private final Object result;
     private final ErrorMessage error;
 
-    public Response(String correlationId, Map<String, Value> entries) {
-        this(correlationId, entries, null);
+    public RemoteResponse(String correlationId, Object result) {
+        this(correlationId, result, null);
     }
 
-    public Response(String correlationId, ErrorMessage error) {
+    public RemoteResponse(String correlationId, ErrorMessage error) {
         this(correlationId, null, error);
     }
 
-    protected Response(String correlationId, Map<String, Value> entries, ErrorMessage error) {
+    protected RemoteResponse(String correlationId, Object result, ErrorMessage error) {
         this.correlationId = correlationId;
-        this.entries = entries;
+        this.result = result;
         this.error = error;
     }
 
@@ -49,8 +47,8 @@ public class Response implements Serializable {
         return correlationId;
     }
 
-    public Map<String, Value> getEntries() {
-        return entries;
+    public Object getResult() {
+        return result;
     }
 
     public ErrorMessage getError() {

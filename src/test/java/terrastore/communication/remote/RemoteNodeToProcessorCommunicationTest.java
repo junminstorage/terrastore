@@ -21,7 +21,6 @@ import java.util.concurrent.Executors;
 import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
@@ -62,15 +61,15 @@ public class RemoteNodeToProcessorCommunicationTest {
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, Executors.newCachedThreadPool());
         Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
-        Command command = new GetValueCommand(bucketName, valueKey);
+        GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
             processor.start();
             sender.connect();
 
-            Map<String, Value> result = sender.send(command);
-            assertEquals(1, result.size());
-            assertEquals(new String(value.getBytes()), new String(result.get(valueKey).getBytes()));
+            Value result = sender.<Value>send(command);
+            assertNotNull(result);
+            assertEquals(new String(value.getBytes()), new String(result.getBytes()));
         } finally {
             try {
                 sender.disconnect();
@@ -102,7 +101,7 @@ public class RemoteNodeToProcessorCommunicationTest {
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, Executors.newCachedThreadPool());
         Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
-        Command command = new GetValueCommand(bucketName, valueKey);
+        GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
             processor.start();
@@ -110,7 +109,7 @@ public class RemoteNodeToProcessorCommunicationTest {
 
             processor.stop();
 
-            sender.send(command);
+            sender.<Value>send(command);
         } finally {
             try {
                 sender.disconnect();

@@ -15,15 +15,12 @@
  */
 package terrastore.communication.protocol;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import terrastore.cluster.impl.ClusterLocator;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.features.Update;
-import terrastore.store.Value;
 import terrastore.store.operators.Function;
 
 /**
@@ -43,7 +40,7 @@ public class UpdateCommand extends AbstractCommand {
         this.function = function;
     }
 
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException {
+    public Object executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             // WARN: use singleton locator due to Terracotta not supporting injection in clustered objects:
@@ -51,6 +48,6 @@ public class UpdateCommand extends AbstractCommand {
             //
             bucket.update(key, update, function, updateExecutor);
         }
-        return new HashMap<String, Value>(0);
+        return null;
     }
 }

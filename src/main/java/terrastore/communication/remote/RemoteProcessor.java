@@ -16,7 +16,6 @@
 package terrastore.communication.remote;
 
 import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
@@ -37,11 +36,9 @@ import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.communication.protocol.Command;
-import terrastore.communication.protocol.Response;
 import terrastore.communication.remote.serialization.JavaSerializer;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 
 /**
  * Process {@link terrastore.communication.protocol.Command} messages sent by remote cluster nodes.
@@ -70,7 +67,7 @@ public class RemoteProcessor {
         server.setOption("reuseAddress", true);
         server.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
         server.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(2097152, 0, 4, 0, 4));
-        server.getPipeline().addLast("RESPONSE_ENCODER", new SerializerEncoder(new JavaSerializer<Response>()));
+        server.getPipeline().addLast("RESPONSE_ENCODER", new SerializerEncoder(new JavaSerializer<RemoteResponse>()));
         server.getPipeline().addLast("COMMAND_DECODER", new SerializerDecoder(new JavaSerializer<Command>()));
         server.getPipeline().addLast("HANDLER", new ServerHandler());
     }
@@ -124,10 +121,10 @@ public class RemoteProcessor {
                     @Override
                     public void run() {
                         try {
-                            Map<String, Value> entries = command.executeOn(store);
-                            channel.write(new Response(command.getId(), entries));
+                            Object result = command.executeOn(store);
+                            channel.write(new RemoteResponse(command.getId(), result));
                         } catch (StoreOperationException ex) {
-                            channel.write(new Response(command.getId(), ex.getErrorMessage()));
+                            channel.write(new RemoteResponse(command.getId(), ex.getErrorMessage()));
                         }
                     }
                 });

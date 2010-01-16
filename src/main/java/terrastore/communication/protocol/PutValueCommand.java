@@ -15,8 +15,6 @@
  */
 package terrastore.communication.protocol;
 
-import java.util.HashMap;
-import java.util.Map;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -37,11 +35,11 @@ public class PutValueCommand extends AbstractCommand {
         this.value = value;
     }
 
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException {
+    public Object executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             bucket.put(key, value);
         }
-        return new HashMap<String, Value>(0);
+        return null;
     }
 }
