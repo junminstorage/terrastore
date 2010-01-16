@@ -130,7 +130,9 @@ public class RemoteNode implements Node {
                 //
                 RemoteResponse response = responses.remove(commandId);
                 if (response != null && response.isOk()) {
+                    // Safe cast: correlation id ensures it's the *correct* command response.
                     return (R) response.getResult();
+                    //
                 } else if (response != null) {
                     throw new ProcessingException(response.getError());
                 } else {
