@@ -15,9 +15,9 @@
  */
 package terrastore.service;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
 import terrastore.router.Router;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
@@ -36,10 +36,10 @@ public interface QueryService {
     /**
      * Get the name of all buckets.
      *
-     * @return A collection of all bucket names.
+     * @return A set of all bucket names.
      * @throws QueryOperationException If unable to access buckets.
      */
-    public Collection<String> getBuckets() throws QueryOperationException;
+    public Set<String> getBuckets() throws QueryOperationException;
 
     /**
      * Get the value under the given key, contained by the given bucket.

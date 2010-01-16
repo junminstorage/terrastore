@@ -17,9 +17,10 @@ package terrastore.server.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.apache.commons.httpclient.HttpClient;
@@ -230,7 +231,9 @@ public class JsonHttpServerTest {
 
     @Test
     public void testGetBuckets() throws Exception {
-        Collection<String> buckets = Arrays.asList("test1", "test2");
+        Set<String> buckets = new LinkedHashSet<String>();
+        buckets.add("test1");
+        buckets.add("test2");
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);

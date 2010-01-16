@@ -16,7 +16,6 @@
 package terrastore.service.impl;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +58,7 @@ public class DefaultQueryService implements QueryService {
         this.router = router;
     }
 
-    public Collection<String> getBuckets() throws QueryOperationException {
+    public Set<String> getBuckets() throws QueryOperationException {
         try {
             LOG.debug("Getting bucket names.");
             Node node = router.getLocalNode();

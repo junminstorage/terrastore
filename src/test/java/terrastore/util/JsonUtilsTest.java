@@ -18,10 +18,10 @@ package terrastore.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Test;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
@@ -99,7 +99,9 @@ public class JsonUtilsTest {
 
     @Test
     public void testWriteBuckets() throws Exception {
-        Collection<String> names = Arrays.asList("1", "2");
+        Set<String> names = new LinkedHashSet<String>();
+        names.add("1");
+        names.add("2");
         Buckets buckets = new Buckets(names);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonUtils.write(buckets, stream);
