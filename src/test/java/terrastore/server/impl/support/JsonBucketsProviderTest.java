@@ -16,8 +16,8 @@
 package terrastore.server.impl.support;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.junit.Test;
 import terrastore.server.Buckets;
 import static org.junit.Assert.*;
@@ -32,7 +32,9 @@ public class JsonBucketsProviderTest {
     @Test
     public void testWrite() throws Exception {
         JsonBucketsProvider provider = new JsonBucketsProvider();
-        Collection<String> names = Arrays.asList("1", "2");
+        Set<String> names = new LinkedHashSet<String>();
+        names.add("1");
+        names.add("2");
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         provider.writeTo(new Buckets(names), null, null, null, null, null, stream);

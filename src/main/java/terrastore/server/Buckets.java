@@ -16,20 +16,20 @@
 package terrastore.server;
 
 import java.io.Serializable;
-import java.util.AbstractCollection;
-import java.util.Collection;
+import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Sergio Bossa
  */
-public class Buckets extends AbstractCollection<String> implements Serializable {
+public class Buckets extends AbstractSet<String> implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
 
-    private final Collection<String> buckets;
+    private final Set<String> buckets;
 
-    public Buckets(Collection<String> buckets) {
+    public Buckets(Set<String> buckets) {
         this.buckets = buckets;
     }
 
