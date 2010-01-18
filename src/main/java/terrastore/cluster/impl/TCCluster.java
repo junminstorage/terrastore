@@ -24,8 +24,11 @@ import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tcclient.cluster.DsoNode;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
@@ -64,7 +67,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private Condition waitAddressCondition = stateLock.newCondition();
     private Map<String, Address> addressTable = new HashMap<String, Address>();
     //
-    private volatile transient Map<String, Node> nodes;
+    private volatile transient String thisNodeName;
+    private volatile transient ConcurrentMap<String, Node> nodes;
     private volatile transient RemoteProcessor processor;
     //
     private volatile transient long nodeTimeout;
@@ -121,10 +125,10 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     public void start(String host, int port) {
-        String thisNodeName = dsoCluster.getCurrentNode().getId();
         stateLock.lock();
         try {
-            nodes = new HashMap<String, Node>();
+            thisNodeName = dsoCluster.getCurrentNode().getId();
+            nodes = new ConcurrentHashMap<String, Node>();
             workerExecutor = Executors.newFixedThreadPool(workerThreads);
             addressTable.put(thisNodeName, new Address(host, port));
             waitAddressCondition.signalAll();
@@ -137,27 +141,12 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     public void operationsEnabled(DsoClusterEvent event) {
-        String thisNodeName = dsoCluster.getCurrentNode().getId();
         stateLock.lock();
         try {
             LOG.info("Setting up cluster node {}", thisNodeName);
-            setupThisNode(thisNodeName);
-            setupRemoteProcessor(thisNodeName);
+            setupThisNode();
+            setupThisRemoteProcessor();
             setupRemoteNodes();
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-        } finally {
-            stateLock.unlock();
-        }
-    }
-
-    public void operationsDisabled(DsoClusterEvent event) {
-        String thisNodeName = dsoCluster.getCurrentNode().getId();
-        stateLock.lock();
-        try {
-            LOG.info("Disabling cluster node {}", thisNodeName);
-            disconnectEverything();
-            cleanupEverything();
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         } finally {
@@ -167,28 +156,38 @@ public class TCCluster implements Cluster, DsoClusterListener {
 
     public void nodeJoined(DsoClusterEvent event) {
         String joinedNodeName = event.getNode().getId();
-        stateLock.lock();
-        try {
-            if (!isThisNode(joinedNodeName)) {
+        if (!isThisNode(joinedNodeName)) {
+            stateLock.lock();
+            try {
                 setupRemoteNode(joinedNodeName, true);
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+            } finally {
+                stateLock.unlock();
             }
+        }
+    }
+
+    public void operationsDisabled(DsoClusterEvent event) {
+        try {
+            LOG.info("Disabling cluster node {}", thisNodeName);
+            disconnectEverything();
+            cleanupEverything();
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         } finally {
-            stateLock.unlock();
+            doExit();
         }
     }
 
     public void nodeLeft(DsoClusterEvent event) {
-        String leftNodeKey = event.getNode().getId();
-        stateLock.lock();
-        try {
-            addressTable.remove(leftNodeKey);
-            discardRemoteNode(leftNodeKey);
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-        } finally {
-            stateLock.unlock();
+        String leftNodeName = event.getNode().getId();
+        if (!isThisNode(leftNodeName)) {
+            try {
+                discardRemoteNode(leftNodeName);
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
         }
     }
 
@@ -201,17 +200,17 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     private boolean isThisNode(String candidateNodeName) {
-        return (dsoCluster.getCurrentNode().getId().equals(candidateNodeName));
+        return thisNodeName.equals(candidateNodeName);
     }
 
-    private void setupRemoteProcessor(String thisNodeName) {
+    private void setupThisRemoteProcessor() {
         Address thisNodeAddress = addressTable.get(thisNodeName);
         processor = new RemoteProcessor(thisNodeAddress.getHost(), thisNodeAddress.getPort(), store, workerExecutor);
         processor.start();
         LOG.info("Set up processor for {}", thisNodeName);
     }
 
-    private void setupThisNode(String thisNodeName) {
+    private void setupThisNode() {
         Node thisNode = new LocalNode(thisNodeName, store);
         thisNode.connect();
         nodes.put(thisNodeName, thisNode);
@@ -222,7 +221,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
 
     private void setupRemoteNode(String remoteNodeName, boolean flush) throws InterruptedException {
         while (!addressTable.containsKey(remoteNodeName)) {
-            waitAddressCondition.await();
+            waitAddressCondition.await(1000, TimeUnit.SECONDS);
         }
         Address remoteNodeAddress = addressTable.get(remoteNodeName);
         if (remoteNodeAddress != null) {
@@ -240,10 +239,9 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     private void setupRemoteNodes() throws InterruptedException {
-        DsoNode currentNode = getDsoCluster().getCurrentNode();
         DsoClusterTopology dsoTopology = getDsoCluster().getClusterTopology();
         for (DsoNode dsoNode : dsoTopology.getNodes()) {
-            if (!dsoNode.getId().equals(currentNode.getId())) {
+            if (!isThisNode(dsoNode.getId())) {
                 String remoteNodeName = dsoNode.getId();
                 setupRemoteNode(remoteNodeName, false);
             }
@@ -268,6 +266,22 @@ public class TCCluster implements Cluster, DsoClusterListener {
         nodes.clear();
         router.cleanup();
         workerExecutor.shutdownNow();
+    }
+
+    private void doExit() {
+        new Thread() {
+
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception ex) {
+                } finally {
+                    LOG.info("Exiting cluster node {}", thisNodeName);
+                    System.exit(0);
+                }
+            }
+        }.start();
     }
 
     @InstrumentedClass
