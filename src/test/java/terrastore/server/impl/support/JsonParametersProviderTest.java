@@ -25,13 +25,13 @@ import static org.junit.Assert.*;
 /**
  * @author Sergio Bossa
  */
-public class JsonParametersMapProviderTest {
+public class JsonParametersProviderTest {
 
     private static final String JSON_PARAMETERS = "{\"test1\":\"test1\"}";
 
     @Test
     public void testRead() throws Exception {
-        JsonParametersMapProvider provider = new JsonParametersMapProvider();
+        JsonParametersProvider provider = new JsonParametersProvider();
         Map<String, String> map = new HashMap<String, String>();
         map.put("test1", "test1");
 

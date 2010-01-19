@@ -19,9 +19,9 @@
 
     <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
     <bean class="terrastore.server.impl.support.JsonValueProvider"/>
-    <bean class="terrastore.server.impl.support.JsonValuesMapProvider"/>
+    <bean class="terrastore.server.impl.support.JsonValuesProvider"/>
     <bean class="terrastore.server.impl.support.JsonBucketsProvider"/>
-    <bean class="terrastore.server.impl.support.JsonParametersMapProvider"/>
+    <bean class="terrastore.server.impl.support.JsonParametersProvider"/>
     <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
     
     <!-- Service -->

@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
 /**
  * @author Sergio Bossa
  */
-public class JsonValuesMapProviderTest {
+public class JsonValuesProviderTest {
 
     private static final String JSON_VALUE_1 = "{\"test1\":\"test1\"}";
     private static final String JSON_VALUE_2 = "{\"test2\":\"test2\"}";
@@ -35,7 +35,7 @@ public class JsonValuesMapProviderTest {
 
     @Test
     public void testWrite() throws Exception {
-        JsonValuesMapProvider provider = new JsonValuesMapProvider();
+        JsonValuesProvider provider = new JsonValuesProvider();
         Map<String, Value> map = new TreeMap<String, Value>();
         map.put("key1", new JsonValue(JSON_VALUE_1.getBytes("UTF-8")));
         map.put("key2", new JsonValue(JSON_VALUE_2.getBytes("UTF-8")));
