@@ -36,8 +36,8 @@ import org.junit.Test;
 import terrastore.common.ErrorMessage;
 import terrastore.server.impl.support.JsonBucketsProvider;
 import terrastore.server.impl.support.JsonErrorMessageProvider;
-import terrastore.server.impl.support.JsonValuesMapProvider;
-import terrastore.server.impl.support.JsonParametersMapProvider;
+import terrastore.server.impl.support.JsonValuesProvider;
+import terrastore.server.impl.support.JsonParametersProvider;
 import terrastore.server.impl.support.JsonServerOperationExceptionMapper;
 import terrastore.server.impl.support.JsonValueProvider;
 import terrastore.service.QueryService;
@@ -508,9 +508,9 @@ public class JsonHttpServerTest {
         server.getDeployment().setRegisterBuiltin(true);
         server.getDeployment().setProviderClasses(Arrays.asList(
                 JsonErrorMessageProvider.class.getName(),
-                JsonValuesMapProvider.class.getName(),
+                JsonValuesProvider.class.getName(),
                 JsonBucketsProvider.class.getName(),
-                JsonParametersMapProvider.class.getName(),
+                JsonParametersProvider.class.getName(),
                 JsonValueProvider.class.getName(),
                 JsonServerOperationExceptionMapper.class.getName()));
         server.getDeployment().setResources(Arrays.<Object>asList(resource));
