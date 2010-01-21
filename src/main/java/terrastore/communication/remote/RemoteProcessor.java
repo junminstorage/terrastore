@@ -48,6 +48,9 @@ import terrastore.store.StoreOperationException;
 public class RemoteProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteProcessor.class);
+    // FIXME: this 3MB limit should be known and configurable
+    private static final int MAX_FRAME_SIZE = 3145728;
+    //
     private final Lock stateLock = new ReentrantLock();
     private final String host;
     private final int port;
@@ -66,7 +69,7 @@ public class RemoteProcessor {
         server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newSingleThreadExecutor(), Executors.newSingleThreadExecutor()));
         server.setOption("reuseAddress", true);
         server.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-        server.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(2097152, 0, 4, 0, 4));
+        server.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
         server.getPipeline().addLast("RESPONSE_ENCODER", new SerializerEncoder(new JavaSerializer<RemoteResponse>()));
         server.getPipeline().addLast("COMMAND_DECODER", new SerializerDecoder(new JavaSerializer<Command>()));
         server.getPipeline().addLast("HANDLER", new ServerHandler());

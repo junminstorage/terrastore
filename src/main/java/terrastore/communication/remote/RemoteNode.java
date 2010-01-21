@@ -51,6 +51,9 @@ import terrastore.communication.remote.serialization.JavaSerializer;
 public class RemoteNode implements Node {
 
     private static final transient Logger LOG = LoggerFactory.getLogger(RemoteNode.class);
+    // FIXME: this 3MB limit should be known and configurable
+    private static final int MAX_FRAME_SIZE = 3145728;
+    //
     private final Lock stateLock = new ReentrantLock();
     private final Map<String, Condition> responseConditions = new HashMap<String, Condition>();
     private final Map<String, RemoteResponse> responses = new HashMap<String, RemoteResponse>();
@@ -68,7 +71,7 @@ public class RemoteNode implements Node {
         this.timeoutInMillis = timeoutInMillis;
         client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newSingleThreadExecutor(), Executors.newSingleThreadExecutor()));
         client.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-        client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(3145728, 0, 4, 0, 4));
+        client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE,0, 4, 0, 4));
         client.getPipeline().addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
         client.getPipeline().addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
         client.getPipeline().addLast("HANDLER", new ClientHandler());
