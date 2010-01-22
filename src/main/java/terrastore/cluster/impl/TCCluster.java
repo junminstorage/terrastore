@@ -168,6 +168,20 @@ public class TCCluster implements Cluster, DsoClusterListener {
         }
     }
 
+    public void nodeLeft(DsoClusterEvent event) {
+        String leftNodeName = event.getNode().getId();
+        if (!isThisNode(leftNodeName)) {
+            stateLock.lock();
+            try {
+                discardRemoteNode(leftNodeName);
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+            } finally {
+                stateLock.unlock();
+            }
+        }
+    }
+
     public void operationsDisabled(DsoClusterEvent event) {
         try {
             LOG.info("Disabling cluster node {}", thisNodeName);
@@ -177,17 +191,6 @@ public class TCCluster implements Cluster, DsoClusterListener {
             LOG.error(ex.getMessage(), ex);
         } finally {
             doExit();
-        }
-    }
-
-    public void nodeLeft(DsoClusterEvent event) {
-        String leftNodeName = event.getNode().getId();
-        if (!isThisNode(leftNodeName)) {
-            try {
-                discardRemoteNode(leftNodeName);
-            } catch (Exception ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
         }
     }
 
