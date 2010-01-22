@@ -167,10 +167,10 @@ public class JsonHttpServer implements Server {
     @GET
     @Path("/{bucket}")
     @Produces("application/json")
-    public Values getAllValues(@PathParam("bucket") String bucket) throws ServerOperationException {
+    public Values getAllValues(@PathParam("bucket") String bucket, @QueryParam("limit") int limit) throws ServerOperationException {
         try {
             LOG.debug("Getting all values from bucket {}", bucket);
-            return new Values(queryService.getAllValues(bucket));
+            return new Values(queryService.getAllValues(bucket, limit));
         } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

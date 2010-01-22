@@ -42,6 +42,7 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Condition;
 import terrastore.util.Maps;
+import terrastore.util.Sets;
 
 /**
  * @author Sergio Bossa
@@ -86,10 +87,10 @@ public class DefaultQueryService implements QueryService {
         }
     }
 
-    public Map<String, Value> getAllValues(String bucket) throws QueryOperationException {
+    public Map<String, Value> getAllValues(String bucket, int limit) throws QueryOperationException {
         try {
             LOG.debug("Getting all values from bucket {}", bucket);
-            Set<String> storedKeys = getAllKeysForBucket(bucket);
+            Set<String> storedKeys =  Sets.limited(getAllKeysForBucket(bucket), limit);
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, storedKeys);
             List<Map<String, Value>> allKeyValues = new ArrayList(nodeToKeys.size());
             for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {

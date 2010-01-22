@@ -132,7 +132,7 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testGetAllValues() throws Exception {
+    public void testGetAllValuesWithNoLimit() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
         PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
@@ -161,6 +161,37 @@ public class IntegrationTest {
         for (int i = 1; i <= size; i++) {
             assertTrue(allValues.containsKey("value" + (char) ('a' + i)));
         }
+    }
+
+    @Test
+    public void testGetAllValuesWithLimit() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        int limit = 5;
+
+        GetMethod getAllValues = makeGetMethodWithLimit(NODE2_PORT, bucket, limit);
+        HTTP_CLIENT.executeMethod(getAllValues);
+        assertEquals(HttpStatus.SC_OK, getAllValues.getStatusCode());
+        Map<String, Object> allValues = fromJsonToMap(getAllValues.getResponseBodyAsString());
+        System.err.println(getAllValues.getResponseBodyAsString());
+        getAllValues.releaseConnection();
+        assertEquals(limit, allValues.size());
     }
 
     @Test
@@ -426,6 +457,12 @@ public class IntegrationTest {
 
     private GetMethod makeGetMethod(int nodePort, String path) {
         GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path);
+        method.setRequestHeader("Content-Type", "application/json");
+        return method;
+    }
+
+    private GetMethod makeGetMethodWithLimit(int nodePort, String path, int limit) {
+        GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?limit=" + limit);
         method.setRequestHeader("Content-Type", "application/json");
         return method;
     }

@@ -96,10 +96,11 @@ public interface Server {
      * Get all key/value entries into the given bucket.
      *
      * @param bucket The name of the bucket containing the values to get.
+     * @param limit Max number of elements to retrieve; if zero, all values will be returned.
      * @return A map containing all key/value entries.
      * @throws ServerOperationException If an error occurs.
      */
-    public Values getAllValues(String bucket) throws ServerOperationException;
+    public Values getAllValues(String bucket, int limit) throws ServerOperationException;
 
     /**
      * Execute a range query returning all key/value pairs whose key falls into the given range, and whose value satisfies the given predicate (if any).
