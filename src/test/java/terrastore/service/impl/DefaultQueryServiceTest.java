@@ -15,6 +15,7 @@
  */
 package terrastore.service.impl;
 
+import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.communication.Node;
@@ -92,20 +94,22 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testGetAllValues() throws Exception {
-        Set<String> keys = new HashSet<String>();
-        keys.add("test");
+        Set<String> keys = new TreeSet<String>();
+        keys.add("test1");
+        keys.add("test2");
         Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         Node localNode = createMock(Node.class);
         Node remoteNode = createMock(Node.class);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test")));
+        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
 
         router.getLocalNode();
         expectLastCall().andReturn(localNode).once();
-        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test")));
+        router.routeToNodesFor("bucket", keys);
         expectLastCall().andReturn(nodeToKeys).once();
         localNode.send(EasyMock.<GetKeysCommand>anyObject());
         expectLastCall().andReturn(keys).once();
@@ -115,9 +119,10 @@ public class DefaultQueryServiceTest {
         replay(localNode, remoteNode, router);
 
         DefaultQueryService service = new DefaultQueryService(router);
-        Map<String, Value> result = service.getAllValues("bucket");
-        assertEquals(1, result.size());
-        assertEquals(JSON_VALUE, new String(result.values().toArray(new JsonValue[1])[0].getBytes()));
+        Map<String, Value> result = service.getAllValues("bucket", 0);
+        assertEquals(2, result.size());
+        assertEquals(JSON_VALUE, new String(result.get("test1").getBytes()));
+        assertEquals(JSON_VALUE, new String(result.get("test2").getBytes()));
 
         verify(localNode, remoteNode, router);
     }

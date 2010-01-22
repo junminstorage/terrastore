@@ -206,7 +206,7 @@ public class JsonHttpServerTest {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
 
-        queryService.getAllValues(eq("bucket"));
+        queryService.getAllValues(eq("bucket"), eq(0));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService);

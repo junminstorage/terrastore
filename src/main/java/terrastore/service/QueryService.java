@@ -55,10 +55,11 @@ public interface QueryService {
      * Get all values contained by the given bucket.
      *
      * @param bucket The bucket whose key/values we want to get.
+     * @param limit Max number of elements to retrieve; if zero, all values will be returned.
      * @return A map containing all key/value pairs
      * @throws QueryOperationException If a bucket with the given name doesn't exist.
      */
-    public Map<String, Value> getAllValues(String bucket) throws QueryOperationException;
+    public Map<String, Value> getAllValues(String bucket, int limit) throws QueryOperationException;
 
     /**
      * Execute a range query returning all key/value pairs whose key falls into the given range, and whose value satisfies the given predicate (if any).
