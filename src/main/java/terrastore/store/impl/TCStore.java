@@ -22,6 +22,8 @@ import org.terracotta.collections.LockType;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
 import terrastore.store.Bucket;
+import terrastore.store.FlushCondition;
+import terrastore.store.FlushStrategy;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 
@@ -63,5 +65,12 @@ public class TCStore implements Store {
     @Override
     public Collection<Bucket> buckets() {
         return buckets.values();
+    }
+
+    @Override
+    public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition) {
+        for (Bucket bucket : buckets.values()) {
+            bucket.flush(flushStrategy, flushCondition);
+        }
     }
 }

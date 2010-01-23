@@ -13,24 +13,27 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster;
+package terrastore.store.impl;
 
+import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import terrastore.store.Bucket;
+import terrastore.store.FlushCallback;
+import terrastore.store.FlushCondition;
+import terrastore.store.FlushStrategy;
 
 /**
- * Predicate-style interface to implement for defining if a key (and related value),
- * belonging to a given bucket, should be flushed.
+ * Strategy to use when no flushing is desired.
  *
  * @author Sergio Bossa
  */
-public interface FlushCondition {
+public class NoOpFlushStrategy implements FlushStrategy {
 
-    /**
-     * Define if the key shoud be flushed.
-     *
-     * @param bucket The bucket containing the key/value to flush.
-     * @param key The key to eventually flush.
-     * @return True if to be flushed, false otherwise.
-     */
-    public boolean isSatisfied(Bucket bucket, String key);
+    private static final Logger LOG = LoggerFactory.getLogger(NoOpFlushStrategy.class);
+
+    @Override
+    public void flush(Bucket bucket, Collection<String> keys, FlushCondition flushCondition, FlushCallback flushCallback) {
+        LOG.warn("Flush is disabled!");
+    }
 }

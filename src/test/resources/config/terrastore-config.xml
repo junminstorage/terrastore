@@ -61,8 +61,8 @@
         <property name="flushCondition" ref="flushCondition"/>
     </bean>
 
-    <bean id="flushStrategy" class="terrastore.cluster.impl.SequentialFlushStrategy"/>
-    <bean id="flushCondition" class="terrastore.cluster.impl.RoutingBasedFlushCondition">
+    <bean id="flushStrategy" class="terrastore.store.impl.SequentialFlushStrategy"/>
+    <bean id="flushCondition" class="terrastore.store.impl.RoutingBasedFlushCondition">
         <constructor-arg ref="router"/>
     </bean>
 

@@ -13,8 +13,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster.impl;
+package terrastore.store.impl;
 
+import terrastore.store.impl.RoutingBasedFlushCondition;
 import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.router.Router;
@@ -31,27 +32,6 @@ public class RoutingBasedFlushConditionTest {
     public void testIsSatisfied() {
         Router router = createMock(Router.class);
         Node local = createMock(Node.class);
-        Bucket bucket = createMock(Bucket.class);
-
-        router.getLocalNode();
-        expectLastCall().andReturn(local).once();
-        router.routeToNodeFor("bucket", "key");
-        expectLastCall().andReturn(local).once();
-        bucket.getName();
-        expectLastCall().andReturn("bucket").once();
-
-        replay(router, bucket, local);
-
-        RoutingBasedFlushCondition condition = new RoutingBasedFlushCondition(router);
-        assertTrue(condition.isSatisfied(bucket, "key"));
-
-        verify(router, bucket, local);
-    }
-
-    @Test
-    public void testIsNotSatisfied() {
-        Router router = createMock(Router.class);
-        Node local = createMock(Node.class);
         Node other = createMock(Node.class);
         Bucket bucket = createMock(Bucket.class);
 
@@ -65,8 +45,29 @@ public class RoutingBasedFlushConditionTest {
         replay(router, bucket, local, other);
 
         RoutingBasedFlushCondition condition = new RoutingBasedFlushCondition(router);
-        assertFalse(condition.isSatisfied(bucket, "key"));
+        assertTrue(condition.isSatisfied(bucket, "key"));
 
         verify(router, bucket, local, other);
+    }
+
+    @Test
+    public void testIsNotSatisfied() {
+        Router router = createMock(Router.class);
+        Node local = createMock(Node.class);
+        Bucket bucket = createMock(Bucket.class);
+
+        router.getLocalNode();
+        expectLastCall().andReturn(local).once();
+        router.routeToNodeFor("bucket", "key");
+        expectLastCall().andReturn(local).once();
+        bucket.getName();
+        expectLastCall().andReturn("bucket").once();
+
+        replay(router, bucket, local);
+
+        RoutingBasedFlushCondition condition = new RoutingBasedFlushCondition(router);
+        assertFalse(condition.isSatisfied(bucket, "key"));
+
+        verify(router, bucket, local);
     }
 }

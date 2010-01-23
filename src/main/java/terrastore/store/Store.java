@@ -56,4 +56,14 @@ public interface Store {
      * @return A collection of {@link Bucket}s.
      */
     public Collection<Bucket> buckets();
+
+    /**
+     * Flush all key/value entries of all buckets contained into this store.
+     * <br>
+     * The actual decision whether the key must be flushed or not, is left to the given {@link FlushCondition}.
+     *
+     * @param flushStrategy The algorithm to execute for flushing keys.
+     * @param flushCondition The condition to evaluate for flushing keys.
+     */
+    public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition);
 }
