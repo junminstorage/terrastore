@@ -13,25 +13,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster.impl;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import terrastore.cluster.FlushCondition;
-import terrastore.cluster.FlushStrategy;
-import terrastore.store.Store;
+package terrastore.store;
 
 /**
- * Strategy to use when no flushing is desired.
+ * Callback for executing the actual doFlush.
  *
  * @author Sergio Bossa
  */
-public class NoOpFlushStrategy implements FlushStrategy {
+public interface FlushCallback {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NoOpFlushStrategy.class);
-
-    @Override
-    public void flush(Store store, FlushCondition flushCondition) {
-        LOG.warn("Flush is disabled!");
-    }
+    /**
+     * Execute the actual doFlush operation.
+     *
+     * @param key The key to doFlush.
+     */
+    public void doFlush(String key);
 }

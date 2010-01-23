@@ -15,6 +15,8 @@
  */
 package terrastore.cluster;
 
+import terrastore.store.FlushCondition;
+import terrastore.store.FlushStrategy;
 import java.util.concurrent.ExecutorService;
 import terrastore.router.Router;
 

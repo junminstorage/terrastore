@@ -13,25 +13,22 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster;
-
-import terrastore.store.Store;
+package terrastore.store;
 
 /**
- * Define a flush strategy to apply for flushing key/value entries of all buckets contained into
- * the store.
+ * Predicate-style interface to implement for defining if a key (and related value),
+ * belonging to a given bucket, should be flushed.
  *
  * @author Sergio Bossa
  */
-public interface FlushStrategy {
+public interface FlushCondition {
 
     /**
-     * Flush all key/value entries of all buckets contained into the given store.
-     * <br>
-     * The actual decision whether the key must be flushed or not, is left to the given {@link FlushCondition}.
+     * Define if the key shoud be flushed.
      *
-     * @param store The store whose entries should be flushed.
-     * @param flushCondition The condition to evaluate for key flushing.
+     * @param bucket The bucket containing the key to flush.
+     * @param key The key to eventually flush.
+     * @return True if to be flushed, false otherwise.
      */
-    public void flush(Store store, FlushCondition flushCondition);
+    public boolean isSatisfied(Bucket bucket, String key);
 }

@@ -13,9 +13,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster.impl;
+package terrastore.store.impl;
 
-import terrastore.cluster.FlushCondition;
+import terrastore.store.FlushCondition;
 import terrastore.communication.Node;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
@@ -38,6 +38,6 @@ public class RoutingBasedFlushCondition implements FlushCondition {
     public boolean isSatisfied(Bucket bucket, String key) {
         Node localNode = router.getLocalNode();
         Node actual = router.routeToNodeFor(bucket.getName(), key);
-        return actual.equals(localNode);
+        return !actual.equals(localNode);
     }
 }

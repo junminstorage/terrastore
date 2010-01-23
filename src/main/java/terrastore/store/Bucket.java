@@ -108,9 +108,14 @@ public interface Bucket {
     public Set<String> keysInRange(Range range, Comparator<String> keyComparator, long timeToLive);
 
     /**
-     * Flush the given keys, with related values, to an external storage.
+     * Flush all key/value entries contained into this bucket.
+     * <br>
+     * The actual decision whether the key must be flushed or not, is left to the given {@link FlushCondition}.
+     *
+     * @param flushStrategy The algorithm to execute for flushing keys.
+     * @param flushCondition The condition to evaluate for flushing keys.
      */
-    public void flush(Set<String> keys);
+    public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition);
 
     /**
      * Get the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.

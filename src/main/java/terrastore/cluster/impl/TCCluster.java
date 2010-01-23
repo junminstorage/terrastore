@@ -38,8 +38,8 @@ import org.terracotta.modules.annotations.InstrumentedClass;
 import org.terracotta.modules.annotations.Root;
 import terrastore.communication.Node;
 import terrastore.cluster.Cluster;
-import terrastore.cluster.FlushCondition;
-import terrastore.cluster.FlushStrategy;
+import terrastore.store.FlushCondition;
+import terrastore.store.FlushStrategy;
 import terrastore.communication.local.LocalNode;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
@@ -157,9 +157,11 @@ public class TCCluster implements Cluster, DsoClusterListener {
     public void nodeJoined(DsoClusterEvent event) {
         String joinedNodeName = event.getNode().getId();
         if (!isThisNode(joinedNodeName)) {
+            LOG.info("Joining remote node {}", joinedNodeName);
             stateLock.lock();
             try {
-                setupRemoteNode(joinedNodeName, true);
+                setupRemoteNode(joinedNodeName);
+                flushThisNodeKeys();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
@@ -222,7 +224,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         LOG.info("Set up this node {}", thisNodeName);
     }
 
-    private void setupRemoteNode(String remoteNodeName, boolean flush) throws InterruptedException {
+    private void setupRemoteNode(String remoteNodeName) throws InterruptedException {
         while (!addressTable.containsKey(remoteNodeName)) {
             waitAddressCondition.await(1000, TimeUnit.SECONDS);
         }
@@ -232,9 +234,6 @@ public class TCCluster implements Cluster, DsoClusterListener {
             remoteNode.connect();
             nodes.put(remoteNodeName, remoteNode);
             router.addRouteTo(remoteNode);
-            if (flush) {
-                flushStrategy.flush(store, flushCondition);
-            }
             LOG.info("Set up remote node {}", remoteNodeName);
         } else {
             LOG.warn("Cannot set up remote node {}", remoteNodeName);
@@ -246,9 +245,14 @@ public class TCCluster implements Cluster, DsoClusterListener {
         for (DsoNode dsoNode : dsoTopology.getNodes()) {
             if (!isThisNode(dsoNode.getId())) {
                 String remoteNodeName = dsoNode.getId();
-                setupRemoteNode(remoteNodeName, false);
+                setupRemoteNode(remoteNodeName);
             }
         }
+    }
+
+    private void flushThisNodeKeys() {
+        LOG.info("About to flush keys on node {}", thisNodeName);
+        store.flush(flushStrategy, flushCondition);
     }
 
     private void discardRemoteNode(String nodeName) {

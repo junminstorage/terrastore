@@ -15,12 +15,17 @@
  */
 package terrastore.store.impl;
 
+import com.tc.cluster.DsoCluster;
+import com.tc.injection.annotations.InjectedDsoInstance;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.collections.FinegrainedLock;
 import org.terracotta.collections.HashcodeLockStrategy;
@@ -29,6 +34,9 @@ import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
 import terrastore.store.Bucket;
+import terrastore.store.FlushCallback;
+import terrastore.store.FlushCondition;
+import terrastore.store.FlushStrategy;
 import terrastore.store.SnapshotManager;
 import terrastore.store.SortedSnapshot;
 import terrastore.store.StoreOperationException;
@@ -46,6 +54,11 @@ import terrastore.store.features.Range;
 @HonorTransient
 public class TCBucket implements Bucket {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TCBucket.class);
+    //
+    @InjectedDsoInstance
+    private DsoCluster dsoCluster;
+    //
     private final String name;
     private final ConcurrentDistributedMap<String, Value> bucket;
     private transient SnapshotManager snapshotManager;
@@ -133,10 +146,20 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public void flush(Set<String> keys) {
-        for (String key : keys) {
-            Value value = bucket.get(key);
-            bucket.flush(key, value);
+    public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition) {
+        if (dsoCluster != null) {
+            Collection<String> keys = dsoCluster.getKeysForLocalValues(bucket);
+            LOG.info("Request to flush {} keys on bucket {}", keys.size(), name);
+            flushStrategy.flush(this, keys, flushCondition, new FlushCallback() {
+
+                @Override
+                public void doFlush(String key) {
+                    Value value = bucket.get(key);
+                    bucket.flush(key, value);
+                }
+            });
+        } else {
+            LOG.warn("Running outside of cluster, no keys to flush!");
         }
     }
 
