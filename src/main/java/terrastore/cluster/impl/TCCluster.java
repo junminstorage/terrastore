@@ -127,7 +127,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     public void start(String host, int port) {
         stateLock.lock();
         try {
-            thisNodeName = dsoCluster.getCurrentNode().getId();
+            thisNodeName = getServerId(dsoCluster.getCurrentNode());
             nodes = new ConcurrentHashMap<String, Node>();
             workerExecutor = Executors.newFixedThreadPool(workerThreads);
             addressTable.put(thisNodeName, new Address(host, port));
@@ -155,7 +155,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     public void nodeJoined(DsoClusterEvent event) {
-        String joinedNodeName = event.getNode().getId();
+        String joinedNodeName = getServerId(event.getNode());
         if (!isThisNode(joinedNodeName)) {
             LOG.info("Joining remote node {}", joinedNodeName);
             stateLock.lock();
@@ -171,7 +171,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     public void nodeLeft(DsoClusterEvent event) {
-        String leftNodeName = event.getNode().getId();
+        String leftNodeName = getServerId(event.getNode());
         if (!isThisNode(leftNodeName)) {
             stateLock.lock();
             try {
@@ -202,6 +202,10 @@ public class TCCluster implements Cluster, DsoClusterListener {
         } else {
             return new SimulatedDsoCluster();
         }
+    }
+
+    private String getServerId(DsoNode dsoNode) {
+        return dsoNode.getId().replace("Client", "Server");
     }
 
     private boolean isThisNode(String candidateNodeName) {
@@ -243,8 +247,9 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private void setupRemoteNodes() throws InterruptedException {
         DsoClusterTopology dsoTopology = getDsoCluster().getClusterTopology();
         for (DsoNode dsoNode : dsoTopology.getNodes()) {
-            if (!isThisNode(dsoNode.getId())) {
-                String remoteNodeName = dsoNode.getId();
+            String serverId = getServerId(dsoNode);
+            if (!isThisNode(serverId)) {
+                String remoteNodeName = serverId;
                 setupRemoteNode(remoteNodeName);
             }
         }
