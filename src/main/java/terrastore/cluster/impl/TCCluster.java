@@ -185,12 +185,12 @@ public class TCCluster implements Cluster, DsoClusterListener {
             try {
                 pauseProcessing();
                 discardRemoteNode(leftNodeName);
-                resumeProcessing();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
                 stateLock.unlock();
-                flushThisNodeKeys();
+                // No need to flush keys, because when a node leaves other nodes maintain their keys
+                // and only get more.
                 resumeProcessing();
             }
         }
