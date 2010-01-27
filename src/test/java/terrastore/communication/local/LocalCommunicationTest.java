@@ -24,10 +24,10 @@ import static org.easymock.classextension.EasyMock.*;
 /**
  * @author Sergio Bossa
  */
-public class LocalNodeTest {
+public class LocalCommunicationTest {
 
     @Test
-    public void testSendSynchronouslyInvokeCommand() throws Exception {
+    public void testSynchronousCommunication() throws Exception {
         Store store = createMock(Store.class);
         Command command = createMock(Command.class);
 
@@ -36,7 +36,8 @@ public class LocalNodeTest {
 
         replay(store, command);
 
-        LocalNode node = new LocalNode("node", store);
+        LocalProcessor processor = new LocalProcessor(store, 10);
+        LocalNode node = new LocalNode("node", processor);
         node.send(command);
 
         verify(store, command);

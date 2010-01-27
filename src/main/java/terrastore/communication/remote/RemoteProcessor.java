@@ -16,7 +16,6 @@
 package terrastore.communication.remote;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,17 +34,18 @@ import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.communication.seda.AbstractSEDAProcessor;
+import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
 import terrastore.store.Store;
-import terrastore.store.StoreOperationException;
 
 /**
  * Process {@link terrastore.communication.protocol.Command} messages sent by remote cluster nodes.
  *
  * @author Sergio Bossa
  */
-public class RemoteProcessor {
+public class RemoteProcessor extends AbstractSEDAProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteProcessor.class);
     // FIXME: this 3MB limit should be known and configurable
@@ -54,19 +54,16 @@ public class RemoteProcessor {
     private final Lock stateLock = new ReentrantLock();
     private final String host;
     private final int port;
-    private final Store store;
-    private final ExecutorService commandExecutor;
     private final ServerBootstrap server;
     private final ChannelGroup acceptedChannels;
     private Channel serverChannel;
 
-    public RemoteProcessor(String host, int port, Store store, ExecutorService commandExecutor) {
+    public RemoteProcessor(String host, int port, Store store, int threads) {
+        super(store, threads);
         this.host = host;
         this.port = port;
-        this.store = store;
-        this.commandExecutor = commandExecutor;
         acceptedChannels = new DefaultChannelGroup(this.toString());
-        server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newSingleThreadExecutor(), Executors.newSingleThreadExecutor()));
+        server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         server.setOption("reuseAddress", true);
         server.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
         server.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
@@ -75,7 +72,7 @@ public class RemoteProcessor {
         server.getPipeline().addLast("HANDLER", new ServerHandler());
     }
 
-    public void start() {
+    protected void doStart() {
         stateLock.lock();
         try {
             if (serverChannel == null) {
@@ -90,7 +87,7 @@ public class RemoteProcessor {
         }
     }
 
-    public void stop() {
+    protected void doStop() {
         stateLock.lock();
         try {
             if (serverChannel != null) {
@@ -117,20 +114,14 @@ public class RemoteProcessor {
         @Override
         public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
             try {
-                final Channel channel = event.getChannel();
-                final Command command = (Command) event.getMessage();
-                commandExecutor.execute(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        try {
-                            Object result = command.executeOn(store);
-                            channel.write(new RemoteResponse(command.getId(), result));
-                        } catch (StoreOperationException ex) {
-                            channel.write(new RemoteResponse(command.getId(), ex.getErrorMessage()));
-                        }
-                    }
-                });
+                Channel channel = event.getChannel();
+                Command command = (Command) event.getMessage();
+                try {
+                    Object result = process(command);
+                    channel.write(new RemoteResponse(command.getId(), result));
+                } catch (ProcessingException ex) {
+                    channel.write(new RemoteResponse(command.getId(), ex.getErrorMessage()));
+                }
             } catch (ClassCastException ex) {
                 LOG.warn("Unexpected command of type: " + event.getMessage().getClass());
                 throw new IllegalStateException("Unexpected message of type: " + event.getMessage().getClass());

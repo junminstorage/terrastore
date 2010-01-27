@@ -20,8 +20,6 @@ import org.slf4j.LoggerFactory;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
-import terrastore.store.Store;
-import terrastore.store.StoreOperationException;
 
 /**
  * Local {@link terrastore.communication.Node} implementation representing <b>this</b> cluster node instance.<br>
@@ -35,23 +33,19 @@ public class LocalNode implements Node {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalNode.class);
     private final String name;
-    private final Store store;
+    private final LocalProcessor processor;
 
-    public LocalNode(String name, Store store) {
+    public LocalNode(String name, LocalProcessor processor) {
         this.name = name;
-        this.store = store;
+        this.processor = processor;
     }
 
     public void connect() {
     }
 
     public <R> R send(Command<R> command) throws ProcessingException {
-        try {
-            R result = command.executeOn(store);
-            return result;
-        } catch (StoreOperationException ex) {
-            throw new ProcessingException(ex.getErrorMessage());
-        }
+        R result = processor.<R>process(command);
+        return result;
     }
 
     public void disconnect() {
