@@ -31,7 +31,7 @@ public interface Cluster {
 
     public void setWokerThreads(int workerThreads);
 
-    public ExecutorService getWorkerExecutor();
+    public ExecutorService getGlobalExecutor();
 
     public Router getRouter();
 

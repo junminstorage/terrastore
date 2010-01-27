@@ -16,7 +16,7 @@
 package terrastore.communication.protocol;
 
 import java.util.concurrent.ExecutorService;
-import terrastore.cluster.impl.ClusterLocator;
+import terrastore.cluster.impl.ClusterServices;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -44,7 +44,7 @@ public class UpdateCommand extends AbstractCommand {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             // WARN: use singleton locator due to Terracotta not supporting injection in clustered objects:
-            ExecutorService updateExecutor = ClusterLocator.getCluster().getWorkerExecutor();
+            ExecutorService updateExecutor = ClusterServices.getGlobalExecutor();
             //
             bucket.update(key, update, function, updateExecutor);
         }
