@@ -77,7 +77,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
     //
     private volatile transient long nodeTimeout;
     private volatile transient int workerThreads;
-    private volatile transient ExecutorService workerExecutor;
+    //
+    private volatile transient ExecutorService globalExecutor;
     //
     private volatile transient Router router;
     private volatile transient FlushStrategy flushStrategy;
@@ -100,8 +101,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
         this.workerThreads = workerThreads;
     }
 
-    public ExecutorService getWorkerExecutor() {
-        return workerExecutor;
+    public ExecutorService getGlobalExecutor() {
+        return globalExecutor;
     }
 
     public Router getRouter() {
@@ -135,7 +136,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
             thisNodeHost = host;
             thisNodePort = port;
             nodes = new ConcurrentHashMap<String, Node>();
-            workerExecutor = Executors.newFixedThreadPool(workerThreads);
+            globalExecutor = Executors.newFixedThreadPool(workerThreads);
             getDsoCluster().addClusterListener(this);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
@@ -306,7 +307,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private void cleanupEverything() {
         nodes.clear();
         router.cleanup();
-        workerExecutor.shutdownNow();
+        globalExecutor.shutdownNow();
     }
 
     private void doExit() {

@@ -15,14 +15,14 @@
  */
 package terrastore.cluster.impl;
 
-import terrastore.cluster.Cluster;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Sergio Bossa
  */
-public class ClusterLocator {
+public class ClusterServices {
 
-    public static Cluster getCluster() {
-        return TCCluster.getInstance();
+    public static ExecutorService getGlobalExecutor() {
+        return TCCluster.getInstance().getGlobalExecutor();
     }
 }
