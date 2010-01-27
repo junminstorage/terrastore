@@ -69,7 +69,7 @@ public class RemoteNode implements Node {
         this.port = port;
         this.name = name;
         this.timeoutInMillis = timeoutInMillis;
-        client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newSingleThreadExecutor(), Executors.newSingleThreadExecutor()));
+        client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         client.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
         client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE,0, 4, 0, 4));
         client.getPipeline().addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
@@ -145,7 +145,7 @@ public class RemoteNode implements Node {
                 stateLock.unlock();
             }
         } else {
-            throw new IllegalStateException();
+            throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication error!"));
         }
     }
 

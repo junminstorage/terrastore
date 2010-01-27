@@ -41,6 +41,7 @@ import terrastore.cluster.Cluster;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.communication.local.LocalNode;
+import terrastore.communication.local.LocalProcessor;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
 import terrastore.router.Router;
@@ -64,12 +65,15 @@ public class TCCluster implements Cluster, DsoClusterListener {
     //
     private Store store = new TCStore();
     private ReentrantLock stateLock = new ReentrantLock();
-    private Condition waitAddressCondition = stateLock.newCondition();
     private Map<String, Address> addressTable = new HashMap<String, Address>();
+    private Condition setupAddressCondition = stateLock.newCondition();
     //
     private volatile transient String thisNodeName;
+    private volatile transient String thisNodeHost;
+    private volatile transient int thisNodePort;
     private volatile transient ConcurrentMap<String, Node> nodes;
-    private volatile transient RemoteProcessor processor;
+    private volatile transient LocalProcessor localProcessor;
+    private volatile transient RemoteProcessor remoteProcessor;
     //
     private volatile transient long nodeTimeout;
     private volatile transient int workerThreads;
@@ -128,10 +132,10 @@ public class TCCluster implements Cluster, DsoClusterListener {
         stateLock.lock();
         try {
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
+            thisNodeHost = host;
+            thisNodePort = port;
             nodes = new ConcurrentHashMap<String, Node>();
             workerExecutor = Executors.newFixedThreadPool(workerThreads);
-            addressTable.put(thisNodeName, new Address(host, port));
-            waitAddressCondition.signalAll();
             getDsoCluster().addClusterListener(this);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
@@ -141,31 +145,35 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     public void operationsEnabled(DsoClusterEvent event) {
-        stateLock.lock();
-        try {
-            LOG.info("Setting up cluster node {}", thisNodeName);
-            setupThisNode();
-            setupThisRemoteProcessor();
-            setupRemoteNodes();
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-        } finally {
-            stateLock.unlock();
-        }
     }
 
     public void nodeJoined(DsoClusterEvent event) {
         String joinedNodeName = getServerId(event.getNode());
-        if (!isThisNode(joinedNodeName)) {
-            LOG.info("Joining remote node {}", joinedNodeName);
+        if (isThisNode(joinedNodeName)) {
             stateLock.lock();
             try {
-                setupRemoteNode(joinedNodeName);
-                flushThisNodeKeys();
+                LOG.info("Joining this node {}", thisNodeName);
+                setupThisNode();
+                setupThisRemoteProcessor();
+                setupAddressTable();
+                setupRemoteNodes();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
                 stateLock.unlock();
+            }
+        } else {
+            stateLock.lock();
+            try {
+                LOG.info("Joining remote node {}", joinedNodeName);
+                pauseProcessing();
+                setupRemoteNode(joinedNodeName);
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+            } finally {
+                stateLock.unlock();
+                flushThisNodeKeys();
+                resumeProcessing();
             }
         }
     }
@@ -175,11 +183,15 @@ public class TCCluster implements Cluster, DsoClusterListener {
         if (!isThisNode(leftNodeName)) {
             stateLock.lock();
             try {
+                pauseProcessing();
                 discardRemoteNode(leftNodeName);
+                resumeProcessing();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
                 stateLock.unlock();
+                flushThisNodeKeys();
+                resumeProcessing();
             }
         }
     }
@@ -213,14 +225,15 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     private void setupThisRemoteProcessor() {
-        Address thisNodeAddress = addressTable.get(thisNodeName);
-        processor = new RemoteProcessor(thisNodeAddress.getHost(), thisNodeAddress.getPort(), store, workerExecutor);
-        processor.start();
+        remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, store, workerThreads);
+        remoteProcessor.start();
         LOG.info("Set up processor for {}", thisNodeName);
     }
 
     private void setupThisNode() {
-        Node thisNode = new LocalNode(thisNodeName, store);
+        localProcessor = new LocalProcessor(store, workerThreads);
+        LocalNode thisNode = new LocalNode(thisNodeName, localProcessor);
+        localProcessor.start();
         thisNode.connect();
         nodes.put(thisNodeName, thisNode);
         router.setLocalNode(thisNode);
@@ -228,9 +241,14 @@ public class TCCluster implements Cluster, DsoClusterListener {
         LOG.info("Set up this node {}", thisNodeName);
     }
 
+    private void setupAddressTable() {
+        addressTable.put(thisNodeName, new Address(thisNodeHost, thisNodePort));
+        setupAddressCondition.signalAll();
+    }
+
     private void setupRemoteNode(String remoteNodeName) throws InterruptedException {
         while (!addressTable.containsKey(remoteNodeName)) {
-            waitAddressCondition.await(1000, TimeUnit.SECONDS);
+            setupAddressCondition.await(1000, TimeUnit.MILLISECONDS);
         }
         Address remoteNodeAddress = addressTable.get(remoteNodeName);
         if (remoteNodeAddress != null) {
@@ -255,6 +273,16 @@ public class TCCluster implements Cluster, DsoClusterListener {
         }
     }
 
+    private void pauseProcessing() {
+        localProcessor.pause();
+        remoteProcessor.pause();
+    }
+
+    private void resumeProcessing() {
+        localProcessor.resume();
+        remoteProcessor.resume();
+    }
+
     private void flushThisNodeKeys() {
         LOG.info("About to flush keys on node {}", thisNodeName);
         store.flush(flushStrategy, flushCondition);
@@ -271,7 +299,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
         for (Node node : nodes.values()) {
             node.disconnect();
         }
-        processor.stop();
+        localProcessor.stop();
+        remoteProcessor.stop();
     }
 
     private void cleanupEverything() {

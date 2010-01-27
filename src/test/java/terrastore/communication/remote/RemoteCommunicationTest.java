@@ -17,7 +17,6 @@ package terrastore.communication.remote;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -36,7 +35,7 @@ import static org.junit.Assert.*;
 /**
  * @author Sergio Bossa
  */
-public class RemoteNodeToProcessorCommunicationTest {
+public class RemoteCommunicationTest {
 
     private static final String VALUE = "test";
 
@@ -59,7 +58,7 @@ public class RemoteNodeToProcessorCommunicationTest {
 
         replay(store, bucket);
 
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, Executors.newCachedThreadPool());
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, 10);
         Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
@@ -99,7 +98,7 @@ public class RemoteNodeToProcessorCommunicationTest {
 
         replay(store, bucket);
 
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, Executors.newCachedThreadPool());
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, 10);
         Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
