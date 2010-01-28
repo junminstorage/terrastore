@@ -263,11 +263,14 @@ public class TCCluster implements Cluster, DsoClusterListener {
         }
         Address remoteNodeAddress = addressTable.get(remoteNodeName);
         if (remoteNodeAddress != null) {
-            Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, nodeTimeout, router.getLocalNode());
-            remoteNode.connect();
-            nodes.put(remoteNodeName, remoteNode);
-            router.addRouteTo(remoteNode);
-            LOG.info("Set up remote node {}", remoteNodeName);
+            // Double check to tolerate duplicated node joins by terracotta server:
+            if (!nodes.containsKey(remoteNodeName)) {
+                Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, nodeTimeout, router.getLocalNode());
+                remoteNode.connect();
+                nodes.put(remoteNodeName, remoteNode);
+                router.addRouteTo(remoteNode);
+                LOG.info("Set up remote node {}", remoteNodeName);
+            }
         } else {
             LOG.warn("Cannot set up remote node {}", remoteNodeName);
         }
