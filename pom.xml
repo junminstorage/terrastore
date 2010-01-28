@@ -491,6 +491,16 @@
     </build>
     <repositories>
         <repository>
+            <id>local-repository</id>
+            <url>${project.baseUri}/maven2/repo</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
             <id>terracotta-repository</id>
             <url>http://www.terracotta.org/download/reflector/maven2</url>
             <releases>
