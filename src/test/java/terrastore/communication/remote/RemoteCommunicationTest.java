@@ -17,6 +17,8 @@ package terrastore.communication.remote;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -50,16 +52,17 @@ public class RemoteCommunicationTest {
 
         Store store = createMock(Store.class);
         Bucket bucket = createMock(Bucket.class);
+        Node backup = createMock(Node.class);
 
         store.get(bucketName);
         expectLastCall().andReturn(bucket).once();
         bucket.get(valueKey);
         expectLastCall().andReturn(value).once();
 
-        replay(store, bucket);
+        replay(store, bucket, backup);
 
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, 10);
-        Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, store, 10);
+        Node sender = new RemoteNode("127.0.0.1", 9990, nodeName, 1000, backup);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -74,7 +77,7 @@ public class RemoteCommunicationTest {
                 sender.disconnect();
                 processor.stop();
             } finally {
-                verify(store, bucket);
+                verify(store, bucket, backup);
             }
         }
     }
@@ -90,32 +93,84 @@ public class RemoteCommunicationTest {
 
         Store store = createMock(Store.class);
         Bucket bucket = createMock(Bucket.class);
+        Node backup = createMock(Node.class);
 
         store.get(bucketName);
         expectLastCall().andReturn(bucket).anyTimes();
         bucket.get(valueKey);
         expectLastCall().andReturn(value).anyTimes();
 
-        replay(store, bucket);
+        replay(store, bucket, backup);
 
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9998, store, 10);
-        Node sender = new RemoteNode("127.0.0.1", 9998, nodeName, 1000);
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, store, 10);
+        Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 1000, backup);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
+            // Start processor
             processor.start();
+            // Connect node:
             sender.connect();
-
+            // Stop processor so that no communication can happen:
             processor.stop();
-
+            // Try to send:
             sender.<Value>send(command);
         } finally {
-            try {
-                sender.disconnect();
-            } finally {
-                verify(store, bucket);
-            }
+            verify(store, bucket, backup);
         }
+    }
+
+    @Test
+    public void testReroutingOnDisconnection() throws Exception {
+        String nodeName = "node";
+        String bucketName = "bucket";
+        String valueKey = "key";
+        Value value = new TestValue(VALUE);
+        Map<String, Value> values = new HashMap<String, Value>();
+        values.put(valueKey, value);
+
+        Store store = createMock(Store.class);
+        Bucket bucket = createMock(Bucket.class);
+        Node backup = createMock(Node.class);
+        makeThreadSafe(backup, true);
+
+        store.get(bucketName);
+        expectLastCall().andReturn(bucket).anyTimes();
+        bucket.get(valueKey);
+        expectLastCall().andReturn(value).anyTimes();
+        backup.send(EasyMock.<GetValueCommand>anyObject());
+        expectLastCall().andReturn(value).once();
+
+        replay(store, bucket, backup);
+
+        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9992, store, 10);
+        final Node sender = new RemoteNode("127.0.0.1", 9992, nodeName, 10000, backup);
+        final GetValueCommand command = new GetValueCommand(bucketName, valueKey);
+
+        try {
+            // Start processor
+            processor.start();
+            // Connect node:
+            sender.connect();
+            // Stop processor so that no communication can happen:
+            processor.stop();
+            // Try to send in another thread so that we can disconnect and reroute:
+            Executors.newSingleThreadExecutor().submit(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        sender.<Value>send(command);
+                    } catch (Exception ex) {
+                    }
+                }
+            });
+        } finally {
+            Thread.sleep(1000);
+            sender.disconnect();
+        }
+
+        verify(store, bucket, backup);
     }
 
     private static class TestValue implements Value {

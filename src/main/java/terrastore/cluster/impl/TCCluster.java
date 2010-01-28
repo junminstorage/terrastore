@@ -167,12 +167,12 @@ public class TCCluster implements Cluster, DsoClusterListener {
             stateLock.lock();
             try {
                 LOG.info("Joining remote node {}", joinedNodeName);
-                pauseProcessing();
-                setupRemoteNode(joinedNodeName);
+                connectRemoteNode(joinedNodeName);
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
                 stateLock.unlock();
+                pauseProcessing();
                 flushThisNodeKeys();
                 resumeProcessing();
             }
@@ -184,14 +184,13 @@ public class TCCluster implements Cluster, DsoClusterListener {
         if (!isThisNode(leftNodeName)) {
             stateLock.lock();
             try {
-                pauseProcessing();
-                discardRemoteNode(leftNodeName);
+                disconnectRemoteNode(leftNodeName);
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
                 stateLock.unlock();
-                // No need to flush keys, because when a node leaves other nodes maintain their keys
-                // and only get more.
+                pauseProcessing();
+                flushThisNodeKeys();
                 resumeProcessing();
             }
         }
@@ -247,30 +246,30 @@ public class TCCluster implements Cluster, DsoClusterListener {
         setupAddressCondition.signalAll();
     }
 
-    private void setupRemoteNode(String remoteNodeName) throws InterruptedException {
-        while (!addressTable.containsKey(remoteNodeName)) {
-            setupAddressCondition.await(1000, TimeUnit.MILLISECONDS);
-        }
-        Address remoteNodeAddress = addressTable.get(remoteNodeName);
-        if (remoteNodeAddress != null) {
-            Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, nodeTimeout);
-            remoteNode.connect();
-            nodes.put(remoteNodeName, remoteNode);
-            router.addRouteTo(remoteNode);
-            LOG.info("Set up remote node {}", remoteNodeName);
-        } else {
-            LOG.warn("Cannot set up remote node {}", remoteNodeName);
-        }
-    }
-
     private void setupRemoteNodes() throws InterruptedException {
         DsoClusterTopology dsoTopology = getDsoCluster().getClusterTopology();
         for (DsoNode dsoNode : dsoTopology.getNodes()) {
             String serverId = getServerId(dsoNode);
             if (!isThisNode(serverId)) {
                 String remoteNodeName = serverId;
-                setupRemoteNode(remoteNodeName);
+                connectRemoteNode(remoteNodeName);
             }
+        }
+    }
+
+    private void connectRemoteNode(String remoteNodeName) throws InterruptedException {
+        while (!addressTable.containsKey(remoteNodeName)) {
+            setupAddressCondition.await(1000, TimeUnit.MILLISECONDS);
+        }
+        Address remoteNodeAddress = addressTable.get(remoteNodeName);
+        if (remoteNodeAddress != null) {
+            Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, nodeTimeout, router.getLocalNode());
+            remoteNode.connect();
+            nodes.put(remoteNodeName, remoteNode);
+            router.addRouteTo(remoteNode);
+            LOG.info("Set up remote node {}", remoteNodeName);
+        } else {
+            LOG.warn("Cannot set up remote node {}", remoteNodeName);
         }
     }
 
@@ -289,7 +288,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         store.flush(flushStrategy, flushCondition);
     }
 
-    private void discardRemoteNode(String nodeName) {
+    private void disconnectRemoteNode(String nodeName) {
         Node remoteNode = nodes.remove(nodeName);
         remoteNode.disconnect();
         router.removeRouteTo(remoteNode);
