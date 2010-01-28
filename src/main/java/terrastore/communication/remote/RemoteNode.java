@@ -44,7 +44,8 @@ import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
 
 /**
- * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes.
+ * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes.<br>
+ * Upon disconnection of the actual remote host, pending commands still not acknowledged will be rerouted to a provided backup node.
  *
  * @author Sergio Bossa
  */
@@ -55,23 +56,26 @@ public class RemoteNode implements Node {
     private static final int MAX_FRAME_SIZE = 3145728;
     //
     private final Lock stateLock = new ReentrantLock();
+    private final Map<String, Command> pendingCommands = new HashMap<String, Command>();
     private final Map<String, Condition> responseConditions = new HashMap<String, Condition>();
     private final Map<String, RemoteResponse> responses = new HashMap<String, RemoteResponse>();
     private final String host;
     private final int port;
     private final String name;
     private final long timeoutInMillis;
+    private final Node backupNode;
     private final ClientBootstrap client;
     private Channel clientChannel;
 
-    public RemoteNode(String host, int port, String name, long timeoutInMillis) {
+    public RemoteNode(String host, int port, String name, long timeoutInMillis, Node fallback) {
         this.host = host;
         this.port = port;
         this.name = name;
         this.timeoutInMillis = timeoutInMillis;
+        this.backupNode = fallback;
         client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         client.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-        client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE,0, 4, 0, 4));
+        client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
         client.getPipeline().addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
         client.getPipeline().addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
         client.getPipeline().addLast("HANDLER", new ClientHandler());
@@ -105,11 +109,14 @@ public class RemoteNode implements Node {
                 client.releaseExternalResources();
                 clientChannel = null;
                 LOG.info("Disconnected from : {}:{}", host, port);
+                // TODO: maybe make rerouting a distinct public method or strategy?
+                reroutePendingCommands();
             }
         } finally {
             stateLock.unlock();
         }
     }
+
 
     public <R> R send(Command<R> command) throws ProcessingException {
         stateLock.lock();
@@ -117,6 +124,7 @@ public class RemoteNode implements Node {
             try {
                 String commandId = configureId(command);
                 Condition responseReceived = stateLock.newCondition();
+                pendingCommands.put(commandId, command);
                 responseConditions.put(commandId, responseReceived);
                 clientChannel.write(command);
                 LOG.debug("Sent command {}", commandId);
@@ -132,6 +140,7 @@ public class RemoteNode implements Node {
                 }
                 //
                 RemoteResponse response = responses.remove(commandId);
+                pendingCommands.remove(commandId);
                 if (response != null && response.isOk()) {
                     // Safe cast: correlation id ensures it's the *correct* command response.
                     return (R) response.getResult();
@@ -183,6 +192,26 @@ public class RemoteNode implements Node {
         return TimeUnit.MILLISECONDS.toNanos(time);
     }
 
+    private void reroutePendingCommands() {
+        for (Command command : pendingCommands.values()) {
+            String commandId = command.getId();
+            RemoteResponse response = null;
+            try {
+                Object result = backupNode.send(command);
+                response = new RemoteResponse(commandId, result);
+            } catch (ProcessingException ex) {
+                response = new RemoteResponse(commandId, ex.getMessage());
+            }
+            signalCommandResponse(commandId, response);
+        }
+    }
+
+    private void signalCommandResponse(String commandId, RemoteResponse response) {
+        Condition responseCondition = responseConditions.remove(commandId);
+        responses.put(commandId, response);
+        responseCondition.signal();
+    }
+
     @ChannelPipelineCoverage("all")
     private class ClientHandler extends SimpleChannelHandler {
 
@@ -192,10 +221,7 @@ public class RemoteNode implements Node {
             try {
                 RemoteResponse response = (RemoteResponse) event.getMessage();
                 String correlationId = response.getCorrelationId();
-                Condition responseCondition = responseConditions.remove(correlationId);
-                responses.put(correlationId, response);
-                responseCondition.signal();
-                LOG.debug("Received response for command {}", correlationId);
+                signalCommandResponse(correlationId, response);
             } catch (ClassCastException ex) {
                 LOG.warn("Unexpected command of type: " + event.getMessage().getClass());
                 throw new IllegalStateException("Unexpected command of type: " + event.getMessage().getClass());
