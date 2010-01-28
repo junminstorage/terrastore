@@ -17,6 +17,7 @@ package terrastore.communication.remote;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -56,7 +57,7 @@ public class RemoteNode implements Node {
     private static final int MAX_FRAME_SIZE = 3145728;
     //
     private final Lock stateLock = new ReentrantLock();
-    private final Map<String, Command> pendingCommands = new HashMap<String, Command>();
+    private final LinkedHashMap<String, Command> pendingCommands = new LinkedHashMap<String, Command>();
     private final Map<String, Condition> responseConditions = new HashMap<String, Condition>();
     private final Map<String, RemoteResponse> responses = new HashMap<String, RemoteResponse>();
     private final String host;
@@ -193,6 +194,8 @@ public class RemoteNode implements Node {
     }
 
     private void reroutePendingCommands() {
+        // pendingCommands is a linked hash map, so commands will be rerouted following
+        // original order:
         for (Command command : pendingCommands.values()) {
             String commandId = command.getId();
             RemoteResponse response = null;
