@@ -1,5 +1,6 @@
 .DS_Store
 nbproject
+nb-configuration.xml
 terrastore-master
 tc-data
 target
