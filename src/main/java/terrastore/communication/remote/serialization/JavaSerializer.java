@@ -22,12 +22,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.modules.annotations.InstrumentedClass;
 
 /**
  * @author Sergio Bossa
  */
-@InstrumentedClass
 public class JavaSerializer<T> implements Serializer<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaSerializer.class);
