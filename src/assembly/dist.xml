@@ -47,6 +47,7 @@
         <file>
             <outputDirectory>terrastore-master</outputDirectory>
             <source>src/dist/master/terracotta-server.log4j.properties</source>
+            <filtered>true</filtered>
         </file>
         <file>
             <outputDirectory>terrastore-master</outputDirectory>
