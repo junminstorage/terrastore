@@ -3,32 +3,15 @@
 
     <target name="server" if="install.dir" description="Install Terrastore server.">
 
-        <delete dir="${java.io.tmpdir}/terrastore-install"/>
+        <antcall target="version"/>
 
-        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
-
-        <copy todir="${install.dir}">
-            <fileset dir="terrastore-server/"/>
-        </copy>
-
-        <copy todir="${install.dir}/terrastore-master-libs">
-            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/">
-                <include name="*.txt"/>
-                <include name="bin/**"/>
-                <include name="lib/**"/>
-                <include name="modules/**"/>
-            </fileset>
-        </copy>
-
-        <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
-
-        <delete file="${install.dir}/terrastore-master-libs/bin/start.sh"/>
-
-        <chmod dir="${install.dir}/terrastore-master-libs/bin" perm="ugo+x" includes="**/*.sh"/>
+        <antcall target="common-server"/>
 
     </target>
 
     <target name="single-master" if="install.dir" description="Install single Terrastore master">
+
+        <antcall target="version"/>
 
         <antcall target="common-master">
             <param name="config" value="terracotta-config.xml"/>
@@ -48,10 +31,44 @@
 
     <target name="ha-master-2" if="install.dir" description="Install Terrastore ha master 2.">
 
+        <antcall target="version"/>
+
         <antcall target="common-master">
             <param name="config" value="terracotta-config-ha.xml"/>
             <param name="master" value="terrastore-ha-master-2"/>
         </antcall>
+
+    </target>
+
+    <target name="version">
+        <echo message="Terrastore Install Tool - Version ${project.version}"/>
+    </target>
+
+    <target name="common-server">
+
+        <delete dir="${java.io.tmpdir}/terrastore-install"/>
+
+        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
+
+        <copy todir="${install.dir}">
+            <fileset dir="terrastore-server/"/>
+        </copy>
+
+        <copy todir="${install.dir}/terrastore-master-libs">
+            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/">
+                <include name="*.txt"/>
+                <include name="bin/**"/>
+                <include name="lib/**"/>
+                <include name="modules/**"/>
+            </fileset>
+        </copy>
+        <copy file="terrastore-master/terracotta-server.log4j.properties" tofile="${install.dir}/terrastore-master-libs/.tc.custom.log4j.properties"/>
+
+        <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
+
+        <delete file="${install.dir}/terrastore-master-libs/bin/start.sh"/>
+
+        <chmod dir="${install.dir}/terrastore-master-libs/bin" perm="ugo+x" includes="**/*.sh"/>
 
     </target>
 
@@ -67,6 +84,7 @@
         <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
 
         <copy file="terrastore-master/${config}" todir="${java.io.tmpdir}/terrastore-install/terrastore-master"/>
+        <copy file="terrastore-master/terracotta-master.log4j.properties" tofile="${java.io.tmpdir}/terrastore-install/terrastore-master/.tc.custom.log4j.properties"/>
 
         <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/${config}">
             <replacefilter

@@ -13,44 +13,72 @@
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
     </dependencySets>
-    <fileSets>
-        <fileSet>
+    <files>
+        <file>
             <outputDirectory></outputDirectory>
-            <includes>
-                <include>terrastore-install.xml</include>
-                <include>terrastore_license.txt</include>
-                <include>terracotta_license.txt</include>
-                <include>README.txt</include>
-            </includes>
-        </fileSet>
-        <fileSet>
+            <source>src/dist/terrastore-install.xml</source>
+            <filtered>true</filtered>
+        </file>
+        <file>
+            <outputDirectory></outputDirectory>
+            <source>terrastore_license.txt</source>
+        </file>
+        <file>
+            <outputDirectory></outputDirectory>
+            <source>terracotta_license.txt</source>
+        </file>
+        <file>
+            <outputDirectory></outputDirectory>
+            <source>README.txt</source>
+        </file>
+        <file>
             <outputDirectory>terrastore-master</outputDirectory>
-            <includes>
-                <include>terracotta-config.xml</include>
-                <include>terracotta-config-ha.xml</include>
-            </includes>
-        </fileSet>
-        <fileSet>
+            <source>src/dist/master/terracotta-config.xml</source>
+        </file>
+        <file>
             <outputDirectory>terrastore-master</outputDirectory>
-            <includes>
-                <include>terrastore-master.zip</include>
-            </includes>
-        </fileSet>
-        <fileSet>
+            <source>src/dist/master/terracotta-config-ha.xml</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-master</outputDirectory>
+            <source>src/dist/master/terracotta-master.log4j.properties</source>
+            <filtered>true</filtered>
+        </file>
+        <file>
+            <outputDirectory>terrastore-master</outputDirectory>
+            <source>src/dist/master/terracotta-server.log4j.properties</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-master</outputDirectory>
+            <source>terrastore-master.zip</source>
+        </file>
+        <file>
             <outputDirectory>terrastore-server</outputDirectory>
-            <includes>
-                <include>comparators-config.xml</include>
-                <include>conditions-config.xml</include>
-                <include>functions-config.xml</include>
-                <include>terrastore-config.xml</include>
-            </includes>
-        </fileSet>
-        <fileSet>
+            <source>src/dist/server/comparators-config.xml</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-server</outputDirectory>
+            <source>src/dist/server/conditions-config.xml</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-server</outputDirectory>
+            <source>src/dist/server/functions-config.xml</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-server</outputDirectory>
+            <source>src/dist/server/terrastore-config.xml</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-server</outputDirectory>
+            <source>src/dist/server/terrastore-logback.xml</source>
+            <filtered>true</filtered>
+        </file>
+        <file>
             <outputDirectory>terrastore-server/bin</outputDirectory>
-            <includes>
-                <include>*.sh</include>
-            </includes>
-        </fileSet>
+            <source>src/dist/server/start.sh</source>
+        </file>
+    </files>
+    <fileSets>
         <fileSet>
             <outputDirectory>terrastore-server/libs</outputDirectory>
             <directory>target</directory>
