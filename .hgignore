@@ -2,6 +2,8 @@
 nbproject
 nb-configuration.xml
 terrastore-master
-tc-data
 target
+tc-data
 src/test/resources/config/tc-data
+src/dist/master/tc-data
+src/dist/server/tc-data

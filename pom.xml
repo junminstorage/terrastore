@@ -278,12 +278,12 @@
                             </dependency>
                         </dependencies>
                         <configuration>
-                            <config>${basedir}/src/test/resources/config/terracotta-config.xml</config>
+                            <config>${basedir}/src/dist/master/terracotta-config-test.xml</config>
                             <startServer>false</startServer>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
                             </processes>
                         </configuration>
                         <executions>
@@ -313,7 +313,8 @@
                                 <configuration>
                                     <tasks>
                                         <delete dir="${basedir}/tc-data" />
-                                        <delete dir="${basedir}/src/test/resources/config/tc-data" />
+                                        <delete dir="${basedir}/src/dist/master/tc-data" />
+                                        <delete dir="${basedir}/src/dist/server/tc-data" />
                                     </tasks>
                                 </configuration>
                                 <goals>
@@ -362,13 +363,13 @@
                             </dependency>
                         </dependencies>
                         <configuration>
-                            <config>${basedir}/src/test/resources/config/terracotta-config.xml</config>
+                            <config>${basedir}/src/dist/master/terracotta-config-test.xml</config>
                             <startServer>false</startServer>
                             <jvmargs>-Xms1024m -Xmx1024m</jvmargs>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xms1024m -Xmx1024m" />
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xms1024m -Xmx1024m" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xms1024m -Xmx1024m" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xms1024m -Xmx1024m" />
                             </processes>
                         </configuration>
                         <executions>
@@ -478,12 +479,12 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <config>${basedir}/src/test/resources/config/terracotta-config.xml</config>
+                    <config>${basedir}/src/dist/master/terracotta-config-test.xml</config>
                     <startServer>false</startServer>
                     <activeNodes>node-1,node-2</activeNodes>
                     <processes>
-                        <process nodeName="node-1" className="terrastore.startup.Startup" arguments="--httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9000" />
-                        <process nodeName="node-2" className="terrastore.startup.Startup" arguments="--httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/test/resources/config -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9001" />
+                        <process nodeName="node-1" className="terrastore.startup.Startup" arguments="--httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9000" />
+                        <process nodeName="node-2" className="terrastore.startup.Startup" arguments="--httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9001" />
                     </processes>
                 </configuration>
             </plugin>
