@@ -232,7 +232,7 @@ public class Startup {
             String location = "file:" + homeDir + separator + DEFAULT_CONFIG_FILE;
             return location;
         } else {
-            throw new IllegalStateException("TCStore home directory is not set!");
+            throw new IllegalStateException("Terrastore home directory is not set!");
         }
     }
 }
