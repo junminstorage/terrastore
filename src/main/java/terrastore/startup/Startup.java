@@ -57,7 +57,6 @@ public class Startup {
     private static final int DEFAULT_HTTP_THREADS = 100;
     private static final int DEFAULT_WORKER_THREADS = Runtime.getRuntime().availableProcessors() * 10;
     private static final String DEFAULT_CONFIG_FILE = "terrastore-config.xml";
-    private static final String TERRASTORE_HOME_DIR = "TERRASTORE_HOME";
     private static final String WELCOME_MESSAGE = "Welcome to Terrastore.";
     private static final String POWEREDBY_MESSAGE = "Powered by Terracotta (http://www.terracotta.org).";
 
@@ -226,7 +225,7 @@ public class Startup {
     }
 
     private String getConfigFileLocation() {
-        String homeDir = System.getenv(TERRASTORE_HOME_DIR) != null ? System.getenv(TERRASTORE_HOME_DIR) : System.getProperty(TERRASTORE_HOME_DIR);
+        String homeDir = System.getenv(Constants.TERRASTORE_HOME) != null ? System.getenv(Constants.TERRASTORE_HOME) : System.getProperty(Constants.TERRASTORE_HOME);
         if (homeDir != null) {
             String separator = System.getProperty("file.separator");
             String location = "file:" + homeDir + separator + DEFAULT_CONFIG_FILE;
