@@ -15,6 +15,7 @@
  */
 package terrastore.store.impl;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.startup.Constants;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
@@ -254,7 +256,7 @@ public class TCBucketTest {
         assertEquals(1, bucket.keysInRange(new Range("key1", "key1", 0, "order"), stringComparator, 0).size());
     }
 
-    @Test()
+    @Test
     public void testUpdate() throws StoreOperationException, UnsupportedEncodingException {
         long timeoutInMillis = 1000;
         Map<String, Object> params = new HashMap<String, Object>();
@@ -275,4 +277,32 @@ public class TCBucketTest {
         bucket.update(key, update, function, Executors.newCachedThreadPool());
         assertEquals(new String(JSON_UPDATED.getBytes("UTF-8")), new String(bucket.get(key).getBytes()));
     }
+
+    @Test
+    public void testBackupImportDoesNotDeleteExistentData() throws StoreOperationException {
+        System.setProperty(Constants.TERRASTORE_HOME, System.getProperty("java.io.tmpdir"));
+        new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + Constants.BACKUPS_DIR).mkdir();
+        
+        String key1 = "key1";
+        Value value1 = new JsonValue(JSON_VALUE.getBytes());
+        String key2 = "key2";
+        Value value2 = new JsonValue(JSON_VALUE.getBytes());
+        String key3 = "key3";
+        Value value3 = new JsonValue(JSON_VALUE.getBytes());
+
+        bucket.put(key1, value1);
+        bucket.put(key2, value2);
+
+        assertTrue(bucket.keys().contains(key1));
+        assertTrue(bucket.keys().contains(key2));
+        bucket.exportBackup("test.bak");
+        bucket.put(key3, value3);
+        assertTrue(bucket.keys().contains(key3));
+
+        bucket.importBackup("test.bak");
+        assertTrue(bucket.keys().contains(key1));
+        assertTrue(bucket.keys().contains(key2));
+        assertTrue(bucket.keys().contains(key3));
+    }
+
 }

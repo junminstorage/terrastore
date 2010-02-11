@@ -15,6 +15,7 @@
  */
 package terrastore.server;
 
+import terrastore.service.BackupService;
 import terrastore.service.QueryService;
 import terrastore.service.UpdateService;
 import terrastore.store.Value;
@@ -137,6 +138,27 @@ public interface Server {
     public Values doPredicateQuery(String bucket, String predicate) throws ServerOperationException;
 
     /**
+     * Execute the import of all bucket key/value entries, without interrupting other operations and preserving
+     * existent entries not contained into the given backup.
+     *
+     * @param bucket The bucket to import entries to.
+     * @param source The name of the resource from which reading the backup.
+     * @param secret The secret key: import is executed only if it matches the pre-configured secret.
+     * @throws ServerOperationException If an error occurs.
+     */
+    public void doImport(String bucket, String source, String secret) throws ServerOperationException;
+
+    /**
+     * Execute the export of all bucket key/value entries, without interrupting other operations.
+     *
+     * @param bucket The bucket to export entries from.
+     * @param destination The name of the resource into which writing the backup.
+     * @param secret The secret key: export is executed only if it matches the pre-configured secret.
+     * @throws ServerOperationException If an error occurs.
+     */
+    public void doExport(String bucket, String destination, String secret) throws ServerOperationException;
+
+    /**
      * Get the {@link terrastore.service.UpdateService} which will actually execute all update operations.
      *
      * @return The {@link terrastore.service.UpdateService} instance.
@@ -149,4 +171,11 @@ public interface Server {
      * @return The {@link terrastore.service.QueryService} instance.
      */
     public QueryService getQueryService();
+
+    /**
+     * Get the {@link terrastore.service.BackupService} which will actually execute all backup operations.
+     *
+     * @return The {@link terrastore.service.BackupService} instance.
+     */
+    public BackupService getBackupService();
 }

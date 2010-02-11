@@ -118,9 +118,34 @@ public interface Bucket {
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition);
 
     /**
+     * Perform the export of this bucket entries.<br>
+     * See {@link BackupManager#exportBackup(Bucket, String)}.
+     *
+     * @param destination The destination resource where to write exported entries.
+     * @throws StoreOperationException If errors occur during export.
+     */
+    public void exportBackup(String destination) throws StoreOperationException;
+
+    /**
+     * Import entries into this bucket.<br>
+     * See {@link BackupManager#importBackup(Bucket, String)}.
+     *
+     * @param source The source resource where to read entries from.
+     * @throws StoreOperationException If errors occur during import.
+     */
+    public void importBackup(String source) throws StoreOperationException;
+
+    /**
      * Get the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.
      *
      * @return The {@link SnapshotManager} used by this bucket.
      */
     public SnapshotManager getSnapshotManager();
+
+    /**
+     * Get the {@link BackupManager} used to execute export and import of entries.
+     *
+     * @return The {@link BackupManager} used by this bucket.
+     */
+    public BackupManager getBackupManager();
 }

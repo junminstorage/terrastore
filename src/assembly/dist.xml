@@ -78,6 +78,10 @@
             <outputDirectory>terrastore-server/bin</outputDirectory>
             <source>src/dist/server/start.sh</source>
         </file>
+        <file>
+            <outputDirectory>terrastore-server/backups</outputDirectory>
+            <source>src/dist/server/backups/README.txt</source>
+        </file>
     </files>
     <fileSets>
         <fileSet>
