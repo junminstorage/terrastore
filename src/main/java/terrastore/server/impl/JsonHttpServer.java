@@ -32,6 +32,8 @@ import terrastore.server.Parameters;
 import terrastore.server.Server;
 import terrastore.server.ServerOperationException;
 import terrastore.server.Values;
+import terrastore.service.BackupOperationException;
+import terrastore.service.BackupService;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
 import terrastore.service.UpdateOperationException;
@@ -52,10 +54,12 @@ public class JsonHttpServer implements Server {
     private static final Logger LOG = LoggerFactory.getLogger(JsonHttpServer.class);
     private final UpdateService updateService;
     private final QueryService queryService;
+    private final BackupService backupService;
 
-    public JsonHttpServer(UpdateService updateService, QueryService queryService) {
+    public JsonHttpServer(UpdateService updateService, QueryService queryService, BackupService backupService) {
         this.updateService = updateService;
         this.queryService = queryService;
+        this.backupService = backupService;
     }
 
     @PUT
@@ -224,11 +228,58 @@ public class JsonHttpServer implements Server {
         }
     }
 
+    @POST
+    @Path("/{bucket}/import")
+    @Consumes("application/json")
+    public void doImport(@PathParam("bucket") String bucket, @QueryParam("source") String source, @QueryParam("secret") String secret) throws ServerOperationException {
+        try {
+            if (source == null) {
+                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No source provided!");
+                throw new ServerOperationException(error);
+            } else if (secret == null) {
+                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No secret provided!");
+                throw new ServerOperationException(error);
+            }
+            LOG.debug("Importing backup for bucket {} from {}", bucket, source);
+            backupService.importBackup(bucket, source, secret);
+        } catch (BackupOperationException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new ServerOperationException(error);
+        }
+    }
+
+    @POST
+    @Path("/{bucket}/export")
+    @Consumes("application/json")
+    public void doExport(@PathParam("bucket") String bucket, @QueryParam("destination") String destination, @QueryParam("secret") String secret) throws ServerOperationException {
+        try {
+            if (destination == null) {
+                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No destination provided!");
+                throw new ServerOperationException(error);
+            } else if (secret == null) {
+                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No secret provided!");
+                throw new ServerOperationException(error);
+            }
+            LOG.debug("Exporting backup for bucket {} to {}", bucket, destination);
+            backupService.exportBackup(bucket, destination, secret);
+        } catch (BackupOperationException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new ServerOperationException(error);
+        }
+    }
+
     public UpdateService getUpdateService() {
         return updateService;
     }
 
     public QueryService getQueryService() {
         return queryService;
+    }
+
+    @Override
+    public BackupService getBackupService() {
+        return backupService;
     }
 }

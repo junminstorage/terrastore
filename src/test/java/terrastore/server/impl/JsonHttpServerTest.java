@@ -40,6 +40,7 @@ import terrastore.server.impl.support.JsonValuesProvider;
 import terrastore.server.impl.support.JsonParametersProvider;
 import terrastore.server.impl.support.JsonServerOperationExceptionMapper;
 import terrastore.server.impl.support.JsonValueProvider;
+import terrastore.service.BackupService;
 import terrastore.service.QueryService;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
@@ -65,16 +66,73 @@ public class JsonHttpServerTest {
     private static final String BUCKETS = "[\"test1\",\"test2\"]";
 
     @Test
+    public void testImportBackup() throws Exception {
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+
+        backupService.importBackup("bucket", "source", "secret");
+        expectLastCall().once();
+
+        replay(updateService, queryService, backupService);
+
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
+        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
+        HttpClient client = new HttpClient();
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/import?source=source&secret=secret");
+        method.setRequestHeader("Content-Type", "application/json");
+        method.setRequestEntity(new StringRequestEntity("", "application/json", null));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_NO_CONTENT, method.getStatusCode());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService);
+    }
+
+    @Test
+    public void testExportBackup() throws Exception {
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+
+        backupService.exportBackup("bucket", "destination", "secret");
+        expectLastCall().once();
+
+        replay(updateService, queryService, backupService);
+
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
+        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
+        HttpClient client = new HttpClient();
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/export?destination=destination&secret=secret");
+        method.setRequestHeader("Content-Type", "application/json");
+        method.setRequestEntity(new StringRequestEntity("", "application/json", null));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_NO_CONTENT, method.getStatusCode());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService);
+    }
+
+    @Test
     public void testAddBucket() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         updateService.addBucket("bucket");
         expectLastCall().once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket");
@@ -88,20 +146,21 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
     public void testRemoveBucket() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         updateService.removeBucket("bucket");
         expectLastCall().once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket");
@@ -114,20 +173,21 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
     public void testPutValue() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         updateService.putValue(eq("bucket"), eq("test1"), EasyMock.<Value>anyObject());
         expectLastCall().once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/test1");
@@ -141,20 +201,21 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
     public void testRemoveValue() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         updateService.removeValue("bucket", "test1");
         expectLastCall().once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/test1");
@@ -167,20 +228,21 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
     public void testGetValue() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         queryService.getValue("bucket", "test1");
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/test1");
@@ -195,13 +257,14 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
     public void testGetAllValues() throws Exception {
         SortedMap<String, Value> values = new TreeMap<String, Value>();
         values.put("test", new JsonValue(JSON_VALUE.getBytes()));
+        BackupService backupService = createMock(BackupService.class);
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -209,9 +272,9 @@ public class JsonHttpServerTest {
         queryService.getAllValues(eq("bucket"), eq(0));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket");
@@ -226,7 +289,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
@@ -237,13 +300,14 @@ public class JsonHttpServerTest {
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         queryService.getBuckets();
         expectLastCall().andReturn(buckets).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/");
@@ -258,7 +322,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
@@ -269,13 +333,14 @@ public class JsonHttpServerTest {
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", 0, "")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&timeToLive=0");
@@ -290,7 +355,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
@@ -301,13 +366,14 @@ public class JsonHttpServerTest {
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", 2, "order")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&limit=2&comparator=order&timeToLive=0");
@@ -322,7 +388,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
@@ -333,13 +399,14 @@ public class JsonHttpServerTest {
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", 0, "order")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order&timeToLive=0");
@@ -354,7 +421,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
@@ -365,13 +432,14 @@ public class JsonHttpServerTest {
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         queryService.doRangeQuery(eq("bucket"), eq(new Range("test1", "test2", 0, "order")), eq(new Predicate("test:condition")), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order&predicate=test:condition&timeToLive=0");
@@ -386,7 +454,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
@@ -397,13 +465,14 @@ public class JsonHttpServerTest {
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         queryService.doPredicateQuery(eq("bucket"), eq(new Predicate("test:condition")));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/predicate?predicate=test:condition");
@@ -418,7 +487,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
@@ -428,13 +497,14 @@ public class JsonHttpServerTest {
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         updateService.executeUpdate(eq("bucket"), eq("key"), eq(new Update("update", 1000, params)));
         expectLastCall().once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/key/update?timeout=1000&function=update");
@@ -448,20 +518,21 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
     public void testJsonErrorMessageOnInternalFail() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
         updateService.addBucket("bucket");
         expectLastCall().andThrow(new UpdateOperationException(new ErrorMessage(500, "error"))).once();
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket");
@@ -476,17 +547,18 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     @Test
     public void testJsonErrorMessageOnBadJson() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
 
-        replay(updateService, queryService);
+        replay(updateService, queryService, backupService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService);
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/key");
@@ -500,7 +572,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService);
+        verify(updateService, queryService, backupService);
     }
 
     private TJWSEmbeddedJaxrsServer startServerWith(JsonHttpServer resource) throws Exception {

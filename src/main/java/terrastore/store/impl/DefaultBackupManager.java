@@ -11,11 +11,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
-import terrastore.startup.Constants;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.StoreOperationException;
@@ -39,11 +37,11 @@ public class DefaultBackupManager implements BackupManager {
 
     @Override
     public void exportBackup(Bucket bucket, String destination) throws StoreOperationException {
+        DataOutputStream dataStream = null;
         try {
             File resource = getResource(destination);
-            DataOutputStream dataStream = new DataOutputStream(new FileOutputStream(resource));
-            Set<String> keys = bucket.keys();
-            for (String key : keys) {
+            dataStream = new DataOutputStream(new FileOutputStream(resource));
+            for (String key : bucket.keys()) {
                 Value value = bucket.get(key);
                 if (value != null) {
                     byte[] content = value.getBytes();
@@ -59,14 +57,24 @@ public class DefaultBackupManager implements BackupManager {
         } catch (IOException ex) {
             LOG.error(ex.getMessage(), ex);
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        } finally {
+            if (dataStream != null) {
+                try {
+                    dataStream.close();
+                } catch (IOException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+                }
+            }
         }
     }
 
     @Override
     public void importBackup(Bucket bucket, String source) throws StoreOperationException {
+        DataInputStream dataStream = null;
         try {
             File resource = getResource(source);
-            DataInputStream dataStream = new DataInputStream(new FileInputStream(resource));
+            dataStream = new DataInputStream(new FileInputStream(resource));
             while (true) {
                 String key = dataStream.readUTF();
 
@@ -88,6 +96,15 @@ public class DefaultBackupManager implements BackupManager {
         } catch (IOException ex) {
             LOG.error(ex.getMessage(), ex);
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        } finally {
+            if (dataStream != null) {
+                try {
+                    dataStream.close();
+                } catch (IOException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+                }
+            }
         }
     }
 

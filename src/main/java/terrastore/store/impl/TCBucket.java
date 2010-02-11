@@ -33,6 +33,7 @@ import org.terracotta.collections.LockType;
 import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
+import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
 import terrastore.store.FlushCondition;
@@ -62,6 +63,7 @@ public class TCBucket implements Bucket {
     private final String name;
     private final ConcurrentDistributedMap<String, Value> bucket;
     private transient SnapshotManager snapshotManager;
+    private transient BackupManager backupManager;
 
     public TCBucket(String name) {
         this.name = name;
@@ -163,8 +165,23 @@ public class TCBucket implements Bucket {
         }
     }
 
+    @Override
+    public void exportBackup(String destination) throws StoreOperationException {
+        getOrCreateBackupManager().exportBackup(this, destination);
+    }
+
+    @Override
+    public void importBackup(String source) throws StoreOperationException {
+        getOrCreateBackupManager().importBackup(this, source);
+    }
+
     public SnapshotManager getSnapshotManager() {
-        return snapshotManager;
+        return getOrCreateSnapshotManager();
+    }
+
+    @Override
+    public BackupManager getBackupManager() {
+        return getOrCreateBackupManager();
     }
 
     private boolean lock(String key) {
@@ -182,7 +199,8 @@ public class TCBucket implements Bucket {
         lock.unlock();
     }
 
-    // WARN: use a private getter and direct call to "new" because of TC not supporting injection of transient values:
+    //
+    // WARN: using a private getter and direct call to "new" because of TC not supporting injection of transient values:
     // TODO: use spin locks?
     private synchronized SnapshotManager getOrCreateSnapshotManager() {
         if (snapshotManager == null) {
@@ -190,4 +208,12 @@ public class TCBucket implements Bucket {
         }
         return snapshotManager;
     }
+    //
+    private synchronized BackupManager getOrCreateBackupManager() {
+        if (backupManager == null) {
+            backupManager = new DefaultBackupManager();
+        }
+        return backupManager;
+    }
+    //
 }

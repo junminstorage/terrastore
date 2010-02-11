@@ -15,6 +15,7 @@
     <bean id="server" class="terrastore.server.impl.JsonHttpServer">
         <constructor-arg ref="updateService"/>
         <constructor-arg ref="queryService"/>
+        <constructor-arg ref="backupService"/>
     </bean>
 
     <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
@@ -36,6 +37,11 @@
         <property name="comparators" ref="comparators"/>
         <property name="conditions" ref="conditions"/>
         <property name="defaultComparator" ref="defaultComparator"/>
+    </bean>
+
+    <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
+        <constructor-arg ref="router"/>
+        <constructor-arg ref="SECRET-KEY"/>
     </bean>
 
     <!-- Router -->
