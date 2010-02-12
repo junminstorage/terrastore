@@ -15,9 +15,13 @@
  */
 package terrastore.communication.remote;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.communication.Node;
@@ -75,6 +79,77 @@ public class RemoteCommunicationTest {
         } finally {
             try {
                 sender.disconnect();
+                processor.stop();
+            } finally {
+                verify(store, bucket, backup);
+            }
+        }
+    }
+
+    @Test
+    public void testMultithreadSendProcessAndReceive() throws StoreOperationException, ProcessingException, InterruptedException {
+        final String nodeName = "node";
+        final String bucketName = "bucket";
+        final String valueKey = "key";
+        final Value value = new TestValue(VALUE);
+        final Map<String, Value> values = new HashMap<String, Value>();
+        values.put(valueKey, value);
+
+        final Store store = createMock(Store.class);
+        final Bucket bucket = createMock(Bucket.class);
+        final Node backup = createMock(Node.class);
+        makeThreadSafe(store, true);
+        makeThreadSafe(bucket, true);
+        makeThreadSafe(backup, true);
+
+        store.get(bucketName);
+        expectLastCall().andReturn(bucket).anyTimes();
+        bucket.get(valueKey);
+        expectLastCall().andReturn(value).anyTimes();
+
+        replay(store, bucket, backup);
+
+        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, store, 10);
+        processor.start();
+        try {
+            final AtomicBoolean corrupted = new AtomicBoolean(false);
+            final AtomicBoolean failed = new AtomicBoolean(false);
+            final ExecutorService executor = Executors.newCachedThreadPool();
+            final int threads = 100;
+            for (int i = 0; i < threads && corrupted.get() == false && failed.get() == false; i++) {
+                executor.submit(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        Node sender = null;
+                        try {
+                            sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3000, backup);
+                            sender.connect();
+                            //
+                            GetValueCommand command = new GetValueCommand(bucketName, valueKey);
+                            Value result = sender.<Value>send(command);
+                            if (result == null || !Arrays.equals(value.getBytes(), result.getBytes())) {
+                                corrupted.set(true);
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            failed.set(true);
+                        } finally {
+                            sender.disconnect();
+                        }
+                    }
+                });
+            }
+            executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+            if (corrupted.get()) {
+                fail("Corrupted data!");
+            }
+            if (failed.get()) {
+                fail("Failed!");
+            }
+        } finally {
+            try {
                 processor.stop();
             } finally {
                 verify(store, bucket, backup);

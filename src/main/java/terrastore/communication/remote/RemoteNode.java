@@ -29,10 +29,13 @@ import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
@@ -75,11 +78,7 @@ public class RemoteNode implements Node {
         this.timeoutInMillis = timeoutInMillis;
         this.backupNode = fallback;
         client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
-        client.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-        client.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
-        client.getPipeline().addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
-        client.getPipeline().addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
-        client.getPipeline().addLast("HANDLER", new ClientHandler());
+        client.setPipelineFactory(new CustomChannelPipelineFactory(new ClientHandler()));
     }
 
     public void connect() {
@@ -106,7 +105,7 @@ public class RemoteNode implements Node {
         stateLock.lock();
         try {
             if (clientChannel != null) {
-                clientChannel.close();
+                clientChannel.close().awaitUninterruptibly();
                 client.releaseExternalResources();
                 clientChannel = null;
                 LOG.info("Disconnected from : {}:{}", host, port);
@@ -117,7 +116,6 @@ public class RemoteNode implements Node {
             stateLock.unlock();
         }
     }
-
 
     public <R> R send(Command<R> command) throws ProcessingException {
         stateLock.lock();
@@ -216,7 +214,7 @@ public class RemoteNode implements Node {
     }
 
     @ChannelPipelineCoverage("all")
-    private class ClientHandler extends SimpleChannelHandler {
+    private class ClientHandler extends SimpleChannelUpstreamHandler {
 
         @Override
         public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
@@ -236,6 +234,26 @@ public class RemoteNode implements Node {
         @Override
         public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
             LOG.debug(event.getCause().getMessage(), event.getCause());
+        }
+    }
+
+    private static class CustomChannelPipelineFactory implements ChannelPipelineFactory {
+
+        private final ClientHandler clientHandler;
+
+        public CustomChannelPipelineFactory(ClientHandler clientHandler) {
+            this.clientHandler = clientHandler;
+        }
+
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+            ChannelPipeline pipeline = Channels.pipeline();
+            pipeline.addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
+            pipeline.addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
+            pipeline.addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
+            pipeline.addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
+            pipeline.addLast("HANDLER", clientHandler);
+            return pipeline;
         }
     }
 }
