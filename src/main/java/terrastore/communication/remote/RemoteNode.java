@@ -78,7 +78,7 @@ public class RemoteNode implements Node {
         this.timeoutInMillis = timeoutInMillis;
         this.backupNode = fallback;
         client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
-        client.setPipelineFactory(new CustomChannelPipelineFactory(new ClientHandler()));
+        client.setPipelineFactory(new ClientChannelPipelineFactory(new ClientHandler()));
     }
 
     public void connect() {
@@ -237,11 +237,11 @@ public class RemoteNode implements Node {
         }
     }
 
-    private static class CustomChannelPipelineFactory implements ChannelPipelineFactory {
+    private static class ClientChannelPipelineFactory implements ChannelPipelineFactory {
 
         private final ClientHandler clientHandler;
 
-        public CustomChannelPipelineFactory(ClientHandler clientHandler) {
+        public ClientChannelPipelineFactory(ClientHandler clientHandler) {
             this.clientHandler = clientHandler;
         }
 
