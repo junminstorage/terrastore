@@ -22,11 +22,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -65,11 +68,10 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
         acceptedChannels = new DefaultChannelGroup(this.toString());
         server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         server.setOption("reuseAddress", true);
-        server.getPipeline().addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-        server.getPipeline().addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
-        server.getPipeline().addLast("RESPONSE_ENCODER", new SerializerEncoder(new JavaSerializer<RemoteResponse>()));
-        server.getPipeline().addLast("COMMAND_DECODER", new SerializerDecoder(new JavaSerializer<Command>()));
-        server.getPipeline().addLast("HANDLER", new ServerHandler());
+        server.setOption("child.tcpNoDelay", true);
+        server.setOption("child.keepAlive", true);
+        server.setOption("child.reuseAddress", true);
+        server.setPipelineFactory(new ServerChannelPipelineFactory(new ServerHandler()));
     }
 
     protected void doStart() {
@@ -91,7 +93,7 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
         stateLock.lock();
         try {
             if (serverChannel != null) {
-                acceptedChannels.close();
+                acceptedChannels.close().awaitUninterruptibly();
                 server.releaseExternalResources();
                 serverChannel = null;
                 LOG.info("Unbound channel from: {}:{}", host, port);
@@ -104,7 +106,7 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
     }
 
     @ChannelPipelineCoverage("all")
-    private class ServerHandler extends SimpleChannelHandler {
+    private class ServerHandler extends SimpleChannelUpstreamHandler {
 
         @Override
         public void channelOpen(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
@@ -131,6 +133,26 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
         @Override
         public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
             LOG.debug(event.getCause().getMessage(), event.getCause());
+        }
+    }
+
+    private static class ServerChannelPipelineFactory implements ChannelPipelineFactory {
+
+        private final ServerHandler serverHandler;
+
+        public ServerChannelPipelineFactory(ServerHandler serverHandler) {
+            this.serverHandler = serverHandler;
+        }
+
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+            ChannelPipeline pipeline = Channels.pipeline();
+            pipeline.addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
+            pipeline.addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
+            pipeline.addLast("RESPONSE_ENCODER", new SerializerEncoder(new JavaSerializer<RemoteResponse>()));
+            pipeline.addLast("COMMAND_DECODER", new SerializerDecoder(new JavaSerializer<Command>()));
+            pipeline.addLast("HANDLER", serverHandler);
+            return pipeline;
         }
     }
 }
