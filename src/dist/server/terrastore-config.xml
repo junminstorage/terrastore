@@ -41,7 +41,7 @@
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
         <constructor-arg ref="router"/>
-        <constructor-arg ref="SECRET-KEY"/>
+        <constructor-arg value="SECRET-KEY"/>
     </bean>
 
     <!-- Router -->

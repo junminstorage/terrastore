@@ -1,7 +1,24 @@
+/**
+ * Copyright 2009 - 2010 Sergio Bossa (sergio.bossa@gmail.com)
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package terrastore.store.impl;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -22,6 +39,10 @@ import terrastore.store.types.JsonValue;
 import static terrastore.startup.Constants.*;
 
 /**
+ * Default {@link terrastore.store.BackupManager} implementation, exporting/importing
+ * backups to/from files into the "backups" directory under Terrastore home
+ * (see {@link terrastore.startup.Constants#TERRASTORE_HOME} and {@link terrastore.startup.Constants#BACKUPS_DIR}).
+ *
  * @author Sergio Bossa
  */
 public class DefaultBackupManager implements BackupManager {
@@ -40,17 +61,18 @@ public class DefaultBackupManager implements BackupManager {
         DataOutputStream dataStream = null;
         try {
             File resource = getResource(destination);
-            dataStream = new DataOutputStream(new FileOutputStream(resource));
+            LOG.info("Exporting bucket {} to {}", bucket.getName(), resource.getAbsolutePath());
+            dataStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(resource)));
             for (String key : bucket.keys()) {
                 Value value = bucket.get(key);
                 if (value != null) {
                     byte[] content = value.getBytes();
-
+                    // Write key:
                     dataStream.writeUTF(key);
-
+                    // Write value:
                     dataStream.writeInt(content.length);
                     dataStream.write(content, 0, content.length);
-
+                    // Write value type:
                     dataStream.writeByte(types.inverse().get(value.getClass()));
                 }
             }
@@ -74,21 +96,22 @@ public class DefaultBackupManager implements BackupManager {
         DataInputStream dataStream = null;
         try {
             File resource = getResource(source);
-            dataStream = new DataInputStream(new FileInputStream(resource));
+            LOG.info("Importing bucket {} from {}", bucket.getName(), resource.getAbsolutePath());
+            dataStream = new DataInputStream(new BufferedInputStream(new FileInputStream(resource)));
             while (true) {
+                // Read key:
                 String key = dataStream.readUTF();
-
+                // Read value:
                 int contentLength = dataStream.readInt();
                 byte[] content = new byte[contentLength];
                 dataStream.read(content, 0, contentLength);
-
+                // Read type:
                 byte valueType = dataStream.readByte();
-
+                // Create value:
                 Class valueClazz = types.get(valueType);
                 ValueFactory valueFactory = factories.get(valueClazz);
-
                 Value value = valueFactory.create(content);
-
+                // Put:
                 bucket.put(key, value);
             }
         } catch (EOFException ex) {
