@@ -315,6 +315,11 @@
                                         <delete dir="${basedir}/tc-data" />
                                         <delete dir="${basedir}/src/dist/master/tc-data" />
                                         <delete dir="${basedir}/src/dist/server/tc-data" />
+                                        <delete>
+                                            <fileset dir="${basedir}/src/dist/server/backups">
+                                                <include name="*.bak"/>
+                                            </fileset>
+                                        </delete>
                                     </tasks>
                                 </configuration>
                                 <goals>

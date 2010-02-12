@@ -443,6 +443,50 @@ public class IntegrationTest {
         getValue.releaseConnection();
     }
 
+    @Test
+    public void testBackup() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        PostMethod postUpdate = makePostMethodForBackupExport(NODE1_PORT, bucket + "/export", "test.bak", "SECRET-KEY");
+        postUpdate.setRequestEntity(new StringRequestEntity("", "application/json", null));
+        HTTP_CLIENT.executeMethod(postUpdate);
+        assertEquals(HttpStatus.SC_NO_CONTENT, postUpdate.getStatusCode());
+        postUpdate.releaseConnection();
+
+        postUpdate = makePostMethodForBackupImport(NODE1_PORT, bucket + "/import", "test.bak", "SECRET-KEY");
+        postUpdate.setRequestEntity(new StringRequestEntity("", "application/json", null));
+        HTTP_CLIENT.executeMethod(postUpdate);
+        assertEquals(HttpStatus.SC_NO_CONTENT, postUpdate.getStatusCode());
+        postUpdate.releaseConnection();
+
+        GetMethod getAllValues = makeGetMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(getAllValues);
+        assertEquals(HttpStatus.SC_OK, getAllValues.getStatusCode());
+        Map<String, Object> allValues = fromJsonToMap(getAllValues.getResponseBodyAsString());
+        System.err.println(getAllValues.getResponseBodyAsString());
+        getAllValues.releaseConnection();
+        assertEquals(size, allValues.size());
+        for (int i = 1; i <= size; i++) {
+            assertTrue(allValues.containsKey("value" + (char) ('a' + i)));
+        }
+    }
+
     private PutMethod makePutMethod(int nodePort, String path) {
         PutMethod method = new PutMethod("http://" + HOST + ":" + nodePort + "/" + path);
         method.setRequestHeader("Content-Type", "application/json");
@@ -536,6 +580,26 @@ public class IntegrationTest {
     private PostMethod makePostMethodForUpdate(int nodePort, String path, long timeout, String function) {
         try {
             PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + path + "?timeout=" + timeout + "&function=" + URLEncoder.encode(function, "UTF-8"));
+            method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private PostMethod makePostMethodForBackupExport(int nodePort, String path, String destination, String secret) {
+        try {
+            PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + path + "?destination=" + destination + "&secret=" + URLEncoder.encode(secret, "UTF-8"));
+            method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private PostMethod makePostMethodForBackupImport(int nodePort, String path, String source, String secret) {
+        try {
+            PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + path + "?source=" + source + "&secret=" + URLEncoder.encode(secret, "UTF-8"));
             method.setRequestHeader("Content-Type", "application/json");
             return method;
         } catch (UnsupportedEncodingException ex) {
