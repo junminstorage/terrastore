@@ -16,8 +16,6 @@
 package terrastore.store.impl;
 
 import com.google.common.collect.Sets;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.charset.Charset;
 import org.junit.Before;
@@ -65,13 +63,34 @@ public class DefaultBackupManagerTest {
 
         BackupManager backupManager = new DefaultBackupManager();
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         backupManager.exportBackup(bucket, "test");
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         backupManager.importBackup(bucket, "test");
 
         verify(bucket);
     }
 
+    @Test
+    public void testBackupOverwriting() throws Exception {
+        Bucket bucket = createMock(Bucket.class);
+
+        bucket.keys();
+        expectLastCall().andReturn(Sets.newHashSet(KEY_1));
+        bucket.getName();
+        expectLastCall().andReturn("bucket").anyTimes();
+        bucket.get(KEY_1);
+        expectLastCall().andReturn(JSON_VALUE_1).once();
+        bucket.put(KEY_1, JSON_VALUE_1);
+        expectLastCall().once();
+
+        replay(bucket);
+
+        BackupManager backupManager = new DefaultBackupManager();
+
+        backupManager.exportBackup(bucket, "test");
+
+        backupManager.importBackup(bucket, "test");
+
+        verify(bucket);
+    }
 }
