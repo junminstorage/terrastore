@@ -68,7 +68,6 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
         acceptedChannels = new DefaultChannelGroup(this.toString());
         server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         server.setOption("reuseAddress", true);
-        server.setOption("child.tcpNoDelay", true);
         server.setOption("child.keepAlive", true);
         server.setOption("child.reuseAddress", true);
         server.setPipelineFactory(new ServerChannelPipelineFactory(new ServerHandler()));
