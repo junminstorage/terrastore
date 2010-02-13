@@ -4,7 +4,7 @@
     <groupId>terrastore</groupId>
     <artifactId>terrastore</artifactId>
     <packaging>jar</packaging>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.4.1</version>
     <name>terrastore</name>
     <scm>
         <connection>scm:hg:https://terrastore.googlecode.com/hg</connection>
@@ -317,7 +317,7 @@
                                         <delete dir="${basedir}/src/dist/server/tc-data" />
                                         <delete>
                                             <fileset dir="${basedir}/src/dist/server/backups">
-                                                <include name="*.bak"/>
+                                                <include name="*.bak" />
                                             </fileset>
                                         </delete>
                                     </tasks>
