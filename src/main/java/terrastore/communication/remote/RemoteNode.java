@@ -56,8 +56,6 @@ import terrastore.communication.remote.serialization.JavaSerializer;
 public class RemoteNode implements Node {
 
     private static final transient Logger LOG = LoggerFactory.getLogger(RemoteNode.class);
-    // FIXME: this 3MB limit should be known and configurable
-    private static final int MAX_FRAME_SIZE = 3145728;
     //
     private final Lock stateLock = new ReentrantLock();
     private final LinkedHashMap<String, Command> pendingCommands = new LinkedHashMap<String, Command>();
@@ -71,14 +69,14 @@ public class RemoteNode implements Node {
     private final ClientBootstrap client;
     private Channel clientChannel;
 
-    public RemoteNode(String host, int port, String name, long timeoutInMillis, Node fallback) {
+    public RemoteNode(String host, int port, String name, int maxFrameLength, long timeoutInMillis, Node fallback) {
         this.host = host;
         this.port = port;
         this.name = name;
         this.timeoutInMillis = timeoutInMillis;
         this.backupNode = fallback;
         client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
-        client.setPipelineFactory(new ClientChannelPipelineFactory(new ClientHandler()));
+        client.setPipelineFactory(new ClientChannelPipelineFactory(maxFrameLength, new ClientHandler()));
     }
 
     public void connect() {
@@ -239,9 +237,11 @@ public class RemoteNode implements Node {
 
     private static class ClientChannelPipelineFactory implements ChannelPipelineFactory {
 
+        private final int maxFrameLength;
         private final ClientHandler clientHandler;
 
-        public ClientChannelPipelineFactory(ClientHandler clientHandler) {
+        public ClientChannelPipelineFactory(int maxFrameLength, ClientHandler clientHandler) {
+            this.maxFrameLength = maxFrameLength;
             this.clientHandler = clientHandler;
         }
 
@@ -249,7 +249,7 @@ public class RemoteNode implements Node {
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
             pipeline.addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-            pipeline.addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
+            pipeline.addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(maxFrameLength, 0, 4, 0, 4));
             pipeline.addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
             pipeline.addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
             pipeline.addLast("HANDLER", clientHandler);
