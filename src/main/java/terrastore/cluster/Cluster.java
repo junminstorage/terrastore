@@ -31,6 +31,8 @@ public interface Cluster {
 
     public void setWokerThreads(int workerThreads);
 
+    public int getMaxFrameLength();
+
     public ExecutorService getGlobalExecutor();
 
     public Router getRouter();

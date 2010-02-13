@@ -51,8 +51,6 @@ import terrastore.store.Store;
 public class RemoteProcessor extends AbstractSEDAProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteProcessor.class);
-    // FIXME: this 3MB limit should be known and configurable
-    private static final int MAX_FRAME_SIZE = 3145728;
     //
     private final Lock stateLock = new ReentrantLock();
     private final String host;
@@ -61,7 +59,7 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
     private final ChannelGroup acceptedChannels;
     private Channel serverChannel;
 
-    public RemoteProcessor(String host, int port, Store store, int threads) {
+    public RemoteProcessor(String host, int port, int maxFrameLength, Store store, int threads) {
         super(store, threads);
         this.host = host;
         this.port = port;
@@ -70,7 +68,7 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
         server.setOption("reuseAddress", true);
         server.setOption("child.keepAlive", true);
         server.setOption("child.reuseAddress", true);
-        server.setPipelineFactory(new ServerChannelPipelineFactory(new ServerHandler()));
+        server.setPipelineFactory(new ServerChannelPipelineFactory(maxFrameLength, new ServerHandler()));
     }
 
     protected void doStart() {
@@ -137,9 +135,11 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
 
     private static class ServerChannelPipelineFactory implements ChannelPipelineFactory {
 
+        private final int maxFrameLength;
         private final ServerHandler serverHandler;
 
-        public ServerChannelPipelineFactory(ServerHandler serverHandler) {
+        public ServerChannelPipelineFactory(int maxFrameLength, ServerHandler serverHandler) {
+            this.maxFrameLength = maxFrameLength;
             this.serverHandler = serverHandler;
         }
 
@@ -147,7 +147,7 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
             pipeline.addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-            pipeline.addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE, 0, 4, 0, 4));
+            pipeline.addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(maxFrameLength, 0, 4, 0, 4));
             pipeline.addLast("RESPONSE_ENCODER", new SerializerEncoder(new JavaSerializer<RemoteResponse>()));
             pipeline.addLast("COMMAND_DECODER", new SerializerDecoder(new JavaSerializer<Command>()));
             pipeline.addLast("HANDLER", serverHandler);

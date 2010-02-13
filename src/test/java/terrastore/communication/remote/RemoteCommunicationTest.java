@@ -65,8 +65,8 @@ public class RemoteCommunicationTest {
 
         replay(store, bucket, backup);
 
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, store, 10);
-        Node sender = new RemoteNode("127.0.0.1", 9990, nodeName, 1000, backup);
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, store, 10);
+        Node sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3145728, 1000, backup);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -109,7 +109,7 @@ public class RemoteCommunicationTest {
 
         replay(store, bucket, backup);
 
-        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, store, 10);
+        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, store, 10);
         processor.start();
         try {
             final AtomicBoolean corrupted = new AtomicBoolean(false);
@@ -123,7 +123,7 @@ public class RemoteCommunicationTest {
                     public void run() {
                         Node sender = null;
                         try {
-                            sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3000, backup);
+                            sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3145728, 3000, backup);
                             sender.connect();
                             //
                             GetValueCommand command = new GetValueCommand(bucketName, valueKey);
@@ -177,8 +177,8 @@ public class RemoteCommunicationTest {
 
         replay(store, bucket, backup);
 
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, store, 10);
-        Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 1000, backup);
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 3145728, store, 10);
+        Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 3145728, 1000, backup);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -218,8 +218,8 @@ public class RemoteCommunicationTest {
 
         replay(store, bucket, backup);
 
-        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9992, store, 10);
-        final Node sender = new RemoteNode("127.0.0.1", 9992, nodeName, 10000, backup);
+        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9992, 3145728, store, 10);
+        final Node sender = new RemoteNode("127.0.0.1", 9992, nodeName, 3145728, 10000, backup);
         final GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {

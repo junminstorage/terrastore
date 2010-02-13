@@ -75,6 +75,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private volatile transient LocalProcessor localProcessor;
     private volatile transient RemoteProcessor remoteProcessor;
     //
+    private volatile transient int maxFrameLength;
     private volatile transient long nodeTimeout;
     private volatile transient int workerThreads;
     //
@@ -101,6 +102,11 @@ public class TCCluster implements Cluster, DsoClusterListener {
         this.workerThreads = workerThreads;
     }
 
+    @Override
+    public int getMaxFrameLength() {
+        return maxFrameLength;
+    }
+
     public ExecutorService getGlobalExecutor() {
         return globalExecutor;
     }
@@ -115,6 +121,10 @@ public class TCCluster implements Cluster, DsoClusterListener {
 
     public FlushCondition getFlushCondition() {
         return flushCondition;
+    }
+
+    public void setMaxFrameLength(int maxFrameLength) {
+        this.maxFrameLength = maxFrameLength;
     }
 
     public void setRouter(Router router) {
@@ -225,7 +235,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     private void setupThisRemoteProcessor() {
-        remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, store, workerThreads);
+        remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, maxFrameLength, store, workerThreads);
         remoteProcessor.start();
         LOG.info("Set up processor for {}", thisNodeName);
     }
@@ -265,7 +275,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         if (remoteNodeAddress != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {
-                Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, nodeTimeout, router.getLocalNode());
+                Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, maxFrameLength, nodeTimeout, router.getLocalNode());
                 remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
                 router.addRouteTo(remoteNode);
