@@ -26,7 +26,6 @@
         <modules>
             <module name="tim-annotations" version="1.5.0" group-id="org.terracotta.modules"/>
             <module name="tim-concurrent-collections-patched" version="1.3.0" group-id="org.terracotta.modules"/>
-            <module name="tim-jetty-6.1" version="2.1.0" group-id="org.terracotta.modules"/>
         </modules>
         <logs>tc-data/client-logs/%i/%D</logs>
         <statistics>tc-data/client-statistics/%i/%D</statistics>
