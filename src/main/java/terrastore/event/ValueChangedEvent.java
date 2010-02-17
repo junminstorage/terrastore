@@ -26,6 +26,6 @@ public class ValueChangedEvent extends AbstractEvent {
 
     @Override
     protected void doDispatch(EventListener listener) {
-        listener.onValueChanged(key, value);
+        listener.onValueChanged(bucket, key, value);
     }
 }

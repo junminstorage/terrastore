@@ -33,15 +33,17 @@ public interface EventListener {
     /**
      * React when a given value changes.
      *
+     * @param bucket Name of the bucket containing the changed value.
      * @param key The key of the changing value.
      * @param value The changed value.
      */
-    public void onValueChanged(String key, byte[] value);
+    public void onValueChanged(String bucket, String key, byte[] value);
 
     /**
      * React when a given value is removed.
      *
+     * @param bucket Name of the bucket containing the removed value.
      * @param key The key of the removed value.
      */
-    public void onValueRemoved(String key);
+    public void onValueRemoved(String bucket, String key);
 }
