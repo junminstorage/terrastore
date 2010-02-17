@@ -50,10 +50,15 @@ public class AsyncEventBus implements EventBus {
 
     @Override
     public void shutdown() {
-        for (EventProcessor processor : processors.values()) {
-            processor.stop();
+        stateLock.lock();
+        try {
+            for (EventProcessor processor : processors.values()) {
+                processor.stop();
+            }
+            threadPool.shutdownNow();
+        } finally {
+            stateLock.unlock();
         }
-        threadPool.shutdownNow();
     }
 
     @Override
