@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
@@ -22,16 +23,23 @@ import terrastore.event.EventListener;
 public class AsyncEventBus implements EventBus {
 
     private static final Logger LOG = LoggerFactory.getLogger(AsyncEventBus.class);
+    private static final int DEFAULT_MAX_IDLE_TIME = 60;
     //
     private final Map<String, BlockingQueue<Event>> queues = new HashMap<String, BlockingQueue<Event>>();
     private final Map<String, EventProcessor> processors = new HashMap<String, EventProcessor>();
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final Lock stateLock = new ReentrantLock();
     private final List<EventListener> eventListeners;
+    private final int maxIdleTimeInSeconds;
     private final boolean enabled;
 
     public AsyncEventBus(List<EventListener> eventListeners) {
+        this(eventListeners, DEFAULT_MAX_IDLE_TIME);
+    }
+
+    public AsyncEventBus(List<EventListener> eventListeners, int maxIdleTimeInSeconds) {
         this.eventListeners = eventListeners;
+        this.maxIdleTimeInSeconds = maxIdleTimeInSeconds;
         this.enabled = this.eventListeners.size() > 0;
     }
 
@@ -55,6 +63,7 @@ public class AsyncEventBus implements EventBus {
             boolean hasListeners = setupListeners(event);
             if (hasListeners) {
                 stateLock.lock();
+                LOG.debug("Enqueuing event for bucket {} and value {}", event.getBucket(), event.getKey());
                 try {
                     enqueue(event);
                 } finally {
@@ -81,7 +90,7 @@ public class AsyncEventBus implements EventBus {
         EventProcessor processor = null;
         if (queue == null) {
             queue = new LinkedBlockingQueue<Event>();
-            processor = new EventProcessor(queue);
+            processor = new EventProcessor(queue, new IdleCallback(bucket), maxIdleTimeInSeconds);
             queues.put(bucket, queue);
             processors.put(bucket, processor);
             threadPool.submit(processor);
@@ -89,25 +98,60 @@ public class AsyncEventBus implements EventBus {
         queue.offer(event);
     }
 
+    private class IdleCallback {
+
+        private final String bucket;
+
+        public IdleCallback(String bucket) {
+            this.bucket = bucket;
+        }
+
+        public void execute() {
+            stateLock.lock();
+            try {
+                queues.remove(bucket);
+                processors.remove(bucket);
+            } finally {
+                stateLock.unlock();
+            }
+        }
+    }
+
     private static class EventProcessor implements Runnable {
 
         private final BlockingQueue<Event> queue;
+        private final IdleCallback idleCallback;
+        private final int maxIdleTimeInSeconds;
         private volatile Thread currentThread;
         private volatile boolean running;
 
-        public EventProcessor(BlockingQueue<Event> queue) {
+        public EventProcessor(BlockingQueue<Event> queue, IdleCallback idleCallback, int maxIdleTimeInSeconds) {
             this.queue = queue;
+            this.idleCallback = idleCallback;
+            this.maxIdleTimeInSeconds = maxIdleTimeInSeconds;
         }
 
         @Override
         public void run() {
+            long waitTime = TimeUnit.MILLISECONDS.convert(maxIdleTimeInSeconds, TimeUnit.SECONDS);
+            long startTime = 0;
             currentThread = Thread.currentThread();
             running = true;
-            while (running) {
+            while (running && waitTime > 0) {
+                startTime = System.currentTimeMillis();
                 try {
-                    Event event = queue.take();
-                    event.dispatch();
+                    Event event = queue.poll(waitTime, TimeUnit.MILLISECONDS);
+                    if (event != null) {
+                        waitTime = TimeUnit.MILLISECONDS.convert(maxIdleTimeInSeconds, TimeUnit.SECONDS);
+                        event.dispatch();
+                    } else {
+                        running = false;
+                        idleCallback.execute();
+                    }
                 } catch (InterruptedException ex) {
+                    waitTime = waitTime - (System.currentTimeMillis() - startTime);
+                } catch (Exception ex) {
+                    LOG.warn(ex.getMessage(), ex);
                 }
             }
             Thread.interrupted();

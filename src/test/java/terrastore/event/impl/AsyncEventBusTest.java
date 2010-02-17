@@ -259,4 +259,40 @@ public class AsyncEventBusTest {
 
         eventBus.shutdown();
     }
+
+    @Test
+    public void testPublishWaitForIdleTimeoutAndPublishAgain() throws Exception {
+        final CountDownLatch listenerLatch = new CountDownLatch(2);
+        String bucket = "bucket";
+        String key = "key";
+        byte[] value = "value".getBytes("UTF-8");
+
+        EventListener listener = createMock(EventListener.class);
+        makeThreadSafe(listener, true);
+        listener.observes(bucket);
+        expectLastCall().andReturn(true).times(2);
+        listener.onValueChanged(eq(key), aryEq(value));
+        expectLastCall().andAnswer(new IAnswer<Object>() {
+
+            @Override
+            public Object answer() throws Throwable {
+                listenerLatch.countDown();
+                return null;
+            }
+        }).times(2);
+
+        replay(listener);
+
+        AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener), 1);
+        
+        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        Thread.sleep(3000);
+        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+
+        listenerLatch.await(3, TimeUnit.SECONDS);
+
+        verify(listener);
+
+        eventBus.shutdown();
+    }
 }
