@@ -20,13 +20,14 @@ import terrastore.cluster.impl.ClusterServices;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
+import terrastore.store.Value;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Function;
 
 /**
  * @author Sergio Bossa
  */
-public class UpdateCommand extends AbstractCommand {
+public class UpdateCommand extends AbstractCommand<Value> {
 
     private final String bucketName;
     private final String key;
@@ -40,14 +41,15 @@ public class UpdateCommand extends AbstractCommand {
         this.function = function;
     }
 
-    public Object executeOn(Store store) throws StoreOperationException {
+    public Value executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             // WARN: use singleton locator due to Terracotta not supporting injection in clustered objects:
             ExecutorService updateExecutor = ClusterServices.getGlobalExecutor();
             //
-            bucket.update(key, update, function, updateExecutor);
+            return bucket.update(key, update, function, updateExecutor);
+        } else {
+            return null;
         }
-        return null;
     }
 }

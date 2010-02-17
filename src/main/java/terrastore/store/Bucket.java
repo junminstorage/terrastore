@@ -83,9 +83,10 @@ public interface Bucket {
      * @param update The update object containing data about the function to apply.
      * @param function The function to apply for the update.
      * @param updateExecutor The executor to use for performing the update operation.
+     * @return The updated value.
      * @throws StoreOperationException If errors occur during updating.
      */
-    public void update(String key, Update update, Function function, ExecutorService updateExecutor) throws StoreOperationException;
+    public Value update(String key, Update update, Function function, ExecutorService updateExecutor) throws StoreOperationException;
 
     /**
      * Get all keys contained into this bucket.

@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.collections.ConcurrentDistributedMap;
@@ -109,7 +110,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public void update(final String key, final Update update, final Function function, final ExecutorService updateExecutor) throws StoreOperationException {
+    public Value update(final String key, final Update update, final Function function, final ExecutorService updateExecutor) throws StoreOperationException {
         long timeout = update.getTimeoutInMillis();
         boolean locked = lock(key);
         if (locked) {
@@ -125,13 +126,14 @@ public class TCBucket implements Bucket {
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.put(key, result);
-            } catch (Exception ex) {
+                return result;
+            } catch (TimeoutException ex) {
                 task.cancel(true);
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Update cancelled due to long execution time."));
+            } catch (Exception ex) {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
             } finally {
                 unlock(key);
-                if (task.isCancelled()) {
-                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Update cancelled due to long execution time."));
-                }
             }
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -208,6 +210,7 @@ public class TCBucket implements Bucket {
         return snapshotManager;
     }
     //
+
     private synchronized BackupManager getOrCreateBackupManager() {
         if (backupManager == null) {
             backupManager = new DefaultBackupManager();

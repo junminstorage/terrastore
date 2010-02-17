@@ -27,6 +27,9 @@ import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
+import terrastore.event.EventBus;
+import terrastore.event.impl.ValueChangedEvent;
+import terrastore.event.impl.ValueRemovedEvent;
 import terrastore.router.Router;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
@@ -42,9 +45,11 @@ public class DefaultUpdateService implements UpdateService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultUpdateService.class);
     private Map<String, Function> functions = new HashMap<String, Function>();
     private final Router router;
+    private final EventBus eventBus;
 
-    public DefaultUpdateService(Router router) {
+    public DefaultUpdateService(Router router, EventBus eventBus) {
         this.router = router;
+        this.eventBus = eventBus;
     }
 
     public void addBucket(String bucket) throws UpdateOperationException {
@@ -79,6 +84,7 @@ public class DefaultUpdateService implements UpdateService {
             Node node = router.routeToNodeFor(bucket, key);
             PutValueCommand command = new PutValueCommand(bucket, key, value);
             node.send(command);
+            eventBus.publish(new ValueChangedEvent(bucket, key, value.getBytes()));
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -92,6 +98,7 @@ public class DefaultUpdateService implements UpdateService {
             Node node = router.routeToNodeFor(bucket, key);
             RemoveValueCommand command = new RemoveValueCommand(bucket, key);
             node.send(command);
+            eventBus.publish(new ValueRemovedEvent(bucket, key));
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -107,7 +114,10 @@ public class DefaultUpdateService implements UpdateService {
             if (function != null) {
                 Node node = router.routeToNodeFor(bucket, key);
                 UpdateCommand command = new UpdateCommand(bucket, key, update, function);
-                node.send(command);
+                Value updated = node.<Value>send(command);
+                if (updated != null) {
+                    eventBus.publish(new ValueChangedEvent(bucket, key, updated.getBytes()));
+                }
             } else {
                 throw new UpdateOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "No function found: " + update.getFunctionName()));
             }
@@ -123,8 +133,14 @@ public class DefaultUpdateService implements UpdateService {
         return functions;
     }
 
+    @Override
     public Router getRouter() {
         return router;
+    }
+
+    @Override
+    public EventBus getEventBus() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public void setFunctions(Map<String, Function> functions) {
