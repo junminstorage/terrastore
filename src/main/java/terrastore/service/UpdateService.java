@@ -48,7 +48,8 @@ public interface UpdateService {
     public void removeBucket(String bucket) throws UpdateOperationException;
 
     /**
-     * Put a value into the given bucket under the given key.
+     * Put a value into the given bucket under the given key, publishing a {@link terrastore.event.ValueChangedEvent} to the
+     * {@link terrastore.event.EventBus}.
      *
      * @param bucket The name of the bucket to put the value into.
      * @param key The key of the value.
@@ -58,7 +59,8 @@ public interface UpdateService {
     public void putValue(String bucket, String key, Value value) throws UpdateOperationException;
 
     /**
-     * Remove a value from the given bucket under the given key.
+     * Remove a value from the given bucket under the given key, publishing a {@link terrastore.event.ValueRemovedEvent} to the
+     * {@link terrastore.event.EventBus}.
      *
      * @param bucket The name of the bucket to remove the value from.
      * @param key The key of the value.
@@ -67,7 +69,8 @@ public interface UpdateService {
     public void removeValue(String bucket, String key) throws UpdateOperationException;
 
     /**
-     * Execute an update on a value from the given bucket under the given key.
+     * Execute an update on a value from the given bucket under the given key, publishing a {@link terrastore.event.ValueChangedEvent} to the
+     * {@link terrastore.event.EventBus}.
      *
      * @param bucket The name of the bucket holding the value to update.
      * @param key The key of the value to update.
@@ -77,8 +80,9 @@ public interface UpdateService {
     public void executeUpdate(String bucket, String key, Update update) throws UpdateOperationException;
 
     /**
+     * Get all supported {@link terrastore.store.operators.Function}s by name.
      *
-     * @return
+     * @return A map of supported functions.
      */
     public Map<String, Function> getFunctions();
 

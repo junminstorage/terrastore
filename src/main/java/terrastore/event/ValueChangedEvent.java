@@ -15,31 +15,17 @@
  */
 package terrastore.event;
 
-import java.util.List;
-
 /**
- * Interface for publishing {@link Event}s to be processed by registered {@link EventListener}s.
- *
  * @author Sergio Bossa
  */
-public interface EventBus {
+public class ValueChangedEvent extends AbstractEvent {
 
-    /**
-     * Get the list or registered {@link EventListener}s.
-     *
-     * @return The list of listeners.
-     */
-    public List<EventListener> getEventListeners();
+    public ValueChangedEvent(String bucket, String key, byte[] value) {
+        super(bucket, key, value);
+    }
 
-    /**
-     * Publish an {@link Event}.
-     *
-     * @param event The event to publish.
-     */
-    public void publish(Event event);
-
-    /**
-     * Stop events publishing and processing.
-     */
-    public void shutdown();
+    @Override
+    protected void doDispatch(EventListener listener) {
+        listener.onValueChanged(key, value);
+    }
 }
