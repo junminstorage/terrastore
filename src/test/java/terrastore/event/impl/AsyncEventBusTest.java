@@ -301,7 +301,7 @@ public class AsyncEventBusTest {
         replay(listener);
 
         AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener), 1);
-        
+
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
         Thread.sleep(3000);
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
@@ -311,5 +311,26 @@ public class AsyncEventBusTest {
         verify(listener);
 
         eventBus.shutdown();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCannotPublishAfterShutdown() throws Exception {
+        String bucket = "bucket";
+        String key = "key";
+        byte[] value = "value".getBytes("UTF-8");
+
+        EventListener listener = createMock(EventListener.class);
+        makeThreadSafe(listener, true);
+        listener.observes(bucket);
+        expectLastCall().andReturn(true).once();
+
+        replay(listener);
+        try {
+            AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener));
+            eventBus.shutdown();
+            eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        } finally {
+            verify(listener);
+        }
     }
 }
