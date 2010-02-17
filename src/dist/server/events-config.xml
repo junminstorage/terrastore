@@ -20,6 +20,7 @@
 
     <bean id="eventBus" class="terrastore.event.impl.AsyncEventBus">
         <constructor-arg ref="event-listeners"/>
+        <constructor-arg value="3600"/>
     </bean>
 
 </beans>
