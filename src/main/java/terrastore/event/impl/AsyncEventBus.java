@@ -50,6 +50,7 @@ public class AsyncEventBus implements EventBus {
     private final List<EventListener> eventListeners;
     private final int maxIdleTimeInSeconds;
     private final boolean enabled;
+    private volatile boolean shutdown;
 
     public AsyncEventBus(List<EventListener> eventListeners) {
         this(eventListeners, DEFAULT_MAX_IDLE_TIME);
@@ -68,14 +69,19 @@ public class AsyncEventBus implements EventBus {
 
     @Override
     public void shutdown() {
-        stateLock.lock();
-        try {
-            for (EventProcessor processor : processors.values()) {
-                processor.stop();
+        if (!shutdown) {
+            stateLock.lock();
+            try {
+                for (EventProcessor processor : processors.values()) {
+                    processor.stop();
+                }
+                threadPool.shutdownNow();
+                shutdown = true;
+            } finally {
+                stateLock.unlock();
             }
-            threadPool.shutdownNow();
-        } finally {
-            stateLock.unlock();
+        } else {
+            throw new IllegalStateException("The bus has been shutdown!");
         }
     }
 
@@ -88,7 +94,11 @@ public class AsyncEventBus implements EventBus {
                 stateLock.lock();
                 LOG.debug("Enqueuing event for bucket {} and value {}", event.getBucket(), event.getKey());
                 try {
-                    enqueue(event);
+                    if (!shutdown) {
+                        enqueue(event);
+                    } else {
+                        throw new IllegalStateException("The bus has been shutdown!");
+                    }
                 } finally {
                     stateLock.unlock();
                 }
