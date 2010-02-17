@@ -274,8 +274,9 @@ public class TCBucketTest {
         String key = "key";
         Value value = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
         bucket.put(key, value);
-        bucket.update(key, update, function, Executors.newCachedThreadPool());
-        assertEquals(new String(JSON_UPDATED.getBytes("UTF-8")), new String(bucket.get(key).getBytes()));
+        Value updated = bucket.update(key, update, function, Executors.newCachedThreadPool());
+        assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), updated.getBytes());
+        assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), bucket.get(key).getBytes());
     }
 
     @Test

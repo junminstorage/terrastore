@@ -16,6 +16,7 @@
 package terrastore.service;
 
 import java.util.Map;
+import terrastore.event.EventBus;
 import terrastore.router.Router;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
@@ -87,4 +88,11 @@ public interface UpdateService {
      * @return The router instance.
      */
     public Router getRouter();
+
+    /**
+     * Get the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
+     *
+     * @return The event bus instance.
+     */
+    public EventBus getEventBus();
 }

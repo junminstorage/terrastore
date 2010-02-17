@@ -9,6 +9,7 @@
     <import resource="comparators-config.xml"/>
     <import resource="conditions-config.xml"/>
     <import resource="functions-config.xml"/>
+    <import resource="events-config.xml"/>
 
     <!-- Server -->
 
@@ -29,6 +30,7 @@
     
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
+        <constructor-arg ref="eventBus"/>
         <property name="functions" ref="update-functions"/>
     </bean>
     
