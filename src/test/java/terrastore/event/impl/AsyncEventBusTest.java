@@ -43,7 +43,7 @@ public class AsyncEventBusTest {
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true);
-        listener.onValueChanged(eq(key), aryEq(value));
+        listener.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -77,7 +77,7 @@ public class AsyncEventBusTest {
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true);
-        listener.onValueRemoved(eq(key));
+        listener.onValueRemoved(eq(bucket), eq(key));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -115,7 +115,7 @@ public class AsyncEventBusTest {
         expectLastCall().andReturn(true);
         listener2.observes(bucket);
         expectLastCall().andReturn(true);
-        listener1.onValueChanged(eq(key), aryEq(value));
+        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -124,7 +124,7 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
-        listener2.onValueChanged(eq(key), aryEq(value));
+        listener2.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -162,7 +162,7 @@ public class AsyncEventBusTest {
         expectLastCall().andReturn(true);
         listener2.observes(bucket);
         expectLastCall().andReturn(false);
-        listener1.onValueChanged(eq(key), aryEq(value));
+        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -200,7 +200,7 @@ public class AsyncEventBusTest {
         expectLastCall().andReturn(true).times(2);
         listener2.observes(bucket);
         expectLastCall().andReturn(true).times(2);
-        listener1.onValueChanged(eq(key), aryEq(value));
+        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -209,7 +209,7 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).times(2);
-        listener2.onValueChanged(eq(key), aryEq(value));
+        listener2.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -246,7 +246,7 @@ public class AsyncEventBusTest {
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true).times(threads);
-        listener.onValueChanged(eq(key), aryEq(value));
+        listener.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -288,7 +288,7 @@ public class AsyncEventBusTest {
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true).times(2);
-        listener.onValueChanged(eq(key), aryEq(value));
+        listener.onValueChanged(eq(bucket), eq(key), aryEq(value));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
