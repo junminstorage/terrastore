@@ -66,6 +66,7 @@
     <bean id="cluster" class="terrastore.cluster.impl.TCCluster" factory-method="getInstance">
         <property name="maxFrameLength" value="10485760"/>
         <property name="router" ref="router"/>
+        <property name="eventBus" ref="eventBus"/>
         <property name="flushStrategy" ref="flushStrategy"/>
         <property name="flushCondition" ref="flushCondition"/>
     </bean>

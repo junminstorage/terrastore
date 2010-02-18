@@ -18,6 +18,7 @@ package terrastore.cluster;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import java.util.concurrent.ExecutorService;
+import terrastore.event.EventBus;
 import terrastore.router.Router;
 
 /**
@@ -36,6 +37,8 @@ public interface Cluster {
     public ExecutorService getGlobalExecutor();
 
     public Router getRouter();
+
+    public EventBus getEventBus();
 
     public FlushStrategy getFlushStrategy();
 

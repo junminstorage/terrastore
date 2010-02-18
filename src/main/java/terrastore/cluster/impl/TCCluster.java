@@ -44,6 +44,7 @@ import terrastore.communication.local.LocalNode;
 import terrastore.communication.local.LocalProcessor;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
+import terrastore.event.EventBus;
 import terrastore.router.Router;
 import terrastore.store.Store;
 import terrastore.store.impl.TCStore;
@@ -82,6 +83,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private volatile transient ExecutorService globalExecutor;
     //
     private volatile transient Router router;
+    private volatile transient EventBus eventBus;
     private volatile transient FlushStrategy flushStrategy;
     private volatile transient FlushCondition flushCondition;
 
@@ -107,18 +109,27 @@ public class TCCluster implements Cluster, DsoClusterListener {
         return maxFrameLength;
     }
 
+    @Override
     public ExecutorService getGlobalExecutor() {
         return globalExecutor;
     }
 
+    @Override
     public Router getRouter() {
         return router;
     }
 
+    @Override
+    public EventBus getEventBus() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public FlushStrategy getFlushStrategy() {
         return flushStrategy;
     }
 
+    @Override
     public FlushCondition getFlushCondition() {
         return flushCondition;
     }
@@ -129,6 +140,10 @@ public class TCCluster implements Cluster, DsoClusterListener {
 
     public void setRouter(Router router) {
         this.router = router;
+    }
+
+    public void setEventBus(EventBus eventBus) {
+        this.eventBus = eventBus;
     }
 
     public void setFlushStrategy(FlushStrategy flushStrategy) {
@@ -319,6 +334,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private void cleanupEverything() {
         nodes.clear();
         router.cleanup();
+        eventBus.shutdown();
         globalExecutor.shutdownNow();
     }
 

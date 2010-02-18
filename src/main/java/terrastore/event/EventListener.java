@@ -46,4 +46,9 @@ public interface EventListener {
      * @param key The key of the removed value.
      */
     public void onValueRemoved(String bucket, String key);
+
+    /**
+     * Callback to cleanup things on {@link EventBus} shutdown.
+     */
+    public void cleanup();
 }

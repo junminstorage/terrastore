@@ -75,6 +75,9 @@ public class AsyncEventBus implements EventBus {
                 for (EventProcessor processor : processors.values()) {
                     processor.stop();
                 }
+                for (EventListener listener : eventListeners) {
+                    listener.cleanup();
+                }
                 threadPool.shutdownNow();
                 shutdown = true;
             } finally {
