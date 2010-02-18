@@ -52,6 +52,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener.cleanup();
+        expectLastCall().once();
 
         replay(listener);
 
@@ -61,9 +63,9 @@ public class AsyncEventBusTest {
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
-        verify(listener);
-
         eventBus.shutdown();
+
+        verify(listener);
     }
 
     @Test
@@ -86,6 +88,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener.cleanup();
+        expectLastCall().once();
 
         replay(listener);
 
@@ -95,9 +99,9 @@ public class AsyncEventBusTest {
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
-        verify(listener);
-
         eventBus.shutdown();
+
+        verify(listener);
     }
 
     @Test
@@ -133,6 +137,10 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener1.cleanup();
+        expectLastCall().once();
+        listener2.cleanup();
+        expectLastCall().once();
 
         replay(listener1, listener2);
 
@@ -142,9 +150,9 @@ public class AsyncEventBusTest {
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
-        verify(listener1, listener2);
-
         eventBus.shutdown();
+
+        verify(listener1, listener2);
     }
 
     @Test
@@ -171,6 +179,10 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener1.cleanup();
+        expectLastCall().once();
+        listener2.cleanup();
+        expectLastCall().once();
 
         replay(listener1, listener2);
 
@@ -180,9 +192,9 @@ public class AsyncEventBusTest {
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
-        verify(listener1, listener2);
-
         eventBus.shutdown();
+
+        verify(listener1, listener2);
     }
 
     @Test
@@ -218,6 +230,10 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).times(2);
+        listener1.cleanup();
+        expectLastCall().once();
+        listener2.cleanup();
+        expectLastCall().once();
 
         replay(listener1, listener2);
 
@@ -228,9 +244,9 @@ public class AsyncEventBusTest {
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
-        verify(listener1, listener2);
-
         eventBus.shutdown();
+
+        verify(listener1, listener2);
     }
 
     @Test
@@ -255,6 +271,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).times(threads);
+        listener.cleanup();
+        expectLastCall().once();
 
         replay(listener);
 
@@ -272,9 +290,9 @@ public class AsyncEventBusTest {
 
         publishingLatch.await(threads, TimeUnit.SECONDS);
 
-        verify(listener);
-
         eventBus.shutdown();
+
+        verify(listener);
     }
 
     @Test
@@ -297,6 +315,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).times(2);
+        listener.cleanup();
+        expectLastCall().once();
 
         replay(listener);
 
@@ -308,9 +328,9 @@ public class AsyncEventBusTest {
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
-        verify(listener);
-
         eventBus.shutdown();
+
+        verify(listener);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -323,6 +343,8 @@ public class AsyncEventBusTest {
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true).once();
+        listener.cleanup();
+        expectLastCall().once();
 
         replay(listener);
         try {
