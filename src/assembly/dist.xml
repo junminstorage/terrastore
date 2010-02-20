@@ -67,6 +67,10 @@
         </file>
         <file>
             <outputDirectory>terrastore-server</outputDirectory>
+            <source>src/dist/server/events-config.xml</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-server</outputDirectory>
             <source>src/dist/server/terrastore-config.xml</source>
         </file>
         <file>
