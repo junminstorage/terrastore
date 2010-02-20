@@ -48,6 +48,11 @@ public interface EventListener {
     public void onValueRemoved(String bucket, String key);
 
     /**
+     * Callback to initialize things on listener registration.
+     */
+    public void init();
+
+    /**
      * Callback to cleanup things on {@link EventBus} shutdown.
      */
     public void cleanup();

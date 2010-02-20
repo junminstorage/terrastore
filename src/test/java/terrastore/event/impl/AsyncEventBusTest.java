@@ -52,6 +52,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener.init();
+        expectLastCall().once();
         listener.cleanup();
         expectLastCall().once();
 
@@ -88,6 +90,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener.init();
+        expectLastCall().once();
         listener.cleanup();
         expectLastCall().once();
 
@@ -137,6 +141,10 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener1.init();
+        expectLastCall().once();
+        listener2.init();
+        expectLastCall().once();
         listener1.cleanup();
         expectLastCall().once();
         listener2.cleanup();
@@ -179,6 +187,10 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).once();
+        listener1.init();
+        expectLastCall().once();
+        listener2.init();
+        expectLastCall().once();
         listener1.cleanup();
         expectLastCall().once();
         listener2.cleanup();
@@ -230,6 +242,10 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).times(2);
+        listener1.init();
+        expectLastCall().once();
+        listener2.init();
+        expectLastCall().once();
         listener1.cleanup();
         expectLastCall().once();
         listener2.cleanup();
@@ -271,6 +287,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).times(threads);
+        listener.init();
+        expectLastCall().once();
         listener.cleanup();
         expectLastCall().once();
 
@@ -315,6 +333,8 @@ public class AsyncEventBusTest {
                 return null;
             }
         }).times(2);
+        listener.init();
+        expectLastCall().once();
         listener.cleanup();
         expectLastCall().once();
 
@@ -343,6 +363,8 @@ public class AsyncEventBusTest {
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true).once();
+        listener.init();
+        expectLastCall().once();
         listener.cleanup();
         expectLastCall().once();
 

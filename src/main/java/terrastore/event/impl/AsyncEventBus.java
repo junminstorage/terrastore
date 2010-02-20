@@ -60,6 +60,7 @@ public class AsyncEventBus implements EventBus {
         this.eventListeners = eventListeners;
         this.maxIdleTimeInSeconds = maxIdleTimeInSeconds;
         this.enabled = this.eventListeners.size() > 0;
+        initListeners(this.eventListeners);
     }
 
     @Override
@@ -72,12 +73,8 @@ public class AsyncEventBus implements EventBus {
         if (!shutdown) {
             stateLock.lock();
             try {
-                for (EventProcessor processor : processors.values()) {
-                    processor.stop();
-                }
-                for (EventListener listener : eventListeners) {
-                    listener.cleanup();
-                }
+                stopProcessors();
+                cleanupListeners();
                 threadPool.shutdownNow();
                 shutdown = true;
             } finally {
@@ -92,13 +89,13 @@ public class AsyncEventBus implements EventBus {
     public void publish(Event event) {
         if (enabled) {
             LOG.debug("Publishing event for bucket {} and value {}", event.getBucket(), event.getKey());
-            boolean hasListeners = setupListeners(event);
+            boolean hasListeners = setupEvent(event);
             if (hasListeners) {
                 stateLock.lock();
                 LOG.debug("Enqueuing event for bucket {} and value {}", event.getBucket(), event.getKey());
                 try {
                     if (!shutdown) {
-                        enqueue(event);
+                        enqueueEvent(event);
                     } else {
                         throw new IllegalStateException("The bus has been shutdown!");
                     }
@@ -109,7 +106,13 @@ public class AsyncEventBus implements EventBus {
         }
     }
 
-    private boolean setupListeners(Event event) {
+    private void initListeners(List<EventListener> eventListeners) {
+        for (EventListener listener : eventListeners) {
+            listener.init();
+        }
+    }
+
+    private boolean setupEvent(Event event) {
         boolean found = false;
         for (EventListener listener : eventListeners) {
             if (listener.observes(event.getBucket())) {
@@ -120,7 +123,7 @@ public class AsyncEventBus implements EventBus {
         return found;
     }
 
-    private void enqueue(Event event) {
+    private void enqueueEvent(Event event) {
         String bucket = event.getBucket();
         BlockingQueue<Event> queue = queues.get(bucket);
         EventProcessor processor = null;
@@ -132,6 +135,18 @@ public class AsyncEventBus implements EventBus {
             threadPool.submit(processor);
         }
         queue.offer(event);
+    }
+    
+    private void stopProcessors() {
+        for (EventProcessor processor : processors.values()) {
+            processor.stop();
+        }
+    }
+
+    private void cleanupListeners() {
+        for (EventListener listener : eventListeners) {
+            listener.cleanup();
+        }
     }
 
     private class IdleCallback {
