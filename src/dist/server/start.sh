@@ -27,6 +27,7 @@ then
     exit 1
 fi
 
+CLASSPATH=${TERRASTORE_HOME}
 for file in ${TERRASTORE_HOME}/libs/*.jar
 do
   CLASSPATH=$file:$CLASSPATH

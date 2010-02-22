@@ -86,6 +86,10 @@
             <outputDirectory>terrastore-server/backups</outputDirectory>
             <source>src/dist/server/backups/README.txt</source>
         </file>
+        <file>
+            <outputDirectory>terrastore-server/extensions</outputDirectory>
+            <source>src/dist/server/extensions/README.txt</source>
+        </file>
     </files>
     <fileSets>
         <fileSet>
