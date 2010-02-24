@@ -16,10 +16,10 @@
 package terrastore.event.impl;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,8 +43,8 @@ public class AsyncEventBus implements EventBus {
     private static final Logger LOG = LoggerFactory.getLogger(AsyncEventBus.class);
     private static final int DEFAULT_MAX_IDLE_TIME = 60;
     //
-    private final Map<String, BlockingQueue<Event>> queues = new HashMap<String, BlockingQueue<Event>>();
-    private final Map<String, EventProcessor> processors = new HashMap<String, EventProcessor>();
+    private final ConcurrentMap<String, BlockingQueue<Event>> queues = new ConcurrentHashMap<String, BlockingQueue<Event>>();
+    private final ConcurrentMap<String, EventProcessor> processors = new ConcurrentHashMap<String, EventProcessor>();
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final Lock stateLock = new ReentrantLock();
     private final List<EventListener> eventListeners;
@@ -91,16 +91,10 @@ public class AsyncEventBus implements EventBus {
             LOG.debug("Publishing event for bucket {} and value {}", event.getBucket(), event.getKey());
             boolean hasListeners = setupEvent(event);
             if (hasListeners) {
-                stateLock.lock();
-                LOG.debug("Enqueuing event for bucket {} and value {}", event.getBucket(), event.getKey());
-                try {
-                    if (!shutdown) {
-                        enqueueEvent(event);
-                    } else {
-                        throw new IllegalStateException("The bus has been shutdown!");
-                    }
-                } finally {
-                    stateLock.unlock();
+                if (!shutdown) {
+                    enqueueEvent(event);
+                } else {
+                    throw new IllegalStateException("The bus has been shutdown!");
                 }
             }
         }
@@ -124,19 +118,27 @@ public class AsyncEventBus implements EventBus {
     }
 
     private void enqueueEvent(Event event) {
+        LOG.debug("Enqueuing event for bucket {} and value {}", event.getBucket(), event.getKey());
         String bucket = event.getBucket();
         BlockingQueue<Event> queue = queues.get(bucket);
         EventProcessor processor = null;
         if (queue == null) {
-            queue = new LinkedBlockingQueue<Event>();
-            processor = new EventProcessor(queue, new IdleCallback(bucket), maxIdleTimeInSeconds);
-            queues.put(bucket, queue);
-            processors.put(bucket, processor);
-            threadPool.submit(processor);
+            stateLock.lock();
+            try {
+                if (!queues.containsKey(bucket)) {
+                    queue = new LinkedBlockingQueue<Event>();
+                    processor = new EventProcessor(queue, new IdleCallback(bucket), maxIdleTimeInSeconds);
+                    queues.put(bucket, queue);
+                    processors.put(bucket, processor);
+                    threadPool.submit(processor);
+                }
+            } finally {
+                stateLock.unlock();
+            }
         }
         queue.offer(event);
     }
-    
+
     private void stopProcessors() {
         for (EventProcessor processor : processors.values()) {
             processor.stop();
