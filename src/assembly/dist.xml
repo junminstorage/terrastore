@@ -51,7 +51,7 @@
         </file>
         <file>
             <outputDirectory>terrastore-master</outputDirectory>
-            <source>terrastore-master.zip</source>
+            <source>src/dist/terrastore-master.zip</source>
         </file>
         <file>
             <outputDirectory>terrastore-server</outputDirectory>
