@@ -15,21 +15,14 @@
  */
 package terrastore.event;
 
-import java.util.LinkedList;
-import java.util.List;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Sergio Bossa
  */
 public abstract class AbstractEvent implements Event {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractEvent.class);
-    //
-    protected final List<EventListener> listeners = new LinkedList<EventListener>();
     protected final String bucket;
     protected final String key;
     protected final byte[] value;
@@ -54,24 +47,6 @@ public abstract class AbstractEvent implements Event {
     public final byte[] getValue() {
         return value;
     }
-
-    @Override
-    public void addEventListener(EventListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void dispatch() {
-        for (EventListener listener : listeners) {
-            try {
-                doDispatch(listener);
-            } catch (Exception ex) {
-                LOG.warn(ex.getMessage(), ex);
-            }
-        }
-    }
-
-    protected abstract void doDispatch(EventListener listener);
 
     @Override
     public boolean equals(Object obj) {

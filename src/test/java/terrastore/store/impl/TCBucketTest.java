@@ -19,10 +19,14 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.event.Event;
+import terrastore.event.EventBus;
+import terrastore.event.EventListener;
 import terrastore.startup.Constants;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
@@ -46,6 +50,7 @@ public class TCBucketTest {
     @Before
     public void setUp() {
         bucket = new TCBucket("bucket");
+        bucket.setEventBus(new DisabledEventBus());
     }
 
     @Test
@@ -306,4 +311,20 @@ public class TCBucketTest {
         assertTrue(bucket.keys().contains(key3));
     }
 
+    private static class DisabledEventBus implements EventBus {
+
+        @Override
+        public List<EventListener> getEventListeners() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void publish(Event event) {
+        }
+
+        @Override
+        public void shutdown() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
 }

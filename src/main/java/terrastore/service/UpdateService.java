@@ -16,7 +16,6 @@
 package terrastore.service;
 
 import java.util.Map;
-import terrastore.event.EventBus;
 import terrastore.router.Router;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
@@ -48,8 +47,7 @@ public interface UpdateService {
     public void removeBucket(String bucket) throws UpdateOperationException;
 
     /**
-     * Put a value into the given bucket under the given key, publishing a {@link terrastore.event.ValueChangedEvent} to the
-     * {@link terrastore.event.EventBus}.
+     * Put a value into the given bucket under the given key.
      *
      * @param bucket The name of the bucket to put the value into.
      * @param key The key of the value.
@@ -59,8 +57,7 @@ public interface UpdateService {
     public void putValue(String bucket, String key, Value value) throws UpdateOperationException;
 
     /**
-     * Remove a value from the given bucket under the given key, publishing a {@link terrastore.event.ValueRemovedEvent} to the
-     * {@link terrastore.event.EventBus}.
+     * Remove a value from the given bucket under the given key.
      *
      * @param bucket The name of the bucket to remove the value from.
      * @param key The key of the value.
@@ -69,8 +66,7 @@ public interface UpdateService {
     public void removeValue(String bucket, String key) throws UpdateOperationException;
 
     /**
-     * Execute an update on a value from the given bucket under the given key, publishing a {@link terrastore.event.ValueChangedEvent} to the
-     * {@link terrastore.event.EventBus}.
+     * Execute an update on a value from the given bucket under the given key.
      *
      * @param bucket The name of the bucket holding the value to update.
      * @param key The key of the value to update.
@@ -92,11 +88,4 @@ public interface UpdateService {
      * @return The router instance.
      */
     public Router getRouter();
-
-    /**
-     * Get the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
-     *
-     * @return The event bus instance.
-     */
-    public EventBus getEventBus();
 }

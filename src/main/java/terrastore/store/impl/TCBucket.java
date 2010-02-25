@@ -34,6 +34,9 @@ import org.terracotta.collections.LockType;
 import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
+import terrastore.event.EventBus;
+import terrastore.event.ValueChangedEvent;
+import terrastore.event.ValueRemovedEvent;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
@@ -63,6 +66,7 @@ public class TCBucket implements Bucket {
     //
     private final String name;
     private final ConcurrentDistributedMap<String, Value> bucket;
+    private transient volatile EventBus eventBus;
     private transient SnapshotManager snapshotManager;
     private transient BackupManager backupManager;
 
@@ -76,7 +80,14 @@ public class TCBucket implements Bucket {
     }
 
     public void put(String key, Value value) {
-        bucket.putNoReturn(key, value);
+        // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
+        lock(key);
+        try {
+            bucket.putNoReturn(key, value);
+            eventBus.publish(new ValueChangedEvent(name, key, value.getBytes()));
+        } finally {
+            unlock(key);
+        }
     }
 
     public Value get(String key) throws StoreOperationException {
@@ -103,20 +114,29 @@ public class TCBucket implements Bucket {
     }
 
     public void remove(String key) throws StoreOperationException {
-        Value removed = bucket.remove(key);
-        if (removed == null) {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
+        // Use explicit locking to remove and publish on the same "transactional" boundary and keep ordering under concurrency.
+        lock(key);
+        try {
+            Value removed = bucket.remove(key);
+            if (removed == null) {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
+            }
+            eventBus.publish(new ValueRemovedEvent(name, key));
+        } finally {
+            unlock(key);
         }
     }
 
     @Override
     public Value update(final String key, final Update update, final Function function, final ExecutorService updateExecutor) throws StoreOperationException {
         long timeout = update.getTimeoutInMillis();
-        boolean locked = lock(key);
-        if (locked) {
-            Future<Value> task = null;
-            try {
-                final Value value = bucket.get(key);
+        Future<Value> task = null;
+        // Use explicit locking to update and block concurrent operations on the same key,
+        // and also publish on the same "transactional" boundary and keep ordering under concurrency.
+        lock(key);
+        try {
+            final Value value = bucket.get(key);
+            if (value != null) {
                 task = updateExecutor.submit(new Callable<Value>() {
 
                     @Override
@@ -126,17 +146,18 @@ public class TCBucket implements Bucket {
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.put(key, result);
+                eventBus.publish(new ValueChangedEvent(name, key, result.getBytes()));
                 return result;
-            } catch (TimeoutException ex) {
-                task.cancel(true);
-                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Update cancelled due to long execution time."));
-            } catch (Exception ex) {
-                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
-            } finally {
-                unlock(key);
+            } else {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
             }
-        } else {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
+        } catch (TimeoutException ex) {
+            task.cancel(true);
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Update cancelled due to long execution time."));
+        } catch (Exception ex) {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        } finally {
+            unlock(key);
         }
     }
 
@@ -177,6 +198,11 @@ public class TCBucket implements Bucket {
         getOrCreateBackupManager().importBackup(this, source);
     }
 
+    @Override
+    public void setEventBus(EventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
     public SnapshotManager getSnapshotManager() {
         return getOrCreateSnapshotManager();
     }
@@ -186,14 +212,9 @@ public class TCBucket implements Bucket {
         return getOrCreateBackupManager();
     }
 
-    private boolean lock(String key) {
-        if (bucket.containsKey(key)) {
-            FinegrainedLock lock = bucket.createFinegrainedLock(key);
-            lock.lock();
-            return true;
-        } else {
-            return false;
-        }
+    private void lock(String key) {
+        FinegrainedLock lock = bucket.createFinegrainedLock(key);
+        lock.lock();
     }
 
     private void unlock(String key) {

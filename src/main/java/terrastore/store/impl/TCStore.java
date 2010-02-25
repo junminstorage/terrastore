@@ -19,8 +19,10 @@ import java.util.Collection;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.collections.HashcodeLockStrategy;
 import org.terracotta.collections.LockType;
+import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
+import terrastore.event.EventBus;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
@@ -31,16 +33,19 @@ import terrastore.store.StoreOperationException;
  * @author Sergio Bossa
  */
 @InstrumentedClass
+@HonorTransient
 public class TCStore implements Store {
 
     private final ConcurrentDistributedMap<String, Bucket> buckets;
+    private transient volatile EventBus eventBus;
 
     public TCStore() {
         buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy(false, true));
     }
 
     public void add(String bucket) throws StoreOperationException {
-        Bucket existent = buckets.putIfAbsent(bucket, new TCBucket(bucket));
+        Bucket toAdd = new TCBucket(bucket);
+        Bucket existent = buckets.putIfAbsent(bucket, toAdd);
         if (existent != null) {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.FORBIDDEN_ERROR_CODE, "Bucket already existent: " + bucket));
         }
@@ -56,6 +61,9 @@ public class TCStore implements Store {
     public Bucket get(String bucket) throws StoreOperationException {
         Bucket requested = buckets.get(bucket);
         if (requested != null) {
+            // We need to manually set the event bus because of TC not supporting injection ...
+            requested.setEventBus(eventBus);
+            // TODO: verify this is not a perf problem.
             return requested;
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Bucket not found: " + bucket));
@@ -72,5 +80,10 @@ public class TCStore implements Store {
         for (Bucket bucket : buckets.values()) {
             bucket.flush(flushStrategy, flushCondition);
         }
+    }
+
+    @Override
+    public void setEventBus(EventBus eventBus) {
+        this.eventBus = eventBus;
     }
 }
