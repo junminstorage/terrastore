@@ -20,6 +20,8 @@ import terrastore.store.FlushStrategy;
 import java.util.concurrent.ExecutorService;
 import terrastore.event.EventBus;
 import terrastore.router.Router;
+import terrastore.store.BackupManager;
+import terrastore.store.SnapshotManager;
 
 /**
  * @author Sergio Bossa
@@ -32,15 +34,19 @@ public interface Cluster {
 
     public void setWokerThreads(int workerThreads);
 
-    public int getMaxFrameLength();
+    public void setMaxFrameLength(int maxFrameLength);
+
+    public void setRouter(Router router);
+
+    public void setEventBus(EventBus eventBus);
+
+    public void setSnapshotManager(SnapshotManager snapshotManager);
+
+    public void setBackupManager(BackupManager backupManager);
+
+    public void setFlushStrategy(FlushStrategy flushStrategy);
+
+    public void setFlushCondition(FlushCondition flushCondition);
 
     public ExecutorService getGlobalExecutor();
-
-    public Router getRouter();
-
-    public EventBus getEventBus();
-
-    public FlushStrategy getFlushStrategy();
-
-    public FlushCondition getFlushCondition();
 }

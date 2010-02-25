@@ -50,6 +50,8 @@ public class TCBucketTest {
     @Before
     public void setUp() {
         bucket = new TCBucket("bucket");
+        bucket.setSnapshotManager(new LocalSnapshotManager());
+        bucket.setBackupManager(new DefaultBackupManager());
         bucket.setEventBus(new DisabledEventBus());
     }
 

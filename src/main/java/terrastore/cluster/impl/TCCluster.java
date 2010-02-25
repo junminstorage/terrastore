@@ -46,6 +46,8 @@ import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
 import terrastore.event.EventBus;
 import terrastore.router.Router;
+import terrastore.store.BackupManager;
+import terrastore.store.SnapshotManager;
 import terrastore.store.Store;
 import terrastore.store.impl.TCStore;
 
@@ -83,15 +85,23 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private volatile transient ExecutorService globalExecutor;
     //
     private volatile transient Router router;
-    private volatile transient EventBus eventBus;
     private volatile transient FlushStrategy flushStrategy;
     private volatile transient FlushCondition flushCondition;
+    //
+    private volatile transient SnapshotManager snapshotManager;
+    private volatile transient BackupManager backupManager;
+    private volatile transient EventBus eventBus;
 
     private TCCluster() {
     }
 
     public static TCCluster getInstance() {
         return INSTANCE;
+    }
+
+    @Override
+    public ExecutorService getGlobalExecutor() {
+        return globalExecutor;
     }
 
     @Override
@@ -105,51 +115,36 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     @Override
-    public int getMaxFrameLength() {
-        return maxFrameLength;
-    }
-
-    @Override
-    public ExecutorService getGlobalExecutor() {
-        return globalExecutor;
-    }
-
-    @Override
-    public Router getRouter() {
-        return router;
-    }
-
-    @Override
-    public EventBus getEventBus() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public FlushStrategy getFlushStrategy() {
-        return flushStrategy;
-    }
-
-    @Override
-    public FlushCondition getFlushCondition() {
-        return flushCondition;
-    }
-
     public void setMaxFrameLength(int maxFrameLength) {
         this.maxFrameLength = maxFrameLength;
     }
 
+    @Override
     public void setRouter(Router router) {
         this.router = router;
     }
 
+    @Override
+    public void setSnapshotManager(SnapshotManager snapshotManager) {
+        this.snapshotManager = snapshotManager;
+    }
+
+    @Override
+    public void setBackupManager(BackupManager backupManager) {
+        this.backupManager = backupManager;
+    }
+
+    @Override
     public void setEventBus(EventBus eventBus) {
         this.eventBus = eventBus;
     }
 
+    @Override
     public void setFlushStrategy(FlushStrategy flushStrategy) {
         this.flushStrategy = flushStrategy;
     }
 
+    @Override
     public void setFlushCondition(FlushCondition flushCondition) {
         this.flushCondition = flushCondition;
     }
@@ -165,6 +160,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
             nodes = new ConcurrentHashMap<String, Node>();
             globalExecutor = Executors.newFixedThreadPool(workerThreads);
             // Do manual injection on shared objects:
+            store.setSnapshotManager(snapshotManager);
+            store.setBackupManager(backupManager);
             store.setEventBus(eventBus);
             // Add cluster listener to listen to events:
             getDsoCluster().addClusterListener(this);

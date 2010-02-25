@@ -121,7 +121,7 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
                 }
             } catch (ClassCastException ex) {
                 LOG.warn("Unexpected command of type: " + event.getMessage().getClass());
-                throw new IllegalStateException("Unexpected message of type: " + event.getMessage().getClass());
+                throw new IllegalStateException("Unexpected command of type: " + event.getMessage().getClass());
             }
         }
 

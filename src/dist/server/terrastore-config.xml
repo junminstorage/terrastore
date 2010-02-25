@@ -66,12 +66,19 @@
     <bean id="cluster" class="terrastore.cluster.impl.TCCluster" factory-method="getInstance">
         <property name="maxFrameLength" value="10485760"/>
         <property name="router" ref="router"/>
+        <property name="snapshotManager" ref="snapshotManager"/>
+        <property name="backupManager" ref="backupManager"/>
         <property name="eventBus" ref="eventBus"/>
         <property name="flushStrategy" ref="flushStrategy"/>
         <property name="flushCondition" ref="flushCondition"/>
     </bean>
 
+    <bean id="snapshotManager" class="terrastore.store.impl.LocalSnapshotManager"/>
+
+    <bean id="backupManager" class="terrastore.store.impl.DefaultBackupManager"/>
+
     <bean id="flushStrategy" class="terrastore.store.impl.SequentialFlushStrategy"/>
+
     <bean id="flushCondition" class="terrastore.store.impl.RoutingBasedFlushCondition">
         <constructor-arg ref="router"/>
     </bean>

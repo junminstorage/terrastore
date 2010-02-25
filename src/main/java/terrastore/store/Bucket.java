@@ -144,18 +144,18 @@ public interface Bucket {
     public void importBackup(String source) throws StoreOperationException;
 
     /**
-     * Get the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.
+     * Set the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.
      *
-     * @return The {@link SnapshotManager} used by this bucket.
+     * @param snapshotManager The {@link SnapshotManager} instance.
      */
-    public SnapshotManager getSnapshotManager();
+    public void setSnapshotManager(SnapshotManager snapshotManager);
 
     /**
-     * Get the {@link BackupManager} used to execute export and import of entries.
+     * Set the {@link BackupManager} used to execute export and import of entries.
      *
-     * @return The {@link BackupManager} used by this bucket.
+     * @param backupManager The {@link BackupManager} instance.
      */
-    public BackupManager getBackupManager();
+    public void setBackupManager(BackupManager backupManager);
 
     /**
      * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
