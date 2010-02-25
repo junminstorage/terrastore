@@ -43,7 +43,7 @@ public class AsyncEventBus implements EventBus {
     private static final Logger LOG = LoggerFactory.getLogger(AsyncEventBus.class);
     private static final int DEFAULT_MAX_IDLE_TIME = 60;
     //
-    private final ConcurrentMap<String, BlockingQueue<Event>> queues = new ConcurrentHashMap<String, BlockingQueue<Event>>();
+    private final ConcurrentMap<String, BlockingQueue<EventDispatcher>> queues = new ConcurrentHashMap<String, BlockingQueue<EventDispatcher>>();
     private final ConcurrentMap<String, EventProcessor> processors = new ConcurrentHashMap<String, EventProcessor>();
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final Lock stateLock = new ReentrantLock();
@@ -87,16 +87,14 @@ public class AsyncEventBus implements EventBus {
 
     @Override
     public void publish(Event event) {
-        if (enabled) {
+        if (enabled && !shutdown) {
             LOG.debug("Publishing event for bucket {} and value {}", event.getBucket(), event.getKey());
-            boolean hasListeners = setupEvent(event);
-            if (hasListeners) {
-                if (!shutdown) {
-                    enqueueEvent(event);
-                } else {
-                    throw new IllegalStateException("The bus has been shutdown!");
-                }
+            EventDispatcher dispatcher = setupEventDispatcher(event);
+            if (dispatcher.hasListeners()) {
+                enqueue(event, dispatcher);
             }
+        } else if (shutdown) {
+            throw new IllegalStateException("The bus has been shutdown!");
         }
     }
 
@@ -106,27 +104,26 @@ public class AsyncEventBus implements EventBus {
         }
     }
 
-    private boolean setupEvent(Event event) {
-        boolean found = false;
+    private EventDispatcher setupEventDispatcher(Event event) {
+        EventDispatcher dispatcher = new EventDispatcher(event);
         for (EventListener listener : eventListeners) {
             if (listener.observes(event.getBucket())) {
-                event.addEventListener(listener);
-                found = true;
+                dispatcher.addEventListener(listener);
             }
         }
-        return found;
+        return dispatcher;
     }
 
-    private void enqueueEvent(Event event) {
+    private void enqueue(Event event, EventDispatcher dispatcher) {
         LOG.debug("Enqueuing event for bucket {} and value {}", event.getBucket(), event.getKey());
         String bucket = event.getBucket();
-        BlockingQueue<Event> queue = queues.get(bucket);
+        BlockingQueue<EventDispatcher> queue = queues.get(bucket);
         EventProcessor processor = null;
         if (queue == null) {
             stateLock.lock();
             try {
                 if (!queues.containsKey(bucket)) {
-                    queue = new LinkedBlockingQueue<Event>();
+                    queue = new LinkedBlockingQueue<EventDispatcher>();
                     processor = new EventProcessor(queue, new IdleCallback(bucket), maxIdleTimeInSeconds);
                     queues.put(bucket, queue);
                     processors.put(bucket, processor);
@@ -136,7 +133,7 @@ public class AsyncEventBus implements EventBus {
                 stateLock.unlock();
             }
         }
-        queue.offer(event);
+        queue.offer(dispatcher);
     }
 
     private void stopProcessors() {
@@ -172,13 +169,13 @@ public class AsyncEventBus implements EventBus {
 
     private static class EventProcessor implements Runnable {
 
-        private final BlockingQueue<Event> queue;
+        private final BlockingQueue<EventDispatcher> queue;
         private final IdleCallback idleCallback;
         private final int maxIdleTimeInSeconds;
         private volatile Thread currentThread;
         private volatile boolean running;
 
-        public EventProcessor(BlockingQueue<Event> queue, IdleCallback idleCallback, int maxIdleTimeInSeconds) {
+        public EventProcessor(BlockingQueue<EventDispatcher> queue, IdleCallback idleCallback, int maxIdleTimeInSeconds) {
             this.queue = queue;
             this.idleCallback = idleCallback;
             this.maxIdleTimeInSeconds = maxIdleTimeInSeconds;
@@ -193,10 +190,10 @@ public class AsyncEventBus implements EventBus {
             while (running && waitTime > 0) {
                 startTime = System.currentTimeMillis();
                 try {
-                    Event event = queue.poll(waitTime, TimeUnit.MILLISECONDS);
-                    if (event != null) {
+                    EventDispatcher eventDispatcher = queue.poll(waitTime, TimeUnit.MILLISECONDS);
+                    if (eventDispatcher != null) {
                         waitTime = TimeUnit.MILLISECONDS.convert(maxIdleTimeInSeconds, TimeUnit.SECONDS);
-                        event.dispatch();
+                        eventDispatcher.dispatch();
                     } else {
                         running = false;
                         idleCallback.execute();
@@ -204,6 +201,7 @@ public class AsyncEventBus implements EventBus {
                 } catch (InterruptedException ex) {
                     waitTime = waitTime - (System.currentTimeMillis() - startTime);
                 } catch (Exception ex) {
+                    // TODO: improve error handling!
                     LOG.warn(ex.getMessage(), ex);
                 }
             }

@@ -25,9 +25,6 @@ import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
-import terrastore.event.EventBus;
-import terrastore.event.ValueChangedEvent;
-import terrastore.event.ValueRemovedEvent;
 import terrastore.router.Router;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
@@ -45,80 +42,72 @@ public class DefaultUpdateServiceTest {
     public void testAddBucket() throws Exception {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
-        EventBus eventBus = createMock(EventBus.class);
 
         router.getLocalNode();
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<AddBucketCommand>anyObject());
         expectLastCall().andReturn(null).once();
 
-        replay(node, router, eventBus);
+        replay(node, router);
 
-        DefaultUpdateService service = new DefaultUpdateService(router, eventBus);
+        DefaultUpdateService service = new DefaultUpdateService(router);
         service.addBucket("bucket");
 
-        verify(node, router, eventBus);
+        verify(node, router);
     }
 
     @Test
     public void testRemoveBucket() throws Exception {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
-        EventBus eventBus = createMock(EventBus.class);
 
         router.getLocalNode();
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<RemoveBucketCommand>anyObject());
         expectLastCall().andReturn(null).once();
 
-        replay(node, router, eventBus);
+        replay(node, router);
 
-        DefaultUpdateService service = new DefaultUpdateService(router, eventBus);
+        DefaultUpdateService service = new DefaultUpdateService(router);
         service.removeBucket("bucket");
 
-        verify(node, router, eventBus);
+        verify(node, router);
     }
 
     @Test
     public void testPutValue() throws Exception {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
-        EventBus eventBus = createMock(EventBus.class);
 
         router.routeToNodeFor("bucket", "test1");
         expectLastCall().andReturn(node).once();
-        eventBus.publish(eq(new ValueChangedEvent("bucket", "test1", JSON_VALUE.getBytes())));
-        expectLastCall().once();
         node.send(EasyMock.<PutValueCommand>anyObject());
         expectLastCall().andReturn(null).once();
 
-        replay(node, router, eventBus);
+        replay(node, router);
 
-        DefaultUpdateService service = new DefaultUpdateService(router, eventBus);
+        DefaultUpdateService service = new DefaultUpdateService(router);
         service.putValue("bucket", "test1", new JsonValue(JSON_VALUE.getBytes()));
 
-        verify(node, router, eventBus);
+        verify(node, router);
     }
 
     @Test
     public void testRemoveValue() throws Exception {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
-        EventBus eventBus = createMock(EventBus.class);
 
         router.routeToNodeFor("bucket", "test1");
         expectLastCall().andReturn(node).once();
-        eventBus.publish(eq(new ValueRemovedEvent("bucket", "test1")));
-        expectLastCall().once();
         node.send(EasyMock.<RemoveValueCommand>anyObject());
         expectLastCall().andReturn(null).once();
 
-        replay(node, router, eventBus);
+        replay(node, router);
 
-        DefaultUpdateService service = new DefaultUpdateService(router, eventBus);
+        DefaultUpdateService service = new DefaultUpdateService(router);
         service.removeValue("bucket", "test1");
 
-        verify(node, router, eventBus);
+        verify(node, router);
     }
 
     @Test
@@ -133,24 +122,21 @@ public class DefaultUpdateServiceTest {
 
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
-        EventBus eventBus = createMock(EventBus.class);
 
         router.routeToNodeFor("bucket", "test1");
         expectLastCall().andReturn(node).once();
-        eventBus.publish(eq(new ValueChangedEvent("bucket", "test1", JSON_VALUE.getBytes())));
-        expectLastCall().once();
         node.send(EasyMock.<UpdateCommand>anyObject());
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
-        replay(node, router, eventBus);
+        replay(node, router);
 
         Map<String, Function> functions = new HashMap<String, Function>();
         functions.put("update", function);
 
-        DefaultUpdateService service = new DefaultUpdateService(router, eventBus);
+        DefaultUpdateService service = new DefaultUpdateService(router);
         service.setFunctions(functions);
         service.executeUpdate("bucket", "test1", new Update("update", 1000, new HashMap<String, Object>()));
 
-        verify(node, router, eventBus);
+        verify(node, router);
     }
 }

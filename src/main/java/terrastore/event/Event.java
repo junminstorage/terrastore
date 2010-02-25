@@ -17,7 +17,6 @@ package terrastore.event;
 
 /**
  * Represent an event related to a key/value pair under a specific bucket.
-
  *
  * @author Sergio Bossa
  */
@@ -46,14 +45,9 @@ public interface Event {
     public byte[] getValue();
 
     /**
-     * Add an {@link EventListener} for this event.
+     * Dispatch this event to the given {@link EventListener}s.
      *
-     * @param listener The listener to add.
+     * @param listener The listener to dispatch this event to.
      */
-    public void addEventListener(EventListener listener);
-
-    /**
-     * Dispatch this event to added {@link EventListener}s.
-     */
-    public void dispatch();
+    public void dispatch(EventListener listener);
 }

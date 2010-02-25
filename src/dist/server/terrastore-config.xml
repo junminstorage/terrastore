@@ -31,7 +31,6 @@
     
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
-        <constructor-arg ref="eventBus"/>
         <property name="functions" ref="update-functions"/>
     </bean>
     

@@ -25,7 +25,7 @@ public class ValueRemovedEvent extends AbstractEvent {
     }
 
     @Override
-    protected void doDispatch(EventListener listener) {
+    public void dispatch(EventListener listener) {
         listener.onValueRemoved(bucket, key);
     }
 }

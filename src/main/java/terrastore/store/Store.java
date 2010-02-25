@@ -16,6 +16,7 @@
 package terrastore.store;
 
 import java.util.Collection;
+import terrastore.event.EventBus;
 
 /**
  * Store interface for managing {@link Bucket} instances.
@@ -66,4 +67,11 @@ public interface Store {
      * @param flushCondition The condition to evaluate for flushing keys.
      */
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition);
+
+    /**
+     * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
+     *
+     * @param eventBus The event bus instance.
+     */
+    public void setEventBus(EventBus eventBus);
 }

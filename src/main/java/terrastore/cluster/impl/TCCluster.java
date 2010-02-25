@@ -157,11 +157,16 @@ public class TCCluster implements Cluster, DsoClusterListener {
     public void start(String host, int port) {
         stateLock.lock();
         try {
+            // Configure host-related data:
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
             thisNodeHost = host;
             thisNodePort = port;
+            // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
             globalExecutor = Executors.newFixedThreadPool(workerThreads);
+            // Do manual injection on shared objects:
+            store.setEventBus(eventBus);
+            // Add cluster listener to listen to events:
             getDsoCluster().addClusterListener(this);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);

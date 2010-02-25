@@ -19,6 +19,7 @@ import terrastore.store.features.Update;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import terrastore.event.EventBus;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
@@ -40,7 +41,9 @@ public interface Bucket {
 
     /**
      * Put the given {@link Value} into this bucket under the given key,
-     * eventually replacing the old one.
+     * eventually replacing the old one.<br>
+     * This publishes a {@link terrastore.event.ValueChangedEvent} to the
+     * {@link terrastore.event.EventBus}.
      *
      * @param key The key of the value to put.
      * @param value The value to put.
@@ -69,7 +72,9 @@ public interface Bucket {
     public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException;
 
     /**
-     * Remove the {@link Value} under the given key.
+     * Remove the {@link Value} under the given key.<br>
+     * This publishes a {@link terrastore.event.ValueRemovedEvent} to the
+     * {@link terrastore.event.EventBus}.
      *
      * @param key The key of the value to remove.
      * @throws StoreOperationException If no value to remove is found for the given key.
@@ -77,7 +82,9 @@ public interface Bucket {
     public void remove(String key) throws StoreOperationException;
 
     /**
-     * Update the {@link Value} under the given key.
+     * Update the {@link Value} under the given key.<br>
+     * This publishes a {@link terrastore.event.ValueChangedEvent} to the
+     * {@link terrastore.event.EventBus}.
      *
      * @param key The key of the value to update.
      * @param update The update object containing data about the function to apply.
@@ -149,4 +156,11 @@ public interface Bucket {
      * @return The {@link BackupManager} used by this bucket.
      */
     public BackupManager getBackupManager();
+
+    /**
+     * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
+     *
+     * @param eventBus The event bus instance.
+     */
+    public void setEventBus(EventBus eventBus);
 }

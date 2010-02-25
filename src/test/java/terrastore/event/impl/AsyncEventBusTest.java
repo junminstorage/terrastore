@@ -361,8 +361,6 @@ public class AsyncEventBusTest {
 
         EventListener listener = createMock(EventListener.class);
         makeThreadSafe(listener, true);
-        listener.observes(bucket);
-        expectLastCall().andReturn(true).once();
         listener.init();
         expectLastCall().once();
         listener.cleanup();
