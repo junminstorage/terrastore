@@ -71,7 +71,21 @@ public interface Store {
     /**
      * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
      *
-     * @param eventBus The event bus instance.
+     * @param eventBus The {@link terrastore.event.EventBus} instance.
      */
     public void setEventBus(EventBus eventBus);
+
+    /**
+     * Set the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.
+     *
+     * @param snapshotManager The {@link SnapshotManager} instance.
+     */
+    public void setSnapshotManager(SnapshotManager snapshotManager);
+
+    /**
+     * Set the {@link BackupManager} used to execute export and import of entries from/to buckets.
+     *
+     * @param backupManager The {@link BackupManager} instance.
+     */
+    public void setBackupManager(BackupManager backupManager);
 }

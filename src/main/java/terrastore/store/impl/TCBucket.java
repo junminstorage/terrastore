@@ -61,14 +61,15 @@ public class TCBucket implements Bucket {
 
     private static final Logger LOG = LoggerFactory.getLogger(TCBucket.class);
     //
+    private static final transient ThreadLocal<EventBus> eventBus = new ThreadLocal<EventBus>();
+    private static final transient ThreadLocal<SnapshotManager> snapshotManager = new ThreadLocal<SnapshotManager>();
+    private static final transient ThreadLocal<BackupManager> backupManager = new ThreadLocal<BackupManager>();
+    //
     @InjectedDsoInstance
     private DsoCluster dsoCluster;
     //
     private final String name;
     private final ConcurrentDistributedMap<String, Value> bucket;
-    private transient volatile EventBus eventBus;
-    private transient SnapshotManager snapshotManager;
-    private transient BackupManager backupManager;
 
     public TCBucket(String name) {
         this.name = name;
@@ -84,7 +85,7 @@ public class TCBucket implements Bucket {
         lock(key);
         try {
             bucket.putNoReturn(key, value);
-            eventBus.publish(new ValueChangedEvent(name, key, value.getBytes()));
+            TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key, value.getBytes()));
         } finally {
             unlock(key);
         }
@@ -121,7 +122,7 @@ public class TCBucket implements Bucket {
             if (removed == null) {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
             }
-            eventBus.publish(new ValueRemovedEvent(name, key));
+            TCBucket.eventBus.get().publish(new ValueRemovedEvent(name, key));
         } finally {
             unlock(key);
         }
@@ -146,7 +147,7 @@ public class TCBucket implements Bucket {
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.put(key, result);
-                eventBus.publish(new ValueChangedEvent(name, key, result.getBytes()));
+                TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key, result.getBytes()));
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -166,7 +167,7 @@ public class TCBucket implements Bucket {
     }
 
     public Set<String> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
-        SortedSnapshot snapshot = getOrCreateSnapshotManager().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
+        SortedSnapshot snapshot = TCBucket.snapshotManager.get().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
     }
 
@@ -190,26 +191,27 @@ public class TCBucket implements Bucket {
 
     @Override
     public void exportBackup(String destination) throws StoreOperationException {
-        getOrCreateBackupManager().exportBackup(this, destination);
+        TCBucket.backupManager.get().exportBackup(this, destination);
     }
 
     @Override
     public void importBackup(String source) throws StoreOperationException {
-        getOrCreateBackupManager().importBackup(this, source);
+        TCBucket.backupManager.get().importBackup(this, source);
     }
 
     @Override
     public void setEventBus(EventBus eventBus) {
-        this.eventBus = eventBus;
-    }
-
-    public SnapshotManager getSnapshotManager() {
-        return getOrCreateSnapshotManager();
+        TCBucket.eventBus.set(eventBus);
     }
 
     @Override
-    public BackupManager getBackupManager() {
-        return getOrCreateBackupManager();
+    public void setSnapshotManager(SnapshotManager snapshotManager) {
+        TCBucket.snapshotManager.set(snapshotManager);
+    }
+
+    @Override
+    public void setBackupManager(BackupManager backupManager) {
+        TCBucket.backupManager.set(backupManager);
     }
 
     private void lock(String key) {
@@ -221,22 +223,4 @@ public class TCBucket implements Bucket {
         FinegrainedLock lock = bucket.createFinegrainedLock(key);
         lock.unlock();
     }
-
-    //
-    // WARN: using a private getter and direct call to "new" because of TC not supporting injection of transient values:
-    private synchronized SnapshotManager getOrCreateSnapshotManager() {
-        if (snapshotManager == null) {
-            snapshotManager = new LocalSnapshotManager();
-        }
-        return snapshotManager;
-    }
-    //
-
-    private synchronized BackupManager getOrCreateBackupManager() {
-        if (backupManager == null) {
-            backupManager = new DefaultBackupManager();
-        }
-        return backupManager;
-    }
-    //
 }

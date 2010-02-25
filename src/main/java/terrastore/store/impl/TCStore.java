@@ -23,9 +23,11 @@ import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
+import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
+import terrastore.store.SnapshotManager;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 
@@ -37,6 +39,8 @@ import terrastore.store.StoreOperationException;
 public class TCStore implements Store {
 
     private final ConcurrentDistributedMap<String, Bucket> buckets;
+    private transient volatile SnapshotManager snapshotManager;
+    private transient volatile BackupManager backupManager;
     private transient volatile EventBus eventBus;
 
     public TCStore() {
@@ -62,6 +66,8 @@ public class TCStore implements Store {
         Bucket requested = buckets.get(bucket);
         if (requested != null) {
             // We need to manually set the event bus because of TC not supporting injection ...
+            requested.setSnapshotManager(snapshotManager);
+            requested.setBackupManager(backupManager);
             requested.setEventBus(eventBus);
             // TODO: verify this is not a perf problem.
             return requested;
@@ -80,6 +86,16 @@ public class TCStore implements Store {
         for (Bucket bucket : buckets.values()) {
             bucket.flush(flushStrategy, flushCondition);
         }
+    }
+
+    @Override
+    public void setSnapshotManager(SnapshotManager snapshotManager) {
+        this.snapshotManager = snapshotManager;
+    }
+
+    @Override
+    public void setBackupManager(BackupManager backupManager) {
+        this.backupManager = backupManager;
     }
 
     @Override

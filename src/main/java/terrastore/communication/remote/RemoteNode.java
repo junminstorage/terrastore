@@ -222,8 +222,8 @@ public class RemoteNode implements Node {
                 String correlationId = response.getCorrelationId();
                 signalCommandResponse(correlationId, response);
             } catch (ClassCastException ex) {
-                LOG.warn("Unexpected command of type: " + event.getMessage().getClass());
-                throw new IllegalStateException("Unexpected command of type: " + event.getMessage().getClass());
+                LOG.warn("Unexpected response of type: " + event.getMessage().getClass());
+                throw new IllegalStateException("Unexpected response of type: " + event.getMessage().getClass());
             } finally {
                 stateLock.unlock();
             }
