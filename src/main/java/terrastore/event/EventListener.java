@@ -15,12 +15,14 @@
  */
 package terrastore.event;
 
+import java.io.Serializable;
+
 /**
  * Observe buckets and react to events related to key/value pairs.
  *
  * @author Sergio Bossa
  */
-public interface EventListener {
+public interface EventListener extends Serializable {
 
     /**
      * Determine if this listener is interested to events happening in the given bucket.
