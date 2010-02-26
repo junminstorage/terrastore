@@ -15,6 +15,7 @@
  */
 package terrastore.event.impl;
 
+import terrastore.event.EventDispatcher;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -27,15 +28,20 @@ import terrastore.event.EventListener;
 /**
  * @author Sergio Bossa
  */
-public class EventDispatcher {
+public class DefaultEventDispatcher implements EventDispatcher {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EventDispatcher.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultEventDispatcher.class);
     //
     private final Event event;
     private final List<EventListener> listeners = new LinkedList<EventListener>();
 
-    public EventDispatcher(Event event) {
+    public DefaultEventDispatcher(Event event) {
         this.event = event;
+    }
+
+    @Override
+    public Event getEvent() {
+        return event;
     }
 
     public void addEventListener(EventListener listener) {
@@ -60,8 +66,8 @@ public class EventDispatcher {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof EventDispatcher) {
-            EventDispatcher other = (EventDispatcher) obj;
+        if (obj instanceof DefaultEventDispatcher) {
+            DefaultEventDispatcher other = (DefaultEventDispatcher) obj;
             return new EqualsBuilder().append(this.event, other.event).append(this.listeners, other.listeners).isEquals();
         } else {
             return false;

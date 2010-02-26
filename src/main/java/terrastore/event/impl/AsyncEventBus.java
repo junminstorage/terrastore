@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.event.Event;
 import terrastore.event.EventBus;
+import terrastore.event.EventDispatcher;
 import terrastore.event.EventListener;
 
 /**
@@ -105,7 +106,7 @@ public class AsyncEventBus implements EventBus {
     }
 
     private EventDispatcher setupEventDispatcher(Event event) {
-        EventDispatcher dispatcher = new EventDispatcher(event);
+        EventDispatcher dispatcher = new DefaultEventDispatcher(event);
         for (EventListener listener : eventListeners) {
             if (listener.observes(event.getBucket())) {
                 dispatcher.addEventListener(listener);
