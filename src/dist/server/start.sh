@@ -30,7 +30,7 @@ fi
 CLASSPATH=${TERRASTORE_HOME}
 for file in ${TERRASTORE_HOME}/libs/*.jar
 do
-  CLASSPATH=$file:$CLASSPATH
+  CLASSPATH=$CLASSPATH:$file
 done
 
 export TC_INSTALL_DIR=${TERRASTORE_HOME}/terrastore-master-libs
