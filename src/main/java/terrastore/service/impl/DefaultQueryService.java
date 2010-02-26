@@ -16,7 +16,6 @@
 package terrastore.service.impl;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,7 @@ import terrastore.service.comparators.LexicographicalComparator;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.util.Maps;
 import terrastore.util.Sets;
@@ -51,7 +51,7 @@ public class DefaultQueryService implements QueryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultQueryService.class);
     private final Router router;
-    private final Map<String, Comparator<String>> comparators = new HashMap<String, Comparator<String>>();
+    private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
     private final Map<String, Condition> conditions = new HashMap<String, Condition>();
     private Comparator defaultComparator = new LexicographicalComparator(true);
 
@@ -112,7 +112,7 @@ public class DefaultQueryService implements QueryService {
     public Map<String, Value> doRangeQuery(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException {
         try {
             LOG.debug("Range query on bucket {}", bucket);
-            Comparator<String> keyComparator = getComparator(range.getKeyComparatorName());
+            Comparator keyComparator = getComparator(range.getKeyComparatorName());
             Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
             Set<String> storedKeys = getKeyRangeForBucket(bucket, range, keyComparator, timeToLive);
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, storedKeys);
@@ -165,11 +165,11 @@ public class DefaultQueryService implements QueryService {
         }
     }
 
-    public Comparator<String> getDefaultComparator() {
+    public Comparator getDefaultComparator() {
         return defaultComparator;
     }
 
-    public Map<String, Comparator<String>> getComparators() {
+    public Map<String, Comparator> getComparators() {
         return comparators;
     }
 
@@ -186,7 +186,7 @@ public class DefaultQueryService implements QueryService {
         this.defaultComparator = defaultComparator;
     }
 
-    public void setComparators(Map<String, Comparator<String>> comparators) {
+    public void setComparators(Map<String, Comparator> comparators) {
         this.comparators.clear();
         this.comparators.putAll(comparators);
     }
@@ -203,7 +203,7 @@ public class DefaultQueryService implements QueryService {
         return storedKeys;
     }
 
-    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator<String> keyComparator, long timeToLive) throws ProcessingException {
+    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws ProcessingException {
         Node node = router.getLocalNode();
         Command command = new DoRangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
         Set<String> storedKeys = node.<Set<String>>send(command);

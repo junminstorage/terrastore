@@ -13,24 +13,14 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.comparators;
+package terrastore.store.operators;
 
-import terrastore.store.operators.Comparator;
+import java.io.Serializable;
 
 /**
- * @author Fabio Marinelli
+ * Interface to implement for comparing keys.
+ *
+ * @author Sergio Bossa
  */
-public class NumberComparator implements Comparator {
-
-    private static final long serialVersionUID = 12345678901L;
-
-    private int direction = 1;
-
-    public NumberComparator(boolean isAscending) {
-        direction = isAscending ? 1 : -1;
-    }
-
-    public int compare(String key1, String key2) {
-        return direction * new Long(key1).compareTo(new Long(key2));
-    }
+public interface Comparator extends java.util.Comparator<String>, Serializable {
 }
