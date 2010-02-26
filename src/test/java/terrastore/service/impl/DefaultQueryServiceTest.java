@@ -15,10 +15,8 @@
  */
 package terrastore.service.impl;
 
-import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,6 +35,7 @@ import terrastore.service.QueryOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
@@ -129,7 +128,7 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testDoRangeQueryWithNoPredicate() throws Exception {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -161,7 +160,7 @@ public class DefaultQueryServiceTest {
 
         replay(localNode, remoteNode, router);
 
-        Map<String, Comparator<String>> comparators = new HashMap<String, Comparator<String>>();
+        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
         comparators.put("order", stringComparator);
 
         DefaultQueryService service = new DefaultQueryService(router);
@@ -177,7 +176,7 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testDoRangeQueryWithPredicate() throws Exception {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -217,7 +216,7 @@ public class DefaultQueryServiceTest {
 
         replay(localNode, remoteNode, router);
 
-        Map<String, Comparator<String>> comparators = new HashMap<String, Comparator<String>>();
+        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
         comparators.put("order", stringComparator);
         Map<String, Condition> conditions = new HashMap<String, Condition>();
         conditions.put("test", trueCondition);
@@ -236,7 +235,7 @@ public class DefaultQueryServiceTest {
 
     @Test(expected = QueryOperationException.class)
     public void testDoRangeQueryWithPredicateFailsDueToNoConditionFound() throws Exception {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -276,7 +275,7 @@ public class DefaultQueryServiceTest {
 
         replay(localNode, remoteNode, router);
 
-        Map<String, Comparator<String>> comparators = new HashMap<String, Comparator<String>>();
+        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
         comparators.put("order", stringComparator);
         Map<String, Condition> conditions = new HashMap<String, Condition>();
         conditions.put("true", trueCondition);

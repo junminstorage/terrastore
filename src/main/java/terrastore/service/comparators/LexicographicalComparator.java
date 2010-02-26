@@ -15,13 +15,12 @@
  */
 package terrastore.service.comparators;
 
-import java.io.Serializable;
-import java.util.Comparator;
+import terrastore.store.operators.Comparator;
 
 /**
  * @author Fabio Marinelli
  */
-public class LexicographicalComparator implements Comparator<String>, Serializable {
+public class LexicographicalComparator implements Comparator {
 
     private static final long serialVersionUID = 12345678901L;
 

@@ -15,13 +15,13 @@
  */
 package terrastore.service;
 
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import terrastore.router.Router;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 
 /**
@@ -111,18 +111,18 @@ public interface QueryService {
     public Router getRouter();
 
     /**
-     * Get the default {@link java.util.Comparator} used to compare keys when no other comparator is found.
+     * Get the default {@link terrastore.store.operators.Comparator} used to compare keys when no other comparator is found.
      *
      * @return The default comparator.
      */
-    public Comparator<String> getDefaultComparator();
+    public Comparator getDefaultComparator();
 
     /**
-     * Get all supported {@link java.util.Comparator} by name.
+     * Get all supported {@link terrastore.store.operators.Comparator} by name.
      *
      * @return A map of supported comparators.
      */
-    public Map<String, Comparator<String>> getComparators();
+    public Map<String, Comparator> getComparators();
 
     /**
      * Get all supported {@link terrastore.store.operators.Condition} by name.
