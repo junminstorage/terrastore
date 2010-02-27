@@ -37,7 +37,7 @@ public interface Router {
     /**
      * Get the local node, representing <b>this</b> cluster node.
      *
-     * @param node The local node.
+     * @return The local node.
      */
     public Node getLocalNode();
 
