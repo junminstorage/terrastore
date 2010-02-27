@@ -93,10 +93,17 @@
     </files>
     <fileSets>
         <fileSet>
+            <outputDirectory>terrastore-api</outputDirectory>
+            <directory>target</directory>
+            <includes>
+                <include>terrastore-${project.version}-api.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
             <outputDirectory>terrastore-server/libs</outputDirectory>
             <directory>target</directory>
             <includes>
-                <include>*.jar</include>
+                <include>terrastore-${project.version}.jar</include>
             </includes>
         </fileSet>
     </fileSets>
