@@ -106,7 +106,7 @@ public interface Bucket {
      * Get a set of all keys falling into the given range, sorted as determined by the given comparator.<br>
      * The range is always computed over a snapshot of all keys: however, if the snapshot is older than the given timeToLive (in milliseconds),
      * a new one will be created with current keys.<br>
-     * The snapshot is computed (and managed) by using the configured {@link SnapshotManager} (see {@link #getSnapshotManager()}).
+     * The snapshot is computed (and managed) by using the configured {@link SnapshotManager} (see {@link #setSnapshotManager(SnapshotManager )}).
      *
      * @param range The range which keys must be fall into.
      * @param keyComparator The comparator determining if a key falls into range.
