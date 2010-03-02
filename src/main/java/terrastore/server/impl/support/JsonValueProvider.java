@@ -15,7 +15,7 @@
  */
 package terrastore.server.impl.support;
 
-import terrastore.util.JsonUtils;
+import terrastore.util.json.JsonUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

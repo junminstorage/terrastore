@@ -49,7 +49,7 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.store.types.JsonValue;
-import terrastore.util.JsonUtils;
+import terrastore.util.json.JsonUtils;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 

@@ -19,7 +19,7 @@ import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
-import terrastore.util.Sets;
+import terrastore.util.collect.Sets;
 
 /**
  * Sorted snapshot of keys.

@@ -26,7 +26,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 import terrastore.common.ErrorMessage;
-import terrastore.util.JsonUtils;
+import terrastore.util.json.JsonUtils;
 
 /**
  * @author Sergio Bossa

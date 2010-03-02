@@ -22,7 +22,7 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
-import terrastore.util.JsonUtils;
+import terrastore.util.json.JsonUtils;
 
 /**
  * Generic value object contained by {@link Bucket} instances.
@@ -46,12 +46,12 @@ public class JsonValue implements Value {
 
     @Override
     public Value dispatch(String key, Update update, Function function) {
-        return JsonUtils.fromMap(function.apply(key, JsonUtils.toMap(this), update.getParameters()));
+        return JsonUtils.fromMap(function.apply(key, JsonUtils.toModifiableMap(this), update.getParameters()));
     }
 
     @Override
     public boolean dispatch(String key, Predicate predicate, Condition condition) {
-        return condition.isSatisfied(key, JsonUtils.toMap(this), predicate.getConditionExpression());
+        return condition.isSatisfied(key, JsonUtils.toUnmodifiableMap(this), predicate.getConditionExpression());
     }
 
     @Override

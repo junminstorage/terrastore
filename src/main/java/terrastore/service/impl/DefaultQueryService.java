@@ -41,8 +41,8 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
-import terrastore.util.Maps;
-import terrastore.util.Sets;
+import terrastore.util.collect.Maps;
+import terrastore.util.collect.Sets;
 
 /**
  * @author Sergio Bossa

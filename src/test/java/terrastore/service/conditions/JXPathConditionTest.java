@@ -19,7 +19,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import org.junit.Test;
 import terrastore.store.types.JsonValue;
-import terrastore.util.JsonUtils;
+import terrastore.util.json.JsonUtils;
 import static org.junit.Assert.*;
 
 /**
@@ -31,7 +31,7 @@ public class JXPathConditionTest {
 
     @Test
     public void testSatisfiedWithJsonValue() throws UnsupportedEncodingException {
-        Map<String, Object> json = JsonUtils.toMap(new JsonValue(JSON_VALUE.getBytes("UTF-8")));
+        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(JSON_VALUE.getBytes("UTF-8")));
         String jxpath = "/key[.='value']";
         JXPathCondition condition = new JXPathCondition();
         assertTrue(condition.isSatisfied("ignored", json, jxpath));
@@ -39,7 +39,7 @@ public class JXPathConditionTest {
 
     @Test
     public void testNotSatisfiedWithJsonValue() throws UnsupportedEncodingException {
-        Map<String, Object> json = JsonUtils.toMap(new JsonValue(JSON_VALUE.getBytes("UTF-8")));
+        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(JSON_VALUE.getBytes("UTF-8")));
         String jxpath = "/key[.='wrong']";
         JXPathCondition condition = new JXPathCondition();
         assertFalse(condition.isSatisfied("ignored", json, jxpath));
