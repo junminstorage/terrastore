@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.util;
+package terrastore.util.json;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -42,9 +42,17 @@ public class JsonUtils {
 
     private static ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    public static Map<String, Object> toMap(JsonValue value) {
+    public static Map<String, Object> toModifiableMap(JsonValue value) {
         try {
             return JSON_MAPPER.readValue(new ByteArrayInputStream(value.getBytes()), Map.class);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Value should have been already validated!");
+        }
+    }
+
+    public static Map<String, Object> toUnmodifiableMap(JsonValue value) {
+        try {
+            return new JsonStreamingMap(value.getBytes());
         } catch (Exception ex) {
             throw new IllegalStateException("Value should have been already validated!");
         }

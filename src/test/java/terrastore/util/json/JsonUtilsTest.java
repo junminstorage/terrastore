@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.util;
+package terrastore.util.json;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -61,13 +61,27 @@ public class JsonUtilsTest {
     }
 
     @Test
-    public void testToMap() throws Exception {
+    public void testToModifiableMap() throws Exception {
         JsonValue json = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> map = JsonUtils.toMap(json);
+        Map<String, Object> map = JsonUtils.toModifiableMap(json);
         assertNotNull(map);
         assertEquals(1, map.size());
         assertTrue(map.containsKey("key"));
         assertTrue(map.containsValue("value"));
+        //
+        assertFalse(JsonStreamingMap.class.equals(map.getClass()));
+    }
+
+    @Test
+    public void testToUnmodifiableMap() throws Exception {
+        JsonValue json = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
+        Map<String, Object> map = JsonUtils.toUnmodifiableMap(json);
+        assertNotNull(map);
+        assertEquals(1, map.size());
+        assertTrue(map.containsKey("key"));
+        assertTrue(map.containsValue("value"));
+        //
+        assertTrue(JsonStreamingMap.class.equals(map.getClass()));
     }
 
     @Test

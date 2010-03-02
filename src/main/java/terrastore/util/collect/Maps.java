@@ -13,16 +13,21 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.util;
+package terrastore.util.collect;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sergio Bossa
  */
-public class Sets {
+public class Maps {
 
-    public static <E> Set<E> limited(Set<E> source, int limit) {
-        return new LimitedSet<E>(source, limit);
+    public static <K, V> Map<K, V> union(List<Map<K, V>> maps) {
+        return new UnionMap<K, V>(maps);
+    }
+
+    public static <K, V> Map<K, V> drain(List<Map<K, V>> maps, Map<K, V> destination) {
+        return new DrainMap<K, V>(maps, destination);
     }
 }
