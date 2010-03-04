@@ -15,9 +15,10 @@
  */
 package terrastore.store.types;
 
-import terrastore.store.*;
 import java.util.Arrays;
 import org.terracotta.modules.annotations.InstrumentedClass;
+import terrastore.store.Bucket;
+import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;

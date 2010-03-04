@@ -32,6 +32,8 @@ import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
+import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 
 /**
@@ -42,7 +44,8 @@ public class DefaultUpdateService implements UpdateService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultUpdateService.class);
     //
     private final Router router;
-    private Map<String, Function> functions = new HashMap<String, Function>();
+    private final Map<String, Function> functions = new HashMap<String, Function>();
+    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
 
     public DefaultUpdateService(Router router) {
         this.router = router;
@@ -74,11 +77,17 @@ public class DefaultUpdateService implements UpdateService {
         }
     }
 
-    public void putValue(String bucket, String key, Value value) throws UpdateOperationException {
+    public void putValue(String bucket, String key, Value value, Predicate predicate) throws UpdateOperationException {
         try {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
-            PutValueCommand command = new PutValueCommand(bucket, key, value);
+            PutValueCommand command = null;
+            if (predicate == null || predicate.isEmpty()) {
+                command = new PutValueCommand(bucket, key, value);
+            } else {
+                Condition condition = getCondition(predicate.getConditionType());
+                command = new PutValueCommand(bucket, key, value, predicate, condition);
+            }
             node.send(command);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
@@ -125,11 +134,30 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
+    public Map<String, Condition> getConditions() {
+        return conditions;
+    }
+
+    @Override
     public Router getRouter() {
         return router;
     }
 
     public void setFunctions(Map<String, Function> functions) {
-        this.functions = functions;
+        this.functions.clear();
+        this.functions.putAll(functions);
+    }
+
+    public void setConditions(Map<String, Condition> conditions) {
+        this.conditions.clear();
+        this.conditions.putAll(conditions);
+    }
+
+    private Condition getCondition(String conditionType) throws UpdateOperationException {
+        if (conditions.containsKey(conditionType)) {
+            return conditions.get(conditionType);
+        } else {
+            throw new UpdateOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong condition type: " + conditionType));
+        }
     }
 }

@@ -32,6 +32,7 @@
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
         <property name="functions" ref="update-functions"/>
+        <property name="conditions" ref="conditions"/>
     </bean>
     
     <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">

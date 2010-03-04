@@ -93,10 +93,10 @@ public class JsonHttpServer implements Server {
     @PUT
     @Path("/{bucket}/{key}")
     @Consumes("application/json")
-    public void putValue(@PathParam("bucket") String bucket, @PathParam("key") String key, Value value) throws ServerOperationException {
+    public void putValue(@PathParam("bucket") String bucket, @PathParam("key") String key, Value value, @QueryParam("predicate") String predicate) throws ServerOperationException {
         try {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
-            updateService.putValue(bucket, key, value);
+            updateService.putValue(bucket, key, value, new Predicate(predicate));
         } catch (UpdateOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

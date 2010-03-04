@@ -182,7 +182,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        updateService.putValue(eq("bucket"), eq("test1"), EasyMock.<Value>anyObject());
+        updateService.putValue(eq("bucket"), eq("test1"), EasyMock.<Value>anyObject(), eq(new Predicate(null)));
         expectLastCall().once();
 
         replay(updateService, queryService, backupService);
@@ -191,6 +191,34 @@ public class JsonHttpServerTest {
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/test1");
+        method.setRequestHeader("Content-Type", "application/json");
+        method.setRequestEntity(new StringRequestEntity(JSON_VALUE, "application/json", null));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_NO_CONTENT, method.getStatusCode());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService);
+    }
+
+    @Test
+    public void testPutValueWithPredicate() throws Exception {
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+
+        updateService.putValue(eq("bucket"), eq("test1"), EasyMock.<Value>anyObject(), eq(new Predicate("test:condition")));
+        expectLastCall().once();
+
+        replay(updateService, queryService, backupService);
+
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
+        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
+        HttpClient client = new HttpClient();
+        PutMethod method = new PutMethod("http://localhost:8080/bucket/test1?predicate=test:condition");
         method.setRequestHeader("Content-Type", "application/json");
         method.setRequestEntity(new StringRequestEntity(JSON_VALUE, "application/json", null));
         client.executeMethod(method);

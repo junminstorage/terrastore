@@ -45,14 +45,17 @@ public interface Server {
     public void removeBucket(String bucket) throws ServerOperationException;
 
     /**
-     * Put a value in the given bucket under the given key.
+     * Put a value in the given bucket under the given key.<br>
+     * Conditional put can be executed by providing a predicate expression:
+     * in such a case, the new value will be put only if no value existed before, or the existent value satisfies the given predicate.
      *
      * @param bucket The name of the bucket where to put the value.
      * @param key The key of the value to put.
      * @param value The value to put.
+     * @param predicate The predicate to evaluate in case of conditional put, or null for no predicate.
      * @throws ServerOperationException If an error occurs.
      */
-    public void putValue(String bucket, String key, Value value) throws ServerOperationException;
+    public void putValue(String bucket, String key, Value value, String predicate) throws ServerOperationException;
 
     /**
      * Remove a value from the given bucket under the given key.

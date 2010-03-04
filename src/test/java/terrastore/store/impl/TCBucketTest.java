@@ -64,6 +64,75 @@ public class TCBucketTest {
     }
 
     @Test
+    public void testConditionalPutAlwaysWorkWithNoOldValue() throws StoreOperationException {
+        final String key = "key";
+        Value value = new JsonValue(JSON_VALUE.getBytes());
+        Predicate predicate = new Predicate("test:unsatisfied");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                if (value.get("test").equals(expression)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        };
+
+        bucket.conditionalPut(key, value, predicate, condition);
+        assertEquals(value, bucket.get(key));
+    }
+
+    @Test
+    public void testConditionalPutSuceedsBecauseSatisfied() throws StoreOperationException {
+        final String key = "key";
+        Value value = new JsonValue(JSON_VALUE.getBytes());
+        Value updated = new JsonValue(JSON_UPDATED.getBytes());
+
+        bucket.put(key, value);
+
+        Predicate predicate = new Predicate("test:test");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                if (value.get("test").equals(expression)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        };
+        bucket.conditionalPut(key, updated, predicate, condition);
+
+        assertEquals(updated, bucket.get(key));
+    }
+
+    @Test(expected = StoreOperationException.class)
+    public void testConditionalPutFailsBecauseUnsatisfied() throws StoreOperationException {
+        final String key = "key";
+        Value value = new JsonValue(JSON_VALUE.getBytes());
+        Value updated = new JsonValue(JSON_UPDATED.getBytes());
+
+        bucket.put(key, value);
+
+        Predicate predicate = new Predicate("test:unsatisfied");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                if (value.get("test").equals(expression)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        };
+        bucket.conditionalPut(key, updated, predicate, condition);
+    }
+
+    @Test
     public void testPutAndConditionallyGetValue() throws StoreOperationException {
         String key = "key";
         Value value = new JsonValue(JSON_VALUE.getBytes());
@@ -79,6 +148,7 @@ public class TCBucketTest {
         bucket.put(key, value);
         assertEquals(value, bucket.conditionalGet(key, predicate, condition));
     }
+
     @Test
     public void testPutAndConditionallyGetValueOnKey() throws StoreOperationException {
         final String key = "key";
@@ -290,7 +360,7 @@ public class TCBucketTest {
     public void testBackupImportDoesNotDeleteExistentData() throws StoreOperationException {
         System.setProperty(Constants.TERRASTORE_HOME, System.getProperty("java.io.tmpdir"));
         new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + Constants.BACKUPS_DIR).mkdir();
-        
+
         String key1 = "key1";
         Value value1 = new JsonValue(JSON_VALUE.getBytes());
         String key2 = "key2";
