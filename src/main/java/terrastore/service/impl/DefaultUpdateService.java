@@ -110,7 +110,7 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
-    public void executeUpdate(String bucket, String key, Update update) throws UpdateOperationException {
+    public void updateValue(String bucket, String key, Update update) throws UpdateOperationException {
         try {
             LOG.debug("Updating value with key {} from bucket {}", key, bucket);
             Function function = functions.get(update.getFunctionName());

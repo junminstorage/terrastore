@@ -128,7 +128,7 @@ public interface Server {
      * @return A map containing key/value pairs
      * @throws ServerOperationException If an error occurs.
      */
-    public Values doRangeQuery(String bucket, String startKey, String endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
+    public Values queryByRange(String bucket, String startKey, String endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whosevalue satisfies the given predicate.
@@ -138,7 +138,7 @@ public interface Server {
      * @return A map containing key/value pairs
      * @throws ServerOperationException If an error occurs.
      */
-    public Values doPredicateQuery(String bucket, String predicate) throws ServerOperationException;
+    public Values queryByPredicate(String bucket, String predicate) throws ServerOperationException;
 
     /**
      * Execute the import of all bucket key/value entries, without interrupting other operations and preserving
@@ -149,7 +149,7 @@ public interface Server {
      * @param secret The secret key: import is executed only if it matches the pre-configured secret.
      * @throws ServerOperationException If an error occurs.
      */
-    public void doImport(String bucket, String source, String secret) throws ServerOperationException;
+    public void importBackup(String bucket, String source, String secret) throws ServerOperationException;
 
     /**
      * Execute the export of all bucket key/value entries, without interrupting other operations.
@@ -159,7 +159,7 @@ public interface Server {
      * @param secret The secret key: export is executed only if it matches the pre-configured secret.
      * @throws ServerOperationException If an error occurs.
      */
-    public void doExport(String bucket, String destination, String secret) throws ServerOperationException;
+    public void exportBackup(String bucket, String destination, String secret) throws ServerOperationException;
 
     /**
      * Get the {@link terrastore.service.UpdateService} which will actually execute all update operations.

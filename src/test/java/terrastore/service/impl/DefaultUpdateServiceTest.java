@@ -112,7 +112,7 @@ public class DefaultUpdateServiceTest {
     }
 
     @Test
-    public void testExecuteUpdate() throws Exception {
+    public void testUpdateValue() throws Exception {
         Function function = new Function() {
 
             @Override
@@ -136,7 +136,7 @@ public class DefaultUpdateServiceTest {
 
         DefaultUpdateService service = new DefaultUpdateService(router);
         service.setFunctions(functions);
-        service.executeUpdate("bucket", "test1", new Update("update", 1000, new HashMap<String, Object>()));
+        service.updateValue("bucket", "test1", new Update("update", 1000, new HashMap<String, Object>()));
 
         verify(node, router);
     }
