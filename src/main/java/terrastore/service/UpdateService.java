@@ -19,6 +19,8 @@ import java.util.Map;
 import terrastore.router.Router;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
+import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 
 /**
@@ -47,14 +49,17 @@ public interface UpdateService {
     public void removeBucket(String bucket) throws UpdateOperationException;
 
     /**
-     * Put a value into the given bucket under the given key.
+     * Put a value into the given bucket under the given key, eventually replacing the old value.<br>
+     * If a {@link terrastore.store.features.Predicate} is provided, and the predicate isn't empty see {@link terrastore.store.features.Predicate#isEmpty()},
+     * the new value will be actually put only if no value existed before, or the old value satisfies the given predicate.
      *
      * @param bucket The name of the bucket to put the value into.
      * @param key The key of the value.
      * @param value The value to put.
+     * @param predicate The predicate object containing the condition to evaluate.
      * @throws UpdateOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public void putValue(String bucket, String key, Value value) throws UpdateOperationException;
+    public void putValue(String bucket, String key, Value value, Predicate predicate) throws UpdateOperationException;
 
     /**
      * Remove a value from the given bucket under the given key.
@@ -81,6 +86,13 @@ public interface UpdateService {
      * @return A map of supported functions.
      */
     public Map<String, Function> getFunctions();
+
+    /**
+     * Get all supported {@link terrastore.store.operators.Condition} by name.
+     *
+     * @return A map of supported conditions.
+     */
+    public Map<String, Condition> getConditions();
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual update operations.

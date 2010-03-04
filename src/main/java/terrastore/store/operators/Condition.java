@@ -19,7 +19,8 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * Interface to implement for evaluating conditions on bucket values.
+ * Interface to implement for evaluating conditions on bucket values.<br>
+ * Condition is expressed as an expression whose meaning depends on the actual implementation.
  *
  * @author Sergio Bossa
  */

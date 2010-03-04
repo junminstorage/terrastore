@@ -7,10 +7,12 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
     <!--
-        Configure here your conditions, used to select values on range queries.
+        Configure here your conditions, used to select values on range queries, and implement conditional put operations.
 
         Each entry key is the predicate type that will be used in Terrastore query string for range queries, e.g.:
         http://localhost:8080/bucket/range?predicate=type:expression&...
+        And for put operations:
+        http://localhost:8080/bucket/value?predicate=type:expression
     -->
 
     <util:map id="conditions">

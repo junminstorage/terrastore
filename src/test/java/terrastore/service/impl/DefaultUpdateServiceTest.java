@@ -26,6 +26,7 @@ import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
+import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
 import terrastore.store.types.JsonValue;
@@ -87,7 +88,7 @@ public class DefaultUpdateServiceTest {
         replay(node, router);
 
         DefaultUpdateService service = new DefaultUpdateService(router);
-        service.putValue("bucket", "test1", new JsonValue(JSON_VALUE.getBytes()));
+        service.putValue("bucket", "test1", new JsonValue(JSON_VALUE.getBytes()), new Predicate(null));
 
         verify(node, router);
     }

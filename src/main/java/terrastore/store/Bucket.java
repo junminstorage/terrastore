@@ -40,15 +40,26 @@ public interface Bucket {
     public String getName();
 
     /**
-     * Put the given {@link Value} into this bucket under the given key,
-     * eventually replacing the old one.<br>
-     * This publishes a {@link terrastore.event.ValueChangedEvent} to the
-     * {@link terrastore.event.EventBus}.
+     * Put the given {@link Value} into this bucket under the given key, eventually replacing the old one.<br>
+     * This publishes a {@link terrastore.event.ValueChangedEvent} to the {@link terrastore.event.EventBus}.
      *
      * @param key The key of the value to put.
      * @param value The value to put.
      */
     public void put(String key, Value value);
+
+    /**
+     * Put the given {@link Value} into this bucket under the given key only if no value existed before,
+     * or the existent value satisfies the given {@link terrastore.store.operators.Condition}.<br>
+     * This publishes a {@link terrastore.event.ValueChangedEvent} to the {@link terrastore.event.EventBus} if the value is actually put.
+     *
+     * @param key The key of the value to put.
+     * @param value The value to put.
+     * @param predicate The predicate object containing data about the condition to evaluate on the old value.
+     * @param condition The condition to evaluate on the old value.
+     * @throws StoreOperationException If the value couldn't be put.
+     */
+    public void conditionalPut(String key, Value value, Predicate predicate, Condition condition) throws StoreOperationException;
 
     /**
      * Get the {@link Value} under the given key.

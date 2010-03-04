@@ -19,6 +19,8 @@ import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
+import terrastore.store.operators.Condition;
 
 /**
  * @author Sergio Bossa
@@ -28,17 +30,36 @@ public class PutValueCommand extends AbstractCommand {
     private final String bucketName;
     private final String key;
     private final Value value;
+    private final boolean conditional;
+    private final Predicate predicate;
+    private final Condition valueCondition;
 
     public PutValueCommand(String bucketName, String key, Value value) {
         this.bucketName = bucketName;
         this.key = key;
         this.value = value;
+        this.conditional = false;
+        this.predicate = null;
+        this.valueCondition = null;
+    }
+
+    public PutValueCommand(String bucketName, String key, Value value, Predicate predicate, Condition valueCondition) {
+        this.bucketName = bucketName;
+        this.key = key;
+        this.value = value;
+        this.conditional = true;
+        this.predicate = predicate;
+        this.valueCondition = valueCondition;
     }
 
     public Object executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            bucket.put(key, value);
+            if (conditional) {
+                bucket.conditionalPut(key, value, predicate, valueCondition);
+            } else {
+                bucket.put(key, value);
+            }
         }
         return null;
     }

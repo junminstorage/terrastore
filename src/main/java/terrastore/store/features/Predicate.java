@@ -66,8 +66,11 @@ public class Predicate implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof Predicate) {
             Predicate other = (Predicate) obj;
-            return new EqualsBuilder().append(this.empty, other.empty).append(this.conditionExpression, other.conditionExpression).append(this.conditionType, other.conditionType).
-                    isEquals();
+            if (this.empty && other.empty) {
+                return true;
+            } else {
+                return new EqualsBuilder().append(this.conditionExpression, other.conditionExpression).append(this.conditionType, other.conditionType).isEquals();
+            }
         } else {
             return false;
         }
@@ -75,6 +78,10 @@ public class Predicate implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(empty).append(conditionExpression).append(conditionType).toHashCode();
+        if (empty) {
+            return 0;
+        } else {
+            return new HashCodeBuilder().append(conditionExpression).append(conditionType).toHashCode();
+        }
     }
 }
