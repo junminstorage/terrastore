@@ -105,6 +105,68 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testCreateBucketPutValueAndConditionallyPutAgainWithSuccess() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        TestValue value = new TestValue("value1", 1);
+        PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
+        putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+        HTTP_CLIENT.executeMethod(putValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        putValue.releaseConnection();
+
+        TestValue newValue = new TestValue("value2", 1);
+        PutMethod conditionallyPutValue = makePutMethodWithPredicate(NODE1_PORT, bucket + "/value", "jxpath:/stringField[.='value1']");
+        conditionallyPutValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(newValue), "application/json", null));
+        HTTP_CLIENT.executeMethod(conditionallyPutValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, conditionallyPutValue.getStatusCode());
+        conditionallyPutValue.releaseConnection();
+
+        GetMethod getValue = makeGetMethod(NODE2_PORT, bucket + "/value");
+        HTTP_CLIENT.executeMethod(getValue);
+        assertEquals(HttpStatus.SC_OK, getValue.getStatusCode());
+        TestValue returned = fromJsonToObject(getValue.getResponseBodyAsString());
+        assertEquals(newValue, returned);
+        getValue.releaseConnection();
+    }
+
+    @Test
+    public void testCreateBucketPutValueAndConditionallyPutAgainWithConflict() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        TestValue value = new TestValue("value1", 1);
+        PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
+        putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+        HTTP_CLIENT.executeMethod(putValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        putValue.releaseConnection();
+
+        TestValue newValue = new TestValue("value2", 1);
+        PutMethod conditionallyPutValue = makePutMethodWithPredicate(NODE1_PORT, bucket + "/value", "jxpath:/stringField[.='wrong']");
+        conditionallyPutValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(newValue), "application/json", null));
+        HTTP_CLIENT.executeMethod(conditionallyPutValue);
+        assertEquals(HttpStatus.SC_CONFLICT, conditionallyPutValue.getStatusCode());
+        conditionallyPutValue.releaseConnection();
+
+        GetMethod getValue = makeGetMethod(NODE2_PORT, bucket + "/value");
+        HTTP_CLIENT.executeMethod(getValue);
+        assertEquals(HttpStatus.SC_OK, getValue.getStatusCode());
+        TestValue returned = fromJsonToObject(getValue.getResponseBodyAsString());
+        assertEquals(value, returned);
+        getValue.releaseConnection();
+    }
+
+    @Test
     public void testCreateBucketPutValueAndDeleteBothOnOtherNode() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
@@ -491,6 +553,16 @@ public class IntegrationTest {
         PutMethod method = new PutMethod("http://" + HOST + ":" + nodePort + "/" + path);
         method.setRequestHeader("Content-Type", "application/json");
         return method;
+    }
+
+    private PutMethod makePutMethodWithPredicate(int nodePort, String path, String predicate) {
+        try {
+            PutMethod method = new PutMethod("http://" + HOST + ":" + nodePort + "/" + path + "?predicate=" + URLEncoder.encode(predicate, "UTF-8"));
+            method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
     }
 
     private DeleteMethod makeDeleteMethod(int nodePort, String path) {
