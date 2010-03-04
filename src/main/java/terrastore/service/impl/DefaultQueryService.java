@@ -28,7 +28,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.GetKeysCommand;
-import terrastore.communication.protocol.DoRangeQueryCommand;
+import terrastore.communication.protocol.RangeQueryCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
@@ -109,7 +109,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<String, Value> doRangeQuery(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException {
+    public Map<String, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException {
         try {
             LOG.debug("Range query on bucket {}", bucket);
             Comparator keyComparator = getComparator(range.getKeyComparatorName());
@@ -139,7 +139,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<String, Value> doPredicateQuery(String bucket, Predicate predicate) throws QueryOperationException {
+    public Map<String, Value> queryByPredicate(String bucket, Predicate predicate) throws QueryOperationException {
         try {
             LOG.debug("Predicate-based query on bucket {}", bucket);
             Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
@@ -205,7 +205,7 @@ public class DefaultQueryService implements QueryService {
 
     private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws ProcessingException {
         Node node = router.getLocalNode();
-        Command command = new DoRangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
+        Command command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
         Set<String> storedKeys = node.<Set<String>>send(command);
         return storedKeys;
     }

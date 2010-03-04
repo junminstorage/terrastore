@@ -71,14 +71,14 @@ public interface UpdateService {
     public void removeValue(String bucket, String key) throws UpdateOperationException;
 
     /**
-     * Execute an update on a value from the given bucket under the given key.
+     * Update the value from the given bucket under the given key.
      *
      * @param bucket The name of the bucket holding the value to update.
      * @param key The key of the value to update.
      * @param update The update object.
      * @throws UpdateOperationException If errors occur during update.
      */
-    public void executeUpdate(String bucket, String key, Update update) throws UpdateOperationException;
+    public void updateValue(String bucket, String key, Update update) throws UpdateOperationException;
 
     /**
      * Get all supported {@link terrastore.store.operators.Function}s by name.

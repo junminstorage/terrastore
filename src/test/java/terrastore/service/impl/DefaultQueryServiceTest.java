@@ -26,7 +26,7 @@ import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.communication.protocol.GetKeysCommand;
-import terrastore.communication.protocol.DoRangeQueryCommand;
+import terrastore.communication.protocol.RangeQueryCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
@@ -127,7 +127,7 @@ public class DefaultQueryServiceTest {
     }
 
     @Test
-    public void testDoRangeQueryWithNoPredicate() throws Exception {
+    public void testQueryByRangeWithNoPredicate() throws Exception {
         Comparator stringComparator = new Comparator() {
 
             @Override
@@ -153,7 +153,7 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(localNode).once();
         router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
         expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<DoRangeQueryCommand>anyObject());
+        localNode.send(EasyMock.<RangeQueryCommand>anyObject());
         expectLastCall().andReturn(keys).once();
         remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
         expectLastCall().andReturn(values).once();
@@ -166,7 +166,7 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         service.setComparators(comparators);
 
-        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", 0, "order"), new Predicate(null), 0);
+        Map<String, Value> result = service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate(null), 0);
         assertEquals(2, result.size());
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
@@ -175,7 +175,7 @@ public class DefaultQueryServiceTest {
     }
 
     @Test
-    public void testDoRangeQueryWithPredicate() throws Exception {
+    public void testQueryByRangeWithPredicate() throws Exception {
         Comparator stringComparator = new Comparator() {
 
             @Override
@@ -209,7 +209,7 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(localNode).once();
         router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
         expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<DoRangeQueryCommand>anyObject());
+        localNode.send(EasyMock.<RangeQueryCommand>anyObject());
         expectLastCall().andReturn(keys).once();
         remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
         expectLastCall().andReturn(values).once();
@@ -225,7 +225,7 @@ public class DefaultQueryServiceTest {
         service.setComparators(comparators);
         service.setConditions(conditions);
 
-        Map<String, Value> result = service.doRangeQuery("bucket", new Range("test1", "test2", 0, "order"), new Predicate("test:true"), 0);
+        Map<String, Value> result = service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate("test:true"), 0);
         assertEquals(2, result.size());
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
@@ -234,7 +234,7 @@ public class DefaultQueryServiceTest {
     }
 
     @Test(expected = QueryOperationException.class)
-    public void testDoRangeQueryWithPredicateFailsDueToNoConditionFound() throws Exception {
+    public void testQueryByRangeWithPredicateFailsDueToNoConditionFound() throws Exception {
         Comparator stringComparator = new Comparator() {
 
             @Override
@@ -268,7 +268,7 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(localNode).once();
         router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
         expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<DoRangeQueryCommand>anyObject());
+        localNode.send(EasyMock.<RangeQueryCommand>anyObject());
         expectLastCall().andReturn(keys).once();
         remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
         expectLastCall().andReturn(values).once();
@@ -284,11 +284,11 @@ public class DefaultQueryServiceTest {
         service.setComparators(comparators);
         service.setConditions(conditions);
 
-        service.doRangeQuery("bucket", new Range("test1", "test2", 0, "order"), new Predicate("notfound:true"), 0);
+        service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate("notfound:true"), 0);
     }
 
     @Test
-    public void testDoPredicateQuery() throws Exception {
+    public void testQueryByPredicate() throws Exception {
         Condition trueCondition = new Condition() {
 
             @Override
@@ -327,7 +327,7 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         service.setConditions(conditions);
 
-        Map<String, Value> result = service.doPredicateQuery("bucket", new Predicate("test:true"));
+        Map<String, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
@@ -336,7 +336,7 @@ public class DefaultQueryServiceTest {
     }
 
     @Test(expected = QueryOperationException.class)
-    public void testDoPredicateQueryFailsDueToNoConditionFound() throws Exception {
+    public void testQueryByPredicateFailsDueToNoConditionFound() throws Exception {
         Condition trueCondition = new Condition() {
 
             @Override
@@ -375,6 +375,6 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         service.setConditions(conditions);
 
-        service.doPredicateQuery("bucket", new Predicate("notfound:true"));
+        service.queryByPredicate("bucket", new Predicate("notfound:true"));
     }
 }

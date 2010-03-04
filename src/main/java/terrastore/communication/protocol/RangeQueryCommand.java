@@ -26,14 +26,14 @@ import terrastore.store.features.Range;
 /**
  * @author Sergio Bossa
  */
-public class DoRangeQueryCommand extends AbstractCommand<Set<String>> {
+public class RangeQueryCommand extends AbstractCommand<Set<String>> {
 
     private final String bucketName;
     private final Range range;
     private final Comparator<String> keyComparator;
     private final long timeToLive;
 
-    public DoRangeQueryCommand(String bucketName, Range range, Comparator<String> keyComparator, long timeToLive) {
+    public RangeQueryCommand(String bucketName, Range range, Comparator<String> keyComparator, long timeToLive) {
         this.bucketName = bucketName;
         this.range = range;
         this.keyComparator = keyComparator;

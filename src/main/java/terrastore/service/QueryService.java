@@ -85,7 +85,7 @@ public interface QueryService {
      * @return An ordered map containing key/value pairs.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
-    public Map<String, Value> doRangeQuery(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException;
+    public Map<String, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
@@ -101,7 +101,7 @@ public interface QueryService {
      * @return A map containing key/value pairs.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no condition is specified or no matching is found.
      */
-    public Map<String, Value> doPredicateQuery(String bucket, Predicate predicate) throws QueryOperationException;
+    public Map<String, Value> queryByPredicate(String bucket, Predicate predicate) throws QueryOperationException;
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.

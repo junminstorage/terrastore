@@ -132,7 +132,7 @@ public class JsonHttpServer implements Server {
             }
             LOG.debug("Updating value with key {} from bucket {}", key, bucket);
             Update update = new Update(function, timeout, parameters);
-            updateService.executeUpdate(bucket, key, update);
+            updateService.updateValue(bucket, key, update);
         } catch (UpdateOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -185,7 +185,7 @@ public class JsonHttpServer implements Server {
     @GET
     @Path("/{bucket}/range")
     @Produces("application/json")
-    public Values doRangeQuery(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
+    public Values queryByRange(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
         try {
             if (startKey == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");
@@ -198,7 +198,7 @@ public class JsonHttpServer implements Server {
             Range range = new Range(startKey, endKey, limit, comparator);
             Predicate predicate = new Predicate(predicateExpression);
             return new Values(
-                    queryService.doRangeQuery(bucket,
+                    queryService.queryByRange(bucket,
                     range,
                     predicate,
                     timeToLive));
@@ -212,7 +212,7 @@ public class JsonHttpServer implements Server {
     @GET
     @Path("/{bucket}/predicate")
     @Produces("application/json")
-    public Values doPredicateQuery(@PathParam("bucket") String bucket, @QueryParam("predicate") String predicateExpression) throws ServerOperationException {
+    public Values queryByPredicate(@PathParam("bucket") String bucket, @QueryParam("predicate") String predicateExpression) throws ServerOperationException {
         try {
             if (predicateExpression == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No predicate provided!");
@@ -220,7 +220,7 @@ public class JsonHttpServer implements Server {
             }
             LOG.debug("Executing predicate-based query on bucket {}", bucket);
             Predicate predicate = new Predicate(predicateExpression);
-            return new Values(queryService.doPredicateQuery(bucket, predicate));
+            return new Values(queryService.queryByPredicate(bucket, predicate));
         } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -231,7 +231,7 @@ public class JsonHttpServer implements Server {
     @POST
     @Path("/{bucket}/import")
     @Consumes("application/json")
-    public void doImport(@PathParam("bucket") String bucket, @QueryParam("source") String source, @QueryParam("secret") String secret) throws ServerOperationException {
+    public void importBackup(@PathParam("bucket") String bucket, @QueryParam("source") String source, @QueryParam("secret") String secret) throws ServerOperationException {
         try {
             if (source == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No source provided!");
@@ -252,7 +252,7 @@ public class JsonHttpServer implements Server {
     @POST
     @Path("/{bucket}/export")
     @Consumes("application/json")
-    public void doExport(@PathParam("bucket") String bucket, @QueryParam("destination") String destination, @QueryParam("secret") String secret) throws ServerOperationException {
+    public void exportBackup(@PathParam("bucket") String bucket, @QueryParam("destination") String destination, @QueryParam("secret") String secret) throws ServerOperationException {
         try {
             if (destination == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No destination provided!");
