@@ -168,6 +168,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
             store.setSnapshotManager(snapshotManager);
             store.setBackupManager(backupManager);
             store.setEventBus(eventBus);
+            store.setTaskExecutor(globalExecutor);
             // Add cluster listener to listen to events:
             getDsoCluster().addClusterListener(this);
         } catch (Exception ex) {

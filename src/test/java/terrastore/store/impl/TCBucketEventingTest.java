@@ -43,6 +43,7 @@ public class TCBucketEventingTest {
     @Before
     public void setUp() {
         bucket = new TCBucket("bucket");
+        bucket.setTaskExecutor(Executors.newCachedThreadPool());
     }
 
     @Test
@@ -113,7 +114,7 @@ public class TCBucketEventingTest {
         bucket.setEventBus(eventBus);
         bucket.put(key, value);
         assertEquals(value, bucket.get(key));
-        bucket.update(key, update, function, Executors.newSingleThreadExecutor());
+        bucket.update(key, update, function);
         assertEquals(updated, bucket.get(key));
 
         verify(eventBus);

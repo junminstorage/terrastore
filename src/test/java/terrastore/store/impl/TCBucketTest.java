@@ -53,6 +53,7 @@ public class TCBucketTest {
         bucket.setSnapshotManager(new LocalSnapshotManager());
         bucket.setBackupManager(new DefaultBackupManager());
         bucket.setEventBus(new DisabledEventBus());
+        bucket.setTaskExecutor(Executors.newCachedThreadPool());
     }
 
     @Test
@@ -351,7 +352,7 @@ public class TCBucketTest {
         String key = "key";
         Value value = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
         bucket.put(key, value);
-        Value updated = bucket.update(key, update, function, Executors.newCachedThreadPool());
+        Value updated = bucket.update(key, update, function);
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), updated.getBytes());
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), bucket.get(key).getBytes());
     }
