@@ -64,6 +64,7 @@ public class TCBucket implements Bucket {
     private static final transient ThreadLocal<EventBus> eventBus = new ThreadLocal<EventBus>();
     private static final transient ThreadLocal<SnapshotManager> snapshotManager = new ThreadLocal<SnapshotManager>();
     private static final transient ThreadLocal<BackupManager> backupManager = new ThreadLocal<BackupManager>();
+    private static final transient ThreadLocal<ExecutorService> taskExecutor = new ThreadLocal<ExecutorService>();
     //
     @InjectedDsoInstance
     private DsoCluster dsoCluster;
@@ -146,7 +147,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Value update(final String key, final Update update, final Function function, final ExecutorService updateExecutor) throws StoreOperationException {
+    public Value update(final String key, final Update update, final Function function) throws StoreOperationException {
         long timeout = update.getTimeoutInMillis();
         Future<Value> task = null;
         // Use explicit locking to update and block concurrent operations on the same key,
@@ -155,7 +156,7 @@ public class TCBucket implements Bucket {
         try {
             final Value value = bucket.get(key);
             if (value != null) {
-                task = updateExecutor.submit(new Callable<Value>() {
+                task = taskExecutor.get().submit(new Callable<Value>() {
 
                     @Override
                     public Value call() {
@@ -229,6 +230,11 @@ public class TCBucket implements Bucket {
     @Override
     public void setBackupManager(BackupManager backupManager) {
         TCBucket.backupManager.set(backupManager);
+    }
+
+    @Override
+    public void setTaskExecutor(ExecutorService taskExecutor) {
+        TCBucket.taskExecutor.set(taskExecutor);
     }
 
     private void lock(String key) {

@@ -16,6 +16,7 @@
 package terrastore.store.impl;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.collections.HashcodeLockStrategy;
 import org.terracotta.collections.LockType;
@@ -42,6 +43,7 @@ public class TCStore implements Store {
     private transient volatile SnapshotManager snapshotManager;
     private transient volatile BackupManager backupManager;
     private transient volatile EventBus eventBus;
+    private transient volatile ExecutorService taskExecutor;
 
     public TCStore() {
         buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy(false, true));
@@ -65,11 +67,7 @@ public class TCStore implements Store {
     public Bucket get(String bucket) throws StoreOperationException {
         Bucket requested = buckets.get(bucket);
         if (requested != null) {
-            // We need to manually set the event bus because of TC not supporting injection ...
-            requested.setSnapshotManager(snapshotManager);
-            requested.setBackupManager(backupManager);
-            requested.setEventBus(eventBus);
-            // TODO: verify this is not a perf problem.
+            hydrateBucket(requested);
             return requested;
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Bucket not found: " + bucket));
@@ -101,5 +99,19 @@ public class TCStore implements Store {
     @Override
     public void setEventBus(EventBus eventBus) {
         this.eventBus = eventBus;
+    }
+
+    @Override
+    public void setTaskExecutor(ExecutorService taskExecutor) {
+        this.taskExecutor = taskExecutor;
+    }
+
+    private void hydrateBucket(Bucket requested) {
+        // We need to manually set the event bus because of TC not supporting injection ...
+        requested.setSnapshotManager(snapshotManager);
+        requested.setBackupManager(backupManager);
+        requested.setEventBus(eventBus);
+        requested.setTaskExecutor(taskExecutor);
+        // TODO: verify this is not a perf problem.
     }
 }

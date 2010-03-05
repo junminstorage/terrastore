@@ -100,11 +100,10 @@ public interface Bucket {
      * @param key The key of the value to update.
      * @param update The update object containing data about the function to apply.
      * @param function The function to apply for the update.
-     * @param updateExecutor The executor to use for performing the update operation.
      * @return The updated value.
      * @throws StoreOperationException If errors occur during updating.
      */
-    public Value update(String key, Update update, Function function, ExecutorService updateExecutor) throws StoreOperationException;
+    public Value update(String key, Update update, Function function) throws StoreOperationException;
 
     /**
      * Get all keys contained into this bucket.
@@ -174,4 +173,11 @@ public interface Bucket {
      * @param eventBus The event bus instance.
      */
     public void setEventBus(EventBus eventBus);
+
+    /**
+     * Set the executor to use for asynchronously running tasks.
+     *
+     * @param taskExecutor The executor.
+     */
+    public void setTaskExecutor(ExecutorService taskExecutor);
 }
