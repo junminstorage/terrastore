@@ -55,6 +55,7 @@ public class Startup {
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
     private static final long DEFAULT_NODE_TIMEOUT = 10000;
     private static final int DEFAULT_HTTP_THREADS = 100;
+    private static final int MIN_WORKER_THREADS = 10;
     private static final int DEFAULT_WORKER_THREADS = Runtime.getRuntime().availableProcessors() * 10;
     private static final String DEFAULT_CONFIG_FILE = "terrastore-config.xml";
     private static final String WELCOME_MESSAGE = "Welcome to Terrastore.";
@@ -150,6 +151,7 @@ public class Startup {
     public void start() {
         try {
             verifyNodeHost();
+            verifyWorkerThreads();
             printInfo();
             Context context = startServer();
             startMonitor();
@@ -162,6 +164,12 @@ public class Startup {
     private void verifyNodeHost() {
         if (nodeHost.equals(DEFAULT_NODE_HOST)) {
             nodeHost = httpHost;
+        }
+    }
+
+    private void verifyWorkerThreads() {
+        if (workerThreads < MIN_WORKER_THREADS) {
+            workerThreads = DEFAULT_WORKER_THREADS;
         }
     }
 

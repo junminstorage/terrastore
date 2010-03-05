@@ -80,7 +80,9 @@ public class TCCluster implements Cluster, DsoClusterListener {
     //
     private volatile transient int maxFrameLength;
     private volatile transient long nodeTimeout;
-    private volatile transient int workerThreads;
+    private volatile transient int localProcessorThreads;
+    private volatile transient int remoteProcessorThreads;
+    private volatile transient int globalExecutorThreads;
     //
     private volatile transient ExecutorService globalExecutor;
     //
@@ -111,7 +113,10 @@ public class TCCluster implements Cluster, DsoClusterListener {
 
     @Override
     public void setWokerThreads(int workerThreads) {
-        this.workerThreads = workerThreads;
+        int threads = workerThreads / 3;
+        this.localProcessorThreads = threads;
+        this.remoteProcessorThreads = threads;
+        this.globalExecutorThreads = threads;
     }
 
     @Override
@@ -158,7 +163,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
             thisNodePort = port;
             // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
-            globalExecutor = Executors.newFixedThreadPool(workerThreads);
+            globalExecutor = Executors.newFixedThreadPool(globalExecutorThreads);
             // Do manual injection on shared objects:
             store.setSnapshotManager(snapshotManager);
             store.setBackupManager(backupManager);
@@ -252,13 +257,13 @@ public class TCCluster implements Cluster, DsoClusterListener {
     }
 
     private void setupThisRemoteProcessor() {
-        remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, maxFrameLength, store, workerThreads);
+        remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, maxFrameLength, store, remoteProcessorThreads);
         remoteProcessor.start();
         LOG.info("Set up processor for {}", thisNodeName);
     }
 
     private void setupThisNode() {
-        localProcessor = new LocalProcessor(store, workerThreads);
+        localProcessor = new LocalProcessor(store, localProcessorThreads);
         LocalNode thisNode = new LocalNode(thisNodeName, localProcessor);
         localProcessor.start();
         thisNode.connect();
