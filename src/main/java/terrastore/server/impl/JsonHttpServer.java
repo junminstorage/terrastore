@@ -157,10 +157,10 @@ public class JsonHttpServer implements Server {
     @GET
     @Path("/{bucket}/{key}")
     @Produces("application/json")
-    public Value getValue(@PathParam("bucket") String bucket, @PathParam("key") String key) throws ServerOperationException {
+    public Value getValue(@PathParam("bucket") String bucket, @PathParam("key") String key, @QueryParam("predicate") String predicate) throws ServerOperationException {
         try {
             LOG.debug("Getting value with key {} from bucket {}", key, bucket);
-            return queryService.getValue(bucket, key);
+            return queryService.getValue(bucket, key, new Predicate(predicate));
         } catch (QueryOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

@@ -81,7 +81,7 @@ public class TCBucketTest {
             }
         };
 
-        bucket.conditionalPut(key, value, predicate, condition);
+        assertTrue(bucket.conditionalPut(key, value, predicate, condition));
         assertEquals(value, bucket.get(key));
     }
 
@@ -105,12 +105,11 @@ public class TCBucketTest {
                 }
             }
         };
-        bucket.conditionalPut(key, updated, predicate, condition);
-
+        assertTrue(bucket.conditionalPut(key, updated, predicate, condition));
         assertEquals(updated, bucket.get(key));
     }
 
-    @Test(expected = StoreOperationException.class)
+    @Test
     public void testConditionalPutFailsBecauseUnsatisfied() throws StoreOperationException {
         final String key = "key";
         Value value = new JsonValue(JSON_VALUE.getBytes());
@@ -130,7 +129,7 @@ public class TCBucketTest {
                 }
             }
         };
-        bucket.conditionalPut(key, updated, predicate, condition);
+        assertFalse(bucket.conditionalPut(key, updated, predicate, condition));
     }
 
     @Test
@@ -185,7 +184,7 @@ public class TCBucketTest {
         };
 
         bucket.put(key, value);
-        assertEquals(null, bucket.conditionalGet(key, predicate, condition));
+        assertNull(bucket.conditionalGet(key, predicate, condition));
     }
 
     @Test(expected = StoreOperationException.class)

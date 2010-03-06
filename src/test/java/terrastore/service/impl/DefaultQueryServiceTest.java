@@ -86,7 +86,7 @@ public class DefaultQueryServiceTest {
         replay(node, router);
 
         DefaultQueryService service = new DefaultQueryService(router);
-        assertEquals(JSON_VALUE, new String(service.getValue("bucket", "test1").getBytes()));
+        assertEquals(JSON_VALUE, new String(service.getValue("bucket", "test1", new Predicate(null)).getBytes()));
 
         verify(node, router);
     }
