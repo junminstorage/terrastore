@@ -57,9 +57,9 @@ public interface Bucket {
      * @param value The value to put.
      * @param predicate The predicate object containing data about the condition to evaluate on the old value.
      * @param condition The condition to evaluate on the old value.
-     * @throws StoreOperationException If the value couldn't be put.
+     * @return True if the value has been actually put, false otherwise.
      */
-    public void conditionalPut(String key, Value value, Predicate predicate, Condition condition) throws StoreOperationException;
+    public boolean conditionalPut(String key, Value value, Predicate predicate, Condition condition);
 
     /**
      * Get the {@link Value} under the given key.

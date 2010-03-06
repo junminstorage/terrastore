@@ -92,7 +92,7 @@ public class TCBucket implements Bucket {
         }
     }
 
-    public void conditionalPut(String key, Value value, Predicate predicate, Condition condition) throws StoreOperationException {
+    public boolean conditionalPut(String key, Value value, Predicate predicate, Condition condition) {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
@@ -100,9 +100,9 @@ public class TCBucket implements Bucket {
             if (old == null || old.dispatch(key, predicate, condition)) {
                 bucket.putNoReturn(key, value);
                 TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key, value.getBytes()));
+                return true;
             } else {
-                throw new StoreOperationException(new ErrorMessage(ErrorMessage.CONFLICT_ERROR_CODE,
-                        "Unsatisfied condition: " + predicate.getConditionType() + ":" + predicate.getConditionExpression() + " for key: " + key));
+                return false;
             }
         } finally {
             unlock(key);

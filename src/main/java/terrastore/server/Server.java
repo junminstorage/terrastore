@@ -87,14 +87,16 @@ public interface Server {
     public Buckets getBuckets() throws ServerOperationException;
 
     /**
-     * Get the value from the given bucket under the given key.
+     * Get the value from the given bucket under the given key.<br>
+     * If a non-empty predicate is provided, the returned value must satisfy the given predicate as well.
      *
      * @param bucket The name of the bucket containing the value to get.
      * @param key The key of the value to get.
      * @return The value.
+     * @param predicate The predicate to evaluate; predicate can be null or empty.
      * @throws ServerOperationException If an error occurs.
      */
-    public Value getValue(String bucket, String key) throws ServerOperationException;
+    public Value getValue(String bucket, String key, String predicate) throws ServerOperationException;
 
     /**
      * Get all key/value entries into the given bucket.

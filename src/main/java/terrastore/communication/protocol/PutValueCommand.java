@@ -15,6 +15,7 @@
  */
 package terrastore.communication.protocol;
 
+import terrastore.common.ErrorMessage;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -56,7 +57,11 @@ public class PutValueCommand extends AbstractCommand {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             if (conditional) {
-                bucket.conditionalPut(key, value, predicate, valueCondition);
+                boolean put = bucket.conditionalPut(key, value, predicate, valueCondition);
+                if (!put) {
+                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.CONFLICT_ERROR_CODE,
+                            "Unsatisfied condition: " + predicate.getConditionType() + ":" + predicate.getConditionExpression() + " for key: " + key));
+                }
             } else {
                 bucket.put(key, value);
             }

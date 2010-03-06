@@ -42,14 +42,16 @@ public interface QueryService {
     public Set<String> getBuckets() throws QueryOperationException;
 
     /**
-     * Get the value under the given key, contained by the given bucket.
+     * Get the value under the given key, contained by the given bucket.<br>
+     * If a non-empty predicate is provided, the returned value must satisfy the given predicate as well.
      *
      * @param bucket The bucket containing the value.
      * @param key The key of the value to get.
      * @return The value.
+     * @param predicate The predicate to evaluate; predicate can be null or empty.
      * @throws QueryOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public Value getValue(String bucket, String key) throws QueryOperationException;
+    public Value getValue(String bucket, String key, Predicate predicate) throws QueryOperationException;
 
     /**
      * Get all values contained by the given bucket.

@@ -15,10 +15,13 @@
  */
 package terrastore.communication.protocol;
 
+import terrastore.common.ErrorMessage;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
+import terrastore.store.features.Predicate;
+import terrastore.store.operators.Condition;
 
 /**
  * @author Sergio Bossa
@@ -27,16 +30,40 @@ public class GetValueCommand extends AbstractCommand<Value> {
 
     private final String bucketName;
     private final String key;
+    private final boolean conditional;
+    private final Predicate predicate;
+    private final Condition condition;
 
     public GetValueCommand(String bucketName, String key) {
         this.bucketName = bucketName;
         this.key = key;
+        this.conditional = false;
+        this.predicate = null;
+        this.condition = null;
+    }
+
+    public GetValueCommand(String bucketName, String key, Predicate predicate, Condition condition) {
+        this.bucketName = bucketName;
+        this.key = key;
+        this.conditional = true;
+        this.predicate = predicate;
+        this.condition = condition;
     }
 
     public Value executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            return bucket.get(key);
+            if (conditional) {
+                Value value = bucket.conditionalGet(key, predicate, condition);
+                if (value != null) {
+                    return value;
+                } else {
+                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE,
+                            "Unsatisfied condition: " + predicate.getConditionType() + ":" + predicate.getConditionExpression() + " for key: " + key));
+                }
+            } else {
+                return bucket.get(key);
+            }
         } else {
             return null;
         }

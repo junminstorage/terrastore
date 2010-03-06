@@ -59,6 +59,7 @@ public class DefaultQueryService implements QueryService {
         this.router = router;
     }
 
+    @Override
     public Set<String> getBuckets() throws QueryOperationException {
         try {
             LOG.debug("Getting bucket names.");
@@ -73,11 +74,18 @@ public class DefaultQueryService implements QueryService {
         }
     }
 
-    public Value getValue(String bucket, String key) throws QueryOperationException {
+    @Override
+    public Value getValue(String bucket, String key, Predicate predicate) throws QueryOperationException {
         try {
             LOG.debug("Getting value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
-            GetValueCommand command = new GetValueCommand(bucket, key);
+            GetValueCommand command = null;
+            if (predicate == null || predicate.isEmpty()) {
+                command = new GetValueCommand(bucket, key);
+            } else {
+                Condition condition = getCondition(predicate.getConditionType());
+                command = new GetValueCommand(bucket, key, predicate, condition);
+            }
             Value result = node.<Value>send(command);
             return result;
         } catch (ProcessingException ex) {
@@ -87,10 +95,11 @@ public class DefaultQueryService implements QueryService {
         }
     }
 
+    @Override
     public Map<String, Value> getAllValues(String bucket, int limit) throws QueryOperationException {
         try {
             LOG.debug("Getting all values from bucket {}", bucket);
-            Set<String> storedKeys =  Sets.limited(getAllKeysForBucket(bucket), limit);
+            Set<String> storedKeys = Sets.limited(getAllKeysForBucket(bucket), limit);
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, storedKeys);
             List<Map<String, Value>> allKeyValues = new ArrayList(nodeToKeys.size());
             for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
@@ -165,10 +174,12 @@ public class DefaultQueryService implements QueryService {
         }
     }
 
+    @Override
     public Comparator getDefaultComparator() {
         return defaultComparator;
     }
 
+    @Override
     public Map<String, Comparator> getComparators() {
         return comparators;
     }
@@ -178,6 +189,7 @@ public class DefaultQueryService implements QueryService {
         return conditions;
     }
 
+    @Override
     public Router getRouter() {
         return router;
     }

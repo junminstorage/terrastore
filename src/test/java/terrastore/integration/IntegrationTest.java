@@ -105,6 +105,52 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testCreateBucketPutValueAndConditionallyGetWithSuccess() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        TestValue value = new TestValue("value", 1);
+        PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
+        putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+        HTTP_CLIENT.executeMethod(putValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        putValue.releaseConnection();
+
+        GetMethod getValue = makeGetMethodWithPredicate(NODE2_PORT, bucket + "/value", "jxpath:/stringField[.='value']");
+        HTTP_CLIENT.executeMethod(getValue);
+        assertEquals(HttpStatus.SC_OK, getValue.getStatusCode());
+        TestValue returned = fromJsonToObject(getValue.getResponseBodyAsString());
+        assertEquals(value, returned);
+        getValue.releaseConnection();
+    }
+
+    @Test
+    public void testCreateBucketPutValueAndConditionallyGetNotFound() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
+        HTTP_CLIENT.executeMethod(addBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
+        addBucket.releaseConnection();
+
+        TestValue value = new TestValue("value", 1);
+        PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
+        putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+        HTTP_CLIENT.executeMethod(putValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        putValue.releaseConnection();
+
+        GetMethod getValue = makeGetMethodWithPredicate(NODE2_PORT, bucket + "/value", "jxpath:/stringField[.='wrong']");
+        HTTP_CLIENT.executeMethod(getValue);
+        assertEquals(HttpStatus.SC_NOT_FOUND, getValue.getStatusCode());
+        getValue.releaseConnection();
+    }
+
+    @Test
     public void testCreateBucketPutValueAndConditionallyPutAgainWithSuccess() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
