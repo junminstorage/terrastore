@@ -15,6 +15,7 @@
  */
 package terrastore.store.types;
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.store.Bucket;
@@ -34,7 +35,8 @@ import terrastore.util.json.JsonUtils;
 public class JsonValue implements Value {
 
     private static final long serialVersionUID = 12345678901L;
-
+    private static final Charset CHARSET = Charset.forName("UTF-8");
+    //
     private final byte[] bytes;
 
     public JsonValue(byte[] bytes) {
@@ -68,5 +70,10 @@ public class JsonValue implements Value {
     @Override
     public int hashCode() {
         return bytes.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new String(bytes, CHARSET);
     }
 }

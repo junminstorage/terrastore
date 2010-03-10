@@ -16,6 +16,7 @@
 package terrastore.util.json;
 
 import org.junit.Test;
+import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
 
 /**
@@ -41,7 +42,7 @@ public class JsonStreamingListTest {
 
     @Test
     public void testEmptyArray() {
-        JsonStreamingList list = new JsonStreamingList(EMPTY.getBytes());
+        JsonStreamingList list = new JsonStreamingList(new JsonValue(EMPTY.getBytes()));
         assertEquals(0, list.size());
     }
 
@@ -49,42 +50,42 @@ public class JsonStreamingListTest {
     public void testTypes() {
         JsonStreamingList list = null;
 
-        list = new JsonStreamingList(STRING.getBytes());
+        list = new JsonStreamingList(new JsonValue(STRING.getBytes()));
         assertEquals(1, list.size());
         assertEquals("string", list.get(0));
 
-        list = new JsonStreamingList(INT.getBytes());
+        list = new JsonStreamingList(new JsonValue(INT.getBytes()));
         assertEquals(1, list.size());
         assertEquals(1, list.get(0));
 
-        list = new JsonStreamingList(FLOAT.getBytes());
+        list = new JsonStreamingList(new JsonValue(FLOAT.getBytes()));
         assertEquals(1, list.size());
         assertEquals(1.5f, list.get(0));
 
-        list = new JsonStreamingList(TRUE.getBytes());
+        list = new JsonStreamingList(new JsonValue(TRUE.getBytes()));
         assertEquals(1, list.size());
         assertEquals(true, list.get(0));
 
-        list = new JsonStreamingList(FALSE.getBytes());
+        list = new JsonStreamingList(new JsonValue(FALSE.getBytes()));
         assertEquals(1, list.size());
         assertEquals(false, list.get(0));
 
-        list = new JsonStreamingList(NULL.getBytes());
+        list = new JsonStreamingList(new JsonValue(NULL.getBytes()));
         assertEquals(1, list.size());
         assertEquals(null, list.get(0));
 
-        list = new JsonStreamingList(OBJECT.getBytes());
+        list = new JsonStreamingList(new JsonValue(OBJECT.getBytes()));
         assertEquals(1, list.size());
         assertTrue(JsonStreamingMap.class.isAssignableFrom(list.get(0).getClass()));
 
-        list = new JsonStreamingList(ARRAY.getBytes());
+        list = new JsonStreamingList(new JsonValue(ARRAY.getBytes()));
         assertEquals(1, list.size());
         assertTrue(JsonStreamingList.class.isAssignableFrom(list.get(0).getClass()));
     }
 
     @Test
     public void testCompositeArray() {
-        JsonStreamingList list = new JsonStreamingList(COMPOSITE.getBytes());
+        JsonStreamingList list = new JsonStreamingList(new JsonValue(COMPOSITE.getBytes()));
         assertEquals(8, list.size());
         assertEquals("string", list.get(0));
         assertEquals(1, list.get(1));
@@ -98,14 +99,14 @@ public class JsonStreamingListTest {
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testArrayIndexOutOfBoundsException() {
-        JsonStreamingList list = new JsonStreamingList(COMPOSITE.getBytes());
+        JsonStreamingList list = new JsonStreamingList(new JsonValue(COMPOSITE.getBytes()));
         assertEquals(8, list.size());
         list.get(8);
     }
 
     @Test
     public void testWithInnerObject() {
-        JsonStreamingList list = new JsonStreamingList(INNER_OBJECT.getBytes());
+        JsonStreamingList list = new JsonStreamingList(new JsonValue(INNER_OBJECT.getBytes()));
         JsonStreamingMap inner = (JsonStreamingMap) list.get(0);
         assertEquals(1, list.size());
         assertEquals(1, inner.size());
@@ -114,7 +115,7 @@ public class JsonStreamingListTest {
 
     @Test
     public void testWithInnerArray() {
-        JsonStreamingList list = new JsonStreamingList(INNER_ARRAY.getBytes());
+        JsonStreamingList list = new JsonStreamingList(new JsonValue(INNER_ARRAY.getBytes()));
         JsonStreamingList inner = (JsonStreamingList) list.get(0);
         assertEquals(1, list.size());
         assertEquals(1, inner.size());

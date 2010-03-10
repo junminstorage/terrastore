@@ -16,6 +16,7 @@
 package terrastore.util.json;
 
 import org.junit.Test;
+import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
 
 /**
@@ -41,7 +42,7 @@ public class JsonStreamingMapTest {
 
     @Test
     public void testEmptyMap() {
-        JsonStreamingMap map = new JsonStreamingMap(EMPTY.getBytes());
+        JsonStreamingMap map = new JsonStreamingMap(new JsonValue(EMPTY.getBytes()));
         assertEquals(0, map.size());
     }
 
@@ -49,42 +50,42 @@ public class JsonStreamingMapTest {
     public void testTypes() {
         JsonStreamingMap map = null;
 
-        map = new JsonStreamingMap(STRING.getBytes());
+        map = new JsonStreamingMap(new JsonValue(STRING.getBytes()));
         assertEquals(1, map.size());
         assertEquals("string", map.get("key"));
 
-        map = new JsonStreamingMap(INT.getBytes());
+        map = new JsonStreamingMap(new JsonValue(INT.getBytes()));
         assertEquals(1, map.size());
         assertEquals(1, map.get("key"));
 
-        map = new JsonStreamingMap(FLOAT.getBytes());
+        map = new JsonStreamingMap(new JsonValue(FLOAT.getBytes()));
         assertEquals(1, map.size());
         assertEquals(1.5f, map.get("key"));
 
-        map = new JsonStreamingMap(TRUE.getBytes());
+        map = new JsonStreamingMap(new JsonValue(TRUE.getBytes()));
         assertEquals(1, map.size());
         assertEquals(true, map.get("key"));
 
-        map = new JsonStreamingMap(FALSE.getBytes());
+        map = new JsonStreamingMap(new JsonValue(FALSE.getBytes()));
         assertEquals(1, map.size());
         assertEquals(false, map.get("key"));
 
-        map = new JsonStreamingMap(NULL.getBytes());
+        map = new JsonStreamingMap(new JsonValue(NULL.getBytes()));
         assertEquals(1, map.size());
         assertEquals(null, map.get("key"));
 
-        map = new JsonStreamingMap(OBJECT.getBytes());
+        map = new JsonStreamingMap(new JsonValue(OBJECT.getBytes()));
         assertEquals(1, map.size());
         assertTrue(JsonStreamingMap.class.isAssignableFrom(map.get("key").getClass()));
 
-        map = new JsonStreamingMap(ARRAY.getBytes());
+        map = new JsonStreamingMap(new JsonValue(ARRAY.getBytes()));
         assertEquals(1, map.size());
         assertTrue(JsonStreamingList.class.isAssignableFrom(map.get("key").getClass()));
     }
 
     @Test
     public void testCompositeMap() {
-        JsonStreamingMap map = new JsonStreamingMap(COMPOSITE.getBytes());
+        JsonStreamingMap map = new JsonStreamingMap(new JsonValue(COMPOSITE.getBytes()));
         assertEquals(8, map.size());
         assertEquals("string", map.get("key1"));
         assertEquals(1, map.get("key2"));
@@ -98,7 +99,7 @@ public class JsonStreamingMapTest {
 
     @Test
     public void testWithInnerObject() {
-        JsonStreamingMap map = new JsonStreamingMap(INNER_OBJECT.getBytes());
+        JsonStreamingMap map = new JsonStreamingMap(new JsonValue(INNER_OBJECT.getBytes()));
         JsonStreamingMap inner = (JsonStreamingMap) map.get("inner");
         assertEquals(1, map.size());
         assertEquals(1, inner.size());
@@ -107,7 +108,7 @@ public class JsonStreamingMapTest {
 
     @Test
     public void testWithInnerArray() {
-        JsonStreamingMap map = new JsonStreamingMap(INNER_ARRAY.getBytes());
+        JsonStreamingMap map = new JsonStreamingMap(new JsonValue(INNER_ARRAY.getBytes()));
         JsonStreamingList inner = (JsonStreamingList) map.get("inner");
         assertEquals(1, map.size());
         assertEquals(1, inner.size());
@@ -116,7 +117,7 @@ public class JsonStreamingMapTest {
 
     @Test
     public void testGetNullValue() {
-        JsonStreamingMap map = new JsonStreamingMap(COMPOSITE.getBytes());
+        JsonStreamingMap map = new JsonStreamingMap(new JsonValue(COMPOSITE.getBytes()));
         assertNull(map.get("no.key"));
     }
 }

@@ -52,7 +52,7 @@ public class JsonUtils {
 
     public static Map<String, Object> toUnmodifiableMap(JsonValue value) {
         try {
-            return new JsonStreamingMap(value.getBytes());
+            return new JsonStreamingMap(value);
         } catch (Exception ex) {
             throw new IllegalStateException("Value should have been already validated!");
         }
@@ -96,7 +96,7 @@ public class JsonUtils {
             String key = entry.getKey();
             Value value = entry.getValue();
             jsonGenerator.writeFieldName(key);
-            jsonGenerator.writeRawValue(new String(value.getBytes(), "UTF-8"));
+            jsonGenerator.writeRawValue(value.toString());
         }
         jsonGenerator.writeEndObject();
         jsonGenerator.close();

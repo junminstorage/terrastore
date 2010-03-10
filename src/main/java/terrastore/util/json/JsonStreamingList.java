@@ -23,15 +23,16 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import terrastore.store.types.JsonValue;
 
 /**
  * @author Sergio Bossa
  */
 public class JsonStreamingList extends AbstractList {
 
-    private final byte[] json;
+    private final JsonValue json;
 
-    public JsonStreamingList(byte[] json) {
+    public JsonStreamingList(JsonValue json) {
         this.json = json;
     }
 
@@ -83,7 +84,7 @@ public class JsonStreamingList extends AbstractList {
     }
 
     private JsonParser makeParser(JsonFactory factory) throws IOException {
-        JsonParser parser = factory.createJsonParser(json);
+        JsonParser parser = factory.createJsonParser(json.getBytes());
         parser.nextToken();
         return parser;
     }
@@ -108,7 +109,7 @@ public class JsonStreamingList extends AbstractList {
         JsonGenerator generator = factory.createJsonGenerator(out, JsonEncoding.UTF8);
         generator.copyCurrentStructure(parser);
         generator.close();
-        return new JsonStreamingList(out.toByteArray());
+        return new JsonStreamingList(new JsonValue(out.toByteArray()));
     }
 
     private Object extractObject(JsonFactory factory, JsonParser parser) throws IOException {
@@ -116,7 +117,7 @@ public class JsonStreamingList extends AbstractList {
         JsonGenerator generator = factory.createJsonGenerator(out, JsonEncoding.UTF8);
         generator.copyCurrentStructure(parser);
         generator.close();
-        return new JsonStreamingMap(out.toByteArray());
+        return new JsonStreamingMap(new JsonValue(out.toByteArray()));
     }
 
     private int calculateSize(JsonParser parser) throws IOException {
