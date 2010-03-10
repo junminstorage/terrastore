@@ -33,7 +33,7 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
-import terrastore.server.io.InputReader;
+import terrastore.util.io.InputReader;
 import terrastore.store.Value;
 import terrastore.store.types.JsonValue;
 
