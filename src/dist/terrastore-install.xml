@@ -78,6 +78,7 @@
         <property name="master.jmx.port" value="9520"/>
         <property name="master.ha.port" value="9530"/>
         <property name="server.reconnection.timeout" value="1"/>
+        <property name="server.healthcheck.timeout" value="3"/>
 
         <delete dir="${java.io.tmpdir}/terrastore-install"/>
 
@@ -99,6 +100,9 @@
             <replacefilter
                 token="@server.reconnection.timeout@"
                 value="${server.reconnection.timeout}"/>
+            <replacefilter
+                token="@server.healthcheck.timeout@"
+                value="${server.healthcheck.timeout}"/>
         </replace>
 
         <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/bin/start.sh">

@@ -5,8 +5,8 @@
         <property name="l2.l1reconnect.timeout.millis" value="@server.reconnection.timeout@"/>
         <property name="l1.healthcheck.l2.ping.enabled" value="true"/>
         <property name="l1.healthcheck.l2.socketConnect" value="true"/>
-        <property name="l1.healthcheck.l2.ping.interval" value="1"/>
-        <property name="l1.healthcheck.l2.ping.probes" value="@server.reconnection.timeout@"/>
+        <property name="l1.healthcheck.l2.ping.interval" value="1000"/>
+        <property name="l1.healthcheck.l2.ping.probes" value="@server.healthcheck.timeout@"/>
     </tc-properties>
     <servers>
         <server host="%i" name="terrastore-single-master">
