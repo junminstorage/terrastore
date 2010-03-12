@@ -96,7 +96,7 @@ public class TCBucket implements Bucket {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            Value old = bucket.unlockedGet(key);
+            Value old = bucket.get(key);
             if (old == null || old.dispatch(key, predicate, condition)) {
                 bucket.unlockedPutNoReturn(key, value);
                 TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key, value.getBytes()));
@@ -111,6 +111,7 @@ public class TCBucket implements Bucket {
 
     public Value get(String key) throws StoreOperationException {
         Value value = bucket.unlockedGet(key);
+        value = value != null ? value : bucket.get(key);
         if (value != null) {
             return value;
         } else {
@@ -121,6 +122,7 @@ public class TCBucket implements Bucket {
     @Override
     public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException {
         Value value = bucket.unlockedGet(key);
+        value = value != null ? value : bucket.get(key);
         if (value != null) {
             if (value.dispatch(key, predicate, condition)) {
                 return value;
@@ -154,7 +156,7 @@ public class TCBucket implements Bucket {
         // and also publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            final Value value = bucket.unlockedGet(key);
+            final Value value = bucket.get(key);
             if (value != null) {
                 task = taskExecutor.get().submit(new Callable<Value>() {
 
