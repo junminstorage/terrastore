@@ -46,7 +46,7 @@ public class TCStore implements Store {
     private transient volatile ExecutorService taskExecutor;
 
     public TCStore() {
-        buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy(false, true));
+        buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy());
     }
 
     public void add(String bucket) throws StoreOperationException {
@@ -65,7 +65,8 @@ public class TCStore implements Store {
     }
 
     public Bucket get(String bucket) throws StoreOperationException {
-        Bucket requested = buckets.get(bucket);
+        Bucket requested = buckets.unlockedGet(bucket);
+        requested = requested != null ? requested : buckets.get(bucket);
         if (requested != null) {
             hydrateBucket(requested);
             return requested;
