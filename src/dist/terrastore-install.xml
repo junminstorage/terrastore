@@ -59,7 +59,7 @@
                 <include name="*.txt"/>
                 <include name="bin/**"/>
                 <include name="lib/**"/>
-                <include name="modules/**"/>
+                <include name="platform/**"/>
             </fileset>
         </copy>
         <copy file="terrastore-master/terracotta-server.log4j.properties" tofile="${install.dir}/terrastore-master-libs/.tc.custom.log4j.properties"/>
