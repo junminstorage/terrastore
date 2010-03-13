@@ -26,7 +26,9 @@ import java.util.Map;
 public interface Function extends Serializable {
 
     /**
-     *  Apply this function to the given value, represented as a map of name -> value pairs (associative array).
+     * Apply this function to the given value, represented as a map of name -> value pairs.
+     * More specifically, the value is a map containing primitive values (such as integers, strings and alike),
+     * nested maps and lists of primitive and nested map values.
      *
      * @param key The key of the value.
      * @param value The value to apply the function to.
