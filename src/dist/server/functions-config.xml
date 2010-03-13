@@ -8,10 +8,15 @@
 
 
     <!--
-        Configure here your update functions, used to atomically update values.
+        Configure here your update terrastore.store.operators.Function used to atomically update values.
+        As an alternative, you may want to annotate your function with terrastore.annotation.AutoDetect: Terrastore
+        will autodetect your annotated class, create an instance and autowire it here.
 
-        Each entry key is the function name that will be used in Terrastore query string for server-side updates, e.g.:
+        Each entry key, or terrastore.annotation.AutoDetect#name, is the function name that will be used in Terrastore query string for server-side updates, e.g.:
         http://localhost:8080/bucket/key/update?function=name&...
+
+        Conditions manually declared here overwrite autodetected ones: this means that if a manually declared condition
+        has the same name (entry key) of an autodetcted one, the latter will not be wired.
     -->
 
     <util:map id="update-functions">

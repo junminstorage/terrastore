@@ -25,20 +25,20 @@ import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import terrastore.annotation.Autowired;
+import terrastore.annotation.AutoDetect;
 
 /**
- * Scan for classes annotated with {@link terrastore.annotation.Autowired}.
+ * Scan for classes annotated with {@link terrastore.annotation.AutoDetect}.
  *
  * @author Sergio Bossa
  */
-public class AutowiredScanner {
+public class AnnotationScanner {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AutowiredScanner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AnnotationScanner.class);
     //
     private final AnnotationDB annotations;
 
-    public AutowiredScanner() {
+    public AnnotationScanner() {
         annotations = new AnnotationDB();
         annotations.setScanClassAnnotations(true);
         annotations.setScanFieldAnnotations(false);
@@ -52,22 +52,22 @@ public class AutowiredScanner {
     }
 
     /**
-     * Get a map containing all objects annotated with {@link terrastore.annotation.Autowired} and of the given base type,
-     * keyed by {@link terrastore.annotation.Autowired#name()}.
+     * Get a map containing all objects annotated with {@link terrastore.annotation.AutoDetect} and of the given base type,
+     * keyed by {@link terrastore.annotation.AutoDetect#name()}.
      *
      * @param type
      * @return
      */
     public final Map scanByType(Class type) {
         Map result = new HashMap<String, Object>();
-        Set<String> autowiredObjects = annotations.getAnnotationIndex().get(Autowired.class.getName());
+        Set<String> autowiredObjects = annotations.getAnnotationIndex().get(AutoDetect.class.getName());
         if (autowiredObjects != null) {
             for (String name : autowiredObjects) {
                 try {
                     Class candidateClass = Class.forName(name, false, Thread.currentThread().getContextClassLoader());
                     if (type.isAssignableFrom(candidateClass)) {
                         Object object = makeInstance(candidateClass);
-                        Autowired annotation = object.getClass().getAnnotation(Autowired.class);
+                        AutoDetect annotation = object.getClass().getAnnotation(AutoDetect.class);
                         result.put(annotation.name(), object);
                     }
                 } catch (Exception ex) {
@@ -79,15 +79,15 @@ public class AutowiredScanner {
     }
 
     /**
-     * Get a set containing all objects annotated with {@link terrastore.annotation.Autowired} and of the given base type,
-     * ordered by {@link terrastore.annotation.Autowired#order()} (ascending).
+     * Get a set containing all objects annotated with {@link terrastore.annotation.AutoDetect} and of the given base type,
+     * ordered by {@link terrastore.annotation.AutoDetect#order()} (ascending).
      *
      * @param type
      * @return
      */
     public final SortedSet orderedScanByType(Class type) {
         Map annotatedObjects = scanByType(type);
-        SortedSet orderedObjects = new TreeSet(new AutowiredOrderComparator());
+        SortedSet orderedObjects = new TreeSet(new OrderComparator());
         orderedObjects.addAll(annotatedObjects.values());
         return orderedObjects;
     }
@@ -96,12 +96,12 @@ public class AutowiredScanner {
         return clazz.newInstance();
     }
 
-    private static class AutowiredOrderComparator implements Comparator {
+    private static class OrderComparator implements Comparator {
 
         @Override
         public int compare(Object o1, Object o2) {
-            Autowired order1 = o1.getClass().getAnnotation(Autowired.class);
-            Autowired order2 = o2.getClass().getAnnotation(Autowired.class);
+            AutoDetect order1 = o1.getClass().getAnnotation(AutoDetect.class);
+            AutoDetect order2 = o2.getClass().getAnnotation(AutoDetect.class);
             return Integer.valueOf(order1.order()).compareTo(Integer.valueOf(order2.order()));
         }
     }

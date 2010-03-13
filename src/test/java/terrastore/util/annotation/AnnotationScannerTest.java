@@ -18,17 +18,17 @@ package terrastore.util.annotation;
 import java.util.Map;
 import java.util.SortedSet;
 import org.junit.Test;
-import terrastore.annotation.Autowired;
+import terrastore.annotation.AutoDetect;
 import static org.junit.Assert.*;
 
 /**
  * @author Sergio Bossa
  */
-public class AutowiredScannerTest {
+public class AnnotationScannerTest {
 
     @Test
     public void testScan() {
-        AutowiredScanner scanner = new AutowiredScanner();
+        AnnotationScanner scanner = new AnnotationScanner();
         Map result = scanner.scanByType(AutowiredCommon.class);
         assertEquals(3, result.size());
         assertEquals(AutowiredOne.class, result.get("one").getClass());
@@ -38,7 +38,7 @@ public class AutowiredScannerTest {
 
     @Test
     public void testOrderedScan() {
-        AutowiredScanner scanner = new AutowiredScanner();
+        AnnotationScanner scanner = new AnnotationScanner();
         SortedSet result = scanner.orderedScanByType(AutowiredCommon.class);
         assertEquals(3, result.size());
         assertEquals(AutowiredOne.class, result.toArray()[0].getClass());
@@ -48,22 +48,22 @@ public class AutowiredScannerTest {
 
     @Test
     public void testScanWithNoResults() {
-        AutowiredScanner scanner = new AutowiredScanner();
+        AnnotationScanner scanner = new AnnotationScanner();
         Map result = scanner.scanByType(Comparable.class);
         assertEquals(0, result.size());
     }
 
     public static interface AutowiredCommon {}
 
-    @Autowired(name = "one", order = 1)
+    @AutoDetect(name = "one", order = 1)
     public static class AutowiredOne implements AutowiredCommon {
     }
 
-    @Autowired(name = "two", order = 2)
+    @AutoDetect(name = "two", order = 2)
     public static class AutowiredTwo implements AutowiredCommon {
     }
 
-    @Autowired(name = "three", order = 3)
+    @AutoDetect(name = "three", order = 3)
     public static class AutowiredThree implements AutowiredCommon {
     }
 }

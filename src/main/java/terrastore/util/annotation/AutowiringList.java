@@ -15,25 +15,30 @@
  */
 package terrastore.util.annotation;
 
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.AbstractSequentialList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author Sergio Bossa
  */
-public class AutowiredScannerMap extends AbstractMap {
+public class AutowiringList extends AbstractSequentialList {
 
-    private final Map map = new HashMap();
+    private final List list = new LinkedList();
 
-    public AutowiredScannerMap(Map presets, AutowiredScanner scanner, Class type) {
-        this.map.putAll(scanner.scanByType(type));
-        this.map.putAll(presets);
+    public AutowiringList(List presets, AnnotationScanner scanner, Class type) {
+        this.list.addAll(presets);
+        this.list.addAll(scanner.orderedScanByType(type));
     }
 
     @Override
-    public Set entrySet() {
-        return map.entrySet();
+    public ListIterator listIterator(int index) {
+        return list.listIterator(index);
+    }
+
+    @Override
+    public int size() {
+        return list.size();
     }
 }
