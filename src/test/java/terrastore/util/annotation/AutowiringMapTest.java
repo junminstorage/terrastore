@@ -18,24 +18,24 @@ package terrastore.util.annotation;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
-import terrastore.annotation.Autowired;
+import terrastore.annotation.AutoDetect;
 import static org.junit.Assert.*;
 
 /**
  * @author Sergio Bossa
  */
-public class AutowiredScannerMapTest {
+public class AutowiringMapTest {
 
     @Test
     public void testPresetsOverwriteAutowiredInCaseOfConflictingName() {
         Map presetsMap = new HashMap();
         presetsMap.put("one", new PresetOne());
         //
-        AutowiredScannerMap scannerMap = new AutowiredScannerMap(presetsMap, new AutowiredScanner(), AutowiredCommon.class);
+        AutowiringMap autowiringMap = new AutowiringMap(presetsMap, new AnnotationScanner(), AutowiredCommon.class);
         //
-        assertEquals(2, scannerMap.size());
-        assertEquals(PresetOne.class, scannerMap.get("one").getClass());
-        assertEquals(AutowiredTwo.class, scannerMap.get("two").getClass());
+        assertEquals(2, autowiringMap.size());
+        assertEquals(PresetOne.class, autowiringMap.get("one").getClass());
+        assertEquals(AutowiredTwo.class, autowiringMap.get("two").getClass());
     }
 
     public static class PresetOne {
@@ -44,11 +44,11 @@ public class AutowiredScannerMapTest {
     public static interface AutowiredCommon {
     }
 
-    @Autowired(name = "one", order = 1)
+    @AutoDetect(name = "one", order = 1)
     public static class AutowiredOne implements AutowiredCommon {
     }
 
-    @Autowired(name = "two", order = 2)
+    @AutoDetect(name = "two", order = 2)
     public static class AutowiredTwo implements AutowiredCommon {
     }
 }

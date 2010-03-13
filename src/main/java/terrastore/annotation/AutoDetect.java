@@ -21,13 +21,30 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Annotate components that needs to be auto-detected and wired into Terrastore server configuration.<br>
+ * Classes implementing the following interfaces can be marked as auto-detected components:
+ * <ul>
+ * <li>{@link terrastore.event.EventListener}</li>
+ * <li>{@link terrastore.store.operators.Comparator}</li>
+ * <li>{@link terrastore.store.operators.Condition}</li>
+ * <li>{@link terrastore.store.operators.Function}</li>
+ * </ul>
+ * Classes marked with this annotation must have a no-arg constructor in order to be created and
+ * wired into Terrastore configuration.
+ *
  * @author Sergio Bossa
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Autowired {
+public @interface AutoDetect {
 
+    /**
+     * The name of the autodetected component.
+     */
     public String name();
 
+    /**
+     * The wiring precedence (optional): lower order means higher precedence.
+     */
     public int order() default 0;
 }

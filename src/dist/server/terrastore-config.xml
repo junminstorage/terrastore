@@ -32,16 +32,16 @@
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
         <property name="functions">
-            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+            <bean class="terrastore.util.annotation.AutowiringMap">
                 <constructor-arg ref="update-functions"/>
-                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.store.operators.Function"/>
             </bean>
         </property>
         <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+            <bean class="terrastore.util.annotation.AutowiringMap">
                 <constructor-arg ref="conditions"/>
-                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.store.operators.Condition"/>
             </bean>
         </property>
@@ -50,16 +50,16 @@
     <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
         <constructor-arg ref="router"/>
         <property name="comparators">
-            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+            <bean class="terrastore.util.annotation.AutowiringMap">
                 <constructor-arg ref="comparators"/>
-                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.store.operators.Comparator"/>
             </bean>
         </property>
         <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+            <bean class="terrastore.util.annotation.AutowiringMap">
                 <constructor-arg ref="conditions"/>
-                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.store.operators.Condition"/>
             </bean>
         </property>
@@ -73,16 +73,16 @@
 
     <bean id="eventBus" class="terrastore.event.impl.AsyncEventBus">
         <constructor-arg>
-            <bean class="terrastore.util.annotation.AutowiredScannerList">
+            <bean class="terrastore.util.annotation.AutowiringList">
                 <constructor-arg ref="event-listeners"/>
-                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.event.EventListener"/>
             </bean>
         </constructor-arg>
         <constructor-arg value="3600"/>
     </bean>
 
-    <bean id="autowiredScanner" class="terrastore.util.annotation.AutowiredScanner"/>
+    <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
 
     <!-- Router -->
 
