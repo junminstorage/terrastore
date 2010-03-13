@@ -26,19 +26,43 @@
     <bean class="terrastore.server.impl.support.JsonBucketsProvider"/>
     <bean class="terrastore.server.impl.support.JsonParametersProvider"/>
     <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
-    
+
     <!-- Service -->
-    
+
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
-        <property name="functions" ref="update-functions"/>
-        <property name="conditions" ref="conditions"/>
+        <property name="functions">
+            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+                <constructor-arg ref="update-functions"/>
+                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg value="terrastore.store.operators.Function"/>
+            </bean>
+        </property>
+        <property name="conditions">
+            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+                <constructor-arg ref="conditions"/>
+                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg value="terrastore.store.operators.Condition"/>
+            </bean>
+        </property>
     </bean>
-    
+
     <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
         <constructor-arg ref="router"/>
-        <property name="comparators" ref="comparators"/>
-        <property name="conditions" ref="conditions"/>
+        <property name="comparators">
+            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+                <constructor-arg ref="comparators"/>
+                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg value="terrastore.store.operators.Comparator"/>
+            </bean>
+        </property>
+        <property name="conditions">
+            <bean class="terrastore.util.annotation.AutowiredScannerMap">
+                <constructor-arg ref="conditions"/>
+                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg value="terrastore.store.operators.Condition"/>
+            </bean>
+        </property>
         <property name="defaultComparator" ref="defaultComparator"/>
     </bean>
 
@@ -46,6 +70,19 @@
         <constructor-arg ref="router"/>
         <constructor-arg value="SECRET-KEY"/>
     </bean>
+
+    <bean id="eventBus" class="terrastore.event.impl.AsyncEventBus">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiredScannerList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="autowiredScanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="3600"/>
+    </bean>
+
+    <bean id="autowiredScanner" class="terrastore.util.annotation.AutowiredScanner"/>
 
     <!-- Router -->
 
