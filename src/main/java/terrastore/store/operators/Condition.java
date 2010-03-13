@@ -20,14 +20,16 @@ import java.util.Map;
 
 /**
  * Interface to implement for evaluating conditions on bucket values.<br>
- * Condition is expressed as an expression whose meaning depends on the actual implementation.
+ * Condition is made up by an expression whose meaning depends on the actual implementation.
  *
  * @author Sergio Bossa
  */
 public interface Condition extends Serializable {
 
     /**
-     * Evaluate this condition on the given value, represented as a map of name -> value pairs (associative array).
+     * Evaluate this condition on the given value, represented as a map of name -> value pairs.
+     * More specifically, the value is a map containing primitive values (such as integers, strings and alike),
+     * nested maps and lists of primitive and nested map values.
      *
      * @param key The key of the value.
      * @param value The value to evaluate condition on.
