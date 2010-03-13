@@ -17,6 +17,11 @@
             <version>2.0.14</version>
         </dependency>
         <dependency>
+            <groupId>net.sf.scannotation</groupId>
+            <artifactId>scannotation</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.netty</groupId>
             <artifactId>netty</artifactId>
             <version>3.1.5.GA</version>
@@ -443,6 +448,7 @@
                             <includes>
                                 <include>terrastore/event/EventListener*</include>
                                 <include>terrastore/store/operators/*</include>
+                                <include>terrastore/annotation/*</include>
                             </includes>
                         </configuration>
                     </execution>
