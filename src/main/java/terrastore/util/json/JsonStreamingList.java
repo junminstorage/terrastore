@@ -53,7 +53,7 @@ public class JsonStreamingList extends AbstractList {
                     } else if (token.equals(JsonToken.VALUE_NUMBER_FLOAT)) {
                         return parser.getFloatValue();
                     } else if (token.equals(JsonToken.VALUE_NUMBER_INT)) {
-                        return parser.getIntValue();
+                        return parser.getLongValue();
                     } else if (token.equals(JsonToken.VALUE_TRUE) || token.equals(JsonToken.VALUE_FALSE)) {
                         return parser.getBooleanValue();
                     } else {

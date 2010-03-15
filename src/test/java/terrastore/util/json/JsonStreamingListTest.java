@@ -27,7 +27,7 @@ public class JsonStreamingListTest {
     private static final String EMPTY = "[]";
     //
     private static final String STRING = "[\"string\"]";
-    private static final String INT = "[1]";
+    private static final String LONG = "[1]";
     private static final String FLOAT = "[1.5]";
     private static final String TRUE = "[true]";
     private static final String FALSE = "[false]";
@@ -54,9 +54,9 @@ public class JsonStreamingListTest {
         assertEquals(1, list.size());
         assertEquals("string", list.get(0));
 
-        list = new JsonStreamingList(new JsonValue(INT.getBytes()));
+        list = new JsonStreamingList(new JsonValue(LONG.getBytes()));
         assertEquals(1, list.size());
-        assertEquals(1, list.get(0));
+        assertEquals(1L, list.get(0));
 
         list = new JsonStreamingList(new JsonValue(FLOAT.getBytes()));
         assertEquals(1, list.size());
@@ -88,7 +88,7 @@ public class JsonStreamingListTest {
         JsonStreamingList list = new JsonStreamingList(new JsonValue(COMPOSITE.getBytes()));
         assertEquals(8, list.size());
         assertEquals("string", list.get(0));
-        assertEquals(1, list.get(1));
+        assertEquals(1L, list.get(1));
         assertEquals(1.5f, list.get(2));
         assertEquals(true, list.get(3));
         assertEquals(false, list.get(4));

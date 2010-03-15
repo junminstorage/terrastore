@@ -97,28 +97,32 @@ public class JsonStreamingMap extends AbstractMap<String, Object> {
                     Object value = null;
                     //
                     token = parser.nextToken();
-                    if (token.equals(JsonToken.START_OBJECT)) {
-                        value = extractObject();
-                    } else if (token.equals(JsonToken.START_ARRAY)) {
-                        value = extractArray();
-                    } else if (token.toString().startsWith("VALUE_")) {
-                        if (token.equals(JsonToken.VALUE_STRING)) {
-                            value = parser.getText();
-                        } else if (token.equals(JsonToken.VALUE_NUMBER_FLOAT)) {
-                            value = parser.getFloatValue();
-                        } else if (token.equals(JsonToken.VALUE_NUMBER_INT)) {
-                            value = parser.getIntValue();
-                        } else if (token.equals(JsonToken.VALUE_TRUE) || token.equals(JsonToken.VALUE_FALSE)) {
-                            value = parser.getBooleanValue();
+                    if (token != null) {
+                        if (token.equals(JsonToken.START_OBJECT)) {
+                            value = extractObject();
+                        } else if (token.equals(JsonToken.START_ARRAY)) {
+                            value = extractArray();
+                        } else if (token.toString().startsWith("VALUE_")) {
+                            if (token.equals(JsonToken.VALUE_STRING)) {
+                                value = parser.getText();
+                            } else if (token.equals(JsonToken.VALUE_NUMBER_FLOAT)) {
+                                value = parser.getFloatValue();
+                            } else if (token.equals(JsonToken.VALUE_NUMBER_INT)) {
+                                value = parser.getLongValue();
+                            } else if (token.equals(JsonToken.VALUE_TRUE) || token.equals(JsonToken.VALUE_FALSE)) {
+                                value = parser.getBooleanValue();
+                            } else {
+                                value = null;
+                            }
                         } else {
-                            value = null;
+                            return endOfData();
                         }
+                        return new JsonEntry(key, value);
                     } else {
                         return endOfData();
                     }
-                    return new JsonEntry(key, value);
                 } catch (Exception ex) {
-                    return endOfData();
+                    throw new RuntimeException(ex.getMessage(), ex);
                 }
             }
 
