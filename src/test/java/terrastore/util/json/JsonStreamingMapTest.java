@@ -27,7 +27,7 @@ public class JsonStreamingMapTest {
     private static final String EMPTY = "{}";
     //
     private static final String STRING = "{\"key\":\"string\"}";
-    private static final String INT = "{\"key\":1}";
+    private static final String LONG = "{\"key\":1}";
     private static final String FLOAT = "{\"key\":1.5}";
     private static final String TRUE = "{\"key\":true}";
     private static final String FALSE = "{\"key\":false}";
@@ -54,9 +54,9 @@ public class JsonStreamingMapTest {
         assertEquals(1, map.size());
         assertEquals("string", map.get("key"));
 
-        map = new JsonStreamingMap(new JsonValue(INT.getBytes()));
+        map = new JsonStreamingMap(new JsonValue(LONG.getBytes()));
         assertEquals(1, map.size());
-        assertEquals(1, map.get("key"));
+        assertEquals(1L, map.get("key"));
 
         map = new JsonStreamingMap(new JsonValue(FLOAT.getBytes()));
         assertEquals(1, map.size());
@@ -88,7 +88,7 @@ public class JsonStreamingMapTest {
         JsonStreamingMap map = new JsonStreamingMap(new JsonValue(COMPOSITE.getBytes()));
         assertEquals(8, map.size());
         assertEquals("string", map.get("key1"));
-        assertEquals(1, map.get("key2"));
+        assertEquals(1L, map.get("key2"));
         assertEquals(1.5f, map.get("key3"));
         assertEquals(true, map.get("key4"));
         assertEquals(false, map.get("key5"));

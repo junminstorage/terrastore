@@ -15,10 +15,10 @@
  */
 package terrastore.service.conditions;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import org.junit.Test;
 import terrastore.store.types.JsonValue;
+import terrastore.util.io.InputReader;
 import terrastore.util.json.JsonUtils;
 import static org.junit.Assert.*;
 
@@ -27,19 +27,21 @@ import static org.junit.Assert.*;
  */
 public class JXPathConditionTest {
 
-    private static final String JSON_VALUE = "{\"key\" : \"value\", \"array\" : [\"primitive\"]}";
-
     @Test
-    public void testSatisfiedWithJsonValue() throws UnsupportedEncodingException {
-        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(JSON_VALUE.getBytes("UTF-8")));
-        String jxpath = "/key[.='value']";
+    public void testSatisfiedWithJsonValue() throws Exception {
+        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("jxpath.json")));
+        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
+        String jxpath1 = "/id[.='6626190681']";
+        String jxpath2 = "//time_zone";
         JXPathCondition condition = new JXPathCondition();
-        assertTrue(condition.isSatisfied("ignored", json, jxpath));
+        assertTrue(condition.isSatisfied("ignored", json, jxpath1));
+        assertTrue(condition.isSatisfied("ignored", json, jxpath2));
     }
 
     @Test
-    public void testNotSatisfiedWithJsonValue() throws UnsupportedEncodingException {
-        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(JSON_VALUE.getBytes("UTF-8")));
+    public void testNotSatisfiedWithJsonValue() throws Exception {
+        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("jxpath.json")));
+        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
         String jxpath = "/key[.='wrong']";
         JXPathCondition condition = new JXPathCondition();
         assertFalse(condition.isSatisfied("ignored", json, jxpath));
