@@ -63,7 +63,11 @@ public abstract class AbstractSEDAProcessor implements SEDAProcessor {
             Future<R> future = threadPool.<R>execute(new ExecutionHandler<R>(store, command));
             return future.get();
         } catch (ExecutionException ex) {
-            throw new ProcessingException(((StoreOperationException) ex.getCause()).getErrorMessage());
+            if (ex.getCause() instanceof StoreOperationException) {
+                throw new ProcessingException(((StoreOperationException) ex.getCause()).getErrorMessage());
+            } else {
+                throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getCause().getMessage()));
+            }
         } catch (Exception ex) {
             throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
