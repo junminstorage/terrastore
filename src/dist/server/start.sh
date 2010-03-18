@@ -27,7 +27,7 @@ then
     exit 1
 fi
 
-CLASSPATH=${TERRASTORE_HOME}
+CLASSPATH=${TERRASTORE_HOME}/extensions
 for file in ${TERRASTORE_HOME}/libs/*.jar
 do
   CLASSPATH=$CLASSPATH:$file
