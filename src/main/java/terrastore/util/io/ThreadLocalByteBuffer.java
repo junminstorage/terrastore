@@ -24,7 +24,7 @@ public class ThreadLocalByteBuffer {
 
         @Override
         protected byte[] initialValue() {
-            return new byte[1024];
+            return new byte[1024 * 4];
         }
     };
 
