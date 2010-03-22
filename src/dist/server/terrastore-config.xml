@@ -87,6 +87,7 @@
 
     <bean id="router" class="terrastore.router.impl.HashingRouter">
         <constructor-arg ref="hashFunction"/>
+        <constructor-arg ref="ensembleManager"/>
         <constructor-arg ref="partitionManager"/>
     </bean>
 
@@ -98,9 +99,15 @@
         <constructor-arg value="1024"/>
     </bean>
 
-    <!-- Cluster -->
+    <!-- EnsembleManager -->
 
-    <bean id="cluster" class="terrastore.cluster.impl.TCCluster" factory-method="getInstance">
+    <bean id="ensembleManager" class="terrastore.ensemble.impl.HashingEnsembleManager">
+        <constructor-arg ref="hashFunction"/>
+    </bean>
+
+    <!-- Coordinator -->
+
+    <bean id="coordinator" class="terrastore.cluster.impl.TCCoordinator" factory-method="getInstance">
         <property name="maxFrameLength" value="10485760"/>
         <property name="router" ref="router"/>
         <property name="snapshotManager" ref="snapshotManager"/>

@@ -17,7 +17,9 @@ package terrastore.router;
 
 import java.util.Map;
 import java.util.Set;
+import terrastore.communication.Cluster;
 import terrastore.communication.Node;
+import terrastore.ensemble.EnsembleManager;
 import terrastore.partition.PartitionManager;
 
 /**
@@ -26,6 +28,8 @@ import terrastore.partition.PartitionManager;
  * @author Sergio Bossa
  */
 public interface Router {
+
+    public void setupClusters(Set<Cluster> clusters);
 
     /**
      * Set the local node, representing <b>this</b> cluster node.
@@ -46,14 +50,14 @@ public interface Router {
      *
      * @param node The node to add the route to.
      */
-    public void addRouteTo(Node node);
+    public void addRouteTo(Cluster cluster, Node node);
 
     /**
      * Remove a route to the given node.
      *
      * @param node The node whose route must be removed.
      */
-    public void removeRouteTo(Node node);
+    public void removeRouteTo(Cluster cluster, Node node);
 
     /**
      * Find the route to a specific node for the given bucket name.
@@ -92,4 +96,8 @@ public interface Router {
      * @return The PartitionManager.
      */
     public PartitionManager getPartitionManager();
+
+    /**
+     */
+    public EnsembleManager getEnsembleManager();
 }

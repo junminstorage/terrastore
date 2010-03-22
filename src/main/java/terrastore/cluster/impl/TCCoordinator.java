@@ -15,6 +15,7 @@
  */
 package terrastore.cluster.impl;
 
+import com.google.common.collect.Sets;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
@@ -23,7 +24,9 @@ import com.tc.cluster.simulation.SimulatedDsoCluster;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tcclient.cluster.DsoNode;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +40,9 @@ import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import org.terracotta.modules.annotations.Root;
 import terrastore.communication.Node;
-import terrastore.cluster.Cluster;
+import terrastore.cluster.Coordinator;
+import terrastore.cluster.EnsembleConfiguration;
+import terrastore.communication.Cluster;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.communication.local.LocalNode;
@@ -56,12 +61,12 @@ import terrastore.store.impl.TCStore;
  */
 @InstrumentedClass
 @HonorTransient
-public class TCCluster implements Cluster, DsoClusterListener {
+public class TCCoordinator implements Coordinator, DsoClusterListener {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TCCluster.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TCCoordinator.class);
     //
     @Root
-    private static final TCCluster INSTANCE = new TCCluster();
+    private static final TCCoordinator INSTANCE = new TCCoordinator();
     //
     @InjectedDsoInstance
     private DsoCluster dsoCluster;
@@ -77,6 +82,8 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private volatile transient ConcurrentMap<String, Node> nodes;
     private volatile transient LocalProcessor localProcessor;
     private volatile transient RemoteProcessor remoteProcessor;
+    private volatile transient Cluster localCluster;
+    private volatile transient Map<Cluster, List<Node>> remoteClusters;
     //
     private volatile transient int maxFrameLength;
     private volatile transient long nodeTimeout;
@@ -94,10 +101,10 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private volatile transient BackupManager backupManager;
     private volatile transient EventBus eventBus;
 
-    private TCCluster() {
+    private TCCoordinator() {
     }
 
-    public static TCCluster getInstance() {
+    public static TCCoordinator getInstance() {
         return INSTANCE;
     }
 
@@ -154,9 +161,21 @@ public class TCCluster implements Cluster, DsoClusterListener {
         this.flushCondition = flushCondition;
     }
 
-    public void start(String host, int port) {
+    public void start(String host, int port, EnsembleConfiguration configuration) {
         stateLock.lock();
         try {
+            //
+            localCluster = new Cluster(configuration.local, true);
+            Map<Cluster, RemoteNode> clusters = new HashMap<Cluster, RemoteNode>();
+            for (Map.Entry<String, EnsembleConfiguration.NodeInfo> cluster : configuration.clusters.entrySet()) {
+                RemoteNode node = new RemoteNode(cluster.getValue().host, cluster.getValue().port, cluster.getValue().host + ":" + cluster.getValue().port, maxFrameLength, nodeTimeout);
+                node.connect();
+                clusters.put(new Cluster(cluster.getKey(), false), node);
+            }
+            router.setupClusters(Sets.newHashSet(clusters.keySet()));
+            for (Map.Entry<Cluster, RemoteNode> cluster : clusters.entrySet()) {
+                router.addRouteTo(cluster.getKey(), cluster.getValue());
+            }
             // Configure host-related data:
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
             thisNodeHost = host;
@@ -270,7 +289,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
         thisNode.connect();
         nodes.put(thisNodeName, thisNode);
         router.setLocalNode(thisNode);
-        router.addRouteTo(thisNode);
+        router.addRouteTo(localCluster, thisNode);
         LOG.info("Set up this node {}", thisNodeName);
     }
 
@@ -301,7 +320,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
                 Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, maxFrameLength, nodeTimeout, router.getLocalNode());
                 remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
-                router.addRouteTo(remoteNode);
+                router.addRouteTo(localCluster, remoteNode);
                 LOG.info("Set up remote node {}", remoteNodeName);
             }
         } else {
@@ -327,7 +346,7 @@ public class TCCluster implements Cluster, DsoClusterListener {
     private void disconnectRemoteNode(String nodeName) {
         Node remoteNode = nodes.remove(nodeName);
         remoteNode.disconnect();
-        router.removeRouteTo(remoteNode);
+        router.removeRouteTo(localCluster, remoteNode);
         LOG.info("Discarded node {}", nodeName);
     }
 

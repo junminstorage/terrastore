@@ -69,6 +69,10 @@ public class RemoteNode implements Node {
     private final ClientBootstrap client;
     private Channel clientChannel;
 
+    public RemoteNode(String host, int port, String name, int maxFrameLength, long timeoutInMillis) {
+        this(host, port, name, maxFrameLength, timeoutInMillis, null);
+    }
+
     public RemoteNode(String host, int port, String name, int maxFrameLength, long timeoutInMillis, Node fallback) {
         this.host = host;
         this.port = port;
@@ -190,18 +194,20 @@ public class RemoteNode implements Node {
     }
 
     private void reroutePendingCommands() {
-        // pendingCommands is a linked hash map, so commands will be rerouted following
-        // original order:
-        for (Command command : pendingCommands.values()) {
-            String commandId = command.getId();
-            RemoteResponse response = null;
-            try {
-                Object result = backupNode.send(command);
-                response = new RemoteResponse(commandId, result);
-            } catch (ProcessingException ex) {
-                response = new RemoteResponse(commandId, ex.getMessage());
+        if (backupNode != null) {
+            // pendingCommands is a linked hash map, so commands will be rerouted following
+            // original order:
+            for (Command command : pendingCommands.values()) {
+                String commandId = command.getId();
+                RemoteResponse response = null;
+                try {
+                    Object result = backupNode.send(command);
+                    response = new RemoteResponse(commandId, result);
+                } catch (ProcessingException ex) {
+                    response = new RemoteResponse(commandId, ex.getMessage());
+                }
+                signalCommandResponse(commandId, response);
             }
-            signalCommandResponse(commandId, response);
         }
     }
 
