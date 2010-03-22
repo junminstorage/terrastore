@@ -23,7 +23,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.communication.Cluster;
 import terrastore.communication.Node;
+import terrastore.ensemble.EnsembleManager;
 import terrastore.partition.PartitionManager;
 import terrastore.router.Router;
 
@@ -38,24 +40,38 @@ public class HashingRouter implements Router {
     private static final Logger LOG = LoggerFactory.getLogger(HashingRouter.class);
     private final ReadWriteLock stateLock;
     private final HashFunction hashFunction;
+    private final EnsembleManager ensembleManager;
     private final PartitionManager partitionManager;
     private Node localNode;
 
-    public HashingRouter(HashFunction hashFunction, PartitionManager partitionManager) {
+    public HashingRouter(HashFunction hashFunction, EnsembleManager ensembleManager, PartitionManager partitionManager) {
         this.stateLock = new ReentrantReadWriteLock();
         this.hashFunction = hashFunction;
+        this.ensembleManager = ensembleManager;
         this.partitionManager = partitionManager;
     }
 
-    public void setLocalNode(Node node) {
+    @Override
+    public void setupClusters(Set<Cluster> clusters) {
         stateLock.writeLock().lock();
         try {
-            this.localNode = node;
+            ensembleManager.setupClusters(clusters);
         } finally {
             stateLock.writeLock().unlock();
         }
     }
 
+    @Override
+    public void setLocalNode(Node node) {
+        stateLock.writeLock().lock();
+        try {
+            localNode = node;
+        } finally {
+            stateLock.writeLock().unlock();
+        }
+    }
+
+    @Override
     public Node getLocalNode() {
         stateLock.writeLock().lock();
         try {
@@ -65,52 +81,75 @@ public class HashingRouter implements Router {
         }
     }
 
-    public void addRouteTo(Node node) {
+    @Override
+    public void addRouteTo(Cluster cluster, Node node) {
         stateLock.writeLock().lock();
         try {
-            partitionManager.addNode(node);
+            if (cluster.isLocal()) {
+                partitionManager.addNode(node);
+            } else {
+                ensembleManager.addContactNode(cluster, node);
+            }
         } finally {
             stateLock.writeLock().unlock();
         }
     }
 
-    public void removeRouteTo(Node node) {
+    @Override
+    public void removeRouteTo(Cluster cluster, Node node) {
         stateLock.writeLock().lock();
         try {
-            partitionManager.removeNode(node);
+            if (cluster.isLocal()) {
+                partitionManager.removeNode(node);
+            } else {
+                ensembleManager.removeContactNode(cluster, node);
+            }
         } finally {
             stateLock.writeLock().unlock();
         }
     }
 
+    @Override
     public Node routeToNodeFor(String bucket) {
         stateLock.readLock().lock();
         try {
-            String toHash = bucket;
-            int partitions = partitionManager.getMaxPartitions();
-            int hash = hashFunction.hash(toHash, partitions);
-            Node route = partitionManager.selectNodeAtPartition(hash);
-            LOG.info("Routing to: {}", route);
-            return route;
+            Cluster cluster = ensembleManager.getClusterFor(bucket);
+            if (cluster.isLocal()) {
+                String toHash = bucket;
+                int partitions = partitionManager.getMaxPartitions();
+                int hash = hashFunction.hash(toHash, partitions);
+                Node route = partitionManager.selectNodeAtPartition(hash);
+                LOG.info("Routing to: {}", route);
+                return route;
+            } else {
+                return ensembleManager.getContactNodeFor(cluster);
+            }
         } finally {
             stateLock.readLock().unlock();
         }
     }
 
+    @Override
     public Node routeToNodeFor(String bucket, String key) {
         stateLock.readLock().lock();
         try {
-            String toHash = bucket + key;
-            int partitions = partitionManager.getMaxPartitions();
-            int hash = hashFunction.hash(toHash, partitions);
-            Node route = partitionManager.selectNodeAtPartition(hash);
-            LOG.info("Routing to: {}", route);
-            return route;
+            Cluster cluster = ensembleManager.getClusterFor(bucket, key);
+            if (cluster.isLocal()) {
+                String toHash = bucket + key;
+                int partitions = partitionManager.getMaxPartitions();
+                int hash = hashFunction.hash(toHash, partitions);
+                Node route = partitionManager.selectNodeAtPartition(hash);
+                LOG.info("Routing to: {}", route);
+                return route;
+            } else {
+                return ensembleManager.getContactNodeFor(cluster);
+            }
         } finally {
             stateLock.readLock().unlock();
         }
     }
 
+    @Override
     public Map<Node, Set<String>> routeToNodesFor(String bucket, Set<String> keys) {
         stateLock.readLock().lock();
         try {
@@ -130,6 +169,7 @@ public class HashingRouter implements Router {
         }
     }
 
+    @Override
     public void cleanup() {
         stateLock.writeLock().lock();
         try {
@@ -140,7 +180,13 @@ public class HashingRouter implements Router {
         }
     }
 
+    @Override
     public PartitionManager getPartitionManager() {
         return partitionManager;
+    }
+
+    @Override
+    public EnsembleManager getEnsembleManager() {
+        return ensembleManager;
     }
 }

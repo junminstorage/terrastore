@@ -16,6 +16,7 @@
 package terrastore.startup;
 
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
@@ -39,7 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-import terrastore.cluster.Cluster;
+import terrastore.cluster.Coordinator;
+import terrastore.cluster.EnsembleConfiguration;
 
 /**
  * @author Sergio Bossa
@@ -94,6 +96,8 @@ public class Startup {
             }
         }
     }
+    //
+    private EnsembleConfiguration ensembleConfiguration = new EnsembleConfiguration("default");
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private String nodeHost = DEFAULT_NODE_HOST;
@@ -106,6 +110,11 @@ public class Startup {
     @Option(name = "--master", required = false)
     public void setMaster(String toIgnore) {
         // Ignore this, here just to let the master to be passed by command line.
+    }
+
+    @Option(name = "--ensemble", required = false)
+    public void setEnsemble(String ensembleConfigurationFile) throws IOException {
+        this.ensembleConfiguration = EnsembleConfiguration.read(new FileInputStream(ensembleConfigurationFile));
     }
 
     @Option(name = "--httpHost", required = false)
@@ -155,7 +164,7 @@ public class Startup {
             printInfo();
             Context context = startServer();
             startMonitor();
-            startCluster(context);
+            startCoordinator(context);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -209,19 +218,19 @@ public class Startup {
         Monitor.monitor();
     }
 
-    private void startCluster(Context context) throws BeansException {
-        Cluster cluster = getClusterFromServletContext(context);
-        cluster.setNodeTimeout(nodeTimeout);
-        cluster.setWokerThreads(workerThreads);
-        cluster.start(nodeHost, nodePort);
+    private void startCoordinator(Context context) throws BeansException {
+        Coordinator coordinator = getCoordinatorFromServletContext(context);
+        coordinator.setNodeTimeout(nodeTimeout);
+        coordinator.setWokerThreads(workerThreads);
+        coordinator.start(nodeHost, nodePort, ensembleConfiguration);
     }
 
-    private Cluster getClusterFromServletContext(Context context) throws BeansException {
-        Map clusterBeans = WebApplicationContextUtils.getWebApplicationContext(context.getServletContext()).getBeansOfType(Cluster.class);
-        if (clusterBeans.size() == 1) {
-            return (Cluster) clusterBeans.values().iterator().next();
+    private Coordinator getCoordinatorFromServletContext(Context context) throws BeansException {
+        Map beans = WebApplicationContextUtils.getWebApplicationContext(context.getServletContext()).getBeansOfType(Coordinator.class);
+        if (beans.size() == 1) {
+            return (Coordinator) beans.values().iterator().next();
         } else {
-            throw new IllegalStateException("Wrong number of configured cluster beans!");
+            throw new IllegalStateException("Wrong number of configured beans!");
         }
     }
 

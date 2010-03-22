@@ -16,7 +16,9 @@
 package terrastore.router.impl;
 
 import org.junit.Test;
+import terrastore.communication.Cluster;
 import terrastore.communication.Node;
+import terrastore.ensemble.EnsembleManager;
 import terrastore.partition.PartitionManager;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
@@ -29,55 +31,67 @@ public class HashingRouterTest {
     private HashingRouter router;
 
     @Test
-    public void testRouteToBucket() {
+    public void testRouteToBucketInLocalCluster() {
         String bucket = "bucket";
 
         HashFunction fn = createMock(HashFunction.class);
+        EnsembleManager ensembleManager = createMock(EnsembleManager.class);
         PartitionManager partitionManager = createMock(PartitionManager.class);
+        Cluster cluster = createMock(Cluster.class);
         Node node = createMock(Node.class);
 
-        partitionManager.addNode(node);
-        expectLastCall().once();
         fn.hash(bucket, 10);
         expectLastCall().andReturn(1).once();
+        ensembleManager.getClusterFor(bucket);
+        expectLastCall().andReturn(cluster);
+        partitionManager.addNode(node);
+        expectLastCall().once();
         partitionManager.getMaxPartitions();
         expectLastCall().andReturn(10).once();
         partitionManager.selectNodeAtPartition(1);
         expectLastCall().andReturn(node).once();
+        cluster.isLocal();
+        expectLastCall().andReturn(true).once();
 
-        replay(fn, partitionManager, node);
+        replay(fn, ensembleManager, partitionManager, cluster, node);
 
-        router = new HashingRouter(fn, partitionManager);
-        router.addRouteTo(node);
+        router = new HashingRouter(fn, ensembleManager, partitionManager);
+        router.addRouteTo(cluster, node);
         assertSame(node, router.routeToNodeFor(bucket));
 
-        verify(fn, partitionManager, node);
+        verify(fn, ensembleManager, partitionManager, cluster, node);
     }
 
     @Test
-    public void testRouteToBucketAndKey() {
+    public void testRouteToBucketAndKeyInLocalCluster() {
         String bucket = "bucket";
         String key = "key";
 
         HashFunction fn = createMock(HashFunction.class);
+        EnsembleManager ensembleManager = createMock(EnsembleManager.class);
         PartitionManager partitionManager = createMock(PartitionManager.class);
+        Cluster cluster = createMock(Cluster.class);
         Node node = createMock(Node.class);
 
-        partitionManager.addNode(node);
-        expectLastCall().once();
         fn.hash(bucket + key, 10);
         expectLastCall().andReturn(1).once();
+        ensembleManager.getClusterFor(bucket, key);
+        expectLastCall().andReturn(cluster);
+        partitionManager.addNode(node);
+        expectLastCall().once();
         partitionManager.getMaxPartitions();
         expectLastCall().andReturn(10).once();
         partitionManager.selectNodeAtPartition(1);
         expectLastCall().andReturn(node).once();
+        cluster.isLocal();
+        expectLastCall().andReturn(true).once();
 
-        replay(fn, partitionManager, node);
+        replay(fn, ensembleManager, partitionManager, cluster, node);
 
-        router = new HashingRouter(fn, partitionManager);
-        router.addRouteTo(node);
+        router = new HashingRouter(fn, ensembleManager, partitionManager);
+        router.addRouteTo(cluster, node);
         assertSame(node, router.routeToNodeFor(bucket, key));
 
-        verify(fn, partitionManager, node);
+        verify(fn, ensembleManager, partitionManager, cluster, node);
     }
 }

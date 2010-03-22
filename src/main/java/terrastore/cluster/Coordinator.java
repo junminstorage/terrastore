@@ -26,9 +26,9 @@ import terrastore.store.SnapshotManager;
 /**
  * @author Sergio Bossa
  */
-public interface Cluster {
+public interface Coordinator {
 
-    public void start(String host, int port);
+    public void start(String host, int port, EnsembleConfiguration configuration);
 
     public void setNodeTimeout(long nodeTimeout);
 

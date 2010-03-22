@@ -282,8 +282,8 @@
                             <startServer>false</startServer>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --shutdownPort 8280 --ensemble /tmp/ensemble1.json" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --shutdownPort 8281 --ensemble /tmp/ensemble2.json" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
                             </processes>
                         </configuration>
                         <executions>
