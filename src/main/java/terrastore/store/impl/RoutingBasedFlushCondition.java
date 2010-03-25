@@ -17,6 +17,7 @@ package terrastore.store.impl;
 
 import terrastore.store.FlushCondition;
 import terrastore.communication.Node;
+import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
 
@@ -36,8 +37,12 @@ public class RoutingBasedFlushCondition implements FlushCondition {
 
     @Override
     public boolean isSatisfied(Bucket bucket, String key) {
-        Node localNode = router.getLocalNode();
-        Node actual = router.routeToNodeFor(bucket.getName(), key);
-        return !actual.equals(localNode);
+        try {
+            Node localNode = router.routeToLocalNode();
+            Node actual = router.routeToNodeFor(bucket.getName(), key);
+            return !actual.equals(localNode);
+        } catch (MissingRouteException ex) {
+            return true;
+        }
     }
 }

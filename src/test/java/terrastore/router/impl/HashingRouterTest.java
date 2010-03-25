@@ -15,11 +15,12 @@
  */
 package terrastore.router.impl;
 
+import com.google.common.collect.Sets;
 import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
-import terrastore.ensemble.EnsembleManager;
-import terrastore.partition.PartitionManager;
+import terrastore.partition.ClusterPartitioner;
+import terrastore.partition.EnsemblePartitioner;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -28,70 +29,74 @@ import static org.easymock.classextension.EasyMock.*;
  */
 public class HashingRouterTest {
 
-    private HashingRouter router;
-
     @Test
-    public void testRouteToBucketInLocalCluster() {
+    public void testRouteToBucket() {
         String bucket = "bucket";
 
-        HashFunction fn = createMock(HashFunction.class);
-        EnsembleManager ensembleManager = createMock(EnsembleManager.class);
-        PartitionManager partitionManager = createMock(PartitionManager.class);
-        Cluster cluster = createMock(Cluster.class);
+        EnsemblePartitioner ensemblePartitioner = createMock(EnsemblePartitioner.class);
+        ClusterPartitioner clusterPartitioner = createMock(ClusterPartitioner.class);
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
         Node node = createMock(Node.class);
 
-        fn.hash(bucket, 10);
-        expectLastCall().andReturn(1).once();
-        ensembleManager.getClusterFor(bucket);
-        expectLastCall().andReturn(cluster);
-        partitionManager.addNode(node);
+        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
         expectLastCall().once();
-        partitionManager.getMaxPartitions();
-        expectLastCall().andReturn(10).once();
-        partitionManager.selectNodeAtPartition(1);
+        ensemblePartitioner.getClusterFor(bucket);
+        expectLastCall().andReturn(cluster1).once();
+        clusterPartitioner.addNode(cluster1, node);
+        expectLastCall().once();
+        clusterPartitioner.getNodeFor(cluster1, bucket);
         expectLastCall().andReturn(node).once();
-        cluster.isLocal();
-        expectLastCall().andReturn(true).once();
+        cluster1.getName();
+        expectLastCall().andReturn("cluster1").anyTimes();
+        cluster2.getName();
+        expectLastCall().andReturn("cluster2").anyTimes();
+        node.getName();
+        expectLastCall().andReturn("node").anyTimes();
 
-        replay(fn, ensembleManager, partitionManager, cluster, node);
+        replay(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node);
 
-        router = new HashingRouter(fn, ensembleManager, partitionManager);
-        router.addRouteTo(cluster, node);
+        DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
+        router.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        router.addRouteTo(cluster1, node);
         assertSame(node, router.routeToNodeFor(bucket));
 
-        verify(fn, ensembleManager, partitionManager, cluster, node);
+        verify(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node);
     }
 
     @Test
-    public void testRouteToBucketAndKeyInLocalCluster() {
+    public void testRouteToBucketAndKey() {
         String bucket = "bucket";
         String key = "key";
 
-        HashFunction fn = createMock(HashFunction.class);
-        EnsembleManager ensembleManager = createMock(EnsembleManager.class);
-        PartitionManager partitionManager = createMock(PartitionManager.class);
-        Cluster cluster = createMock(Cluster.class);
+        EnsemblePartitioner ensemblePartitioner = createMock(EnsemblePartitioner.class);
+        ClusterPartitioner clusterPartitioner = createMock(ClusterPartitioner.class);
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
         Node node = createMock(Node.class);
 
-        fn.hash(bucket + key, 10);
-        expectLastCall().andReturn(1).once();
-        ensembleManager.getClusterFor(bucket, key);
-        expectLastCall().andReturn(cluster);
-        partitionManager.addNode(node);
+        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
         expectLastCall().once();
-        partitionManager.getMaxPartitions();
-        expectLastCall().andReturn(10).once();
-        partitionManager.selectNodeAtPartition(1);
+        ensemblePartitioner.getClusterFor(bucket, key);
+        expectLastCall().andReturn(cluster1).once();
+        clusterPartitioner.addNode(cluster1, node);
+        expectLastCall().once();
+        clusterPartitioner.getNodeFor(cluster1, bucket, key);
         expectLastCall().andReturn(node).once();
-        cluster.isLocal();
-        expectLastCall().andReturn(true).once();
+        cluster1.getName();
+        expectLastCall().andReturn("cluster1").anyTimes();
+        cluster2.getName();
+        expectLastCall().andReturn("cluster2").anyTimes();
+        node.getName();
+        expectLastCall().andReturn("node").anyTimes();
 
-        replay(fn, ensembleManager, partitionManager, cluster, node);
+        replay(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node);
 
-        router = new HashingRouter(fn, ensembleManager, partitionManager);
-        router.addRouteTo(cluster, node);
+        DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
+        router.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        router.addRouteTo(cluster1, node);
         assertSame(node, router.routeToNodeFor(bucket, key));
 
-        verify(fn, ensembleManager, partitionManager, cluster, node);
+        verify(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node);
     }
 }

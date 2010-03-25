@@ -45,7 +45,7 @@ public class DefaultBackupService implements BackupService {
         try {
             if (secret.equals(this.secret)) {
                 LOG.info("Importing backup for bucket {} from {}", bucket, source);
-                Node node = router.getLocalNode();
+                Node node = router.routeToLocalNode();
                 ImportBackupCommand command = new ImportBackupCommand(bucket, source);
                 node.send(command);
             } else {
@@ -63,7 +63,7 @@ public class DefaultBackupService implements BackupService {
         try {
             if (secret.equals(this.secret)) {
                 LOG.info("Exporting backup for bucket {} to {}", bucket, destination);
-                Node node = router.getLocalNode();
+                Node node = router.routeToLocalNode();
                 ExportBackupCommand command = new ExportBackupCommand(bucket, destination);
                 node.send(command);
             } else {

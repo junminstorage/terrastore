@@ -27,6 +27,7 @@ public class ErrorMessage implements Serializable {
     public static final int NOT_FOUND_ERROR_CODE = 404;
     public static final int CONFLICT_ERROR_CODE = 409;
     public static final int INTERNAL_SERVER_ERROR_CODE = 500;
+    public static final int UNAVAILABLE_ERROR_CODE = 503;
 
     private int code;
     private String message;

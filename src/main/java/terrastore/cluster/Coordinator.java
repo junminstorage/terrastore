@@ -15,6 +15,7 @@
  */
 package terrastore.cluster;
 
+import terrastore.ensemble.EnsembleConfiguration;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import java.util.concurrent.ExecutorService;

@@ -15,48 +15,47 @@
  */
 package terrastore.partition;
 
+import terrastore.communication.Cluster;
 import terrastore.communication.Node;
-import java.util.List;
 
 /**
- * The PartitionManager manages cluster nodes by organizing them into a partition table whose size must be
+ * The ClusterPartitioner manages cluster nodes by organizing them into a partition table whose size must be
  * greater or equal to the max number of cluster nodes.<br>
  * Each node is assigned to one or more partitions, used by the {@link terrastore.router.Router} to manage
  * routes.
  *
  * @author Sergio Bossa
  */
-public interface PartitionManager {
+public interface ClusterPartitioner {
 
     /**
      * Add a {@link terrastore.communication.Node} to the partition table.
      *
      * @param node The node to add.
      */
-    public void addNode(Node node);
+    public void addNode(Cluster cluster, Node node);
 
     /**
      * Remove a {@link terrastore.communication.Node} from the partition table.
      *
      * @param node The node to remove.
      */
-    public void removeNode(Node node);
+    public void removeNode(Cluster cluster, Node node);
 
     /**
-     * Select the {@link terrastore.communication.Node} belonging to the given partition number.
      *
-     * @param partition The partition number whose node must be selected.
-     * @return The node at the given partition number, or null if no node is found.
      */
-    public Node selectNodeAtPartition(int partition);
+    public Node getNodeFor(Cluster cluster);
 
     /**
-     * Get all partitions for the given {@link terrastore.communication.Node}.
      *
-     * @param node The node whose corresponding partitions must be get.
-     * @return A list of partition numbers.
      */
-    public List<Integer> getPartitionsForNode(Node node);
+    public Node getNodeFor(Cluster cluster, String bucket);
+
+    /**
+     *
+     */
+    public Node getNodeFor(Cluster cluster, String bucket, String key);
 
     /**
      * Cleanup the partition table.
