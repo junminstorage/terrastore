@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
-import terrastore.ensemble.EnsembleManager;
-import terrastore.partition.PartitionManager;
+import terrastore.partition.ClusterPartitioner;
+import terrastore.partition.EnsemblePartitioner;
 
 /**
  * Router interface for defining and finding routes to {@link terrastore.communication.Node}s in the cluster.
@@ -29,21 +29,14 @@ import terrastore.partition.PartitionManager;
  */
 public interface Router {
 
+    /**
+     *
+     */
     public void setupClusters(Set<Cluster> clusters);
 
     /**
-     * Set the local node, representing <b>this</b> cluster node.
-     *
-     * @param node The local node.
      */
-    public void setLocalNode(Node node);
-
-    /**
-     * Get the local node, representing <b>this</b> cluster node.
-     *
-     * @return The local node.
-     */
-    public Node getLocalNode();
+    public void addRouteToLocalNode(Node node);
 
     /**
      * Add a route to the given node.
@@ -60,12 +53,16 @@ public interface Router {
     public void removeRouteTo(Cluster cluster, Node node);
 
     /**
+     */
+    public Node routeToLocalNode();
+
+    /**
      * Find the route to a specific node for the given bucket name.
      *
      * @param bucket The name of the bucket.
      * @return The corresponding node.
      */
-    public Node routeToNodeFor(String bucket);
+    public Node routeToNodeFor(String bucket) throws MissingRouteException;
 
     /**
      * Find the route to a specific node for the given bucket name and key.
@@ -74,7 +71,7 @@ public interface Router {
      * @param key The key.
      * @return The corresponding node.
      */
-    public Node routeToNodeFor(String bucket, String key);
+    public Node routeToNodeFor(String bucket, String key) throws MissingRouteException;
 
     /**
      * Find the route to a set of nodes for the given bucket name and set of keys.
@@ -83,7 +80,12 @@ public interface Router {
      * @param keys The set of keys.
      * @return A map associating each node to its set of keys.
      */
-    public Map<Node, Set<String>> routeToNodesFor(String bucket, Set<String> keys);
+    public Map<Node, Set<String>> routeToNodesFor(String bucket, Set<String> keys) throws MissingRouteException;
+
+    /**
+     * 
+     */
+    public Set<Node> broadcastRoute() throws MissingRouteException;
 
     /**
      * Cleanup all routes.
@@ -91,13 +93,16 @@ public interface Router {
     public void cleanup();
 
     /**
-     * Get the {@link terrastore.partition.PartitionManager} instance managing node partitions.
+     * Get the {@link terrastore.partition.ClusterPartitioner} instance managing cluster nodes partitions.
      * 
-     * @return The PartitionManager.
+     * @return The ClusterPartitioner.
      */
-    public PartitionManager getPartitionManager();
+    public ClusterPartitioner getClusterPartitioner();
 
     /**
+     * Get the {@link terrastore.partition.ClusterPartitioner} instance managing ensemble clusters partitions.
+     *
+     * @return The EnsemblePartitioner.
      */
-    public EnsembleManager getEnsembleManager();
+    public EnsemblePartitioner getEnsemblePartitioner();
 }

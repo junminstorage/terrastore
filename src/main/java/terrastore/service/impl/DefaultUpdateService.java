@@ -17,6 +17,7 @@ package terrastore.service.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
@@ -27,6 +28,7 @@ import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
+import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
@@ -54,9 +56,15 @@ public class DefaultUpdateService implements UpdateService {
     public void addBucket(String bucket) throws UpdateOperationException {
         try {
             LOG.debug("Adding bucket {}", bucket);
-            Node node = router.getLocalNode();
-            AddBucketCommand command = new AddBucketCommand(bucket);
-            node.send(command);
+            Set<Node> nodes = router.broadcastRoute();
+            for (Node node : nodes) {
+                AddBucketCommand command = new AddBucketCommand(bucket);
+                node.send(command);
+            }
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -67,9 +75,15 @@ public class DefaultUpdateService implements UpdateService {
     public void removeBucket(String bucket) throws UpdateOperationException {
         try {
             LOG.debug("Removing bucket {}", bucket);
-            Node node = router.getLocalNode();
-            RemoveBucketCommand command = new RemoveBucketCommand(bucket);
-            node.send(command);
+            Set<Node> nodes = router.broadcastRoute();
+            for (Node node : nodes) {
+                RemoveBucketCommand command = new RemoveBucketCommand(bucket);
+                node.send(command);
+            }
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -89,6 +103,10 @@ public class DefaultUpdateService implements UpdateService {
                 command = new PutValueCommand(bucket, key, value, predicate, condition);
             }
             node.send(command);
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -102,6 +120,10 @@ public class DefaultUpdateService implements UpdateService {
             Node node = router.routeToNodeFor(bucket, key);
             RemoveValueCommand command = new RemoveValueCommand(bucket, key);
             node.send(command);
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -121,6 +143,10 @@ public class DefaultUpdateService implements UpdateService {
             } else {
                 throw new UpdateOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "No function found: " + update.getFunctionName()));
             }
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

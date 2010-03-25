@@ -41,7 +41,7 @@ import org.terracotta.modules.annotations.InstrumentedClass;
 import org.terracotta.modules.annotations.Root;
 import terrastore.communication.Node;
 import terrastore.cluster.Coordinator;
-import terrastore.cluster.EnsembleConfiguration;
+import terrastore.ensemble.EnsembleConfiguration;
 import terrastore.communication.Cluster;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
@@ -165,7 +165,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         stateLock.lock();
         try {
             //
-            localCluster = new Cluster(configuration.local, true);
+            /*localCluster = new Cluster(configuration.local, true);
             Map<Cluster, RemoteNode> clusters = new HashMap<Cluster, RemoteNode>();
             for (Map.Entry<String, EnsembleConfiguration.NodeInfo> cluster : configuration.clusters.entrySet()) {
                 RemoteNode node = new RemoteNode(cluster.getValue().host, cluster.getValue().port, cluster.getValue().host + ":" + cluster.getValue().port, maxFrameLength, nodeTimeout);
@@ -175,7 +175,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
             router.setupClusters(Sets.newHashSet(clusters.keySet()));
             for (Map.Entry<Cluster, RemoteNode> cluster : clusters.entrySet()) {
                 router.addRouteTo(cluster.getKey(), cluster.getValue());
-            }
+            }*/
             // Configure host-related data:
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
             thisNodeHost = host;

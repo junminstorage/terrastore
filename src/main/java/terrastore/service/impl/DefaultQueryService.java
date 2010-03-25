@@ -15,8 +15,11 @@
  */
 package terrastore.service.impl;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,12 +29,12 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.GetKeysCommand;
 import terrastore.communication.protocol.RangeQueryCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
+import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
@@ -63,10 +66,23 @@ public class DefaultQueryService implements QueryService {
     public Set<String> getBuckets() throws QueryOperationException {
         try {
             LOG.debug("Getting bucket names.");
-            Node node = router.getLocalNode();
-            GetBucketsCommand command = new GetBucketsCommand();
-            Set<String> buckets = node.<Set<String>>send(command);
+            Set<String> buckets = new HashSet<String>();
+            Set<Node> nodes = router.broadcastRoute();
+            for (Node node : nodes) {
+                GetBucketsCommand command = new GetBucketsCommand();
+                Set<String> partial = node.<Set<String>>send(command);
+                Set<String> difference = com.google.common.collect.Sets.difference(partial, buckets);
+                if (!difference.isEmpty()) {
+                    throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Missing buckets: " + difference.toString()));
+                } else {
+                    buckets.addAll(partial);
+                }
+            }
             return buckets;
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -88,6 +104,10 @@ public class DefaultQueryService implements QueryService {
             }
             Value result = node.<Value>send(command);
             return result;
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -110,6 +130,10 @@ public class DefaultQueryService implements QueryService {
                 allKeyValues.add(partial);
             }
             return Maps.union(allKeyValues);
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -140,6 +164,10 @@ public class DefaultQueryService implements QueryService {
             }
             // TODO: we may use fork/join to build the final map out of all sub-maps.
             return Maps.drain(allKeyValues, new TreeMap<String, Value>(keyComparator));
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -167,6 +195,10 @@ public class DefaultQueryService implements QueryService {
             } else {
                 throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong predicate!"));
             }
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -208,18 +240,46 @@ public class DefaultQueryService implements QueryService {
         this.conditions.putAll(conditions);
     }
 
-    private Set<String> getAllKeysForBucket(String bucket) throws ProcessingException {
-        Node node = router.getLocalNode();
-        GetKeysCommand command = new GetKeysCommand(bucket);
-        Set<String> storedKeys = node.<Set<String>>send(command);
-        return storedKeys;
+    private Set<String> getAllKeysForBucket(String bucket) throws QueryOperationException {
+        try {
+            Set<String> keys = new HashSet<String>();
+            Set<Node> nodes = router.broadcastRoute();
+            for (Node node : nodes) {
+                GetKeysCommand command = new GetKeysCommand(bucket);
+                Set<String> partial = node.<Set<String>>send(command);
+                keys.addAll(partial);
+            }
+            return keys;
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
+        } catch (ProcessingException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
+        }
     }
 
-    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws ProcessingException {
-        Node node = router.getLocalNode();
-        Command command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
-        Set<String> storedKeys = node.<Set<String>>send(command);
-        return storedKeys;
+    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws QueryOperationException {
+        try {
+            Set<String> keys = new HashSet<String>();
+            Set<Node> nodes = router.broadcastRoute();
+            for (Node node : nodes) {
+                RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
+                Set<String> partial = node.<Set<String>>send(command);
+                keys.addAll(partial);
+            }
+            return keys;
+        } catch (MissingRouteException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
+        } catch (ProcessingException ex) {
+            LOG.error(ex.getMessage(), ex);
+            ErrorMessage error = ex.getErrorMessage();
+            throw new QueryOperationException(error);
+        }
     }
 
     private Comparator getComparator(String comparatorName) {

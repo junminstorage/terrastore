@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import terrastore.cluster.Coordinator;
-import terrastore.cluster.EnsembleConfiguration;
+import terrastore.ensemble.EnsembleConfiguration;
 
 /**
  * @author Sergio Bossa
@@ -97,7 +97,7 @@ public class Startup {
         }
     }
     //
-    private EnsembleConfiguration ensembleConfiguration = new EnsembleConfiguration("default");
+    private EnsembleConfiguration ensembleConfiguration = new EnsembleConfiguration(); ////////////////////////////////////////////////////////
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private String nodeHost = DEFAULT_NODE_HOST;

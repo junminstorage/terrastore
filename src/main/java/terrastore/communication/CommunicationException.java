@@ -13,14 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.ensemble;
+package terrastore.communication;
+
+import terrastore.common.ErrorMessage;
 
 /**
  * @author Sergio Bossa
  */
-public class EnsembleException extends RuntimeException {
+public class CommunicationException extends Exception {
 
-    public EnsembleException(String message) {
-        super(message);
+    private final ErrorMessage errorMessage;
+
+    public CommunicationException(ErrorMessage errorMessage) {
+        super(errorMessage.getMessage());
+        this.errorMessage = errorMessage;
+    }
+
+    public ErrorMessage getErrorMessage() {
+        return errorMessage;
     }
 }

@@ -1,5 +1,6 @@
 package terrastore.cluster;
 
+import terrastore.ensemble.EnsembleConfiguration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import org.codehaus.jackson.map.ObjectMapper;

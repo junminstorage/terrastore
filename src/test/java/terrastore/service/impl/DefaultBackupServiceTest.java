@@ -34,7 +34,7 @@ public class DefaultBackupServiceTest {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
 
-        router.getLocalNode();
+        router.routeToLocalNode();
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<ImportBackupCommand>anyObject());
         expectLastCall().andReturn(null).once();
@@ -66,7 +66,7 @@ public class DefaultBackupServiceTest {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
 
-        router.getLocalNode();
+        router.routeToLocalNode();
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<ExportBackupCommand>anyObject());
         expectLastCall().andReturn(null).once();
