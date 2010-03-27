@@ -57,9 +57,9 @@ public class DefaultQueryServiceTest {
         router.broadcastRoute();
         expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
         node1.send(EasyMock.<GetBucketsCommand>anyObject());
-        expectLastCall().andReturn(Sets.newHashSet("test1, test2")).once();
+        expectLastCall().andReturn(Sets.newHashSet("test1", "test2")).once();
         node2.send(EasyMock.<GetBucketsCommand>anyObject());
-        expectLastCall().andReturn(Sets.newHashSet("test1, test2")).once();
+        expectLastCall().andReturn(Sets.newHashSet("test1", "test2")).once();
 
         replay(node1, node2, router);
 
@@ -83,7 +83,7 @@ public class DefaultQueryServiceTest {
         node1.send(EasyMock.<GetBucketsCommand>anyObject());
         expectLastCall().andReturn(Sets.newHashSet("test1")).once();
         node2.send(EasyMock.<GetBucketsCommand>anyObject());
-        expectLastCall().andReturn(Sets.newHashSet("test1, test2")).once();
+        expectLastCall().andReturn(Sets.newHashSet("test1", "test2")).once();
 
         replay(node1, node2, router);
 
@@ -357,8 +357,8 @@ public class DefaultQueryServiceTest {
 
         Map<String, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());
-        assertEquals("test1", result.keySet().toArray()[0]);
-        assertEquals("test2", result.keySet().toArray()[1]);
+        assertTrue(result.containsKey("test1"));
+        assertTrue(result.containsKey("test2"));
 
         verify(node1, node2, router);
     }

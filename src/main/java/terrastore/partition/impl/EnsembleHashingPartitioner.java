@@ -1,6 +1,7 @@
 package terrastore.partition.impl;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -32,7 +33,7 @@ public class EnsembleHashingPartitioner implements EnsemblePartitioner {
             for (Cluster cluster : clusters) {
                 this.clusters[i++] = cluster;
             }
-            Arrays.sort(this.clusters);
+            Arrays.sort(this.clusters, new ClusterComparator());
         } finally {
             stateLock.writeLock().unlock();
         }
@@ -57,6 +58,13 @@ public class EnsembleHashingPartitioner implements EnsemblePartitioner {
             return clusters[index];
         } finally {
             stateLock.readLock().unlock();
+        }
+    }
+
+    private static class ClusterComparator implements Comparator<Cluster> {
+
+        public int compare(Cluster c1, Cluster c2) {
+            return c1.getName().compareTo(c2.getName());
         }
     }
 }

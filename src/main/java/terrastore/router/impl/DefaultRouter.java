@@ -119,7 +119,7 @@ public class DefaultRouter implements Router {
                 LOG.info("Routing to cluster {} with node {}", cluster, route);
                 return route;
             } else {
-                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable"));
+                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
             }
         } finally {
             stateLock.readLock().unlock();
@@ -130,13 +130,13 @@ public class DefaultRouter implements Router {
     public Node routeToNodeFor(String bucket, String key) throws MissingRouteException {
         stateLock.readLock().lock();
         try {
-            Cluster cluster = ensemblePartitioner.getClusterFor(bucket);
+            Cluster cluster = ensemblePartitioner.getClusterFor(bucket, key);
             Node route = clusterPartitioner.getNodeFor(cluster, bucket, key);
             if (route != null) {
                 LOG.info("Routing to cluster {} with node {}", cluster, route);
                 return route;
             } else {
-                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable"));
+                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
             }
         } finally {
             stateLock.readLock().unlock();
@@ -169,11 +169,15 @@ public class DefaultRouter implements Router {
         try {
             Set<Node> nodes = new HashSet<Node>(clustersCache.size());
             for (Cluster cluster : clustersCache) {
-                Node route = clusterPartitioner.getNodeFor(cluster);
-                if (route != null) {
-                    nodes.add(route);
+                if (cluster.isLocal()) {
+                    nodes.add(localNode);
                 } else {
-                    throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable"));
+                    Node route = clusterPartitioner.getNodeFor(cluster);
+                    if (route != null) {
+                        nodes.add(route);
+                    } else {
+                        throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
+                    }
                 }
             }
             return nodes;

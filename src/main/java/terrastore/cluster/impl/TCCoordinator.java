@@ -15,7 +15,6 @@
  */
 package terrastore.cluster.impl;
 
-import com.google.common.collect.Sets;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
@@ -25,7 +24,6 @@ import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tcclient.cluster.DsoNode;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -337,8 +335,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
                         remoteNodeAddress.getPort(),
                         remoteNodeName,
                         maxFrameLength,
-                        nodeTimeout,
-                        router.routeToLocalNode());
+                        nodeTimeout);
                 remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
                 router.addRouteTo(thisCluster, remoteNode);

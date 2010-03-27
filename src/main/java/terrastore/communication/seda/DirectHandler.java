@@ -15,9 +15,7 @@
  */
 package terrastore.communication.seda;
 
-import terrastore.communication.Node;
 import terrastore.communication.protocol.Command;
-import terrastore.router.Router;
 import terrastore.store.Store;
 
 /**

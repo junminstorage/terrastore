@@ -64,16 +64,20 @@ public class DefaultQueryService implements QueryService {
     public Set<String> getBuckets() throws QueryOperationException {
         try {
             LOG.debug("Getting bucket names.");
-            Set<String> buckets = new HashSet<String>();
+            Set<String> buckets = null;
             Set<Node> nodes = router.broadcastRoute();
             for (Node node : nodes) {
                 GetBucketsCommand command = new GetBucketsCommand();
                 Set<String> partial = node.<Set<String>>send(command);
-                Set<String> difference = com.google.common.collect.Sets.difference(partial, buckets);
-                if (!difference.isEmpty()) {
-                    throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Missing buckets: " + difference.toString()));
+                if (buckets != null) {
+                    Set<String> intersection = com.google.common.collect.Sets.intersection(buckets, partial);
+                    if (intersection.size() != buckets.size()) {
+                        throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Missing buckets: " + intersection.toString()));
+                    } else {
+                        buckets.addAll(partial);
+                    }
                 } else {
-                    buckets.addAll(partial);
+                    buckets = new HashSet<String>(partial);
                 }
             }
             return buckets;

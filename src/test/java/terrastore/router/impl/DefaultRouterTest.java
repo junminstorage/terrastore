@@ -28,7 +28,7 @@ import terrastore.router.MissingRouteException;
 /**
  * @author Sergio Bossa
  */
-public class HashingRouterTest {
+public class DefaultRouterTest {
 
     @Test
     public void testRouteToBucket() throws MissingRouteException {

@@ -15,9 +15,7 @@
  */
 package terrastore.communication.protocol;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import terrastore.communication.Node;
@@ -30,7 +28,6 @@ import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Condition;
-import terrastore.util.collect.Maps;
 
 /**
  * @author Sergio Bossa
@@ -70,15 +67,14 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
     @Override
     public Map<String, Value> route(Router router) throws MissingRouteException, ProcessingException {
         Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
-        List<Map<String, Value>> allKeyValues = new ArrayList<Map<String, Value>>(nodeToKeys.size());
+        Map<String, Value> result = new HashMap<String, Value>();
         for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
             Node node = nodeToKeysEntry.getKey();
             Set<String> nodeKeys = nodeToKeysEntry.getValue();
             GetValuesCommand command = new GetValuesCommand(this, nodeKeys);
-            Map<String, Value> partial = node.<Map<String, Value>>send(command);
-            allKeyValues.add(partial);
+            result.putAll(node.<Map<String, Value>>send(command));
         }
-        return Maps.drain(allKeyValues, new HashMap<String, Value>());
+        return result;
     }
 
     public Map<String, Value> executeOn(Store store) throws StoreOperationException {

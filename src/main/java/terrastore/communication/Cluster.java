@@ -6,7 +6,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 /**
  * @author Sergio Bossa
  */
-public class Cluster implements Comparable<Cluster> {
+public class Cluster {
 
     private final String name;
     private final boolean local;
@@ -32,11 +32,6 @@ public class Cluster implements Comparable<Cluster> {
         } else {
             return false;
         }
-    }
-
-    @Override
-    public int compareTo(Cluster other) {
-        return this.name.compareTo(other.name);
     }
 
     @Override
