@@ -15,6 +15,7 @@
  */
 package terrastore.communication.seda;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import terrastore.communication.protocol.Command;
 
 /**
  * @author Sergio Bossa
@@ -102,9 +104,9 @@ public class SEDAThreadPoolExecutor extends ThreadPoolExecutor implements SEDATh
         }
     }
 
-    public <R> Future<R> execute(ExecutionHandler<R> handler) {
+    public <R> Future<R> execute(Command<R> command, CommandHandler<R> handler) {
         if (!shutdown) {
-            Future<R> result = submit(handler);
+            Future<R> result = submit(new CommandCallable<R>(command, handler));
             return result;
         } else {
             throw new IllegalStateException("Shutdown SEDA thread pool!");
@@ -137,6 +139,22 @@ public class SEDAThreadPoolExecutor extends ThreadPoolExecutor implements SEDATh
             }
         } finally {
             stateLock.unlock();
+        }
+    }
+
+    private static class CommandCallable<R> implements Callable<R> {
+
+        private final Command<R> command;
+        private final CommandHandler<R> handler;
+
+        public CommandCallable(Command<R> command, CommandHandler<R> handler) {
+            this.command = command;
+            this.handler = handler;
+        }
+
+        @Override
+        public R call() throws Exception {
+            return handler.handle(command);
         }
     }
 }

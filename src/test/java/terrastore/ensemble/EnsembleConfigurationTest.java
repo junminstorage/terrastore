@@ -1,4 +1,4 @@
-package terrastore.cluster;
+package terrastore.ensemble;
 
 import terrastore.ensemble.EnsembleConfiguration;
 import java.io.ByteArrayInputStream;
@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 /**
  * @author Sergio Bossa
  */
-public class ConfigurationTest {
+public class EnsembleConfigurationTest {
 
     private final String CONFIGURATION = "{\"clusters\":{\"cluster1\":[{\"host\":\"localhost\",\"port\":6000}]}}";
 

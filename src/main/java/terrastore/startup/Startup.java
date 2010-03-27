@@ -42,6 +42,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import terrastore.cluster.Coordinator;
 import terrastore.ensemble.EnsembleConfiguration;
+import terrastore.ensemble.support.EnsembleConfigurationUtils;
 
 /**
  * @author Sergio Bossa
@@ -49,6 +50,8 @@ import terrastore.ensemble.EnsembleConfiguration;
 public class Startup {
 
     private static final Logger LOG = LoggerFactory.getLogger(Startup.class);
+    private static final String DEFAULT_ENSEMBLE_NAME = "terrastore-ensemble";
+    private static final String DEFAULT_CLUSTER_NAME = "terrastore-cluster";
     private static final String DEFAULT_HTTP_HOST = "127.0.0.1";
     private static final int DEFAULT_HTTP_PORT = 8080;
     private static final String DEFAULT_NODE_HOST = "NULL";
@@ -97,7 +100,7 @@ public class Startup {
         }
     }
     //
-    private EnsembleConfiguration ensembleConfiguration = new EnsembleConfiguration(); ////////////////////////////////////////////////////////
+    private EnsembleConfiguration ensembleConfiguration = EnsembleConfigurationUtils.makeDefault(DEFAULT_ENSEMBLE_NAME, DEFAULT_CLUSTER_NAME);
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private String nodeHost = DEFAULT_NODE_HOST;
@@ -114,7 +117,8 @@ public class Startup {
 
     @Option(name = "--ensemble", required = false)
     public void setEnsemble(String ensembleConfigurationFile) throws IOException {
-        this.ensembleConfiguration = EnsembleConfiguration.read(new FileInputStream(ensembleConfigurationFile));
+        this.ensembleConfiguration = EnsembleConfigurationUtils.readFrom(new FileInputStream(ensembleConfigurationFile));
+        // TODO: validate!
     }
 
     @Option(name = "--httpHost", required = false)

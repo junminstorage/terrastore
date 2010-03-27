@@ -15,15 +15,22 @@
  */
 package terrastore.communication.protocol;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
+import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Condition;
+import terrastore.util.collect.Maps;
 
 /**
  * @author Sergio Bossa
@@ -35,6 +42,14 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
     private final boolean conditional;
     private final Predicate predicate;
     private final Condition valueCondition;
+
+    public GetValuesCommand(GetValuesCommand command, Set<String> keys) {
+        this.bucketName = command.bucketName;
+        this.conditional = command.conditional;
+        this.predicate = command.predicate;
+        this.valueCondition = command.valueCondition;
+        this.keys = keys;
+    }
 
     public GetValuesCommand(String bucketName, Set<String> keys) {
         this.bucketName = bucketName;
@@ -50,6 +65,20 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
         this.conditional = true;
         this.predicate = predicate;
         this.valueCondition = valueCondition;
+    }
+
+    @Override
+    public Map<String, Value> route(Router router) throws MissingRouteException, ProcessingException {
+        Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
+        List<Map<String, Value>> allKeyValues = new ArrayList<Map<String, Value>>(nodeToKeys.size());
+        for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
+            Node node = nodeToKeysEntry.getKey();
+            Set<String> nodeKeys = nodeToKeysEntry.getValue();
+            GetValuesCommand command = new GetValuesCommand(this, nodeKeys);
+            Map<String, Value> partial = node.<Map<String, Value>>send(command);
+            allKeyValues.add(partial);
+        }
+        return Maps.drain(allKeyValues, new HashMap<String, Value>());
     }
 
     public Map<String, Value> executeOn(Store store) throws StoreOperationException {

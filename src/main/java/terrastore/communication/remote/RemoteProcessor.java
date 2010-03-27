@@ -39,16 +39,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.communication.seda.AbstractSEDAProcessor;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.Processor;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
-import terrastore.store.Store;
+import terrastore.communication.seda.RoutingHandler;
+import terrastore.router.Router;
 
 /**
  * Process {@link terrastore.communication.protocol.Command} messages sent by remote cluster nodes.
  *
  * @author Sergio Bossa
  */
-public class RemoteProcessor extends AbstractSEDAProcessor {
+public class RemoteProcessor extends AbstractSEDAProcessor implements Processor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteProcessor.class);
     //
@@ -57,16 +59,23 @@ public class RemoteProcessor extends AbstractSEDAProcessor {
     private final int port;
     private final ServerBootstrap server;
     private final ChannelGroup acceptedChannels;
+    private final Router router;
     private Channel serverChannel;
 
-    public RemoteProcessor(String host, int port, int maxFrameLength, Store store, int threads) {
-        super(store, threads);
+    public RemoteProcessor(String host, int port, int maxFrameLength, int threads, Router router) {
+        super(threads);
         this.host = host;
         this.port = port;
+        this.router = router;
         acceptedChannels = new DefaultChannelGroup(this.toString());
         server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         server.setOption("reuseAddress", true);
         server.setPipelineFactory(new ServerChannelPipelineFactory(maxFrameLength, new ServerHandler()));
+    }
+
+    @Override
+    public <R> R process(Command<R> command) throws ProcessingException {
+        return process(command, new RoutingHandler<R>(router));
     }
 
     protected void doStart() {

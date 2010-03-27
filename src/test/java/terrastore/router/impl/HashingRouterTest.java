@@ -23,6 +23,7 @@ import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.EnsemblePartitioner;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
+import terrastore.router.MissingRouteException;
 
 /**
  * @author Sergio Bossa
@@ -30,7 +31,7 @@ import static org.easymock.classextension.EasyMock.*;
 public class HashingRouterTest {
 
     @Test
-    public void testRouteToBucket() {
+    public void testRouteToBucket() throws MissingRouteException {
         String bucket = "bucket";
 
         EnsemblePartitioner ensemblePartitioner = createMock(EnsemblePartitioner.class);
@@ -65,7 +66,7 @@ public class HashingRouterTest {
     }
 
     @Test
-    public void testRouteToBucketAndKey() {
+    public void testRouteToBucketAndKey() throws MissingRouteException {
         String bucket = "bucket";
         String key = "key";
 

@@ -13,10 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package terrastore.communication.seda;
 
 import java.util.concurrent.CountDownLatch;
@@ -24,22 +20,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import terrastore.communication.protocol.Command;
-import terrastore.store.Store;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
-import terrastore.store.StoreOperationException;
 
 /**
- *
- * @author sergio
+ * @author Sergio Bossa
  */
 public class SEDAThreadPoolExecutorTest {
 
     @Test
     public void testExecution() throws Exception {
-        Store store = createMock(Store.class);
+        Command command = createMock(Command.class);
 
-        replay(store);
+        replay(command);
 
         int commands = 1000;
         final CountDownLatch waitThreadsExecution = new CountDownLatch(commands);
@@ -47,38 +40,28 @@ public class SEDAThreadPoolExecutorTest {
         SEDAThreadPoolExecutor pool = new SEDAThreadPoolExecutor();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(new ExecutionHandler<Object>(store, new Command<Object>() {
+            pool.execute(command, new CommandHandler() {
 
                 @Override
-                public Object executeOn(Store store) throws StoreOperationException {
+                public Object handle(Command command) throws Exception {
                     waitThreadsExecution.countDown();
                     return null;
                 }
-
-                @Override
-                public void setId(String id) {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-
-                @Override
-                public String getId() {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            }));
+            });
         }
 
         assertTrue(waitThreadsExecution.await(60, TimeUnit.SECONDS));
 
         pool.shutdown();
 
-        verify(store);
+        verify(command);
     }
 
     @Test
     public void testPauseWaitsActiveThreads() throws Exception {
-        Store store = createMock(Store.class);
+        Command command = createMock(Command.class);
 
-        replay(store);
+        replay(command);
 
         int commands = 1000;
         final CountDownLatch waitThreadsStart = new CountDownLatch(commands);
@@ -87,10 +70,10 @@ public class SEDAThreadPoolExecutorTest {
         SEDAThreadPoolExecutor pool = new SEDAThreadPoolExecutor();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(new ExecutionHandler<Object>(store, new Command<Object>() {
+            pool.execute(command, new CommandHandler() {
 
                 @Override
-                public Object executeOn(Store store) throws StoreOperationException {
+                public Object handle(Command command) throws Exception {
                     try {
                         waitThreadsStart.countDown();
                         Thread.sleep(10);
@@ -100,17 +83,7 @@ public class SEDAThreadPoolExecutorTest {
                         return null;
                     }
                 }
-
-                @Override
-                public void setId(String id) {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-
-                @Override
-                public String getId() {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            }));
+            });
         }
 
         waitThreadsStart.await();
@@ -120,14 +93,14 @@ public class SEDAThreadPoolExecutorTest {
 
         pool.shutdown();
 
-        verify(store);
+        verify(command);
     }
 
     @Test
     public void testPauseIgnoresExecutionRequests() throws Exception {
-        Store store = createMock(Store.class);
+        Command command = createMock(Command.class);
 
-        replay(store);
+        replay(command);
 
         int commands = 1000;
         final CountDownLatch waitThreadsStart = new CountDownLatch(commands);
@@ -138,10 +111,10 @@ public class SEDAThreadPoolExecutorTest {
         pool.pause();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(new ExecutionHandler<Object>(store, new Command<Object>() {
+            pool.execute(command, new CommandHandler() {
 
                 @Override
-                public Object executeOn(Store store) throws StoreOperationException {
+                public Object handle(Command command) throws Exception {
                     try {
                         waitThreadsStart.countDown();
                         Thread.sleep(10);
@@ -151,17 +124,7 @@ public class SEDAThreadPoolExecutorTest {
                         return null;
                     }
                 }
-
-                @Override
-                public void setId(String id) {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-
-                @Override
-                public String getId() {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            }));
+            });
         }
 
         assertFalse(waitThreadsStart.await(1, TimeUnit.SECONDS));
@@ -169,14 +132,14 @@ public class SEDAThreadPoolExecutorTest {
 
         pool.shutdown();
 
-        verify(store);
+        verify(command);
     }
 
     @Test
     public void testPauseAndResumeExecutionRequests() throws Exception {
-        Store store = createMock(Store.class);
+        Command command = createMock(Command.class);
 
-        replay(store);
+        replay(command);
 
         int commands = 1000;
         final CountDownLatch waitThreadsStart = new CountDownLatch(commands);
@@ -187,10 +150,10 @@ public class SEDAThreadPoolExecutorTest {
         pool.pause();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(new ExecutionHandler<Object>(store, new Command<Object>() {
+            pool.execute(command, new CommandHandler() {
 
                 @Override
-                public Object executeOn(Store store) throws StoreOperationException {
+                public Object handle(Command command) throws Exception {
                     try {
                         waitThreadsStart.countDown();
                         Thread.sleep(10);
@@ -200,17 +163,7 @@ public class SEDAThreadPoolExecutorTest {
                         return null;
                     }
                 }
-
-                @Override
-                public void setId(String id) {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-
-                @Override
-                public String getId() {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            }));
+            });
         }
 
         assertFalse(waitThreadsStart.await(1, TimeUnit.SECONDS));
@@ -222,6 +175,6 @@ public class SEDAThreadPoolExecutorTest {
 
         pool.shutdown();
 
-        verify(store);
+        verify(command);
     }
 }

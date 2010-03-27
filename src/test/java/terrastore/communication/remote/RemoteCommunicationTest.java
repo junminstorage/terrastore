@@ -27,9 +27,7 @@ import org.junit.Test;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetValueCommand;
-import terrastore.store.Bucket;
-import terrastore.store.Store;
-import terrastore.store.StoreOperationException;
+import terrastore.router.Router;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
@@ -46,7 +44,7 @@ public class RemoteCommunicationTest {
     private static final String VALUE = "test";
 
     @Test
-    public void testSendProcessAndReceive() throws StoreOperationException, ProcessingException {
+    public void testSendProcessAndReceive() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
         String valueKey = "key";
@@ -54,18 +52,18 @@ public class RemoteCommunicationTest {
         Map<String, Value> values = new HashMap<String, Value>();
         values.put(valueKey, value);
 
-        Store store = createMock(Store.class);
-        Bucket bucket = createMock(Bucket.class);
+        Router router = createMock(Router.class);
+        Node node = createMock(Node.class);
         Node backup = createMock(Node.class);
 
-        store.get(bucketName);
-        expectLastCall().andReturn(bucket).once();
-        bucket.get(valueKey);
+        router.routeToNodeFor(bucketName, valueKey);
+        expectLastCall().andReturn(node).once();
+        node.send(EasyMock.<GetValueCommand>anyObject());
         expectLastCall().andReturn(value).once();
 
-        replay(store, bucket, backup);
+        replay(router, node, backup);
 
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, store, 10);
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, 10, router);
         Node sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3145728, 1000, backup);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
@@ -81,13 +79,13 @@ public class RemoteCommunicationTest {
                 sender.disconnect();
                 processor.stop();
             } finally {
-                verify(store, bucket, backup);
+                verify(router, node, backup);
             }
         }
     }
 
     @Test
-    public void testMultithreadSendProcessAndReceive() throws StoreOperationException, ProcessingException, InterruptedException {
+    public void testMultithreadSendProcessAndReceive() throws Exception {
         final String nodeName = "node";
         final String bucketName = "bucket";
         final String valueKey = "key";
@@ -95,21 +93,21 @@ public class RemoteCommunicationTest {
         final Map<String, Value> values = new HashMap<String, Value>();
         values.put(valueKey, value);
 
-        final Store store = createMock(Store.class);
-        final Bucket bucket = createMock(Bucket.class);
+        final Router router = createMock(Router.class);
+        final Node node = createMock(Node.class);
         final Node backup = createMock(Node.class);
-        makeThreadSafe(store, true);
-        makeThreadSafe(bucket, true);
+        makeThreadSafe(router, true);
+        makeThreadSafe(node, true);
         makeThreadSafe(backup, true);
 
-        store.get(bucketName);
-        expectLastCall().andReturn(bucket).anyTimes();
-        bucket.get(valueKey);
+        router.routeToNodeFor(bucketName, valueKey);
+        expectLastCall().andReturn(node).anyTimes();
+        node.send(EasyMock.<GetValueCommand>anyObject());
         expectLastCall().andReturn(value).anyTimes();
 
-        replay(store, bucket, backup);
+        replay(router, node, backup);
 
-        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, store, 10);
+        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, 10, router);
         processor.start();
         try {
             final AtomicBoolean corrupted = new AtomicBoolean(false);
@@ -152,13 +150,13 @@ public class RemoteCommunicationTest {
             try {
                 processor.stop();
             } finally {
-                verify(store, bucket, backup);
+                verify(router, node, backup);
             }
         }
     }
 
     @Test(expected = ProcessingException.class)
-    public void testCommunicationTimeout() throws StoreOperationException, ProcessingException {
+    public void testCommunicationTimeout() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
         String valueKey = "key";
@@ -166,18 +164,13 @@ public class RemoteCommunicationTest {
         Map<String, Value> values = new HashMap<String, Value>();
         values.put(valueKey, value);
 
-        Store store = createMock(Store.class);
-        Bucket bucket = createMock(Bucket.class);
+        Router router = createMock(Router.class);
+        Node node = createMock(Node.class);
         Node backup = createMock(Node.class);
 
-        store.get(bucketName);
-        expectLastCall().andReturn(bucket).anyTimes();
-        bucket.get(valueKey);
-        expectLastCall().andReturn(value).anyTimes();
+        replay(router, node, backup);
 
-        replay(store, bucket, backup);
-
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 3145728, store, 10);
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 3145728, 10, router);
         Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 3145728, 1000, backup);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
@@ -191,7 +184,7 @@ public class RemoteCommunicationTest {
             // Try to send:
             sender.<Value>send(command);
         } finally {
-            verify(store, bucket, backup);
+            verify(router, node, backup);
         }
     }
 
@@ -204,21 +197,21 @@ public class RemoteCommunicationTest {
         Map<String, Value> values = new HashMap<String, Value>();
         values.put(valueKey, value);
 
-        Store store = createMock(Store.class);
-        Bucket bucket = createMock(Bucket.class);
+        Router router = createMock(Router.class);
+        Node node = createMock(Node.class);
         Node backup = createMock(Node.class);
         makeThreadSafe(backup, true);
 
-        store.get(bucketName);
-        expectLastCall().andReturn(bucket).anyTimes();
-        bucket.get(valueKey);
-        expectLastCall().andReturn(value).anyTimes();
+        router.routeToNodeFor(bucketName, valueKey);
+        expectLastCall().andReturn(node).once();
+        node.send(EasyMock.<GetValueCommand>anyObject());
+        expectLastCall().andReturn(value).once();
         backup.send(EasyMock.<GetValueCommand>anyObject());
         expectLastCall().andReturn(value).once();
 
-        replay(store, bucket, backup);
+        replay(router, node, backup);
 
-        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9992, 3145728, store, 10);
+        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9992, 3145728, 10, router);
         final Node sender = new RemoteNode("127.0.0.1", 9992, nodeName, 3145728, 10000, backup);
         final GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
@@ -245,7 +238,7 @@ public class RemoteCommunicationTest {
             sender.disconnect();
         }
 
-        verify(store, bucket, backup);
+        verify(router, node, backup);
     }
 
     private static class TestValue implements Value {

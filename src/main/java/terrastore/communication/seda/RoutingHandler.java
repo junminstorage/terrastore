@@ -15,25 +15,22 @@
  */
 package terrastore.communication.seda;
 
-import java.util.concurrent.Callable;
 import terrastore.communication.protocol.Command;
-import terrastore.store.Store;
+import terrastore.router.Router;
 
 /**
  * @author Sergio Bossa
  */
-public class ExecutionHandler<R> implements Callable<R> {
+public class RoutingHandler<R> implements CommandHandler<R> {
 
-    private final Store store;
-    private final Command<R> command;
+    private final Router router;
 
-    public ExecutionHandler(Store store, Command<R> command) {
-        this.store = store;
-        this.command = command;
+    public RoutingHandler(Router router) {
+        this.router = router;
     }
 
     @Override
-    public R call() throws Exception {
-        return command.executeOn(store);
+    public R handle(Command<R> command) throws Exception {
+        return command.route(router);
     }
 }

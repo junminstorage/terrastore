@@ -15,6 +15,10 @@
  */
 package terrastore.communication.protocol;
 
+import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
+import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -30,6 +34,12 @@ public class RemoveValueCommand extends AbstractCommand {
     public RemoveValueCommand(String bucketName, String key) {
         this.bucketName = bucketName;
         this.key = key;
+    }
+
+    @Override
+    public Object route(Router router) throws MissingRouteException, ProcessingException {
+        Node node = router.routeToNodeFor(bucketName, key);
+        return node.send(this);
     }
 
     public Object executeOn(Store store) throws StoreOperationException {

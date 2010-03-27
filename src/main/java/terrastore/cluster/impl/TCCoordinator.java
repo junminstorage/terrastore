@@ -24,6 +24,7 @@ import com.tc.cluster.simulation.SimulatedDsoCluster;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tcclient.cluster.DsoNode;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,9 @@ import terrastore.communication.local.LocalNode;
 import terrastore.communication.local.LocalProcessor;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
+import terrastore.ensemble.DiscoveryProcess;
+import terrastore.ensemble.EnsembleNodeFactory;
+import terrastore.ensemble.impl.StaticDiscoveryProcess;
 import terrastore.event.EventBus;
 import terrastore.router.Router;
 import terrastore.store.BackupManager;
@@ -76,14 +80,14 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     private Map<String, Address> addressTable = new HashMap<String, Address>();
     private Condition setupAddressCondition = stateLock.newCondition();
     //
+    private volatile transient Cluster thisCluster;
     private volatile transient String thisNodeName;
     private volatile transient String thisNodeHost;
     private volatile transient int thisNodePort;
     private volatile transient ConcurrentMap<String, Node> nodes;
     private volatile transient LocalProcessor localProcessor;
     private volatile transient RemoteProcessor remoteProcessor;
-    private volatile transient Cluster localCluster;
-    private volatile transient Map<Cluster, List<Node>> remoteClusters;
+    private volatile transient DiscoveryProcess ensembleDiscovery;
     //
     private volatile transient int maxFrameLength;
     private volatile transient long nodeTimeout;
@@ -161,25 +165,36 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         this.flushCondition = flushCondition;
     }
 
-    public void start(String host, int port, EnsembleConfiguration configuration) {
+    public void start(String host, int port, EnsembleConfiguration ensembleConfiguration) {
         stateLock.lock();
         try {
-            //
-            /*localCluster = new Cluster(configuration.local, true);
-            Map<Cluster, RemoteNode> clusters = new HashMap<Cluster, RemoteNode>();
-            for (Map.Entry<String, EnsembleConfiguration.NodeInfo> cluster : configuration.clusters.entrySet()) {
-                RemoteNode node = new RemoteNode(cluster.getValue().host, cluster.getValue().port, cluster.getValue().host + ":" + cluster.getValue().port, maxFrameLength, nodeTimeout);
-                node.connect();
-                clusters.put(new Cluster(cluster.getKey(), false), node);
-            }
-            router.setupClusters(Sets.newHashSet(clusters.keySet()));
-            for (Map.Entry<Cluster, RemoteNode> cluster : clusters.entrySet()) {
-                router.addRouteTo(cluster.getKey(), cluster.getValue());
-            }*/
-            // Configure host-related data:
+            // Configure local data:
+            thisCluster = new Cluster(ensembleConfiguration.getClusterName(), true);
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
             thisNodeHost = host;
             thisNodePort = port;
+            Set<Cluster> clusters = new HashSet<Cluster>();
+            for (String cluster : ensembleConfiguration.getClusters()) {
+                if (!cluster.equals(thisCluster.getName())) {
+                    clusters.add(new Cluster(cluster, false));
+                } else {
+                    clusters.add(thisCluster);
+                }
+            }
+            router.setupClusters(clusters);
+            if (ensembleConfiguration.getClusters().size() > 1) {
+
+                if (ensembleConfiguration.getStaticDiscovery() != null) {
+                    ensembleDiscovery = new StaticDiscoveryProcess(router);
+                    ensembleDiscovery.start(ensembleConfiguration, new EnsembleNodeFactory() {
+
+                        @Override
+                        public Node makeNode(String name, String host, int port) {
+                            return new RemoteNode(host, port, name, maxFrameLength, nodeTimeout);
+                        }
+                    });
+                }
+            }
             // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
             globalExecutor = Executors.newFixedThreadPool(globalExecutorThreads);
@@ -277,19 +292,19 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     }
 
     private void setupThisRemoteProcessor() {
-        remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, maxFrameLength, store, remoteProcessorThreads);
+        remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, maxFrameLength, remoteProcessorThreads, router);
         remoteProcessor.start();
         LOG.info("Set up processor for {}", thisNodeName);
     }
 
     private void setupThisNode() {
-        localProcessor = new LocalProcessor(store, localProcessorThreads);
+        localProcessor = new LocalProcessor(localProcessorThreads, store);
         LocalNode thisNode = new LocalNode(thisNodeName, localProcessor);
         localProcessor.start();
         thisNode.connect();
         nodes.put(thisNodeName, thisNode);
-        router.setLocalNode(thisNode);
-        router.addRouteTo(localCluster, thisNode);
+        router.addRouteToLocalNode(thisNode);
+        router.addRouteTo(thisCluster, thisNode);
         LOG.info("Set up this node {}", thisNodeName);
     }
 
@@ -317,10 +332,16 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         if (remoteNodeAddress != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {
-                Node remoteNode = new RemoteNode(remoteNodeAddress.getHost(), remoteNodeAddress.getPort(), remoteNodeName, maxFrameLength, nodeTimeout, router.getLocalNode());
+                Node remoteNode = new RemoteNode(
+                        remoteNodeAddress.getHost(),
+                        remoteNodeAddress.getPort(),
+                        remoteNodeName,
+                        maxFrameLength,
+                        nodeTimeout,
+                        router.routeToLocalNode());
                 remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
-                router.addRouteTo(localCluster, remoteNode);
+                router.addRouteTo(thisCluster, remoteNode);
                 LOG.info("Set up remote node {}", remoteNodeName);
             }
         } else {
@@ -346,7 +367,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     private void disconnectRemoteNode(String nodeName) {
         Node remoteNode = nodes.remove(nodeName);
         remoteNode.disconnect();
-        router.removeRouteTo(localCluster, remoteNode);
+        router.removeRouteTo(thisCluster, remoteNode);
         LOG.info("Discarded node {}", nodeName);
     }
 

@@ -15,9 +15,9 @@
  */
 package terrastore.store.impl;
 
-import terrastore.store.impl.RoutingBasedFlushCondition;
 import org.junit.Test;
 import terrastore.communication.Node;
+import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
 import static org.easymock.classextension.EasyMock.*;
@@ -29,13 +29,13 @@ import static org.junit.Assert.*;
 public class RoutingBasedFlushConditionTest {
 
     @Test
-    public void testIsSatisfied() {
+    public void testIsSatisfied() throws MissingRouteException {
         Router router = createMock(Router.class);
         Node local = createMock(Node.class);
         Node other = createMock(Node.class);
         Bucket bucket = createMock(Bucket.class);
 
-        router.getLocalNode();
+        router.routeToLocalNode();
         expectLastCall().andReturn(local).once();
         router.routeToNodeFor("bucket", "key");
         expectLastCall().andReturn(other).once();
@@ -51,12 +51,12 @@ public class RoutingBasedFlushConditionTest {
     }
 
     @Test
-    public void testIsNotSatisfied() {
+    public void testIsNotSatisfied() throws MissingRouteException {
         Router router = createMock(Router.class);
         Node local = createMock(Node.class);
         Bucket bucket = createMock(Bucket.class);
 
-        router.getLocalNode();
+        router.routeToLocalNode();
         expectLastCall().andReturn(local).once();
         router.routeToNodeFor("bucket", "key");
         expectLastCall().andReturn(local).once();

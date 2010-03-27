@@ -31,5 +31,5 @@ public interface SEDAProcessor {
 
     public void stop();
 
-    public <R> R process(Command<R> command) throws ProcessingException;
+    public <R> R process(Command<R> command, CommandHandler<R> handler) throws ProcessingException;
 }

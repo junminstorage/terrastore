@@ -1,9 +1,5 @@
 package terrastore.ensemble;
 
-import terrastore.ensemble.EnsembleConfiguration;
-import terrastore.ensemble.EnsembleConfiguration;
-import terrastore.ensemble.EnsembleNodeFactory;
-import terrastore.ensemble.EnsembleNodeFactory;
 import terrastore.router.Router;
 
 /**
@@ -11,7 +7,7 @@ import terrastore.router.Router;
  */
 public interface DiscoveryProcess {
 
-    public void start(String host, int port, EnsembleConfiguration ensembleConfiguration, EnsembleNodeFactory ensembleNodeFactory);
+    public void start(EnsembleConfiguration ensembleConfiguration, EnsembleNodeFactory ensembleNodeFactory);
 
     public void stop();
 

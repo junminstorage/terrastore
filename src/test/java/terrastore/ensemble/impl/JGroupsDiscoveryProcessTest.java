@@ -1,4 +1,4 @@
-package terrastore.ensemble.discovery;
+package terrastore.ensemble.impl;
 
 import terrastore.ensemble.impl.JGroupsDiscoveryProcess;
 import java.util.Arrays;
@@ -22,9 +22,9 @@ import static org.easymock.EasyMock.*;
  *
  * @author sergio
  */
-public class DiscoveryProcessImplTest {
+public class JGroupsDiscoveryProcessTest {
 
-    public DiscoveryProcessImplTest() {
+    public JGroupsDiscoveryProcessTest() {
     }
 
     @Test

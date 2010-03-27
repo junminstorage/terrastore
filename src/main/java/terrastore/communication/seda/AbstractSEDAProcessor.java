@@ -20,7 +20,6 @@ import java.util.concurrent.Future;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
-import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 
 /**
@@ -28,11 +27,9 @@ import terrastore.store.StoreOperationException;
  */
 public abstract class AbstractSEDAProcessor implements SEDAProcessor {
 
-    private final Store store;
     private final SEDAThreadPool threadPool;
 
-    public AbstractSEDAProcessor(Store store, int threads) {
-        this.store = store;
+    public AbstractSEDAProcessor(int threads) {
         this.threadPool = new SEDAThreadPoolExecutor(threads);
     }
 
@@ -58,9 +55,9 @@ public abstract class AbstractSEDAProcessor implements SEDAProcessor {
     }
 
     @Override
-    public final <R> R process(final Command<R> command) throws ProcessingException {
+    public final <R> R process(final Command<R> command, final CommandHandler<R> handler) throws ProcessingException {
         try {
-            Future<R> future = threadPool.<R>execute(new ExecutionHandler<R>(store, command));
+            Future<R> future = threadPool.<R>execute(command, handler);
             return future.get();
         } catch (ExecutionException ex) {
             if (ex.getCause() instanceof StoreOperationException) {

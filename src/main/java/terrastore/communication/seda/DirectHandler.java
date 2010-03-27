@@ -13,34 +13,26 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.protocol;
+package terrastore.communication.seda;
 
 import terrastore.communication.Node;
-import terrastore.communication.ProcessingException;
-import terrastore.router.MissingRouteException;
+import terrastore.communication.protocol.Command;
 import terrastore.router.Router;
 import terrastore.store.Store;
-import terrastore.store.StoreOperationException;
 
 /**
  * @author Sergio Bossa
  */
-public class RemoveBucketCommand extends AbstractCommand {
+public class DirectHandler<R> implements CommandHandler<R> {
 
-    private final String bucketName;
+    private final Store store;
 
-    public RemoveBucketCommand(String bucketName) {
-        this.bucketName = bucketName;
+    public DirectHandler(Store store) {
+        this.store = store;
     }
 
     @Override
-    public Object route(Router router) throws MissingRouteException, ProcessingException {
-        Node node = router.routeToLocalNode();
-        return node.send(this);
-    }
-
-    public Object executeOn(Store store) throws StoreOperationException {
-        store.remove(bucketName);
-        return null;
+    public R handle(Command<R> command) throws Exception {
+        return command.executeOn(store);
     }
 }

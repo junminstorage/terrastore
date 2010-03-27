@@ -25,9 +25,7 @@ import static org.easymock.classextension.EasyMock.*;
 /**
  * @author Sergio Bossa
  */
-public class ConsistentPartitionManagerTest {
-
-    private ClusterHashingPartitioner partitionManager;
+public class ClusterHashingPartitionerTest {
 
     @Test
     public void testAddAndRemoveNodeOnOneCluster() {
@@ -49,14 +47,15 @@ public class ConsistentPartitionManagerTest {
 
         replay(cluster, node, fn);
 
-        partitionManager = new ClusterHashingPartitioner(5, fn);
-        partitionManager.addNode(cluster, node);
+        ClusterHashingPartitioner partitioner = new ClusterHashingPartitioner(5, fn);
+
+        partitioner.addNode(cluster, node);
         for (int i = 0; i < 5; i++) {
-            assertSame(node, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
-        partitionManager.removeNode(cluster, node);
+        partitioner.removeNode(cluster, node);
         for (int i = 0; i < 10; i++) {
-            assertNull(partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertNull(partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
         verify(cluster, node, fn);
@@ -86,22 +85,23 @@ public class ConsistentPartitionManagerTest {
 
         replay(cluster1, cluster2, node1, node2, fn);
 
-        partitionManager = new ClusterHashingPartitioner(5, fn);
-        partitionManager.addNode(cluster1, node1);
+        ClusterHashingPartitioner partitioner = new ClusterHashingPartitioner(5, fn);
+        
+        partitioner.addNode(cluster1, node1);
         for (int i = 0; i < 5; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster1, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster1, "bucket" + (i + 1)));
         }
-        partitionManager.removeNode(cluster1, node1);
+        partitioner.removeNode(cluster1, node1);
         for (int i = 0; i < 10; i++) {
-            assertNull(partitionManager.getNodeFor(cluster1, "bucket" + (i + 1)));
+            assertNull(partitioner.getNodeFor(cluster1, "bucket" + (i + 1)));
         }
-        partitionManager.addNode(cluster2, node2);
+        partitioner.addNode(cluster2, node2);
         for (int i = 0; i < 5; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster2, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster2, "bucket" + (i + 1)));
         }
-        partitionManager.removeNode(cluster2, node2);
+        partitioner.removeNode(cluster2, node2);
         for (int i = 0; i < 10; i++) {
-            assertNull(partitionManager.getNodeFor(cluster2, "bucket" + (i + 1)));
+            assertNull(partitioner.getNodeFor(cluster2, "bucket" + (i + 1)));
         }
 
         verify(cluster1, cluster2, node1, node2, fn);
@@ -135,65 +135,65 @@ public class ConsistentPartitionManagerTest {
 
         replay(cluster, node1, node2, node3, node4, node5, fn);
 
-        partitionManager = new ClusterHashingPartitioner(5, fn);
+        ClusterHashingPartitioner partitioner = new ClusterHashingPartitioner(5, fn);
 
-        partitionManager.addNode(cluster, node1);
+        partitioner.addNode(cluster, node1);
         for (int i = 0; i < 5; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
-        partitionManager.addNode(cluster, node2);
+        partitioner.addNode(cluster, node2);
         for (int i = 0; i < 2; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 2; i < 5; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
-        partitionManager.addNode(cluster, node3);
+        partitioner.addNode(cluster, node3);
         for (int i = 0; i < 1; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 1; i < 2; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 2; i < 5; i++) {
-            assertSame(node3, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node3, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
-        partitionManager.addNode(cluster, node4);
+        partitioner.addNode(cluster, node4);
         for (int i = 0; i < 1; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 1; i < 2; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 2; i < 3; i++) {
-            assertSame(node3, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node3, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 3; i < 5; i++) {
-            assertSame(node4, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node4, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
-        partitionManager.addNode(cluster, node5);
+        partitioner.addNode(cluster, node5);
         for (int i = 0; i < 1; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 1; i < 2; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 2; i < 3; i++) {
-            assertSame(node3, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node3, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 3; i < 4; i++) {
-            assertSame(node4, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node4, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 4; i < 5; i++) {
-            assertSame(node5, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node5, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
         try {
-            partitionManager.addNode(cluster, node5);
+            partitioner.addNode(cluster, node5);
             fail();
         } catch (Exception ex) {
         }
@@ -229,49 +229,50 @@ public class ConsistentPartitionManagerTest {
 
         replay(cluster, node1, node2, node3, node4, node5, fn);
 
-        partitionManager = new ClusterHashingPartitioner(5, fn);
-        partitionManager.addNode(cluster, node1);
-        partitionManager.addNode(cluster, node2);
-        partitionManager.addNode(cluster, node3);
-        partitionManager.addNode(cluster, node4);
-        partitionManager.addNode(cluster, node5);
+        ClusterHashingPartitioner partitioner = new ClusterHashingPartitioner(5, fn);
 
-        partitionManager.removeNode(cluster, node5);
+        partitioner.addNode(cluster, node1);
+        partitioner.addNode(cluster, node2);
+        partitioner.addNode(cluster, node3);
+        partitioner.addNode(cluster, node4);
+        partitioner.addNode(cluster, node5);
+
+        partitioner.removeNode(cluster, node5);
         for (int i = 0; i < 1; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 1; i < 2; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 2; i < 3; i++) {
-            assertSame(node3, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node3, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 3; i < 5; i++) {
-            assertSame(node4, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node4, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
-        partitionManager.removeNode(cluster, node4);
+        partitioner.removeNode(cluster, node4);
         for (int i = 0; i < 1; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 1; i < 2; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 2; i < 5; i++) {
-            assertSame(node3, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node3, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
-        partitionManager.removeNode(cluster, node3);
+        partitioner.removeNode(cluster, node3);
         for (int i = 0; i < 2; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         for (int i = 2; i < 5; i++) {
-            assertSame(node2, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node2, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
-        partitionManager.removeNode(cluster, node2);
+        partitioner.removeNode(cluster, node2);
         for (int i = 0; i < 5; i++) {
-            assertSame(node1, partitionManager.getNodeFor(cluster, "bucket" + (i + 1)));
+            assertSame(node1, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
         verify(cluster, node1, node2, node3, node4, node5, fn);

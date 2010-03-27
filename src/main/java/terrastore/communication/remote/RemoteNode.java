@@ -121,41 +121,40 @@ public class RemoteNode implements Node {
 
     public <R> R send(Command<R> command) throws ProcessingException {
         stateLock.lock();
-        if (clientChannel != null) {
-            try {
-                String commandId = configureId(command);
-                Condition responseReceived = stateLock.newCondition();
-                pendingCommands.put(commandId, command);
-                responseConditions.put(commandId, responseReceived);
-                clientChannel.write(command);
-                LOG.debug("Sent command {}", commandId);
-                //
-                long wait = millisToNanos(timeoutInMillis);
-                while (!responses.containsKey(commandId) && wait > 0) {
-                    long start = millisToNanos(System.currentTimeMillis());
-                    try {
-                        wait = responseReceived.awaitNanos(wait);
-                    } catch (InterruptedException ex) {
-                        wait = wait - (millisToNanos(System.currentTimeMillis()) - start);
-                    }
+        if (clientChannel == null) {
+            connect();
+        }
+        try {
+            String commandId = configureId(command);
+            Condition responseReceived = stateLock.newCondition();
+            pendingCommands.put(commandId, command);
+            responseConditions.put(commandId, responseReceived);
+            clientChannel.write(command);
+            LOG.debug("Sent command {}", commandId);
+            //
+            long wait = millisToNanos(timeoutInMillis);
+            while (!responses.containsKey(commandId) && wait > 0) {
+                long start = millisToNanos(System.currentTimeMillis());
+                try {
+                    wait = responseReceived.awaitNanos(wait);
+                } catch (InterruptedException ex) {
+                    wait = wait - (millisToNanos(System.currentTimeMillis()) - start);
                 }
-                //
-                RemoteResponse response = responses.remove(commandId);
-                pendingCommands.remove(commandId);
-                if (response != null && response.isOk()) {
-                    // Safe cast: correlation id ensures it's the *correct* command response.
-                    return (R) response.getResult();
-                    //
-                } else if (response != null) {
-                    throw new ProcessingException(response.getError());
-                } else {
-                    throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
-                }
-            } finally {
-                stateLock.unlock();
             }
-        } else {
-            throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication error!"));
+            //
+            RemoteResponse response = responses.remove(commandId);
+            pendingCommands.remove(commandId);
+            if (response != null && response.isOk()) {
+                // Safe cast: correlation id ensures it's the *correct* command response.
+                return (R) response.getResult();
+                //
+            } else if (response != null) {
+                throw new ProcessingException(response.getError());
+            } else {
+                throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
+            }
+        } finally {
+            stateLock.unlock();
         }
     }
 

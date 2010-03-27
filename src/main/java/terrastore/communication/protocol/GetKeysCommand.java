@@ -17,6 +17,10 @@ package terrastore.communication.protocol;
 
 import java.util.Collections;
 import java.util.Set;
+import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
+import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -30,6 +34,12 @@ public class GetKeysCommand extends AbstractCommand<Set<String>> {
 
     public GetKeysCommand(String bucketName) {
         this.bucketName = bucketName;
+    }
+
+    @Override
+    public Set<String> route(Router router) throws MissingRouteException, ProcessingException {
+        Node node = router.routeToLocalNode();
+        return node.<Set<String>>send(this);
     }
 
     public Set<String> executeOn(Store store) throws StoreOperationException {
