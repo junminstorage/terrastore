@@ -54,17 +54,16 @@ public class RemoteCommunicationTest {
 
         Router router = createMock(Router.class);
         Node node = createMock(Node.class);
-        Node backup = createMock(Node.class);
 
         router.routeToNodeFor(bucketName, valueKey);
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<GetValueCommand>anyObject());
         expectLastCall().andReturn(value).once();
 
-        replay(router, node, backup);
+        replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, 10, router);
-        Node sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3145728, 1000, backup);
+        Node sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3145728, 1000);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -79,7 +78,7 @@ public class RemoteCommunicationTest {
                 sender.disconnect();
                 processor.stop();
             } finally {
-                verify(router, node, backup);
+                verify(router, node);
             }
         }
     }
@@ -95,17 +94,15 @@ public class RemoteCommunicationTest {
 
         final Router router = createMock(Router.class);
         final Node node = createMock(Node.class);
-        final Node backup = createMock(Node.class);
         makeThreadSafe(router, true);
         makeThreadSafe(node, true);
-        makeThreadSafe(backup, true);
 
         router.routeToNodeFor(bucketName, valueKey);
         expectLastCall().andReturn(node).anyTimes();
         node.send(EasyMock.<GetValueCommand>anyObject());
         expectLastCall().andReturn(value).anyTimes();
 
-        replay(router, node, backup);
+        replay(router, node);
 
         final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, 10, router);
         processor.start();
@@ -121,7 +118,7 @@ public class RemoteCommunicationTest {
                     public void run() {
                         Node sender = null;
                         try {
-                            sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3145728, 3000, backup);
+                            sender = new RemoteNode("127.0.0.1", 9990, nodeName, 3145728, 3000);
                             sender.connect();
                             //
                             GetValueCommand command = new GetValueCommand(bucketName, valueKey);
@@ -150,7 +147,7 @@ public class RemoteCommunicationTest {
             try {
                 processor.stop();
             } finally {
-                verify(router, node, backup);
+                verify(router, node);
             }
         }
     }
@@ -166,12 +163,11 @@ public class RemoteCommunicationTest {
 
         Router router = createMock(Router.class);
         Node node = createMock(Node.class);
-        Node backup = createMock(Node.class);
 
-        replay(router, node, backup);
+        replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 3145728, 10, router);
-        Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 3145728, 1000, backup);
+        Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 3145728, 1000);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -184,61 +180,8 @@ public class RemoteCommunicationTest {
             // Try to send:
             sender.<Value>send(command);
         } finally {
-            verify(router, node, backup);
+            verify(router, node);
         }
-    }
-
-    @Test
-    public void testReroutingOnDisconnection() throws Exception {
-        String nodeName = "node";
-        String bucketName = "bucket";
-        String valueKey = "key";
-        Value value = new TestValue(VALUE);
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put(valueKey, value);
-
-        Router router = createMock(Router.class);
-        Node node = createMock(Node.class);
-        Node backup = createMock(Node.class);
-        makeThreadSafe(backup, true);
-
-        router.routeToNodeFor(bucketName, valueKey);
-        expectLastCall().andReturn(node).once();
-        node.send(EasyMock.<GetValueCommand>anyObject());
-        expectLastCall().andReturn(value).once();
-        backup.send(EasyMock.<GetValueCommand>anyObject());
-        expectLastCall().andReturn(value).once();
-
-        replay(router, node, backup);
-
-        final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9992, 3145728, 10, router);
-        final Node sender = new RemoteNode("127.0.0.1", 9992, nodeName, 3145728, 10000, backup);
-        final GetValueCommand command = new GetValueCommand(bucketName, valueKey);
-
-        try {
-            // Start processor
-            processor.start();
-            // Connect node:
-            sender.connect();
-            // Stop processor so that no communication can happen:
-            processor.stop();
-            // Try to send in another thread so that we can disconnect and reroute:
-            Executors.newSingleThreadExecutor().submit(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        sender.<Value>send(command);
-                    } catch (Exception ex) {
-                    }
-                }
-            });
-        } finally {
-            Thread.sleep(1000);
-            sender.disconnect();
-        }
-
-        verify(router, node, backup);
     }
 
     private static class TestValue implements Value {

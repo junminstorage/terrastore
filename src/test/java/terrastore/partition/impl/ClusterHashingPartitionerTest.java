@@ -35,15 +35,15 @@ public class ClusterHashingPartitionerTest {
         expect(node.getName()).andReturn("node").anyTimes();
         HashFunction fn = createMock(HashFunction.class);
         fn.hash("bucket1", 5);
-        expectLastCall().andReturn(0).once();
+        expectLastCall().andReturn(0).anyTimes();
         fn.hash("bucket2", 5);
-        expectLastCall().andReturn(1).once();
+        expectLastCall().andReturn(1).anyTimes();
         fn.hash("bucket3", 5);
-        expectLastCall().andReturn(2).once();
+        expectLastCall().andReturn(2).anyTimes();
         fn.hash("bucket4", 5);
-        expectLastCall().andReturn(3).once();
+        expectLastCall().andReturn(3).anyTimes();
         fn.hash("bucket5", 5);
-        expectLastCall().andReturn(4).once();
+        expectLastCall().andReturn(4).anyTimes();
 
         replay(cluster, node, fn);
 
@@ -54,7 +54,7 @@ public class ClusterHashingPartitionerTest {
             assertSame(node, partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
         partitioner.removeNode(cluster, node);
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             assertNull(partitioner.getNodeFor(cluster, "bucket" + (i + 1)));
         }
 
@@ -73,15 +73,15 @@ public class ClusterHashingPartitionerTest {
         expect(node2.getName()).andReturn("node2").anyTimes();
         HashFunction fn = createMock(HashFunction.class);
         fn.hash("bucket1", 5);
-        expectLastCall().andReturn(0).times(2);
+        expectLastCall().andReturn(0).anyTimes();
         fn.hash("bucket2", 5);
-        expectLastCall().andReturn(1).times(2);
+        expectLastCall().andReturn(1).anyTimes();
         fn.hash("bucket3", 5);
-        expectLastCall().andReturn(2).times(2);
+        expectLastCall().andReturn(2).anyTimes();
         fn.hash("bucket4", 5);
-        expectLastCall().andReturn(3).times(2);
+        expectLastCall().andReturn(3).anyTimes();
         fn.hash("bucket5", 5);
-        expectLastCall().andReturn(4).times(2);
+        expectLastCall().andReturn(4).anyTimes();
 
         replay(cluster1, cluster2, node1, node2, fn);
 
@@ -92,7 +92,7 @@ public class ClusterHashingPartitionerTest {
             assertSame(node1, partitioner.getNodeFor(cluster1, "bucket" + (i + 1)));
         }
         partitioner.removeNode(cluster1, node1);
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             assertNull(partitioner.getNodeFor(cluster1, "bucket" + (i + 1)));
         }
         partitioner.addNode(cluster2, node2);
@@ -100,7 +100,7 @@ public class ClusterHashingPartitionerTest {
             assertSame(node2, partitioner.getNodeFor(cluster2, "bucket" + (i + 1)));
         }
         partitioner.removeNode(cluster2, node2);
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             assertNull(partitioner.getNodeFor(cluster2, "bucket" + (i + 1)));
         }
 
@@ -123,15 +123,15 @@ public class ClusterHashingPartitionerTest {
         expect(node5.getName()).andReturn("node5").anyTimes();
         HashFunction fn = createMock(HashFunction.class);
         fn.hash("bucket1", 5);
-        expectLastCall().andReturn(0).once();
+        expectLastCall().andReturn(0).anyTimes();
         fn.hash("bucket2", 5);
-        expectLastCall().andReturn(1).once();
+        expectLastCall().andReturn(1).anyTimes();
         fn.hash("bucket3", 5);
-        expectLastCall().andReturn(2).once();
+        expectLastCall().andReturn(2).anyTimes();
         fn.hash("bucket4", 5);
-        expectLastCall().andReturn(3).once();
+        expectLastCall().andReturn(3).anyTimes();
         fn.hash("bucket5", 5);
-        expectLastCall().andReturn(4).once();
+        expectLastCall().andReturn(4).anyTimes();
 
         replay(cluster, node1, node2, node3, node4, node5, fn);
 
@@ -217,15 +217,15 @@ public class ClusterHashingPartitionerTest {
         expect(node5.getName()).andReturn("node5").anyTimes();
         HashFunction fn = createMock(HashFunction.class);
         fn.hash("bucket1", 5);
-        expectLastCall().andReturn(0).once();
+        expectLastCall().andReturn(0).anyTimes();
         fn.hash("bucket2", 5);
-        expectLastCall().andReturn(1).once();
+        expectLastCall().andReturn(1).anyTimes();
         fn.hash("bucket3", 5);
-        expectLastCall().andReturn(2).once();
+        expectLastCall().andReturn(2).anyTimes();
         fn.hash("bucket4", 5);
-        expectLastCall().andReturn(3).once();
+        expectLastCall().andReturn(3).anyTimes();
         fn.hash("bucket5", 5);
-        expectLastCall().andReturn(4).once();
+        expectLastCall().andReturn(4).anyTimes();
 
         replay(cluster, node1, node2, node3, node4, node5, fn);
 

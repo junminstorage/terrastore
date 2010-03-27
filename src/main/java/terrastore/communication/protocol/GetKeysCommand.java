@@ -45,8 +45,7 @@ public class GetKeysCommand extends AbstractCommand<Set<String>> {
     public Set<String> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            Set<String> keys = bucket.keys();
-            return keys;
+            return bucket.keys();
         } else {
             return Collections.emptySet();
         }

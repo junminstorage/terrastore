@@ -17,6 +17,8 @@ package terrastore.communication.seda;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
@@ -27,6 +29,8 @@ import terrastore.store.StoreOperationException;
  */
 public abstract class AbstractSEDAProcessor implements SEDAProcessor {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSEDAProcessor.class);
+    //
     private final SEDAThreadPool threadPool;
 
     public AbstractSEDAProcessor(int threads) {
@@ -62,6 +66,8 @@ public abstract class AbstractSEDAProcessor implements SEDAProcessor {
         } catch (ExecutionException ex) {
             if (ex.getCause() instanceof StoreOperationException) {
                 throw new ProcessingException(((StoreOperationException) ex.getCause()).getErrorMessage());
+            } else if (ex.getCause() instanceof ProcessingException) {
+                throw ((ProcessingException) ex.getCause());
             } else {
                 throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getCause().getMessage()));
             }
