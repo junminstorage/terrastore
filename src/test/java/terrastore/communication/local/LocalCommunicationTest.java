@@ -15,10 +15,10 @@
  */
 package terrastore.communication.local;
 
-import java.util.HashMap;
 import org.junit.Test;
 import terrastore.communication.protocol.Command;
 import terrastore.store.Store;
+import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
 /**
@@ -28,17 +28,19 @@ public class LocalCommunicationTest {
 
     @Test
     public void testSynchronousCommunication() throws Exception {
+        Object result = new Object();
+
         Store store = createMock(Store.class);
         Command command = createMock(Command.class);
 
         command.executeOn(store);
-        expectLastCall().andReturn(new HashMap()).once();
+        expectLastCall().andReturn(result).once();
 
         replay(store, command);
 
-        LocalProcessor processor = new LocalProcessor(store, 10);
+        LocalProcessor processor = new LocalProcessor(10, store);
         LocalNode node = new LocalNode("node", processor);
-        node.send(command);
+        assertEquals(result, node.send(command));
 
         verify(store, command);
     }

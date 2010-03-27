@@ -15,15 +15,27 @@
  */
 package terrastore.communication.local;
 
+import terrastore.communication.ProcessingException;
+import terrastore.communication.Processor;
+import terrastore.communication.protocol.Command;
 import terrastore.communication.seda.AbstractSEDAProcessor;
+import terrastore.communication.seda.DirectHandler;
 import terrastore.store.Store;
 
 /**
  * @author Sergio Bossa
  */
-public class LocalProcessor extends AbstractSEDAProcessor {
+public class LocalProcessor extends AbstractSEDAProcessor implements Processor {
 
-    public LocalProcessor(Store store, int threads) {
-        super(store, threads);
+    private final Store store;
+
+    public LocalProcessor(int threads, Store store) {
+        super(threads);
+        this.store = store;
+    }
+
+    @Override
+    public <R> R process(Command<R> command) throws ProcessingException {
+        return process(command, new DirectHandler<R>(store));
     }
 }

@@ -15,13 +15,13 @@
  */
 package terrastore.service.impl;
 
+import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.communication.Node;
@@ -50,25 +50,49 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testGetBuckets() throws Exception {
-        Set<String> buckets = new HashSet<String>();
-        buckets.add("test1");
-        buckets.add("test2");
-
-        Node node = createMock(Node.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
 
-        router.getLocalNode();
-        expectLastCall().andReturn(node).once();
-        node.send(EasyMock.<GetBucketsCommand>anyObject());
-        expectLastCall().andReturn(buckets).once();
+        router.broadcastRoute();
+        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        node1.send(EasyMock.<GetBucketsCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1, test2")).once();
+        node2.send(EasyMock.<GetBucketsCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1, test2")).once();
 
-        replay(node, router);
+        replay(node1, node2, router);
 
         DefaultQueryService service = new DefaultQueryService(router);
         Collection<String> result = service.getBuckets();
         assertEquals(2, result.size());
+        assertTrue(result.contains("test1"));
+        assertTrue(result.contains("test2"));
 
-        verify(node, router);
+        verify(node1, node2, router);
+    }
+
+    @Test(expected = QueryOperationException.class)
+    public void testGetBucketsFailsDueToDifferenceInBuckets() throws Exception {
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        node1.send(EasyMock.<GetBucketsCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1")).once();
+        node2.send(EasyMock.<GetBucketsCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1, test2")).once();
+
+        replay(node1, node2, router);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        try {
+            service.getBuckets();
+        } finally {
+            verify(node1, node2, router);
+        }
     }
 
     @Test
@@ -93,29 +117,34 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testGetAllValues() throws Exception {
-        Set<String> keys = new TreeSet<String>();
-        keys.add("test1");
-        keys.add("test2");
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
-
-        Node localNode = createMock(Node.class);
-        Node remoteNode = createMock(Node.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
-        router.getLocalNode();
-        expectLastCall().andReturn(localNode).once();
-        router.routeToNodesFor("bucket", keys);
+        router.broadcastRoute();
+        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+
+        node1.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1")).once();
+        node2.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test2")).once();
+
+        router.routeToNodesFor("bucket", Sets.newHashSet("test1", "test2"));
         expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andReturn(keys).once();
-        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
-        expectLastCall().andReturn(values).once();
 
-        replay(localNode, remoteNode, router);
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(node1, node2, router);
 
         DefaultQueryService service = new DefaultQueryService(router);
         Map<String, Value> result = service.getAllValues("bucket", 0);
@@ -123,7 +152,7 @@ public class DefaultQueryServiceTest {
         assertEquals(JSON_VALUE, new String(result.get("test1").getBytes()));
         assertEquals(JSON_VALUE, new String(result.get("test2").getBytes()));
 
-        verify(localNode, remoteNode, router);
+        verify(node1, node2, router);
     }
 
     @Test
@@ -136,29 +165,34 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Set<String> keys = new HashSet<String>();
-        keys.add("test1");
-        keys.add("test2");
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
-
-        Node localNode = createMock(Node.class);
-        Node remoteNode = createMock(Node.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
-        router.getLocalNode();
-        expectLastCall().andReturn(localNode).once();
-        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
+        router.broadcastRoute();
+        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+
+        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1")).once();
+        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test2")).once();
+
+        router.routeToNodesFor("bucket", Sets.newHashSet("test1", "test2"));
         expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<RangeQueryCommand>anyObject());
-        expectLastCall().andReturn(keys).once();
-        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
-        expectLastCall().andReturn(values).once();
 
-        replay(localNode, remoteNode, router);
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(node1, node2, router);
 
         Map<String, Comparator> comparators = new HashMap<String, Comparator>();
         comparators.put("order", stringComparator);
@@ -171,7 +205,7 @@ public class DefaultQueryServiceTest {
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
 
-        verify(localNode, remoteNode, router);
+        verify(node1, node2, router);
     }
 
     @Test
@@ -192,29 +226,34 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Set<String> keys = new HashSet<String>();
-        keys.add("test1");
-        keys.add("test2");
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
-
-        Node localNode = createMock(Node.class);
-        Node remoteNode = createMock(Node.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
-        router.getLocalNode();
-        expectLastCall().andReturn(localNode).once();
-        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
+        router.broadcastRoute();
+        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+
+        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1")).once();
+        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test2")).once();
+
+        router.routeToNodesFor("bucket", Sets.newHashSet("test1", "test2"));
         expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<RangeQueryCommand>anyObject());
-        expectLastCall().andReturn(keys).once();
-        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
-        expectLastCall().andReturn(values).once();
 
-        replay(localNode, remoteNode, router);
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(node1, node2, router);
 
         Map<String, Comparator> comparators = new HashMap<String, Comparator>();
         comparators.put("order", stringComparator);
@@ -230,7 +269,7 @@ public class DefaultQueryServiceTest {
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
 
-        verify(localNode, remoteNode, router);
+        verify(node1, node2, router);
     }
 
     @Test(expected = QueryOperationException.class)
@@ -251,29 +290,9 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Set<String> keys = new HashSet<String>();
-        keys.add("test1");
-        keys.add("test2");
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
-
-        Node localNode = createMock(Node.class);
-        Node remoteNode = createMock(Node.class);
         Router router = createMock(Router.class);
-        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
 
-        router.getLocalNode();
-        expectLastCall().andReturn(localNode).once();
-        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
-        expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<RangeQueryCommand>anyObject());
-        expectLastCall().andReturn(keys).once();
-        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
-        expectLastCall().andReturn(values).once();
-
-        replay(localNode, remoteNode, router);
+        replay(router);
 
         Map<String, Comparator> comparators = new HashMap<String, Comparator>();
         comparators.put("order", stringComparator);
@@ -284,7 +303,11 @@ public class DefaultQueryServiceTest {
         service.setComparators(comparators);
         service.setConditions(conditions);
 
-        service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate("notfound:true"), 0);
+        try {
+            service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate("notfound:true"), 0);
+        } finally {
+            verify(router);
+        }
     }
 
     @Test
@@ -297,29 +320,34 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Set<String> keys = new HashSet<String>();
-        keys.add("test1");
-        keys.add("test2");
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
-
-        Node localNode = createMock(Node.class);
-        Node remoteNode = createMock(Node.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
-        router.getLocalNode();
-        expectLastCall().andReturn(localNode).once();
-        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
+        router.broadcastRoute();
+        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+
+        node1.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test1")).once();
+        node2.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(Sets.newHashSet("test2")).once();
+
+        router.routeToNodesFor("bucket", Sets.newHashSet("test1", "test2"));
         expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andReturn(keys).once();
-        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
-        expectLastCall().andReturn(values).once();
 
-        replay(localNode, remoteNode, router);
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(node1, node2, router);
 
         Map<String, Condition> conditions = new HashMap<String, Condition>();
         conditions.put("test", trueCondition);
@@ -332,7 +360,7 @@ public class DefaultQueryServiceTest {
         assertEquals("test1", result.keySet().toArray()[0]);
         assertEquals("test2", result.keySet().toArray()[1]);
 
-        verify(localNode, remoteNode, router);
+        verify(node1, node2, router);
     }
 
     @Test(expected = QueryOperationException.class)
@@ -345,29 +373,9 @@ public class DefaultQueryServiceTest {
             }
         };
 
-        Set<String> keys = new HashSet<String>();
-        keys.add("test1");
-        keys.add("test2");
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
-
-        Node localNode = createMock(Node.class);
-        Node remoteNode = createMock(Node.class);
         Router router = createMock(Router.class);
-        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-        nodeToKeys.put(remoteNode, new HashSet<String>(Arrays.asList("test1", "test2")));
 
-        router.getLocalNode();
-        expectLastCall().andReturn(localNode).once();
-        router.routeToNodesFor("bucket", new HashSet<String>(Arrays.asList("test1", "test2")));
-        expectLastCall().andReturn(nodeToKeys).once();
-        localNode.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andReturn(keys).once();
-        remoteNode.send(EasyMock.<GetValuesCommand>anyObject());
-        expectLastCall().andReturn(values).once();
-
-        replay(localNode, remoteNode, router);
+        replay(router);
 
         Map<String, Condition> conditions = new HashMap<String, Condition>();
         conditions.put("test", trueCondition);
@@ -375,6 +383,10 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router);
         service.setConditions(conditions);
 
-        service.queryByPredicate("bucket", new Predicate("notfound:true"));
+        try {
+            service.queryByPredicate("bucket", new Predicate("notfound:true"));
+        } finally {
+            verify(router);
+        }
     }
 }

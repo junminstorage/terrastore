@@ -65,6 +65,11 @@ public class DefaultRouter implements Router {
     }
 
     @Override
+    public Set<Cluster> getClusters() {
+        return Collections.unmodifiableSet(clustersCache);
+    }
+
+    @Override
     public void addRouteToLocalNode(Node node) {
         localNode = node;
     }

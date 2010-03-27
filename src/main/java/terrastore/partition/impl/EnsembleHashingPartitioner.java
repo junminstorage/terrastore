@@ -1,5 +1,6 @@
 package terrastore.partition.impl;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -31,6 +32,7 @@ public class EnsembleHashingPartitioner implements EnsemblePartitioner {
             for (Cluster cluster : clusters) {
                 this.clusters[i++] = cluster;
             }
+            Arrays.sort(this.clusters);
         } finally {
             stateLock.writeLock().unlock();
         }

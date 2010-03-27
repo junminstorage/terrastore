@@ -35,6 +35,11 @@ public interface Router {
     public void setupClusters(Set<Cluster> clusters);
 
     /**
+     *
+     */
+    public Set<Cluster> getClusters();
+
+    /**
      */
     public void addRouteToLocalNode(Node node);
 

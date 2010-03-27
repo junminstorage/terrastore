@@ -16,13 +16,14 @@
 package terrastore.communication.seda;
 
 import java.util.concurrent.Future;
+import terrastore.communication.protocol.Command;
 
 /**
  * @author Sergio Bossa
  */
 public interface SEDAThreadPool {
 
-    public <R> Future<R> execute(ExecutionHandler<R> handler);
+    public <R> Future<R> execute(Command<R> command, CommandHandler<R> handler);
 
     public void pause();
 

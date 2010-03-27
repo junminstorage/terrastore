@@ -7,5 +7,5 @@ import terrastore.communication.Node;
  */
 public interface EnsembleNodeFactory {
 
-    public Node makeNode(String host, int port);
+    public Node makeNode(String name, String host, int port);
 }

@@ -15,6 +15,10 @@
  */
 package terrastore.communication.protocol;
 
+import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
+import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 
@@ -27,6 +31,12 @@ public class AddBucketCommand extends AbstractCommand {
 
     public AddBucketCommand(String bucketName) {
         this.bucketName = bucketName;
+    }
+
+    @Override
+    public Object route(Router router) throws MissingRouteException, ProcessingException {
+        Node node = router.routeToLocalNode();
+        return node.send(this);
     }
 
     public Object executeOn(Store store) throws StoreOperationException {

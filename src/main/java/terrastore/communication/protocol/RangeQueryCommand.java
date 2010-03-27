@@ -18,6 +18,10 @@ package terrastore.communication.protocol;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
+import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
+import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -38,6 +42,14 @@ public class RangeQueryCommand extends AbstractCommand<Set<String>> {
         this.range = range;
         this.keyComparator = keyComparator;
         this.timeToLive = timeToLive;
+    }
+
+    @Override
+    public Set<String> route(Router router) throws MissingRouteException, ProcessingException {
+        Node node = router.routeToLocalNode();
+        Command command = new RangeQueryCommand(bucketName, range, keyComparator, timeToLive);
+        Set<String> storedKeys = node.<Set<String>>send(command);
+        return storedKeys;
     }
 
     public Set<String> executeOn(Store store) throws StoreOperationException {

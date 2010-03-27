@@ -15,6 +15,10 @@
  */
 package terrastore.communication.protocol;
 
+import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
+import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -30,6 +34,12 @@ public class ExportBackupCommand extends AbstractCommand {
     public ExportBackupCommand(String bucketName, String destination) {
         this.bucketName = bucketName;
         this.destination = destination;
+    }
+
+    @Override
+    public Object route(Router router) throws MissingRouteException, ProcessingException {
+        Node node = router.routeToLocalNode();
+        return node.send(this);
     }
 
     public Object executeOn(Store store) throws StoreOperationException {

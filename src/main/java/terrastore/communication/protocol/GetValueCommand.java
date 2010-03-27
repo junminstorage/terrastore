@@ -16,6 +16,10 @@
 package terrastore.communication.protocol;
 
 import terrastore.common.ErrorMessage;
+import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
+import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -48,6 +52,12 @@ public class GetValueCommand extends AbstractCommand<Value> {
         this.conditional = true;
         this.predicate = predicate;
         this.condition = condition;
+    }
+
+    @Override
+    public Value route(Router router) throws MissingRouteException, ProcessingException {
+        Node node = router.routeToNodeFor(bucketName, key);
+        return node.<Value>send(this);
     }
 
     public Value executeOn(Store store) throws StoreOperationException {

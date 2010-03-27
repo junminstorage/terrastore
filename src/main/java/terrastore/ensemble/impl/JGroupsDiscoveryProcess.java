@@ -50,8 +50,8 @@ public class JGroupsDiscoveryProcess extends ReceiverAdapter implements RequestH
         this.configuration = ensembleConfiguration;
         this.nodeFactory = ensembleNodeFactory;
         try {
-            setupDiscoveryHost(configuration.getDiscoveryHost(), configuration.getDiscoveryPort());
-            setupInitialHosts(configuration.getInitialHosts());
+            setupDiscoveryHost(configuration.getJgroupsDiscovery().getHost(), configuration.getJgroupsDiscovery().getPort());
+            setupInitialHosts(configuration.getJgroupsDiscovery().getInitialHosts());
             setupIpStack();
             channel = new JChannel(Thread.currentThread().getContextClassLoader().getResource("tcp.xml"));
             dispatcher = new MessageDispatcher(channel, this, this, this);

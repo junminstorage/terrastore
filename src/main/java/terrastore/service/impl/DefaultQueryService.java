@@ -15,8 +15,6 @@
  */
 package terrastore.service.impl;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
