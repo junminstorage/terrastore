@@ -51,4 +51,14 @@ public interface Node {
      * @return The node name.
      */
     public String getName();
+
+    /**
+     *
+     */
+    public String getHost();
+
+    /**
+     *
+     */
+    public int getPort();
 }

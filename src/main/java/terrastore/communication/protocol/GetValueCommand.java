@@ -55,7 +55,7 @@ public class GetValueCommand extends AbstractCommand<Value> {
     }
 
     @Override
-    public Value route(Router router) throws MissingRouteException, ProcessingException {
+    public Value executeOn(Router router) throws MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
         return node.<Value>send(this);
     }

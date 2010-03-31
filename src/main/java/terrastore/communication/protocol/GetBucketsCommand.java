@@ -32,7 +32,7 @@ import terrastore.store.StoreOperationException;
 public class GetBucketsCommand extends AbstractCommand<Set<String>> {
 
     @Override
-    public Set<String> route(Router router) throws MissingRouteException, ProcessingException {
+    public Set<String> executeOn(Router router) throws MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         return node.<Set<String>>send(this);
     }

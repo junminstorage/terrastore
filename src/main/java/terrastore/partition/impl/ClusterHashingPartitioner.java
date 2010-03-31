@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -93,12 +94,12 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
     }
 
     @Override
-    public Node getNodeFor(Cluster cluster) {
+    public Set<Node> getNodesFor(Cluster cluster) {
         stateLock.readLock().lock();
         try {
             Partitioner partitioner = partitioners.get(cluster);
             if (partitioner != null) {
-                return partitioner.getRandomNode();
+                return partitioner.getNodes();
             } else {
                 // TODO : use proper exception here?
                 throw new IllegalStateException("Not existent cluster: " + cluster.getName());
@@ -203,8 +204,8 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
             }
         }
 
-        public Node getRandomNode() {
-            return selectNodeAtPartition(0);
+        public Set<Node> getNodes() {
+            return nodes;
         }
 
         public Node getNodeFor(String bucket) {

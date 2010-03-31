@@ -42,7 +42,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.communication.Processor;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
-import terrastore.communication.seda.RoutingHandler;
+import terrastore.communication.seda.RouterHandler;
 import terrastore.router.Router;
 
 /**
@@ -75,7 +75,7 @@ public class RemoteProcessor extends AbstractSEDAProcessor implements Processor 
 
     @Override
     public <R> R process(Command<R> command) throws ProcessingException {
-        return process(command, new RoutingHandler<R>(router));
+        return process(command, new RouterHandler<R>(router));
     }
 
     protected void doStart() {

@@ -32,29 +32,48 @@ import terrastore.communication.protocol.Command;
 public class LocalNode implements Node {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalNode.class);
+    private final String host;
+    private final int port;
     private final String name;
     private final LocalProcessor processor;
 
-    public LocalNode(String name, LocalProcessor processor) {
+    public LocalNode(String host, int port, String name, LocalProcessor processor) {
+        this.host = host;
+        this.port = port;
         this.name = name;
         this.processor = processor;
     }
 
+    @Override
     public void connect() {
     }
 
+    @Override
     public <R> R send(Command<R> command) throws ProcessingException {
         R result = processor.<R>process(command);
         return result;
     }
 
+    @Override
     public void disconnect() {
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
+    public String getHost() {
+        return host;
+    }
+
+    @Override
+    public int getPort() {
+        return port;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof LocalNode) {
             LocalNode other = (LocalNode) obj;
@@ -64,10 +83,12 @@ public class LocalNode implements Node {
         }
     }
 
+    @Override
     public int hashCode() {
         return name.hashCode();
     }
 
+    @Override
     public String toString() {
         return name;
     }

@@ -65,7 +65,7 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
     }
 
     @Override
-    public Map<String, Value> route(Router router) throws MissingRouteException, ProcessingException {
+    public Map<String, Value> executeOn(Router router) throws MissingRouteException, ProcessingException {
         Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
         Map<String, Value> result = new HashMap<String, Value>();
         for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {

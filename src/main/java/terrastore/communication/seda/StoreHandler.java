@@ -21,11 +21,11 @@ import terrastore.store.Store;
 /**
  * @author Sergio Bossa
  */
-public class DirectHandler<R> implements CommandHandler<R> {
+public class StoreHandler<R> implements CommandHandler<R> {
 
     private final Store store;
 
-    public DirectHandler(Store store) {
+    public StoreHandler(Store store) {
         this.store = store;
     }
 
