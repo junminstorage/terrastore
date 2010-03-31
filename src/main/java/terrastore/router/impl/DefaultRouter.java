@@ -15,6 +15,7 @@
  */
 package terrastore.router.impl;
 
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,6 +165,21 @@ public class DefaultRouter implements Router {
     }
 
     @Override
+    public Set<Node> clusterRoute(Cluster cluster) throws MissingRouteException {
+        stateLock.readLock().lock();
+        try {
+            Set<Node> nodes = clusterPartitioner.getNodesFor(cluster);
+            if (!nodes.isEmpty()) {
+                return nodes;
+            } else {
+                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
+            }
+        } finally {
+            stateLock.readLock().unlock();
+        }
+    }
+
+    @Override
     public Set<Node> broadcastRoute() throws MissingRouteException {
         stateLock.readLock().lock();
         try {
@@ -172,9 +188,9 @@ public class DefaultRouter implements Router {
                 if (cluster.isLocal()) {
                     nodes.add(localNode);
                 } else {
-                    Node route = clusterPartitioner.getNodeFor(cluster);
-                    if (route != null) {
-                        nodes.add(route);
+                    Set<Node> clusterNodes = clusterPartitioner.getNodesFor(cluster);
+                    if (!clusterNodes.isEmpty()) {
+                        nodes.add(clusterNodes.iterator().next());
                     } else {
                         throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
                     }

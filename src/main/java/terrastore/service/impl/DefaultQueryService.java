@@ -68,16 +68,14 @@ public class DefaultQueryService implements QueryService {
             Set<Node> nodes = router.broadcastRoute();
             for (Node node : nodes) {
                 GetBucketsCommand command = new GetBucketsCommand();
-                Set<String> partial = node.<Set<String>>send(command);
+                Set<String> current = node.<Set<String>>send(command);
                 if (buckets != null) {
-                    Set<String> intersection = com.google.common.collect.Sets.intersection(buckets, partial);
-                    if (intersection.size() != buckets.size()) {
-                        throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Missing buckets: " + intersection.toString()));
-                    } else {
-                        buckets.addAll(partial);
+                    Set<String> difference = com.google.common.collect.Sets.difference(buckets, current);
+                    if (buckets.size() != current.size() || !difference.isEmpty()) {
+                        throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Inconsistent buckets!"));
                     }
                 } else {
-                    buckets = new HashSet<String>(partial);
+                    buckets = new HashSet<String>(current);
                 }
             }
             return buckets;

@@ -37,7 +37,7 @@ public class ImportBackupCommand extends AbstractCommand {
     }
 
     @Override
-    public Object route(Router router) throws MissingRouteException, ProcessingException {
+    public Object executeOn(Router router) throws MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         return node.send(this);
     }

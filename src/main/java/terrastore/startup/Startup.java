@@ -118,7 +118,7 @@ public class Startup {
     @Option(name = "--ensemble", required = false)
     public void setEnsemble(String ensembleConfigurationFile) throws IOException {
         this.ensembleConfiguration = EnsembleConfigurationUtils.readFrom(new FileInputStream(ensembleConfigurationFile));
-        // TODO: validate!
+        this.ensembleConfiguration.validate();
     }
 
     @Option(name = "--httpHost", required = false)

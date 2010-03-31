@@ -75,6 +75,7 @@ public class RemoteNode implements Node {
         client.setPipelineFactory(new ClientChannelPipelineFactory(maxFrameLength, new ClientHandler()));
     }
 
+    @Override
     public void connect() {
         stateLock.lock();
         try {
@@ -95,6 +96,7 @@ public class RemoteNode implements Node {
         }
     }
 
+    @Override
     public void disconnect() {
         stateLock.lock();
         try {
@@ -109,6 +111,7 @@ public class RemoteNode implements Node {
         }
     }
 
+    @Override
     public <R> R send(Command<R> command) throws ProcessingException {
         stateLock.lock();
         if (clientChannel == null) {
@@ -147,8 +150,19 @@ public class RemoteNode implements Node {
         }
     }
 
+    @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getHost() {
+        return host;
+    }
+
+    @Override
+    public int getPort() {
+        return port;
     }
 
     public boolean equals(Object obj) {
@@ -160,10 +174,12 @@ public class RemoteNode implements Node {
         }
     }
 
+    @Override
     public int hashCode() {
         return name.hashCode();
     }
 
+    @Override
     public String toString() {
         return name;
     }

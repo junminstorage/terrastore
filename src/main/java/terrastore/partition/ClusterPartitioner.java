@@ -15,6 +15,7 @@
  */
 package terrastore.partition;
 
+import java.util.Set;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 
@@ -45,7 +46,7 @@ public interface ClusterPartitioner {
     /**
      *
      */
-    public Node getNodeFor(Cluster cluster);
+    public Set<Node> getNodesFor(Cluster cluster);
 
     /**
      *

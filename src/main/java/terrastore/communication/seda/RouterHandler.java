@@ -21,16 +21,16 @@ import terrastore.router.Router;
 /**
  * @author Sergio Bossa
  */
-public class RoutingHandler<R> implements CommandHandler<R> {
+public class RouterHandler<R> implements CommandHandler<R> {
 
     private final Router router;
 
-    public RoutingHandler(Router router) {
+    public RouterHandler(Router router) {
         this.router = router;
     }
 
     @Override
     public R handle(Command<R> command) throws Exception {
-        return command.route(router);
+        return command.executeOn(router);
     }
 }

@@ -19,7 +19,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.communication.Processor;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.seda.AbstractSEDAProcessor;
-import terrastore.communication.seda.DirectHandler;
+import terrastore.communication.seda.StoreHandler;
 import terrastore.store.Store;
 
 /**
@@ -36,6 +36,6 @@ public class LocalProcessor extends AbstractSEDAProcessor implements Processor {
 
     @Override
     public <R> R process(Command<R> command) throws ProcessingException {
-        return process(command, new DirectHandler<R>(store));
+        return process(command, new StoreHandler<R>(store));
     }
 }

@@ -25,7 +25,6 @@ import com.tcclient.cluster.DsoNode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -40,17 +39,19 @@ import org.terracotta.modules.annotations.InstrumentedClass;
 import org.terracotta.modules.annotations.Root;
 import terrastore.communication.Node;
 import terrastore.cluster.Coordinator;
+import terrastore.communication.ProcessingException;
 import terrastore.ensemble.EnsembleConfiguration;
 import terrastore.communication.Cluster;
+import terrastore.router.MissingRouteException;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.communication.local.LocalNode;
 import terrastore.communication.local.LocalProcessor;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
-import terrastore.ensemble.DiscoveryProcess;
-import terrastore.ensemble.EnsembleNodeFactory;
-import terrastore.ensemble.impl.StaticDiscoveryProcess;
+import terrastore.ensemble.Discovery;
+import terrastore.ensemble.impl.DefaultDiscovery;
+import terrastore.ensemble.RemoteNodeFactory;
 import terrastore.event.EventBus;
 import terrastore.router.Router;
 import terrastore.store.BackupManager;
@@ -85,7 +86,6 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     private volatile transient ConcurrentMap<String, Node> nodes;
     private volatile transient LocalProcessor localProcessor;
     private volatile transient RemoteProcessor remoteProcessor;
-    private volatile transient DiscoveryProcess ensembleDiscovery;
     //
     private volatile transient int maxFrameLength;
     private volatile transient long nodeTimeout;
@@ -98,6 +98,8 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     private volatile transient Router router;
     private volatile transient FlushStrategy flushStrategy;
     private volatile transient FlushCondition flushCondition;
+    //
+    private volatile transient Discovery ensembleDiscovery;
     //
     private volatile transient SnapshotManager snapshotManager;
     private volatile transient BackupManager backupManager;
@@ -171,28 +173,6 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
             thisNodeHost = host;
             thisNodePort = port;
-            Set<Cluster> clusters = new HashSet<Cluster>();
-            for (String cluster : ensembleConfiguration.getClusters()) {
-                if (!cluster.equals(thisCluster.getName())) {
-                    clusters.add(new Cluster(cluster, false));
-                } else {
-                    clusters.add(thisCluster);
-                }
-            }
-            router.setupClusters(clusters);
-            if (ensembleConfiguration.getClusters().size() > 1) {
-
-                if (ensembleConfiguration.getStaticDiscovery() != null) {
-                    ensembleDiscovery = new StaticDiscoveryProcess(router);
-                    ensembleDiscovery.start(ensembleConfiguration, new EnsembleNodeFactory() {
-
-                        @Override
-                        public Node makeNode(String name, String host, int port) {
-                            return new RemoteNode(host, port, name, maxFrameLength, nodeTimeout);
-                        }
-                    });
-                }
-            }
             // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
             globalExecutor = Executors.newFixedThreadPool(globalExecutorThreads);
@@ -201,6 +181,8 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
             store.setBackupManager(backupManager);
             store.setEventBus(eventBus);
             store.setTaskExecutor(globalExecutor);
+            // Setup ensemble:
+            setupEnsemble(ensembleConfiguration);
             // Add cluster listener to listen to events:
             getDsoCluster().addClusterListener(this);
         } catch (Exception ex) {
@@ -297,7 +279,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
 
     private void setupThisNode() {
         localProcessor = new LocalProcessor(localProcessorThreads, store);
-        LocalNode thisNode = new LocalNode(thisNodeName, localProcessor);
+        LocalNode thisNode = new LocalNode(thisNodeHost, thisNodePort, thisNodeName, localProcessor);
         localProcessor.start();
         thisNode.connect();
         nodes.put(thisNodeName, thisNode);
@@ -397,6 +379,33 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
                 }
             }
         }.start();
+    }
+
+    private void setupEnsemble(EnsembleConfiguration ensembleConfiguration) throws MissingRouteException, ProcessingException {
+        Map<String, Cluster> clusters = new HashMap<String, Cluster>();
+        for (String cluster : ensembleConfiguration.getClusters()) {
+            if (!cluster.equals(thisCluster.getName())) {
+                LOG.info("Set up remote cluster {}.", cluster);
+                clusters.put(cluster, new Cluster(cluster, false));
+            } else {
+                LOG.info("Set up this cluster {}.", cluster);
+                clusters.put(cluster, thisCluster);
+            }
+        }
+        router.setupClusters(new HashSet<Cluster>(clusters.values()));
+        ensembleDiscovery = new DefaultDiscovery(router, new RemoteNodeFactory() {
+
+            @Override
+            public Node makeNode(String host, int port, String name) {
+                return new RemoteNode(thisNodeHost, thisNodePort, thisNodeName, maxFrameLength, nodeTimeout);
+            }
+        });
+        for (Map.Entry<String, String> entry : ensembleConfiguration.getSeeds().entrySet()) {
+            String cluster = entry.getKey();
+            String seed = entry.getValue();
+            ensembleDiscovery.join(clusters.get(cluster), seed);
+            LOG.info("Joined remote cluster {}.", cluster);
+        }
     }
 
     @InstrumentedClass

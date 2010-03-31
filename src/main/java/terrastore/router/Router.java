@@ -88,6 +88,11 @@ public interface Router {
     public Map<Node, Set<String>> routeToNodesFor(String bucket, Set<String> keys) throws MissingRouteException;
 
     /**
+     *
+     */
+    public Set<Node> clusterRoute(Cluster cluster) throws MissingRouteException;
+
+    /**
      * 
      */
     public Set<Node> broadcastRoute() throws MissingRouteException;

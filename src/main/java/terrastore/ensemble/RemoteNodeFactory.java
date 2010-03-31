@@ -5,7 +5,7 @@ import terrastore.communication.Node;
 /**
  * @author Sergio Bossa
  */
-public interface EnsembleNodeFactory {
+public interface RemoteNodeFactory {
 
-    public Node makeNode(String name, String host, int port);
+    public Node makeNode(String host, int port, String name);
 }

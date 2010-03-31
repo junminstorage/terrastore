@@ -45,7 +45,7 @@ public class RangeQueryCommand extends AbstractCommand<Set<String>> {
     }
 
     @Override
-    public Set<String> route(Router router) throws MissingRouteException, ProcessingException {
+    public Set<String> executeOn(Router router) throws MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         Command command = new RangeQueryCommand(bucketName, range, keyComparator, timeToLive);
         return node.<Set<String>>send(command);

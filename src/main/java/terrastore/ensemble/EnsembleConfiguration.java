@@ -1,7 +1,10 @@
 package terrastore.ensemble;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import terrastore.ensemble.support.EnsembleConfigurationException;
 
 /**
  * @author Sergio Bossa
@@ -10,9 +13,8 @@ public class EnsembleConfiguration {
 
     private String clusterName;
     private String ensembleName;
-    private List<String> clusters;
-    private JGroupsDiscovery jgroupsDiscovery;
-    private StaticDiscovery staticDiscovery;
+    private List<String> clusters = new LinkedList<String>();
+    private Map<String, String> seeds = new HashMap<String, String>();
 
     public EnsembleConfiguration() {
     }
@@ -41,63 +43,48 @@ public class EnsembleConfiguration {
         this.clusters = clusters;
     }
 
-    public JGroupsDiscovery getJgroupsDiscovery() {
-        return jgroupsDiscovery;
+    public Map<String, String> getSeeds() {
+        return seeds;
     }
 
-    public void setJgroupsDiscovery(JGroupsDiscovery jgroupsDiscovery) {
-        this.jgroupsDiscovery = jgroupsDiscovery;
+    public void setSeeds(Map<String, String> seeds) {
+        this.seeds = seeds;
     }
 
-    public StaticDiscovery getStaticDiscovery() {
-        return staticDiscovery;
+    public void validate() {
+        validateClusterAndEnsembleName();
+        validateClustersContainLocalCluster();
+        validatePerClusterSeeds();
     }
 
-    public void setStaticDiscovery(StaticDiscovery staticDiscovery) {
-        this.staticDiscovery = staticDiscovery;
-    }
-
-    public static class JGroupsDiscovery {
-
-        private String host;
-        private String port;
-        private String initialHosts;
-
-        public String getHost() {
-            return host;
+    private void validateClusterAndEnsembleName() {
+        if (clusterName == null || clusterName.isEmpty()) {
+            throw new EnsembleConfigurationException("Cluster name must not be empty!");
         }
-
-        public void setHost(String host) {
-            this.host = host;
-        }
-
-        public String getPort() {
-            return port;
-        }
-
-        public void setPort(String port) {
-            this.port = port;
-        }
-
-        public String getInitialHosts() {
-            return initialHosts;
-        }
-
-        public void setInitialHosts(String initialHosts) {
-            this.initialHosts = initialHosts;
+        if (ensembleName == null || ensembleName.isEmpty()) {
+            throw new EnsembleConfigurationException("Ensemble name must not be empty!");
         }
     }
 
-    public static class StaticDiscovery {
-
-        private Map<String, List<String>> hosts;
-
-        public Map<String, List<String>> getHosts() {
-            return hosts;
+    private void validateClustersContainLocalCluster() {
+        if (!clusters.contains(clusterName)) {
+            throw new EnsembleConfigurationException("Clusters list must contain specified cluster name!");
         }
+    }
 
-        public void setHosts(Map<String, List<String>> hosts) {
-            this.hosts = hosts;
+    private void validatePerClusterSeeds() {
+        if (seeds.containsKey(clusterName)) {
+            throw new EnsembleConfigurationException("Seeds must not contain a seed for the local cluster!");
+        }
+        for (String cluster : clusters) {
+            if (!cluster.equals(clusterName)) {
+                if (!seeds.containsKey(cluster)) {
+                    throw new EnsembleConfigurationException("Unable to find a seed for cluster: " + cluster);
+                }
+                if (!seeds.get(cluster).matches(".+:\\d+")) {
+                    throw new EnsembleConfigurationException("Bad seed format (host:port): " + seeds.get(cluster));
+                }
+            }
         }
     }
 }

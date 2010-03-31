@@ -39,7 +39,7 @@ public class LocalCommunicationTest {
         replay(store, command);
 
         LocalProcessor processor = new LocalProcessor(10, store);
-        LocalNode node = new LocalNode("node", processor);
+        LocalNode node = new LocalNode("localhost", 6000, "node", processor);
         assertEquals(result, node.send(command));
 
         verify(store, command);
