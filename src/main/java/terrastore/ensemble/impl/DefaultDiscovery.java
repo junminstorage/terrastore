@@ -4,13 +4,16 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
@@ -34,17 +37,20 @@ public class DefaultDiscovery implements Discovery {
     //
     private final Router router;
     private final RemoteNodeFactory nodeFactory;
-    private final Map<Cluster, List<Node>> perClusterNodes;
-    private final Map<Cluster, View> perClusterViews;
+    private final ConcurrentMap<Cluster, List<Node>> perClusterNodes;
+    private final ConcurrentMap<Cluster, View> perClusterViews;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public DefaultDiscovery(Router router, RemoteNodeFactory nodeFactory) {
         this.router = router;
         this.nodeFactory = nodeFactory;
-        this.perClusterNodes = new HashMap<Cluster, List<Node>>();
-        this.perClusterViews = new HashMap<Cluster, View>();
+        this.perClusterNodes = new ConcurrentHashMap<Cluster, List<Node>>();
+        this.perClusterViews = new ConcurrentHashMap<Cluster, View>();
     }
 
-    public synchronized void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
+    @Override
+    public void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
+        LOG.info("Joining cluster {} with seed {}", cluster, seed);
         String[] hostPortPair = seed.split(":");
         Node bootstrap = nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed);
         try {
@@ -59,13 +65,33 @@ public class DefaultDiscovery implements Discovery {
         }
     }
 
-    public synchronized void update() throws MissingRouteException, ProcessingException {
-        for (Map.Entry<Cluster, List<Node>> entry : perClusterNodes.entrySet()) {
-            Cluster cluster = entry.getKey();
-            List<Node> nodes = entry.getValue();
-            View view = requestMembership(cluster, nodes);
-            calculateView(cluster, view);
+    @Override
+    public void schedule(long delay, long interval, TimeUnit timeUnit) {
+        for (final Cluster cluster : perClusterNodes.keySet()) {
+            LOG.info("Scheduling discovery for cluster {}", cluster);
+            scheduler.scheduleWithFixedDelay(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        update(cluster);
+                    } catch (Exception ex) {
+                        LOG.warn(ex.getMessage(), ex);
+                    }
+                }
+            }, delay, interval, timeUnit);
         }
+    }
+
+    @Override
+    public void cancel() {
+        scheduler.shutdown();
+    }
+
+    private void update(Cluster cluster) throws MissingRouteException, ProcessingException {
+        List<Node> nodes = perClusterNodes.get(cluster);
+        View view = requestMembership(cluster, nodes);
+        calculateView(cluster, view);
     }
 
     private View requestMembership(Cluster cluster, List<Node> contactNodes) throws MissingRouteException, ProcessingException {

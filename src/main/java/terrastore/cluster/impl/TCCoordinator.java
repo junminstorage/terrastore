@@ -169,7 +169,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         stateLock.lock();
         try {
             // Configure local data:
-            thisCluster = new Cluster(ensembleConfiguration.getClusterName(), true);
+            thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
             thisNodeHost = host;
             thisNodePort = port;
@@ -385,10 +385,10 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         Map<String, Cluster> clusters = new HashMap<String, Cluster>();
         for (String cluster : ensembleConfiguration.getClusters()) {
             if (!cluster.equals(thisCluster.getName())) {
-                LOG.info("Set up remote cluster {}.", cluster);
+                LOG.info("Set up remote cluster {}", cluster);
                 clusters.put(cluster, new Cluster(cluster, false));
             } else {
-                LOG.info("Set up this cluster {}.", cluster);
+                LOG.info("Set up this cluster {}", cluster);
                 clusters.put(cluster, thisCluster);
             }
         }
@@ -403,9 +403,10 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         for (Map.Entry<String, String> entry : ensembleConfiguration.getSeeds().entrySet()) {
             String cluster = entry.getKey();
             String seed = entry.getValue();
+            LOG.info("Joining remote cluster {}", cluster);
             ensembleDiscovery.join(clusters.get(cluster), seed);
-            LOG.info("Joined remote cluster {}.", cluster);
         }
+        ensembleDiscovery.schedule(ensembleConfiguration.getDiscoveryInterval(), ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
     }
 
     @InstrumentedClass

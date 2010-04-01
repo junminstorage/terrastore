@@ -50,7 +50,6 @@ import terrastore.ensemble.support.EnsembleConfigurationUtils;
 public class Startup {
 
     private static final Logger LOG = LoggerFactory.getLogger(Startup.class);
-    private static final String DEFAULT_ENSEMBLE_NAME = "terrastore-ensemble";
     private static final String DEFAULT_CLUSTER_NAME = "terrastore-cluster";
     private static final String DEFAULT_HTTP_HOST = "127.0.0.1";
     private static final int DEFAULT_HTTP_PORT = 8080;
@@ -100,7 +99,7 @@ public class Startup {
         }
     }
     //
-    private EnsembleConfiguration ensembleConfiguration = EnsembleConfigurationUtils.makeDefault(DEFAULT_ENSEMBLE_NAME, DEFAULT_CLUSTER_NAME);
+    private EnsembleConfiguration ensembleConfiguration = EnsembleConfigurationUtils.makeDefault(DEFAULT_CLUSTER_NAME);
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private String nodeHost = DEFAULT_NODE_HOST;
