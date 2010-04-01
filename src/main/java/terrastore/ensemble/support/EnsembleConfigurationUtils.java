@@ -11,10 +11,9 @@ import terrastore.ensemble.EnsembleConfiguration;
  */
 public class EnsembleConfigurationUtils {
 
-    public static EnsembleConfiguration makeDefault(String ensembleName, String clusterName) {
+    public static EnsembleConfiguration makeDefault(String clusterName) {
         EnsembleConfiguration configuration = new EnsembleConfiguration();
-        configuration.setEnsembleName(ensembleName);
-        configuration.setClusterName(clusterName);
+        configuration.setLocalCluster(clusterName);
         configuration.setClusters(Arrays.asList(clusterName));
         return configuration;
     }

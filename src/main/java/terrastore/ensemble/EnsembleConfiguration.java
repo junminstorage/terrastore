@@ -11,28 +11,28 @@ import terrastore.ensemble.support.EnsembleConfigurationException;
  */
 public class EnsembleConfiguration {
 
-    private String clusterName;
-    private String ensembleName;
+    private String localCluster;
+    private long discoveryInterval;
     private List<String> clusters = new LinkedList<String>();
     private Map<String, String> seeds = new HashMap<String, String>();
 
     public EnsembleConfiguration() {
     }
 
-    public String getClusterName() {
-        return clusterName;
+    public String getLocalCluster() {
+        return localCluster;
     }
 
-    public void setClusterName(String clusterName) {
-        this.clusterName = clusterName;
+    public void setLocalCluster(String localCluster) {
+        this.localCluster = localCluster;
     }
 
-    public String getEnsembleName() {
-        return ensembleName;
+    public long getDiscoveryInterval() {
+        return discoveryInterval;
     }
 
-    public void setEnsembleName(String ensembleName) {
-        this.ensembleName = ensembleName;
+    public void setDiscoveryInterval(long discoveryInterval) {
+        this.discoveryInterval = discoveryInterval;
     }
 
     public List<String> getClusters() {
@@ -52,32 +52,36 @@ public class EnsembleConfiguration {
     }
 
     public void validate() {
-        validateClusterAndEnsembleName();
+        validateLocalCluster();
+        validateDiscoveryInterval();
         validateClustersContainLocalCluster();
         validatePerClusterSeeds();
     }
 
-    private void validateClusterAndEnsembleName() {
-        if (clusterName == null || clusterName.isEmpty()) {
-            throw new EnsembleConfigurationException("Cluster name must not be empty!");
+    private void validateDiscoveryInterval() {
+        if (discoveryInterval <= 0) {
+            throw new EnsembleConfigurationException("Discovery interval must be a positive time value (in milliseconds)!");
         }
-        if (ensembleName == null || ensembleName.isEmpty()) {
-            throw new EnsembleConfigurationException("Ensemble name must not be empty!");
+    }
+
+    private void validateLocalCluster() {
+        if (localCluster == null || localCluster.isEmpty()) {
+            throw new EnsembleConfigurationException("Local cluster name must not be empty!");
         }
     }
 
     private void validateClustersContainLocalCluster() {
-        if (!clusters.contains(clusterName)) {
-            throw new EnsembleConfigurationException("Clusters list must contain specified cluster name!");
+        if (!clusters.contains(localCluster)) {
+            throw new EnsembleConfigurationException("Clusters list must contain specified local cluster name!");
         }
     }
 
     private void validatePerClusterSeeds() {
-        if (seeds.containsKey(clusterName)) {
+        if (seeds.containsKey(localCluster)) {
             throw new EnsembleConfigurationException("Seeds must not contain a seed for the local cluster!");
         }
         for (String cluster : clusters) {
-            if (!cluster.equals(clusterName)) {
+            if (!cluster.equals(localCluster)) {
                 if (!seeds.containsKey(cluster)) {
                     throw new EnsembleConfigurationException("Unable to find a seed for cluster: " + cluster);
                 }

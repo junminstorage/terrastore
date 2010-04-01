@@ -12,28 +12,28 @@ public class EnsembleConfigurationTest {
 
     private final String CONFIGURATION = "{"
             + "\"clusterName\":\"cluster1\","
-            + "\"ensembleName\":\"ensemble\","
+            + "\"discoveryInterval\":\"1000\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_CLUSTER_CONFIGURATION = "{"
             + "\"clusterName\":\"cluster1\","
-            + "\"ensembleName\":\"ensemble\","
+            + "\"discoveryInterval\":\"1000\","
             + "\"clusters\":[\"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_SEED_CONFIGURATION = "{"
             + "\"clusterName\":\"cluster1\","
-            + "\"ensembleName\":\"ensemble\","
+            + "\"discoveryInterval\":\"1000\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster3\":\"www.acme3.org:6000\"}}";
     private final String BAD_SEED_CONFIGURATION = "{"
             + "\"clusterName\":\"cluster1\","
-            + "\"ensembleName\":\"ensemble\","
+            + "\"discoveryInterval\":\"1000\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org\", \"cluster3\":\"www.acme3.org:6000\"}}";
 
     @Test
     public void testDefaultConfiguration() throws Exception {
-        EnsembleConfiguration configuration = EnsembleConfigurationUtils.makeDefault("ensemble", "cluster");
+        EnsembleConfiguration configuration = EnsembleConfigurationUtils.makeDefault("cluster");
         configuration.validate();
     }
 
