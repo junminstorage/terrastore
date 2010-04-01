@@ -160,7 +160,6 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
         private final Node[] ring;
         private final SortedSet<Node> nodes;
         private final Map<Node, List<Integer>> nodesToPartitions;
-        private final ReadWriteLock stateLock;
 
         public Partitioner(int maxPartitions, HashFunction hashFunction) {
             this.maxPartitions = maxPartitions;
@@ -168,39 +167,28 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
             this.ring = new Node[maxPartitions];
             this.nodes = new TreeSet<Node>(new NodeComparator());
             this.nodesToPartitions = new HashMap();
-            this.stateLock = new ReentrantReadWriteLock();
         }
 
         public void addNode(Node node) {
-            stateLock.writeLock().lock();
-            try {
-                if (nodes.size() == maxPartitions) {
-                    // TODO : use proper exception here!
-                    throw new IllegalStateException("Reached partitions limit: " + maxPartitions);
-                } else if (!nodes.contains(node)) {
-                    nodes.add(node);
-                    rebuildPartitions();
-                } else {
-                    // TODO : use proper exception here?
-                    throw new IllegalStateException("Duplicated node: " + node.getName());
-                }
-            } finally {
-                stateLock.writeLock().unlock();
+            if (nodes.size() == maxPartitions) {
+                // TODO : use proper exception here!
+                throw new IllegalStateException("Reached partitions limit: " + maxPartitions);
+            } else if (!nodes.contains(node)) {
+                nodes.add(node);
+                rebuildPartitions();
+            } else {
+                // TODO : use proper exception here?
+                throw new IllegalStateException("Duplicated node: " + node.getName());
             }
         }
 
         public void removeNode(Node node) {
-            stateLock.writeLock().lock();
-            try {
-                if (nodes.contains(node)) {
-                    nodes.remove(node);
-                    rebuildPartitions();
-                } else {
-                    // TODO : use proper exception here?
-                    throw new IllegalStateException("Not existent node: " + node.getName());
-                }
-            } finally {
-                stateLock.writeLock().unlock();
+            if (nodes.contains(node)) {
+                nodes.remove(node);
+                rebuildPartitions();
+            } else {
+                // TODO : use proper exception here?
+                throw new IllegalStateException("Not existent node: " + node.getName());
             }
         }
 
@@ -221,13 +209,8 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
         }
 
         public void cleanupPartitions() {
-            stateLock.writeLock().lock();
-            try {
-                nodes.clear();
-                nodesToPartitions.clear();
-            } finally {
-                stateLock.writeLock().unlock();
-            }
+            nodes.clear();
+            nodesToPartitions.clear();
         }
 
         private void rebuildPartitions() {
@@ -256,18 +239,13 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
         }
 
         private Node selectNodeAtPartition(int partition) {
-            stateLock.readLock().lock();
-            try {
-                if (partition >= 0 && partition < ring.length) {
-                    Node selected = ring[partition];
-                    LOG.info("Getting node {} at partition {}", selected, partition);
-                    return selected;
-                } else {
-                    // TODO : use proper exception here?
-                    throw new IllegalStateException("Wrong partition number: " + partition);
-                }
-            } finally {
-                stateLock.readLock().unlock();
+            if (partition >= 0 && partition < ring.length) {
+                Node selected = ring[partition];
+                LOG.info("Getting node {} at partition {}", selected, partition);
+                return selected;
+            } else {
+                // TODO : use proper exception here?
+                throw new IllegalStateException("Wrong partition number: " + partition);
             }
         }
     }
