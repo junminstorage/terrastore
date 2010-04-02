@@ -105,7 +105,7 @@ public class DefaultDiscoveryTest {
     }
 
     @Test
-    public void testJoinAndUpdateWithDisconnectedNode() throws Exception {
+    public void testJoinAndScheduleWithDisconnectedNode() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
         Node seed = createMock(Node.class);
@@ -163,6 +163,26 @@ public class DefaultDiscoveryTest {
         } finally {
             discovery.cancel();
             verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+        }
+    }
+
+    @Test
+    public void testScheduleWithNoJoins() throws Exception {
+        RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
+        makeThreadSafe(nodeFactory, true);
+        //
+        Router router = createMock(Router.class);
+        makeThreadSafe(router, true);
+
+        replay(nodeFactory, router);
+
+        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
+        try {
+            discovery.schedule(0, 10, TimeUnit.SECONDS);
+            Thread.sleep(3000);
+        } finally {
+            discovery.cancel();
+            verify(nodeFactory, router);
         }
     }
 }
