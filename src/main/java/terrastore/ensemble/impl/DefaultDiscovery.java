@@ -39,7 +39,8 @@ public class DefaultDiscovery implements Discovery {
     private final RemoteNodeFactory nodeFactory;
     private final ConcurrentMap<Cluster, List<Node>> perClusterNodes;
     private final ConcurrentMap<Cluster, View> perClusterViews;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private volatile ScheduledExecutorService scheduler;
+    private volatile boolean scheduled;
 
     public DefaultDiscovery(Router router, RemoteNodeFactory nodeFactory) {
         this.router = router;
@@ -49,7 +50,7 @@ public class DefaultDiscovery implements Discovery {
     }
 
     @Override
-    public void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
+    public synchronized void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
         if (!cluster.isLocal()) {
             LOG.info("Joining cluster {} with seed {}", cluster, seed);
             String[] hostPortPair = seed.split(":");
@@ -70,26 +71,35 @@ public class DefaultDiscovery implements Discovery {
     }
 
     @Override
-    public void schedule(long delay, long interval, TimeUnit timeUnit) {
-        for (final Cluster cluster : perClusterNodes.keySet()) {
-            LOG.info("Scheduling discovery for cluster {}", cluster);
-            scheduler.scheduleWithFixedDelay(new Runnable() {
+    public synchronized void schedule(long delay, long interval, TimeUnit timeUnit) {
+        if (!scheduled) {
+            scheduler = Executors.newScheduledThreadPool(perClusterNodes.size());
+            for (final Cluster cluster : perClusterNodes.keySet()) {
+                LOG.info("Scheduling discovery for cluster {}", cluster);
+                scheduler.scheduleWithFixedDelay(new Runnable() {
 
-                @Override
-                public void run() {
-                    try {
-                        update(cluster);
-                    } catch (Exception ex) {
-                        LOG.warn(ex.getMessage(), ex);
+                    @Override
+                    public void run() {
+                        try {
+                            // Update doesn't need to be synchronized because there's one single thread per-cluster,
+                            // and backing maps are concurrent.
+                            update(cluster);
+                        } catch (Exception ex) {
+                            LOG.warn(ex.getMessage(), ex);
+                        }
                     }
-                }
-            }, delay, interval, timeUnit);
+                }, delay, interval, timeUnit);
+            }
+            scheduled = true;
         }
     }
 
     @Override
-    public void cancel() {
-        scheduler.shutdown();
+    public synchronized void cancel() {
+        if (scheduled) {
+            scheduler.shutdownNow();
+            scheduled = false;
+        }
     }
 
     private void update(Cluster cluster) throws MissingRouteException, ProcessingException {
