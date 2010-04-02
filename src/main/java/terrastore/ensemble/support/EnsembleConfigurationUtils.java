@@ -15,6 +15,7 @@ public class EnsembleConfigurationUtils {
         EnsembleConfiguration configuration = new EnsembleConfiguration();
         configuration.setLocalCluster(clusterName);
         configuration.setClusters(Arrays.asList(clusterName));
+        configuration.setDiscoveryInterval(1);
         return configuration;
     }
 
