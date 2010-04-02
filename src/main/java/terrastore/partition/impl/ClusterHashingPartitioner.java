@@ -33,12 +33,7 @@ import terrastore.router.impl.HashFunction;
 import terrastore.partition.ClusterPartitioner;
 
 /**
- * {@link terrastore.partition.ClusterPartitioner} implementation based on consistent hashing and ordering,
- * with equally distributed, ordered, partitioning of nodes.<br>
- * All nodes have at most ((maxPartitions / totalNodes) + (maxPartitions % totalNodes)) assigned partitions.<br>
- * Every node add/remove causes (maxPartitions / totalNodes) partitions reassignment.<br>
- * Thanks to nodes ordering, all nodes will have a consistent, equal, partition table regardless of the actual time
- * nodes joined or left the cluster.
+ * {@link terrastore.partition.ClusterPartitioner} implementation based on consistent hashing and ordering.
  *
  * @author Sergio Bossa
  */

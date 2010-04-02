@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import terrastore.ensemble.support.EnsembleConfigurationException;
 
 /**
  * @author Sergio Bossa
@@ -15,9 +14,6 @@ public class EnsembleConfiguration {
     private long discoveryInterval;
     private List<String> clusters = new LinkedList<String>();
     private Map<String, String> seeds = new HashMap<String, String>();
-
-    public EnsembleConfiguration() {
-    }
 
     public String getLocalCluster() {
         return localCluster;

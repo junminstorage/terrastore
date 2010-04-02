@@ -10,6 +10,8 @@ import terrastore.partition.EnsemblePartitioner;
 import terrastore.router.impl.HashFunction;
 
 /**
+ * {@link terrastore.partition.EnsemblePartitioner} implementation based on consistent hashing and ordering.
+ *
  * @author Sergio Bossa
  */
 public class EnsembleHashingPartitioner implements EnsemblePartitioner {

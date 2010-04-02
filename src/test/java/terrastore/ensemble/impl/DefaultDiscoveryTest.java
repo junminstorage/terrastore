@@ -8,8 +8,6 @@ import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.protocol.MembershipCommand;
-import terrastore.ensemble.RemoteNodeFactory;
-import terrastore.ensemble.View;
 import terrastore.router.Router;
 import static org.easymock.EasyMock.*;
 

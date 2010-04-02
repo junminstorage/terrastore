@@ -20,15 +20,15 @@ import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.ensemble.View.Member;
+import terrastore.ensemble.impl.View.Member;
 import terrastore.communication.protocol.MembershipCommand;
 import terrastore.ensemble.Discovery;
-import terrastore.ensemble.RemoteNodeFactory;
-import terrastore.ensemble.View;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 
 /**
+ * Default {@link terrastore.ensemble.Discovery} implementation.
+ *
  * @author Sergio Bossa
  */
 public class DefaultDiscovery implements Discovery {

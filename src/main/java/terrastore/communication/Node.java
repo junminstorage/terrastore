@@ -18,8 +18,9 @@ package terrastore.communication;
 import terrastore.communication.protocol.Command;
 
 /**
- * Node interface, representing an actual node in the cluster, which can be local
- * ({@link terrastore.communication.local.LocalNode}) or remote ({@link terrastore.communication.remote.RemoteNode}).
+ * Node interface, representing an actual node in a cluster.
+ * <br><br>
+ * A node can be local ({@link terrastore.communication.local.LocalNode}) or remote ({@link terrastore.communication.remote.RemoteNode}).
  *
  * @author Sergio Bossa
  */
@@ -53,12 +54,16 @@ public interface Node {
     public String getName();
 
     /**
+     * Get this node host.
      *
+     * @return The node host.
      */
     public String getHost();
 
     /**
+     * Get this node port.
      *
+     * @return The node port.
      */
     public int getPort();
 }

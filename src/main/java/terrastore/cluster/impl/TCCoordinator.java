@@ -51,7 +51,7 @@ import terrastore.communication.remote.RemoteProcessor;
 import terrastore.communication.remote.RemoteNode;
 import terrastore.ensemble.Discovery;
 import terrastore.ensemble.impl.DefaultDiscovery;
-import terrastore.ensemble.RemoteNodeFactory;
+import terrastore.ensemble.impl.RemoteNodeFactory;
 import terrastore.event.EventBus;
 import terrastore.router.Router;
 import terrastore.store.BackupManager;

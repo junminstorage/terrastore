@@ -23,41 +23,54 @@ import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.EnsemblePartitioner;
 
 /**
- * Router interface for defining and finding routes to {@link terrastore.communication.Node}s in the cluster.
+ * Router interface for defining and finding routes to ensemble {@link terrastore.communication.Cluster}s
+ * and related {@link terrastore.communication.Node}s.
  *
  * @author Sergio Bossa
  */
 public interface Router {
 
     /**
+     * Set up all {@link terrastore.communication.Cluster}s which make up the ensemble.
      *
+     * @param clusters
      */
     public void setupClusters(Set<Cluster> clusters);
 
     /**
+     * Get all {@link terrastore.communication.Cluster}s belonging to the ensemble.
      *
+     * @return All clusters.
      */
     public Set<Cluster> getClusters();
 
     /**
+     * Add a route to the {@link terrastore.communication.Node} object representing this local node.
+     *
+     * @param node The local node object.
      */
     public void addRouteToLocalNode(Node node);
 
     /**
-     * Add a route to the given node.
+     * Add a route to the given {@link terrastore.communication.Node} belonging to the given {@link terrastore.communication.Cluster}.
      *
+     * @param cluster The cluster of the node to add.
      * @param node The node to add the route to.
      */
     public void addRouteTo(Cluster cluster, Node node);
 
     /**
-     * Remove a route to the given node.
+     * Remove a route to the given {@link terrastore.communication.Node} belonging to the given {@link terrastore.communication.Cluster}.
      *
+     * @param cluster The cluster of the node to remove.
      * @param node The node whose route must be removed.
      */
     public void removeRouteTo(Cluster cluster, Node node);
 
     /**
+     * Find the route to this local {@link terrastore.communication.Node}.
+     *
+     * @return The route to the local node.
      */
     public Node routeToLocalNode();
 
@@ -66,6 +79,7 @@ public interface Router {
      *
      * @param bucket The name of the bucket.
      * @return The corresponding node.
+     * @throws MissingRouteException If no route can be found.
      */
     public Node routeToNodeFor(String bucket) throws MissingRouteException;
 
@@ -75,6 +89,7 @@ public interface Router {
      * @param bucket The name of the bucket.
      * @param key The key.
      * @return The corresponding node.
+     * @throws MissingRouteException If no route can be found.
      */
     public Node routeToNodeFor(String bucket, String key) throws MissingRouteException;
 
@@ -84,16 +99,24 @@ public interface Router {
      * @param bucket The name of the bucket.
      * @param keys The set of keys.
      * @return A map associating each node to its set of keys.
+     * @throws MissingRouteException If no route can be found.
      */
     public Map<Node, Set<String>> routeToNodesFor(String bucket, Set<String> keys) throws MissingRouteException;
 
     /**
+     * Find the route for all {@link terrastore.communication.Node}s belonging to the given {@link terrastore.communication.Cluster}.
      *
+     * @param cluster The cluster whose nodes must be returned.
+     * @return A set of all nodes belonging to the cluster.
+     * @throws MissingRouteException If something wrong happens while finding routes.
      */
     public Set<Node> clusterRoute(Cluster cluster) throws MissingRouteException;
 
     /**
-     * 
+     * Find a route for one node per cluster.
+     *
+     * @return A set containing one node per cluster.
+     * @throws MissingRouteException
      */
     public Set<Node> broadcastRoute() throws MissingRouteException;
 
@@ -103,16 +126,16 @@ public interface Router {
     public void cleanup();
 
     /**
-     * Get the {@link terrastore.partition.ClusterPartitioner} instance managing cluster nodes partitions.
+     * Get the {@link terrastore.partition.ClusterPartitioner} instance managing per-cluster nodes partitions.
      * 
-     * @return The ClusterPartitioner.
+     * @return
      */
     public ClusterPartitioner getClusterPartitioner();
 
     /**
      * Get the {@link terrastore.partition.ClusterPartitioner} instance managing ensemble clusters partitions.
      *
-     * @return The EnsemblePartitioner.
+     * @return
      */
     public EnsemblePartitioner getEnsemblePartitioner();
 }
