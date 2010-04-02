@@ -50,18 +50,22 @@ public class DefaultDiscovery implements Discovery {
 
     @Override
     public void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
-        LOG.info("Joining cluster {} with seed {}", cluster, seed);
-        String[] hostPortPair = seed.split(":");
-        Node bootstrap = nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed);
-        try {
-            bootstrap.connect();
-            View view = requestMembership(cluster, Arrays.asList(bootstrap));
-            calculateView(cluster, view);
-        } catch (Exception ex) {
-            LOG.warn(ex.getMessage(), ex);
-            throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Seed is unavailable: " + seed));
-        } finally {
-            bootstrap.disconnect();
+        if (!cluster.isLocal()) {
+            LOG.info("Joining cluster {} with seed {}", cluster, seed);
+            String[] hostPortPair = seed.split(":");
+            Node bootstrap = nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed);
+            try {
+                bootstrap.connect();
+                View view = requestMembership(cluster, Arrays.asList(bootstrap));
+                calculateView(cluster, view);
+            } catch (Exception ex) {
+                LOG.warn(ex.getMessage(), ex);
+                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Seed is unavailable: " + seed));
+            } finally {
+                bootstrap.disconnect();
+            }
+        } else {
+            throw new IllegalArgumentException("No need to join local cluster: " + cluster);
         }
     }
 
