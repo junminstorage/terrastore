@@ -4,6 +4,11 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
+ * Cluster interface, representing an actual cluster in the ensemble.
+ * <br><br>
+ * Every cluster is actually comprised of a set of Terrastore server nodes<br>
+ * All clusters makes up an ensemble.
+ *
  * @author Sergio Bossa
  */
 public class Cluster {

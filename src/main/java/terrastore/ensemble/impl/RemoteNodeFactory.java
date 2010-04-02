@@ -1,4 +1,4 @@
-package terrastore.ensemble;
+package terrastore.ensemble.impl;
 
 import terrastore.communication.Node;
 

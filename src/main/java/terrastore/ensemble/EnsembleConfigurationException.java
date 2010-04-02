@@ -1,4 +1,4 @@
-package terrastore.ensemble.support;
+package terrastore.ensemble;
 
 /**
  * @author Sergio Bossa

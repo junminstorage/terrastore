@@ -47,8 +47,8 @@ import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
 
 /**
- * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes.<br>
- * Upon disconnection of the actual remote host, pending commands still not acknowledged will be rerouted to a provided backup node.
+ * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes, waiting for the asynchronous response.<br>
+ * Upon disconnection of the actual remote host, pending commands will fail and an error response will be returned.
  *
  * @author Sergio Bossa
  */

@@ -15,7 +15,6 @@
  */
 package terrastore.router.impl;
 
-import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +33,7 @@ import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 
 /**
- * {@link terrastore.router.Router} implementation.
+ * Default {@link terrastore.router.Router} implementation.
  *
  * @author Sergio Bossa
  */
@@ -115,12 +114,17 @@ public class DefaultRouter implements Router {
         stateLock.readLock().lock();
         try {
             Cluster cluster = ensemblePartitioner.getClusterFor(bucket);
-            Node route = clusterPartitioner.getNodeFor(cluster, bucket);
-            if (route != null) {
-                LOG.info("Routing to cluster {} with node {}", cluster, route);
-                return route;
+            if (cluster != null) {
+                Node route = clusterPartitioner.getNodeFor(cluster, bucket);
+                if (route != null) {
+                    LOG.info("Routing to cluster {} with node {}", cluster, route);
+                    return route;
+                } else {
+                    throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
+                }
             } else {
-                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
+                // TODO : use proper exception here?
+                throw new IllegalStateException("Cannot find cluster for bucket " + bucket);
             }
         } finally {
             stateLock.readLock().unlock();
@@ -132,12 +136,17 @@ public class DefaultRouter implements Router {
         stateLock.readLock().lock();
         try {
             Cluster cluster = ensemblePartitioner.getClusterFor(bucket, key);
-            Node route = clusterPartitioner.getNodeFor(cluster, bucket, key);
-            if (route != null) {
-                LOG.info("Routing to cluster {} with node {}", cluster, route);
-                return route;
+            if (cluster != null) {
+                Node route = clusterPartitioner.getNodeFor(cluster, bucket, key);
+                if (route != null) {
+                    LOG.info("Routing to cluster {} with node {}", cluster, route);
+                    return route;
+                } else {
+                    throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
+                }
             } else {
-                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
+                // TODO : use proper exception here?
+                throw new IllegalStateException("Cannot find cluster for bucket " + bucket + " and key " + key);
             }
         } finally {
             stateLock.readLock().unlock();
