@@ -31,6 +31,7 @@ import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.EnsemblePartitioner;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
+import terrastore.util.collect.Sets;
 
 /**
  * Default {@link terrastore.router.Router} implementation.
@@ -189,17 +190,17 @@ public class DefaultRouter implements Router {
     }
 
     @Override
-    public Set<Node> broadcastRoute() throws MissingRouteException {
+    public Map<Cluster, Set<Node>> broadcastRoute() throws MissingRouteException {
         stateLock.readLock().lock();
         try {
-            Set<Node> nodes = new HashSet<Node>(clustersCache.size());
+            Map<Cluster, Set<Node>> nodes = new HashMap<Cluster, Set<Node>>(clustersCache.size());
             for (Cluster cluster : clustersCache) {
                 if (cluster.isLocal()) {
-                    nodes.add(localNode);
+                    nodes.put(cluster, Sets.hash(localNode));
                 } else {
                     Set<Node> clusterNodes = clusterPartitioner.getNodesFor(cluster);
                     if (!clusterNodes.isEmpty()) {
-                        nodes.add(clusterNodes.iterator().next());
+                        nodes.put(cluster, clusterNodes);
                     } else {
                         throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
                     }

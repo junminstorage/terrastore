@@ -15,13 +15,15 @@
  */
 package terrastore.service.impl;
 
-import com.google.common.collect.Sets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.common.ErrorMessage;
+import terrastore.communication.Cluster;
 import terrastore.communication.Node;
+import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.AddBucketCommand;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
@@ -34,6 +36,8 @@ import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
 import terrastore.store.types.JsonValue;
+import terrastore.util.collect.Maps;
+import terrastore.util.collect.Sets;
 import static org.easymock.classextension.EasyMock.*;
 
 /**
@@ -45,27 +49,75 @@ public class DefaultUpdateServiceTest {
 
     @Test
     public void testAddBucket() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
         Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
-        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
         node1.send(EasyMock.<AddBucketCommand>anyObject());
         expectLastCall().andReturn(null).once();
         node2.send(EasyMock.<AddBucketCommand>anyObject());
         expectLastCall().andReturn(null).once();
 
-        replay(node1, node2, router);
+        replay(cluster1, cluster2, node1, node2, router);
 
         DefaultUpdateService service = new DefaultUpdateService(router);
         service.addBucket("bucket");
 
-        verify(node1, node2, router);
+        verify(cluster1, cluster2, node1, node2, router);
+    }
+
+    @Test
+    public void testAddBucketSucceedsBySkippingFailingNodes() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+        node1.send(EasyMock.<AddBucketCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        node2.send(EasyMock.<AddBucketCommand>anyObject());
+        expectLastCall().andReturn(null).once();
+
+        replay(cluster1, node1, node2, router);
+
+        DefaultUpdateService service = new DefaultUpdateService(router);
+        service.addBucket("bucket");
+
+        verify(cluster1, node1, node2, router);
     }
 
     @Test(expected = UpdateOperationException.class)
-    public void testAddBucketThrowsExceptionWhenMissingRoute() throws Exception {
+    public void testAddBucketFailsWhenAllNodesFail() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.hash(node1, node2)})).once();
+        node1.send(EasyMock.<AddBucketCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        node2.send(EasyMock.<AddBucketCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+
+        replay(cluster1, node1, node2, router);
+
+        try {
+            DefaultUpdateService service = new DefaultUpdateService(router);
+            service.addBucket("bucket");
+        } finally {
+            verify(cluster1, node1, node2, router);
+        }
+    }
+
+    @Test(expected = UpdateOperationException.class)
+    public void testAddBucketFailsWhenMissingRoute() throws Exception {
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
@@ -83,27 +135,75 @@ public class DefaultUpdateServiceTest {
 
     @Test
     public void testRemoveBucket() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
         Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
-        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
         node1.send(EasyMock.<RemoveBucketCommand>anyObject());
         expectLastCall().andReturn(null).once();
         node2.send(EasyMock.<RemoveBucketCommand>anyObject());
         expectLastCall().andReturn(null).once();
 
-        replay(node1, node2, router);
+        replay(cluster1, cluster2, node1, node2, router);
 
         DefaultUpdateService service = new DefaultUpdateService(router);
         service.removeBucket("bucket");
 
-        verify(node1, node2, router);
+        verify(cluster1, cluster2, node1, node2, router);
+    }
+
+    @Test
+    public void testRemoveBucketSucceedsBySkippingFailingNodes() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+        node1.send(EasyMock.<RemoveBucketCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        node2.send(EasyMock.<RemoveBucketCommand>anyObject());
+        expectLastCall().andReturn(null).once();
+
+        replay(cluster1, node1, node2, router);
+
+        DefaultUpdateService service = new DefaultUpdateService(router);
+        service.removeBucket("bucket");
+
+        verify(cluster1, node1, node2, router);
     }
 
     @Test(expected = UpdateOperationException.class)
-    public void testRemoveBucketThrowsExceptionWhenMissingRoute() throws Exception {
+    public void testRemoveBucketFailsWhenAllNodesFail() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.hash(node1, node2)})).once();
+        node1.send(EasyMock.<RemoveBucketCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        node2.send(EasyMock.<RemoveBucketCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+
+        replay(cluster1, node1, node2, router);
+
+        try {
+            DefaultUpdateService service = new DefaultUpdateService(router);
+            service.removeBucket("bucket");
+        } finally {
+            verify(cluster1, node1, node2, router);
+        }
+    }
+
+    @Test(expected = UpdateOperationException.class)
+    public void testRemoveBucketFailsWhenMissingRoute() throws Exception {
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
