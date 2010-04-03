@@ -48,19 +48,13 @@ public class TCStoreTest {
         assertEquals(2, store.buckets().size());
     }
 
-    @Test(expected=StoreOperationException.class)
+    @Test(expected = StoreOperationException.class)
     public void testGetNullBucket() throws StoreOperationException {
         String bucket = "bucket";
         store.get(bucket);
     }
 
-    @Test(expected=StoreOperationException.class)
-    public void testRemoveNullBucket() throws StoreOperationException {
-        String bucket = "bucket";
-        store.remove(bucket);
-    }
-
-    @Test(expected=StoreOperationException.class)
+    @Test(expected = StoreOperationException.class)
     public void testAddAndRemoveBucket() throws StoreOperationException {
         String bucket = "bucket";
         store.add(bucket);
@@ -69,10 +63,24 @@ public class TCStoreTest {
         store.get(bucket);
     }
 
-    @Test(expected=StoreOperationException.class)
-    public void testAddSameBucketTwiceMustFail() throws StoreOperationException {
+    @Test
+    public void testAddSameBucketTwiceIsIdempotent() {
         String bucket = "bucket";
         store.add(bucket);
         store.add(bucket);
+    }
+
+    @Test
+    public void testRemoveSameBucketTwiceIsIdempotent() {
+        String bucket = "bucket";
+        store.add(bucket);
+        store.remove(bucket);
+        store.remove(bucket);
+    }
+
+    @Test
+    public void testRemoveNullBucketHasNoEffect() throws StoreOperationException {
+        String bucket = "bucket";
+        store.remove(bucket);
     }
 }

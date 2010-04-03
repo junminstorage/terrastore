@@ -28,20 +28,19 @@ public interface Store {
 
     /**
      * Add a named {@link Bucket}.<br>
-     * Bucket names must be unique.
+     * This operation is idempotent.
      *
-     * @param bucket The bucket name.
-     * @throws StoreOperationException If the bucket already exists.
+     * @param bucket The bucket name, which must be unique.
      */
-    public void add(String bucket) throws StoreOperationException;
+    public void add(String bucket);
 
     /**
-     * Removed a named {@link Bucket}.
+     * Remove a named {@link Bucket}.<br>
+     * This operation is idempotent.
      *
      * @param bucket The bucket name.
-     * @throws StoreOperationException If the bucket doesn't exist.
      */
-    public void remove(String bucket) throws StoreOperationException;
+    public void remove(String bucket);
 
     /**
      * Get a named {@link Bucket}.
