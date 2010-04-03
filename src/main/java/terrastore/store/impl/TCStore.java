@@ -49,19 +49,13 @@ public class TCStore implements Store {
         buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy());
     }
 
-    public void add(String bucket) throws StoreOperationException {
+    public void add(String bucket) {
         Bucket toAdd = new TCBucket(bucket);
-        Bucket existent = buckets.putIfAbsent(bucket, toAdd);
-        if (existent != null) {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.FORBIDDEN_ERROR_CODE, "Bucket already existent: " + bucket));
-        }
+        buckets.putIfAbsent(bucket, toAdd);
     }
 
-    public void remove(String bucket) throws StoreOperationException {
-        Bucket removed = buckets.remove(bucket);
-        if (removed == null) {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Bucket not found: " + bucket));
-        }
+    public void remove(String bucket) {
+        buckets.remove(bucket);
     }
 
     public Bucket get(String bucket) throws StoreOperationException {
