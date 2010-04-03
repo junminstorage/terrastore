@@ -114,11 +114,8 @@ public interface Router {
 
     /**
      * Find a route for one node per cluster.
-     *
-     * @return A set containing one node per cluster.
-     * @throws MissingRouteException
      */
-    public Set<Node> broadcastRoute() throws MissingRouteException;
+    public Map<Cluster, Set<Node>> broadcastRoute() throws MissingRouteException;
 
     /**
      * Cleanup all routes.

@@ -16,6 +16,7 @@
 package terrastore.router.impl;
 
 import com.google.common.collect.Sets;
+import java.util.Map;
 import java.util.Set;
 import org.junit.Test;
 import terrastore.communication.Cluster;
@@ -153,6 +154,8 @@ public class DefaultRouterTest {
 
         ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
         expectLastCall().once();
+        clusterPartitioner.addNode(cluster1, node1);
+        expectLastCall().once();
         clusterPartitioner.addNode(cluster2, node2);
         expectLastCall().once();
         clusterPartitioner.getNodesFor(cluster2);
@@ -175,11 +178,14 @@ public class DefaultRouterTest {
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
         router.setupClusters(Sets.newHashSet(cluster1, cluster2));
         router.addRouteToLocalNode(node1);
+        router.addRouteTo(cluster1, node1);
         router.addRouteTo(cluster2, node2);
-        Set<Node> nodes = router.broadcastRoute();
+        Map<Cluster, Set<Node>> nodes = router.broadcastRoute();
         assertEquals(2, nodes.size());
-        assertTrue(nodes.contains(node1));
-        assertTrue(nodes.contains(node2));
+        assertTrue(nodes.get(cluster1).size() == 1);
+        assertTrue(nodes.get(cluster1).contains(node1));
+        assertTrue(nodes.get(cluster2).size() == 1);
+        assertTrue(nodes.get(cluster2).contains(node2));
 
         verify(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node1, node2);
     }

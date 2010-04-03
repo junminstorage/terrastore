@@ -21,9 +21,11 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
+import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.AddBucketCommand;
+import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
@@ -56,16 +58,10 @@ public class DefaultUpdateService implements UpdateService {
     public void addBucket(String bucket) throws UpdateOperationException {
         try {
             LOG.debug("Adding bucket {}", bucket);
-            Set<Node> nodes = router.broadcastRoute();
-            for (Node node : nodes) {
-                AddBucketCommand command = new AddBucketCommand(bucket);
-                node.send(command);
-            }
+            AddBucketCommand command = new AddBucketCommand(bucket);
+            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+            broadcastAddRemoveBucketCommand(perClusterNodes, command);
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new UpdateOperationException(error);
-        } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new UpdateOperationException(error);
@@ -75,16 +71,10 @@ public class DefaultUpdateService implements UpdateService {
     public void removeBucket(String bucket) throws UpdateOperationException {
         try {
             LOG.debug("Removing bucket {}", bucket);
-            Set<Node> nodes = router.broadcastRoute();
-            for (Node node : nodes) {
-                RemoveBucketCommand command = new RemoveBucketCommand(bucket);
-                node.send(command);
-            }
+            RemoveBucketCommand command = new RemoveBucketCommand(bucket);
+            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+            broadcastAddRemoveBucketCommand(perClusterNodes, command);
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new UpdateOperationException(error);
-        } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new UpdateOperationException(error);
@@ -177,6 +167,30 @@ public class DefaultUpdateService implements UpdateService {
     public void setConditions(Map<String, Condition> conditions) {
         this.conditions.clear();
         this.conditions.putAll(conditions);
+    }
+
+    private void broadcastAddRemoveBucketCommand(Map<Cluster, Set<Node>> perClusterNodes, Command command) throws UpdateOperationException {
+        for (Map.Entry<Cluster, Set<Node>> entry : perClusterNodes.entrySet()) {
+            Set<Node> nodes = entry.getValue();
+            boolean successful = false;
+            ErrorMessage error = null;
+            // Try to broadcast operation:
+            for (Node node : nodes) {
+                try {
+                    node.send(command);
+                    // Break after first success, we just want to broadcast to one node per cluster:
+                    successful = true;
+                    break;
+                } catch (ProcessingException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                    error = ex.getErrorMessage();
+                }
+            }
+            // If no success, throw exception:
+            if (!successful) {
+                throw new UpdateOperationException(error);
+            }
+        }
     }
 
     private Condition getCondition(String conditionType) throws UpdateOperationException {

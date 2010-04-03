@@ -25,8 +25,10 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
+import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.GetKeysCommand;
 import terrastore.communication.protocol.RangeQueryCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
@@ -64,25 +66,10 @@ public class DefaultQueryService implements QueryService {
     public Set<String> getBuckets() throws QueryOperationException {
         try {
             LOG.debug("Getting bucket names.");
-            Set<String> buckets = null;
-            Set<Node> nodes = router.broadcastRoute();
-            for (Node node : nodes) {
-                GetBucketsCommand command = new GetBucketsCommand();
-                Set<String> current = node.<Set<String>>send(command);
-                if (buckets != null) {
-                    Set<String> difference = com.google.common.collect.Sets.difference(buckets, current);
-                    if (buckets.size() != current.size() || !difference.isEmpty()) {
-                        throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Inconsistent buckets!"));
-                    }
-                } else {
-                    buckets = new HashSet<String>(current);
-                }
-            }
+            GetBucketsCommand command = new GetBucketsCommand();
+            Node localNode = router.routeToLocalNode();
+            Set<String> buckets = localNode.<Set<String>>send(command);
             return buckets;
-        } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new QueryOperationException(error);
         } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -242,19 +229,11 @@ public class DefaultQueryService implements QueryService {
 
     private Set<String> getAllKeysForBucket(String bucket) throws QueryOperationException {
         try {
-            Set<String> keys = new HashSet<String>();
-            Set<Node> nodes = router.broadcastRoute();
-            for (Node node : nodes) {
-                GetKeysCommand command = new GetKeysCommand(bucket);
-                Set<String> partial = node.<Set<String>>send(command);
-                keys.addAll(partial);
-            }
+            GetKeysCommand command = new GetKeysCommand(bucket);
+            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+            Set<String> keys = broadcastKeysCommand(perClusterNodes, command);
             return keys;
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new QueryOperationException(error);
-        } catch (ProcessingException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
@@ -263,23 +242,42 @@ public class DefaultQueryService implements QueryService {
 
     private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws QueryOperationException {
         try {
-            Set<String> keys = new HashSet<String>();
-            Set<Node> nodes = router.broadcastRoute();
-            for (Node node : nodes) {
-                RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
-                Set<String> partial = node.<Set<String>>send(command);
-                keys.addAll(partial);
-            }
+            RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
+            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+            Set<String> keys = broadcastKeysCommand(perClusterNodes, command);
             return keys;
         } catch (MissingRouteException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
-        } catch (ProcessingException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new QueryOperationException(error);
         }
+    }
+
+    private Set<String> broadcastKeysCommand(Map<Cluster, Set<Node>> perClusterNodes, Command command) throws QueryOperationException {
+        Set<String> keys = new HashSet<String>();
+        for (Map.Entry<Cluster, Set<Node>> entry : perClusterNodes.entrySet()) {
+            Set<Node> nodes = entry.getValue();
+            boolean successful = false;
+            ErrorMessage error = null;
+            // Try to broadcast operation:
+            for (Node node : nodes) {
+                try {
+                    Set<String> partial = node.<Set<String>>send(command);
+                        keys.addAll(partial);
+                    // Break after first success, we just want to broadcast to one node per cluster:
+                    successful = true;
+                    break;
+                } catch (ProcessingException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                    error = ex.getErrorMessage();
+                }
+            }
+            // If no success, throw exception:
+            if (!successful) {
+                throw new QueryOperationException(error);
+            }
+        }
+        return keys;
     }
 
     private Comparator getComparator(String comparatorName) {
