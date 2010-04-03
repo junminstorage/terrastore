@@ -15,6 +15,8 @@
  */
 package terrastore.util.collect;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,11 +25,34 @@ import java.util.Map;
  */
 public class Maps {
 
+    public static <K, V> Map<K, V> hash(K[] keys, V[] values) {
+        Map<K, V> result = new HashMap<K, V>();
+        Maps.<K, V>fill(result, keys, values);
+        return result;
+    }
+
+    public static <K, V> Map<K, V> linked(K[] keys, V[] values) {
+        Map<K, V> result = new LinkedHashMap<K, V>();
+        Maps.<K, V>fill(result, keys, values);
+        return result;
+    }
+
     public static <K, V> Map<K, V> union(List<Map<K, V>> maps) {
         return new UnionMap<K, V>(maps);
     }
 
     public static <K, V> Map<K, V> drain(List<Map<K, V>> maps, Map<K, V> destination) {
         return new DrainMap<K, V>(maps, destination);
+    }
+
+    private static <K, V> void fill(Map<K, V> map, K[] keys, V[] values) {
+        if (keys.length == values.length) {
+            int index = 0;
+            for (K key : keys) {
+                map.put(key, values[index++]);
+            }
+        } else {
+            throw new IllegalArgumentException("Both keys and values arrays must have same length!");
+        }
     }
 }

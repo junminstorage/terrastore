@@ -15,12 +15,21 @@
  */
 package terrastore.util.collect;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
  * @author Sergio Bossa
  */
 public class Sets {
+
+    public static <E> Set<E> hash(E... elements) {
+        return com.google.common.collect.Sets.newHashSet(elements);
+    }
+
+    public static <E> Set<E> linked(E... elements) {
+        return com.google.common.collect.Sets.newLinkedHashSet(Arrays.asList(elements));
+    }
 
     public static <E> Set<E> limited(Set<E> source, int limit) {
         return new LimitedSet<E>(source, limit);
