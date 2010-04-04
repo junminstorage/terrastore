@@ -397,13 +397,13 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
 
             @Override
             public Node makeNode(String host, int port, String name) {
-                return new RemoteNode(thisNodeHost, thisNodePort, thisNodeName, maxFrameLength, nodeTimeout);
+                return new RemoteNode(host, port, name, maxFrameLength, nodeTimeout);
             }
         });
         for (Map.Entry<String, String> entry : ensembleConfiguration.getSeeds().entrySet()) {
             String cluster = entry.getKey();
             String seed = entry.getValue();
-            LOG.info("Joining remote cluster {}", cluster);
+            LOG.info("Joining remote cluster {} with seed {}", cluster, seed);
             ensembleDiscovery.join(clusters.get(cluster), seed);
         }
         ensembleDiscovery.schedule(ensembleConfiguration.getDiscoveryInterval(), ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
