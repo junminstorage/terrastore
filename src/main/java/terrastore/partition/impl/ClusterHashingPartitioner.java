@@ -16,6 +16,7 @@
 package terrastore.partition.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -79,9 +80,6 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
             Partitioner partitioner = partitioners.get(cluster);
             if (partitioner != null) {
                 partitioner.removeNode(node);
-            } else {
-                // TODO : use proper exception here?
-                throw new IllegalStateException("Not existent node: " + node.getName());
             }
         } finally {
             stateLock.writeLock().unlock();
@@ -96,8 +94,7 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
             if (partitioner != null) {
                 return partitioner.getNodes();
             } else {
-                // TODO : use proper exception here?
-                throw new IllegalStateException("Not existent cluster: " + cluster.getName());
+                return Collections.emptySet();
             }
         } finally {
             stateLock.readLock().unlock();
@@ -112,8 +109,7 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
             if (partitioner != null) {
                 return partitioner.getNodeFor(bucket);
             } else {
-                // TODO : use proper exception here?
-                throw new IllegalStateException("Not existent cluster: " + cluster.getName());
+                return null;
             }
         } finally {
             stateLock.readLock().unlock();
@@ -128,8 +124,7 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
             if (partitioner != null) {
                 return partitioner.getNodeFor(bucket, key);
             } else {
-                // TODO : use proper exception here?
-                throw new IllegalStateException("Not existent cluster: " + cluster.getName());
+                return null;
             }
         } finally {
             stateLock.readLock().unlock();
