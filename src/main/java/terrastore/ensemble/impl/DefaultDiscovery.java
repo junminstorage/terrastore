@@ -37,6 +37,7 @@ public class DefaultDiscovery implements Discovery {
     //
     private final Router router;
     private final RemoteNodeFactory nodeFactory;
+    private final ConcurrentMap<Cluster, Node> bootstrapNodes;
     private final ConcurrentMap<Cluster, List<Node>> perClusterNodes;
     private final ConcurrentMap<Cluster, View> perClusterViews;
     private volatile ScheduledExecutorService scheduler;
@@ -45,6 +46,7 @@ public class DefaultDiscovery implements Discovery {
     public DefaultDiscovery(Router router, RemoteNodeFactory nodeFactory) {
         this.router = router;
         this.nodeFactory = nodeFactory;
+        this.bootstrapNodes = new ConcurrentHashMap<Cluster, Node>();
         this.perClusterNodes = new ConcurrentHashMap<Cluster, List<Node>>();
         this.perClusterViews = new ConcurrentHashMap<Cluster, View>();
     }
@@ -54,17 +56,8 @@ public class DefaultDiscovery implements Discovery {
         if (!cluster.isLocal()) {
             LOG.info("Joining cluster {} with seed {}", cluster, seed);
             String[] hostPortPair = seed.split(":");
-            Node bootstrap = nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed);
-            try {
-                bootstrap.connect();
-                View view = requestMembership(cluster, Arrays.asList(bootstrap));
-                calculateView(cluster, view);
-            } catch (Exception ex) {
-                LOG.warn(ex.getMessage(), ex);
-                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Seed is unavailable: " + seed));
-            } finally {
-                bootstrap.disconnect();
-            }
+            bootstrapNodes.put(cluster, nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed));
+            update(cluster);
         } else {
             throw new IllegalArgumentException("No need to join local cluster: " + cluster);
         }
@@ -73,8 +66,8 @@ public class DefaultDiscovery implements Discovery {
     @Override
     public synchronized void schedule(long delay, long interval, TimeUnit timeUnit) {
         if (!scheduled) {
-            scheduler = Executors.newScheduledThreadPool(perClusterNodes.size());
-            for (final Cluster cluster : perClusterNodes.keySet()) {
+            scheduler = Executors.newScheduledThreadPool(bootstrapNodes.size());
+            for (final Cluster cluster : bootstrapNodes.keySet()) {
                 LOG.info("Scheduling discovery for cluster {}", cluster);
                 scheduler.scheduleWithFixedDelay(new Runnable() {
 
@@ -103,24 +96,45 @@ public class DefaultDiscovery implements Discovery {
     }
 
     private void update(Cluster cluster) throws MissingRouteException, ProcessingException {
-        List<Node> nodes = perClusterNodes.get(cluster);
-        View view = requestMembership(cluster, nodes);
-        calculateView(cluster, view);
+        try {
+            List<Node> nodes = perClusterNodes.get(cluster);
+            if (nodes == null || nodes.isEmpty()) {
+                Node bootstrap = null;
+                try {
+                    bootstrap = bootstrapNodes.get(cluster);
+                    bootstrap.connect();
+                    View view = requestMembership(cluster, Arrays.asList(bootstrap));
+                    calculateView(cluster, view);
+                } finally {
+                    bootstrap.disconnect();
+                }
+            } else {
+                View view = requestMembership(cluster, nodes);
+                calculateView(cluster, view);
+            }
+        } catch (Exception ex) {
+            LOG.warn("Error updating membership information for cluster {}", cluster);
+            LOG.warn(ex.getMessage());
+        }
     }
 
     private View requestMembership(Cluster cluster, List<Node> contactNodes) throws MissingRouteException, ProcessingException {
-        View view = null;
         Iterator<Node> nodeIterator = contactNodes.iterator();
         boolean successful = false;
+        View view = null;
         while (!successful && nodeIterator.hasNext()) {
-            Node node = nodeIterator.next();
-            view = node.<View>send(new MembershipCommand());
-            successful = true;
+            try {
+                Node node = nodeIterator.next();
+                view = node.<View>send(new MembershipCommand());
+                successful = true;
+            } catch (Exception ex) {
+                // FIXME: log?
+            }
         }
-        if (view != null) {
+        if (successful) {
             return view;
         } else {
-            throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Missing route to cluster: " + cluster));
+            throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "No route to cluster " + cluster));
         }
     }
 
