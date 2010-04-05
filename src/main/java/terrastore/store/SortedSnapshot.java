@@ -16,10 +16,11 @@
 package terrastore.store;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
-import terrastore.util.collect.Sets;
 
 /**
  * Sorted snapshot of keys.
@@ -37,14 +38,23 @@ public class SortedSnapshot {
         this.sortedKeys.addAll(keys);
     }
 
-    public Set<String> keysInRange(String start, String end, int limit) {
+    public SortedSet<String> keysInRange(String start, String end, int limit) {
+        SortedSet<String> result = new TreeSet<String>();
         NavigableSet<String> subSet = null;
         if (end != null) {
             subSet = sortedKeys.subSet(start, true, end, true);
         } else {
             subSet = sortedKeys.tailSet(start, true);
         }
-        return Sets.limited(subSet, limit);
+        if (limit > 0) {
+            Iterator<String> it = subSet.iterator();
+            for (int i = 0; i < limit && it.hasNext(); i++) {
+                result.add(it.next());
+            }
+        } else {
+            result.addAll(subSet);
+        }
+        return result;
     }
 
     public boolean isExpired(long timeToLive) {

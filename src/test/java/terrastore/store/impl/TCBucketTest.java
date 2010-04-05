@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
@@ -240,9 +241,10 @@ public class TCBucketTest {
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
-        assertEquals(2, bucket.keysInRange(new Range("key2", "key3", 0, "order"), stringComparator, 0).size());
-        assertTrue(bucket.keys().contains(key2));
-        assertTrue(bucket.keys().contains(key3));
+        Set<String> range = bucket.keysInRange(new Range("key2", "key3", 0, "order"), stringComparator, 0);
+        assertEquals(2, range.size());
+        assertEquals(key2, range.toArray()[0]);
+        assertEquals(key3, range.toArray()[1]);
     }
 
     @Test
@@ -264,9 +266,10 @@ public class TCBucketTest {
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
-        assertEquals(2, bucket.keysInRange(new Range("key1", "key3", 2, "order"), stringComparator, 0).size());
-        assertTrue(bucket.keys().contains(key1));
-        assertTrue(bucket.keys().contains(key2));
+        Set<String> range = bucket.keysInRange(new Range("key1", "key3", 2, "order"), stringComparator, 0);
+        assertEquals(2, range.size());
+        assertEquals(key1, range.toArray()[0]);
+        assertEquals(key2, range.toArray()[1]);
     }
 
     @Test
