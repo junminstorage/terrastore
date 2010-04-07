@@ -60,7 +60,7 @@ public class DefaultUpdateService implements UpdateService {
             LOG.debug("Adding bucket {}", bucket);
             AddBucketCommand command = new AddBucketCommand(bucket);
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-            broadcastAddRemoveBucketCommand(perClusterNodes, command);
+            multicastAddRemoveBucketCommand(perClusterNodes, command);
         } catch (MissingRouteException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -73,7 +73,7 @@ public class DefaultUpdateService implements UpdateService {
             LOG.debug("Removing bucket {}", bucket);
             RemoveBucketCommand command = new RemoveBucketCommand(bucket);
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-            broadcastAddRemoveBucketCommand(perClusterNodes, command);
+            multicastAddRemoveBucketCommand(perClusterNodes, command);
         } catch (MissingRouteException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -169,7 +169,7 @@ public class DefaultUpdateService implements UpdateService {
         this.conditions.putAll(conditions);
     }
 
-    private void broadcastAddRemoveBucketCommand(Map<Cluster, Set<Node>> perClusterNodes, Command command) throws UpdateOperationException {
+    private void multicastAddRemoveBucketCommand(Map<Cluster, Set<Node>> perClusterNodes, Command command) throws UpdateOperationException {
         for (Map.Entry<Cluster, Set<Node>> entry : perClusterNodes.entrySet()) {
             Set<Node> nodes = entry.getValue();
             boolean successful = false;
