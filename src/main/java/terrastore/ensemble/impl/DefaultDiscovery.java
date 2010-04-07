@@ -54,7 +54,6 @@ public class DefaultDiscovery implements Discovery {
     @Override
     public synchronized void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
         if (!cluster.isLocal()) {
-            LOG.info("Joining cluster {} with seed {}", cluster, seed);
             String[] hostPortPair = seed.split(":");
             bootstrapNodes.put(cluster, nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed));
             update(cluster);
@@ -99,6 +98,7 @@ public class DefaultDiscovery implements Discovery {
         try {
             List<Node> nodes = perClusterNodes.get(cluster);
             if (nodes == null || nodes.isEmpty()) {
+                LOG.debug("Bootstrapping discovery for cluster {}", cluster);
                 Node bootstrap = null;
                 try {
                     bootstrap = bootstrapNodes.get(cluster);
@@ -109,6 +109,7 @@ public class DefaultDiscovery implements Discovery {
                     bootstrap.disconnect();
                 }
             } else {
+                LOG.debug("Updating cluster view for {}", cluster);
                 View view = requestMembership(cluster, nodes);
                 calculateView(cluster, view);
             }
@@ -123,12 +124,14 @@ public class DefaultDiscovery implements Discovery {
         boolean successful = false;
         View view = null;
         while (!successful && nodeIterator.hasNext()) {
+            Node node = null;
             try {
-                Node node = nodeIterator.next();
+                node = nodeIterator.next();
                 view = node.<View>send(new MembershipCommand());
                 successful = true;
+                LOG.debug("Updated cluster view from node {}:{}", cluster, node);
             } catch (Exception ex) {
-                // FIXME: log?
+                LOG.warn("Failed to contact node {}:{} for updating cluster view!", cluster, node);
             }
         }
         if (successful) {
@@ -147,6 +150,8 @@ public class DefaultDiscovery implements Discovery {
         //
         View currentView = perClusterViews.get(cluster);
         if (currentView != null) {
+            LOG.debug("Current view for cluster {} :  {}", cluster, currentView);
+            LOG.debug("Updated view for cluster {} :  {}", cluster, updatedView);
             Set<View.Member> leavingMembers = Sets.difference(currentView.getMembers(), updatedView.getMembers());
             Set<View.Member> joiningMembers = Sets.difference(updatedView.getMembers(), currentView.getMembers());
             for (View.Member member : leavingMembers) {
@@ -154,20 +159,25 @@ public class DefaultDiscovery implements Discovery {
                 router.removeRouteTo(cluster, node);
                 node.disconnect();
                 currentNodes.remove(node);
+                LOG.info("Disconnected remote node {}:{}", cluster, node);
             }
             for (View.Member member : joiningMembers) {
                 Node node = nodeFactory.makeNode(member.getHost(), member.getPort(), member.getName());
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
+                LOG.info("Joining remote node {}:{}", cluster, node);
             }
         } else {
+            LOG.debug("No current view for cluster {}", cluster);
+            LOG.debug("Updated view for cluster {} :  {}", cluster, updatedView);
             perClusterViews.put(cluster, updatedView);
             for (View.Member member : updatedView.getMembers()) {
                 Node node = nodeFactory.makeNode(member.getHost(), member.getPort(), member.getName());
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
+                LOG.info("Joining remote node {}:{}", cluster, node);
             }
         }
     }

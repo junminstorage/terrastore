@@ -200,7 +200,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         if (isThisNode(joinedNodeName)) {
             stateLock.lock();
             try {
-                LOG.info("Joining this node {}", thisNodeName);
+                LOG.info("Joining this node {}:{}", thisCluster.getName(), thisNodeName);
                 setupThisNode();
                 setupThisRemoteProcessor();
                 setupAddressTable();
@@ -213,7 +213,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         } else {
             stateLock.lock();
             try {
-                LOG.info("Joining remote node {}", joinedNodeName);
+                LOG.info("Joining remote node {}:{}", thisCluster.getName(), joinedNodeName);
                 connectRemoteNode(joinedNodeName);
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -245,7 +245,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
 
     public void operationsDisabled(DsoClusterEvent event) {
         try {
-            LOG.info("Disabling cluster node {}", thisNodeName);
+            LOG.info("Disabling this node {}:{}", thisCluster.getName(), thisNodeName);
             disconnectEverything();
             cleanupEverything();
         } catch (Exception ex) {
@@ -274,7 +274,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     private void setupThisRemoteProcessor() {
         remoteProcessor = new RemoteProcessor(thisNodeHost, thisNodePort, maxFrameLength, remoteProcessorThreads, router);
         remoteProcessor.start();
-        LOG.info("Set up processor for {}", thisNodeName);
+        LOG.debug("Set up processor for {}", thisNodeName);
     }
 
     private void setupThisNode() {
@@ -285,7 +285,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         nodes.put(thisNodeName, thisNode);
         router.addRouteToLocalNode(thisNode);
         router.addRouteTo(thisCluster, thisNode);
-        LOG.info("Set up this node {}", thisNodeName);
+        LOG.info("Set up this node {}:{}", thisCluster.getName(), thisNodeName);
     }
 
     private void setupAddressTable() {
@@ -321,7 +321,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
                 remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
                 router.addRouteTo(thisCluster, remoteNode);
-                LOG.info("Set up remote node {}", remoteNodeName);
+                LOG.info("Set up remote node {}:{}", thisCluster.getName(), remoteNodeName);
             }
         } else {
             LOG.warn("Cannot set up remote node {}", remoteNodeName);
@@ -339,7 +339,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     }
 
     private void flushThisNodeKeys() {
-        LOG.info("About to flush keys on node {}", thisNodeName);
+        LOG.debug("About to flush keys on node {}:{}", thisCluster.getName(), thisNodeName);
         store.flush(flushStrategy, flushCondition);
     }
 
@@ -347,7 +347,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         Node remoteNode = nodes.remove(nodeName);
         remoteNode.disconnect();
         router.removeRouteTo(thisCluster, remoteNode);
-        LOG.info("Discarded node {}", nodeName);
+        LOG.info("Disconnected node {}:{}", thisCluster.getName(), nodeName);
     }
 
     private void disconnectEverything() {
@@ -374,7 +374,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
                     Thread.sleep(1000);
                 } catch (Exception ex) {
                 } finally {
-                    LOG.info("Exiting cluster node {}", thisNodeName);
+                    LOG.info("Exiting this node {}:{}", thisCluster.getName(), thisNodeName);
                     System.exit(0);
                 }
             }
