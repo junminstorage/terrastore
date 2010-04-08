@@ -37,6 +37,10 @@ public class Maps {
         return result;
     }
 
+    public static <K, V> Map<K, V> serializing(Map<K, V> source) {
+        return new SerializingMap<K, V>(source);
+    }
+
     public static <K, V> Map<K, V> union(List<Map<K, V>> maps) {
         return new UnionMap<K, V>(maps);
     }

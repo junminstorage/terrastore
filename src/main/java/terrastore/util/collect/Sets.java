@@ -31,6 +31,10 @@ public class Sets {
         return com.google.common.collect.Sets.newLinkedHashSet(Arrays.asList(elements));
     }
 
+    public static <E> Set<E> serializing(Set<E> source) {
+        return new SerializingSet<E>(source);
+    }
+
     public static <E> Set<E> limited(Set<E> source, int limit) {
         return new LimitedSet<E>(source, limit);
     }
