@@ -62,29 +62,33 @@ public class RemoteNode implements Node {
     private final String host;
     private final int port;
     private final String name;
+    private final int maxFrameLength;
     private final long timeoutInMillis;
-    private final ClientBootstrap client;
-    private Channel clientChannel;
+    private volatile ClientBootstrap client;
+    private volatile Channel clientChannel;
+    private volatile boolean connected;
 
     public RemoteNode(String host, int port, String name, int maxFrameLength, long timeoutInMillis) {
         this.host = host;
         this.port = port;
         this.name = name;
+        this.maxFrameLength = maxFrameLength;
         this.timeoutInMillis = timeoutInMillis;
-        client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
-        client.setPipelineFactory(new ClientChannelPipelineFactory(maxFrameLength, new ClientHandler()));
     }
 
     @Override
     public void connect() {
         stateLock.lock();
         try {
-            if (clientChannel == null) {
+            if (!connected) {
+                client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
+                client.setPipelineFactory(new ClientChannelPipelineFactory(maxFrameLength, new ClientHandler()));
                 ChannelFuture future = client.connect(new InetSocketAddress(host, port));
                 future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
                 if (future.isSuccess()) {
                     LOG.info("Connected to {}:{}", host, port);
                     clientChannel = future.getChannel();
+                    connected = true;
                 } else {
                     throw new RuntimeException("Error connecting to " + host + ":" + port, future.getCause());
                 }
@@ -100,10 +104,10 @@ public class RemoteNode implements Node {
     public void disconnect() {
         stateLock.lock();
         try {
-            if (clientChannel != null) {
+            if (connected) {
                 clientChannel.close().awaitUninterruptibly();
                 client.releaseExternalResources();
-                clientChannel = null;
+                connected = false;
                 LOG.info("Disconnected from : {}:{}", host, port);
             }
         } finally {
@@ -114,7 +118,7 @@ public class RemoteNode implements Node {
     @Override
     public <R> R send(Command<R> command) throws ProcessingException {
         stateLock.lock();
-        if (clientChannel == null) {
+        if (!connected) {
             connect();
         }
         String commandId = configureId(command);
