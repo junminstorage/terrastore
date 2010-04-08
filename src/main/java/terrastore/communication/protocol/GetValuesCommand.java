@@ -28,6 +28,7 @@ import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Condition;
+import terrastore.util.collect.Maps;
 
 /**
  * @author Sergio Bossa
@@ -74,7 +75,7 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
             GetValuesCommand command = new GetValuesCommand(this, nodeKeys);
             result.putAll(node.<Map<String, Value>>send(command));
         }
-        return result;
+        return Maps.serializing(result);
     }
 
     public Map<String, Value> executeOn(Store store) throws StoreOperationException {
@@ -92,7 +93,7 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
                     entries.put(key, value);
                 }
             }
-            return entries;
+            return Maps.serializing(entries);
         } else {
             return new HashMap<String, Value>(0);
         }

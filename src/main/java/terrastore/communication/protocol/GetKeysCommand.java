@@ -24,6 +24,7 @@ import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
+import terrastore.util.collect.Sets;
 
 /**
  * @author Sergio Bossa
@@ -39,13 +40,13 @@ public class GetKeysCommand extends AbstractCommand<Set<String>> {
     @Override
     public Set<String> executeOn(Router router) throws MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
-        return node.<Set<String>>send(this);
+        return Sets.serializing(node.<Set<String>>send(this));
     }
 
     public Set<String> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            return bucket.keys();
+            return Sets.serializing(bucket.keys());
         } else {
             return Collections.emptySet();
         }
