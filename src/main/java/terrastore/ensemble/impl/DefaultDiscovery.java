@@ -114,8 +114,8 @@ public class DefaultDiscovery implements Discovery {
                 calculateView(cluster, view);
             }
         } catch (Exception ex) {
-            LOG.warn("Error updating membership information for cluster {}", cluster);
-            LOG.warn(ex.getMessage());
+            LOG.info("Error updating membership information for cluster {}", cluster);
+            LOG.debug(ex.getMessage(), ex);
         }
     }
 
@@ -132,6 +132,10 @@ public class DefaultDiscovery implements Discovery {
                 LOG.debug("Updated cluster view from node {}:{}", cluster, node);
             } catch (Exception ex) {
                 LOG.warn("Failed to contact node {}:{} for updating cluster view!", cluster, node);
+                router.removeRouteTo(cluster, node);
+                node.disconnect();
+                nodeIterator.remove();
+                LOG.info("Disconnected remote node {}:{}", cluster, node);
             }
         }
         if (successful) {
@@ -150,16 +154,18 @@ public class DefaultDiscovery implements Discovery {
         //
         View currentView = perClusterViews.get(cluster);
         if (currentView != null) {
-            LOG.debug("Current view for cluster {} :  {}", cluster, currentView);
-            LOG.debug("Updated view for cluster {} :  {}", cluster, updatedView);
+            LOG.debug("Current view for cluster {} : {}", cluster, currentView);
+            LOG.debug("Updated view for cluster {} : {}", cluster, updatedView);
             Set<View.Member> leavingMembers = Sets.difference(currentView.getMembers(), updatedView.getMembers());
             Set<View.Member> joiningMembers = Sets.difference(updatedView.getMembers(), currentView.getMembers());
             for (View.Member member : leavingMembers) {
                 Node node = findNode(currentNodes, member);
-                router.removeRouteTo(cluster, node);
-                node.disconnect();
-                currentNodes.remove(node);
-                LOG.info("Disconnected remote node {}:{}", cluster, node);
+                if (node != null) {
+                    router.removeRouteTo(cluster, node);
+                    node.disconnect();
+                    currentNodes.remove(node);
+                    LOG.info("Disconnected remote node {}:{}", cluster, node);
+                }
             }
             for (View.Member member : joiningMembers) {
                 Node node = nodeFactory.makeNode(member.getHost(), member.getPort(), member.getName());
@@ -171,7 +177,6 @@ public class DefaultDiscovery implements Discovery {
         } else {
             LOG.debug("No current view for cluster {}", cluster);
             LOG.debug("Updated view for cluster {} :  {}", cluster, updatedView);
-            perClusterViews.put(cluster, updatedView);
             for (View.Member member : updatedView.getMembers()) {
                 Node node = nodeFactory.makeNode(member.getHost(), member.getPort(), member.getName());
                 router.addRouteTo(cluster, node);
@@ -180,6 +185,7 @@ public class DefaultDiscovery implements Discovery {
                 LOG.info("Joining remote node {}:{}", cluster, node);
             }
         }
+        perClusterViews.put(cluster, updatedView);
     }
 
     private Node findNode(List<Node> nodes, Member member) {
