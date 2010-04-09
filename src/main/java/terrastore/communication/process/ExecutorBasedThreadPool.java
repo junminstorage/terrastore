@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.seda;
+package terrastore.communication.process;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -23,12 +23,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import terrastore.communication.protocol.Command;
 
 /**
  * @author Sergio Bossa
  */
-public class SEDAThreadPoolExecutor extends ThreadPoolExecutor implements SEDAThreadPool {
+public class ExecutorBasedThreadPool extends ThreadPoolExecutor implements ThreadPool {
 
     private final Lock stateLock;
     private final Condition pauseCondition;
@@ -37,11 +36,11 @@ public class SEDAThreadPoolExecutor extends ThreadPoolExecutor implements SEDATh
     private volatile boolean paused;
     private volatile boolean shutdown;
 
-    public SEDAThreadPoolExecutor() {
+    public ExecutorBasedThreadPool() {
         this(Runtime.getRuntime().availableProcessors() * 10);
     }
 
-    public SEDAThreadPoolExecutor(int threads) {
+    public ExecutorBasedThreadPool(int threads) {
         super(Runtime.getRuntime().availableProcessors(), threads, 60, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
         stateLock = new ReentrantLock();
         pauseCondition = stateLock.newCondition();
@@ -104,9 +103,9 @@ public class SEDAThreadPoolExecutor extends ThreadPoolExecutor implements SEDATh
         }
     }
 
-    public <R> Future<R> execute(Command<R> command, CommandHandler<R> handler) {
+    public <R> Future<R> execute(Callable<R> callable) {
         if (!shutdown) {
-            Future<R> result = submit(new CommandCallable<R>(command, handler));
+            Future<R> result = submit(callable);
             return result;
         } else {
             throw new IllegalStateException("Shutdown SEDA thread pool!");
@@ -139,22 +138,6 @@ public class SEDAThreadPoolExecutor extends ThreadPoolExecutor implements SEDATh
             }
         } finally {
             stateLock.unlock();
-        }
-    }
-
-    private static class CommandCallable<R> implements Callable<R> {
-
-        private final Command<R> command;
-        private final CommandHandler<R> handler;
-
-        public CommandCallable(Command<R> command, CommandHandler<R> handler) {
-            this.command = command;
-            this.handler = handler;
-        }
-
-        @Override
-        public R call() throws Exception {
-            return handler.handle(command);
         }
     }
 }

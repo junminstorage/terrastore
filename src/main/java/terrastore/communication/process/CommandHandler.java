@@ -1,4 +1,4 @@
-package terrastore.communication.seda;
+package terrastore.communication.process;
 
 import terrastore.communication.protocol.Command;
 

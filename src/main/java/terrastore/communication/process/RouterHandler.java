@@ -13,23 +13,24 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.seda;
+package terrastore.communication.process;
 
-import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
+import terrastore.router.Router;
 
 /**
  * @author Sergio Bossa
  */
-public interface SEDAProcessor {
+public class RouterHandler<R> implements CommandHandler<R> {
 
-    public void start();
+    private final Router router;
 
-    public void pause();
+    public RouterHandler(Router router) {
+        this.router = router;
+    }
 
-    public void resume();
-
-    public void stop();
-
-    public <R> R process(Command<R> command, CommandHandler<R> handler) throws ProcessingException;
+    @Override
+    public R handle(Command<R> command) throws Exception {
+        return command.executeOn(router);
+    }
 }

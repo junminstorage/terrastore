@@ -16,16 +16,15 @@
 package terrastore.communication.local;
 
 import terrastore.communication.ProcessingException;
-import terrastore.communication.Processor;
 import terrastore.communication.protocol.Command;
-import terrastore.communication.seda.AbstractSEDAProcessor;
-import terrastore.communication.seda.StoreHandler;
+import terrastore.communication.process.AbstractProcessor;
+import terrastore.communication.process.StoreHandler;
 import terrastore.store.Store;
 
 /**
  * @author Sergio Bossa
  */
-public class LocalProcessor extends AbstractSEDAProcessor implements Processor {
+public class LocalProcessor extends AbstractProcessor {
 
     private final Store store;
 
@@ -34,7 +33,6 @@ public class LocalProcessor extends AbstractSEDAProcessor implements Processor {
         this.store = store;
     }
 
-    @Override
     public <R> R process(Command<R> command) throws ProcessingException {
         return process(command, new StoreHandler<R>(store));
     }

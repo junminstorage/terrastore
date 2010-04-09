@@ -13,37 +13,33 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.seda;
+package terrastore.communication.process;
 
+import terrastore.communication.process.ExecutorBasedThreadPool;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
-import terrastore.communication.protocol.Command;
 import static org.junit.Assert.*;
-import static org.easymock.classextension.EasyMock.*;
 
 /**
  * @author Sergio Bossa
  */
-public class SEDAThreadPoolExecutorTest {
+public class ExecutorBasedThreadPoolTest {
 
     @Test
     public void testExecution() throws Exception {
-        Command command = createMock(Command.class);
-
-        replay(command);
-
         int commands = 1000;
         final CountDownLatch waitThreadsExecution = new CountDownLatch(commands);
 
-        SEDAThreadPoolExecutor pool = new SEDAThreadPoolExecutor();
+        ExecutorBasedThreadPool pool = new ExecutorBasedThreadPool();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(command, new CommandHandler() {
+            pool.execute(new Callable() {
 
                 @Override
-                public Object handle(Command command) throws Exception {
+                public Object call() throws Exception {
                     waitThreadsExecution.countDown();
                     return null;
                 }
@@ -53,27 +49,21 @@ public class SEDAThreadPoolExecutorTest {
         assertTrue(waitThreadsExecution.await(60, TimeUnit.SECONDS));
 
         pool.shutdown();
-
-        verify(command);
     }
 
     @Test
     public void testPauseWaitsActiveThreads() throws Exception {
-        Command command = createMock(Command.class);
-
-        replay(command);
-
         int commands = 1000;
         final CountDownLatch waitThreadsStart = new CountDownLatch(commands);
         final AtomicInteger count = new AtomicInteger(commands);
 
-        SEDAThreadPoolExecutor pool = new SEDAThreadPoolExecutor();
+        ExecutorBasedThreadPool pool = new ExecutorBasedThreadPool();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(command, new CommandHandler() {
+            pool.execute(new Callable() {
 
                 @Override
-                public Object handle(Command command) throws Exception {
+                public Object call() throws Exception {
                     try {
                         waitThreadsStart.countDown();
                         Thread.sleep(10);
@@ -92,29 +82,23 @@ public class SEDAThreadPoolExecutorTest {
         assertEquals(0, count.get());
 
         pool.shutdown();
-
-        verify(command);
     }
 
     @Test
     public void testPauseIgnoresExecutionRequests() throws Exception {
-        Command command = createMock(Command.class);
-
-        replay(command);
-
         int commands = 1000;
         final CountDownLatch waitThreadsStart = new CountDownLatch(commands);
         final AtomicInteger count = new AtomicInteger(commands);
 
-        SEDAThreadPoolExecutor pool = new SEDAThreadPoolExecutor();
+        ExecutorBasedThreadPool pool = new ExecutorBasedThreadPool();
 
         pool.pause();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(command, new CommandHandler() {
+            pool.execute(new Callable() {
 
                 @Override
-                public Object handle(Command command) throws Exception {
+                public Object call() throws Exception {
                     try {
                         waitThreadsStart.countDown();
                         Thread.sleep(10);
@@ -131,29 +115,23 @@ public class SEDAThreadPoolExecutorTest {
         assertEquals(commands, count.get());
 
         pool.shutdown();
-
-        verify(command);
     }
 
     @Test
     public void testPauseAndResumeExecutionRequests() throws Exception {
-        Command command = createMock(Command.class);
-
-        replay(command);
-
         int commands = 1000;
         final CountDownLatch waitThreadsStart = new CountDownLatch(commands);
         final AtomicInteger count = new AtomicInteger(commands);
 
-        SEDAThreadPoolExecutor pool = new SEDAThreadPoolExecutor();
+        ExecutorBasedThreadPool pool = new ExecutorBasedThreadPool();
 
         pool.pause();
 
         for (int i = 0; i < commands; i++) {
-            pool.execute(command, new CommandHandler() {
+            pool.execute(new Callable() {
 
                 @Override
-                public Object handle(Command command) throws Exception {
+                public Object call() throws Exception {
                     try {
                         waitThreadsStart.countDown();
                         Thread.sleep(10);
@@ -174,7 +152,5 @@ public class SEDAThreadPoolExecutorTest {
         assertTrue(waitThreadsStart.await(60, TimeUnit.SECONDS));
 
         pool.shutdown();
-
-        verify(command);
     }
 }
