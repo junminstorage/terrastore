@@ -13,24 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.seda;
+package terrastore.communication.process;
 
-import terrastore.communication.protocol.Command;
-import terrastore.router.Router;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * @author Sergio Bossa
  */
-public class RouterHandler<R> implements CommandHandler<R> {
+public interface ThreadPool {
 
-    private final Router router;
+    public <R> Future<R> execute(Callable<R> callable);
 
-    public RouterHandler(Router router) {
-        this.router = router;
-    }
+    public void pause();
 
-    @Override
-    public R handle(Command<R> command) throws Exception {
-        return command.executeOn(router);
-    }
+    public void resume();
+
+    public void shutdown();
+
+    public boolean isPaused();
 }

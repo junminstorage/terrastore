@@ -37,12 +37,12 @@ import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import terrastore.communication.seda.AbstractSEDAProcessor;
+import terrastore.communication.process.AbstractProcessor;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.Processor;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
-import terrastore.communication.seda.RouterHandler;
+import terrastore.communication.process.CompletionHandler;
+import terrastore.communication.process.RouterHandler;
 import terrastore.router.Router;
 
 /**
@@ -50,7 +50,7 @@ import terrastore.router.Router;
  *
  * @author Sergio Bossa
  */
-public class RemoteProcessor extends AbstractSEDAProcessor implements Processor {
+public class RemoteProcessor extends AbstractProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteProcessor.class);
     //
@@ -71,11 +71,6 @@ public class RemoteProcessor extends AbstractSEDAProcessor implements Processor 
         server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         server.setOption("reuseAddress", true);
         server.setPipelineFactory(new ServerChannelPipelineFactory(maxFrameLength, new ServerHandler()));
-    }
-
-    @Override
-    public <R> R process(Command<R> command) throws ProcessingException {
-        return process(command, new RouterHandler<R>(router));
     }
 
     protected void doStart() {
@@ -122,12 +117,8 @@ public class RemoteProcessor extends AbstractSEDAProcessor implements Processor 
             try {
                 Channel channel = event.getChannel();
                 Command command = (Command) event.getMessage();
-                try {
-                    Object result = process(command);
-                    channel.write(new RemoteResponse(command.getId(), result));
-                } catch (ProcessingException ex) {
-                    channel.write(new RemoteResponse(command.getId(), ex.getErrorMessage()));
-                }
+                String commandId = command.getId();
+                    process(command, new RouterHandler(router), new RemoteCompletionHandler(channel, commandId));
             } catch (ClassCastException ex) {
                 LOG.warn("Unexpected command of type: " + event.getMessage().getClass());
                 throw new IllegalStateException("Unexpected command of type: " + event.getMessage().getClass());
@@ -159,6 +150,27 @@ public class RemoteProcessor extends AbstractSEDAProcessor implements Processor 
             pipeline.addLast("COMMAND_DECODER", new SerializerDecoder(new JavaSerializer<Command>()));
             pipeline.addLast("HANDLER", serverHandler);
             return pipeline;
+        }
+    }
+
+    private static class RemoteCompletionHandler implements CompletionHandler<Object, ProcessingException> {
+
+        private final Channel channel;
+        private final String commandId;
+
+        public RemoteCompletionHandler(Channel channel, String commandId) {
+            this.channel = channel;
+            this.commandId = commandId;
+        }
+
+        @Override
+        public void handleSuccess(Object response) throws Exception {
+            channel.write(new RemoteResponse(commandId, response));
+        }
+
+        @Override
+        public void handleFailure(ProcessingException exception) throws Exception {
+            channel.write(new RemoteResponse(commandId, exception.getErrorMessage()));
         }
     }
 }

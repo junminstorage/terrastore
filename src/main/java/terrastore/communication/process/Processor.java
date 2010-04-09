@@ -13,23 +13,25 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.seda;
+package terrastore.communication.process;
 
-import java.util.concurrent.Future;
+import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 
 /**
  * @author Sergio Bossa
  */
-public interface SEDAThreadPool {
+public interface Processor {
 
-    public <R> Future<R> execute(Command<R> command, CommandHandler<R> handler);
+    public void start();
 
     public void pause();
 
     public void resume();
 
-    public void shutdown();
+    public void stop();
 
-    public boolean isPaused();
+    public <R> R process(Command<R> command, CommandHandler<R> commandHandler) throws ProcessingException;
+
+    public <R> void process(Command<R> command, CommandHandler<R> commandHandler, CompletionHandler<R, ProcessingException> completionHandler);
 }
