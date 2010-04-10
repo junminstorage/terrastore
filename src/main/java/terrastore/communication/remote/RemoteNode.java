@@ -92,8 +92,6 @@ public class RemoteNode implements Node {
                 } else {
                     throw new RuntimeException("Error connecting to " + host + ":" + port, future.getCause());
                 }
-            } else {
-                throw new IllegalStateException("Already connected to " + host + ":" + port);
             }
         } finally {
             stateLock.unlock();
