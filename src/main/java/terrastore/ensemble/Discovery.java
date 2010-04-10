@@ -33,7 +33,7 @@ public interface Discovery {
     public void schedule(long delay, long interval, TimeUnit timeUnit);
 
     /**
-     * Cancel previously scheduled updates.
+     * Shutdown by cancelling scheduled updates and disconnecting discovered nodes.
      */
-    public void cancel();
+    public void shutdown();
 }

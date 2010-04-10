@@ -74,12 +74,16 @@ public class DefaultDiscoveryTest {
         makeThreadSafe(discoveredNode1, true);
         discoveredNode1.connect();
         expectLastCall().once();
+        discoveredNode1.disconnect();
+        expectLastCall().once();
         discoveredNode1.send(EasyMock.<MembershipCommand>anyObject());
         expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered1", "localhost", 6000), new View.Member("discovered2", "localhost", 6001))));
         //
         Node discoveredNode2 = createMock(Node.class);
         makeThreadSafe(discoveredNode2, true);
         discoveredNode2.connect();
+        expectLastCall().once();
+        discoveredNode2.disconnect();
         expectLastCall().once();
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
@@ -106,7 +110,7 @@ public class DefaultDiscoveryTest {
             discovery.schedule(0, 10, TimeUnit.SECONDS);
             Thread.sleep(3000);
         } finally {
-            discovery.cancel();
+            discovery.shutdown();
             verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
@@ -129,6 +133,8 @@ public class DefaultDiscoveryTest {
         discoveredNode1.getName();
         expectLastCall().andReturn("discovered1").once();
         discoveredNode1.connect();
+        expectLastCall().once();
+        discoveredNode1.disconnect();
         expectLastCall().once();
         discoveredNode1.send(EasyMock.<MembershipCommand>anyObject());
         expectLastCall().andReturn(new View("cluster", Sets.newLinkedHashSet(Arrays.asList(new View.Member("discovered1", "localhost", 6000)))));
@@ -168,7 +174,7 @@ public class DefaultDiscoveryTest {
             discovery.schedule(0, 10, TimeUnit.SECONDS);
             Thread.sleep(3000);
         } finally {
-            discovery.cancel();
+            discovery.shutdown();
             verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
@@ -188,7 +194,7 @@ public class DefaultDiscoveryTest {
             discovery.schedule(0, 10, TimeUnit.SECONDS);
             Thread.sleep(3000);
         } finally {
-            discovery.cancel();
+            discovery.shutdown();
             verify(nodeFactory, router);
         }
     }
