@@ -42,6 +42,7 @@ public class DefaultDiscovery implements Discovery {
     private final ConcurrentMap<Cluster, View> perClusterViews;
     private volatile ScheduledExecutorService scheduler;
     private volatile boolean scheduled;
+    private volatile boolean shutdown;
 
     public DefaultDiscovery(Router router, RemoteNodeFactory nodeFactory) {
         this.router = router;
@@ -64,7 +65,7 @@ public class DefaultDiscovery implements Discovery {
 
     @Override
     public synchronized void schedule(long delay, long interval, TimeUnit timeUnit) {
-        if (!scheduled) {
+        if (!scheduled && !shutdown) {
             scheduler = Executors.newScheduledThreadPool(bootstrapNodes.size());
             for (final Cluster cluster : bootstrapNodes.keySet()) {
                 LOG.info("Scheduling discovery for cluster {}", cluster);
@@ -87,11 +88,15 @@ public class DefaultDiscovery implements Discovery {
     }
 
     @Override
-    public synchronized void cancel() {
-        if (scheduled) {
-            scheduler.shutdownNow();
-            scheduled = false;
-        }
+    public synchronized void shutdown() {
+        shutdown = true;
+        cancelScheduler();
+        disconnectAllClustersNodes();
+    }
+
+    private void cancelScheduler() {
+        scheduler.shutdownNow();
+        scheduled = false;
     }
 
     private void update(Cluster cluster) throws MissingRouteException, ProcessingException {
@@ -193,6 +198,17 @@ public class DefaultDiscovery implements Discovery {
             return Iterables.find(nodes, new NodeFinder(member.getName()));
         } catch (NoSuchElementException ex) {
             return null;
+        }
+    }
+
+    private void disconnectAllClustersNodes() {
+        for (List<Node> nodes : perClusterNodes.values()) {
+            for (Node node : nodes) {
+                try {
+                    node.disconnect();
+                } catch (Exception ex) {
+                }
+            }
         }
     }
 

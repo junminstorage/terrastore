@@ -246,7 +246,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     public void operationsDisabled(DsoClusterEvent event) {
         try {
             LOG.info("Disabling this node {}:{}", thisCluster.getName(), thisNodeName);
-            disconnectEverything();
+            shutdownEverything();
             cleanupEverything();
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
@@ -350,19 +350,20 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         LOG.info("Disconnected node {}:{}", thisCluster.getName(), nodeName);
     }
 
-    private void disconnectEverything() {
+    private void shutdownEverything() {
         for (Node node : nodes.values()) {
             node.disconnect();
         }
         localProcessor.stop();
         remoteProcessor.stop();
+        ensembleDiscovery.shutdown();
+        eventBus.shutdown();
+        globalExecutor.shutdownNow();
     }
 
     private void cleanupEverything() {
         nodes.clear();
         router.cleanup();
-        eventBus.shutdown();
-        globalExecutor.shutdownNow();
     }
 
     private void doExit() {
