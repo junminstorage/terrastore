@@ -16,12 +16,12 @@
 package terrastore.communication.remote;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -57,8 +57,8 @@ public class RemoteNode implements Node {
     private static final transient Logger LOG = LoggerFactory.getLogger(RemoteNode.class);
     //
     private final Lock stateLock = new ReentrantLock();
-    private final Map<String, Condition> responseConditions = new HashMap<String, Condition>();
-    private final Map<String, RemoteResponse> responses = new HashMap<String, RemoteResponse>();
+    private final ConcurrentMap<String, CountDownLatch> responseConditions = new ConcurrentHashMap<String, CountDownLatch>();
+    private final ConcurrentMap<String, RemoteResponse> responses = new ConcurrentHashMap<String, RemoteResponse>();
     private final String host;
     private final int port;
     private final String name;
@@ -115,24 +115,24 @@ public class RemoteNode implements Node {
 
     @Override
     public <R> R send(Command<R> command) throws ProcessingException {
-        stateLock.lock();
         if (!connected) {
             connect();
         }
         String commandId = configureId(command);
         try {
-            Condition responseReceived = stateLock.newCondition();
-            responseConditions.put(commandId, responseReceived);
+            CountDownLatch responseLatch = new CountDownLatch(1);
+            responseConditions.put(commandId, responseLatch);
             clientChannel.write(command);
             LOG.debug("Sent command {}", commandId);
             //
-            long wait = millisToNanos(timeoutInMillis);
+            long wait = timeoutInMillis;
             while (!responses.containsKey(commandId) && wait > 0) {
-                long start = millisToNanos(System.currentTimeMillis());
+                long start = System.currentTimeMillis();
                 try {
-                    wait = responseReceived.awaitNanos(wait);
+                    responseLatch.await(wait, TimeUnit.MILLISECONDS);
+                    wait = 0;
                 } catch (InterruptedException ex) {
-                    wait = wait - (millisToNanos(System.currentTimeMillis()) - start);
+                    wait = wait - (System.currentTimeMillis() - start);
                 }
             }
             //
@@ -148,7 +148,6 @@ public class RemoteNode implements Node {
             }
         } finally {
             responses.remove(commandId);
-            stateLock.unlock();
         }
     }
 
@@ -204,7 +203,6 @@ public class RemoteNode implements Node {
 
         @Override
         public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
-            stateLock.lock();
             try {
                 RemoteResponse response = (RemoteResponse) event.getMessage();
                 String correlationId = response.getCorrelationId();
@@ -212,8 +210,6 @@ public class RemoteNode implements Node {
             } catch (ClassCastException ex) {
                 LOG.warn("Unexpected response of type: " + event.getMessage().getClass());
                 throw new IllegalStateException("Unexpected response of type: " + event.getMessage().getClass());
-            } finally {
-                stateLock.unlock();
             }
         }
 
@@ -223,9 +219,9 @@ public class RemoteNode implements Node {
         }
 
         private void signalCommandResponse(String commandId, RemoteResponse response) {
-            Condition responseCondition = responseConditions.remove(commandId);
+            CountDownLatch responseLatch = responseConditions.remove(commandId);
             responses.put(commandId, response);
-            responseCondition.signal();
+            responseLatch.countDown();
         }
     }
 
