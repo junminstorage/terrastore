@@ -19,10 +19,8 @@ import terrastore.ensemble.EnsembleConfiguration;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import java.util.concurrent.ExecutorService;
-import terrastore.event.EventBus;
 import terrastore.router.Router;
-import terrastore.store.BackupManager;
-import terrastore.store.SnapshotManager;
+import terrastore.store.Store;
 
 /**
  * @author Sergio Bossa
@@ -37,13 +35,9 @@ public interface Coordinator {
 
     public void setMaxFrameLength(int maxFrameLength);
 
+    public void setStore(Store store);
+
     public void setRouter(Router router);
-
-    public void setEventBus(EventBus eventBus);
-
-    public void setSnapshotManager(SnapshotManager snapshotManager);
-
-    public void setBackupManager(BackupManager backupManager);
 
     public void setFlushStrategy(FlushStrategy flushStrategy);
 
