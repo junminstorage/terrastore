@@ -169,26 +169,31 @@ public class DefaultUpdateService implements UpdateService {
         this.conditions.putAll(conditions);
     }
 
-    private void multicastAddRemoveBucketCommand(Map<Cluster, Set<Node>> perClusterNodes, Command command) throws UpdateOperationException {
+    private void multicastAddRemoveBucketCommand(Map<Cluster, Set<Node>> perClusterNodes, Command command) throws MissingRouteException, UpdateOperationException {
         for (Map.Entry<Cluster, Set<Node>> entry : perClusterNodes.entrySet()) {
             Set<Node> nodes = entry.getValue();
             boolean successful = false;
             ErrorMessage error = null;
-            // Try to broadcast operation:
-            for (Node node : nodes) {
-                try {
-                    node.send(command);
-                    // Break after first success, we just want to broadcast to one node per cluster:
-                    successful = true;
-                    break;
-                } catch (ProcessingException ex) {
-                    LOG.error(ex.getMessage(), ex);
-                    error = ex.getErrorMessage();
+            // There must be connected cluster nodes, else throw MissingRouteException:
+            if (!nodes.isEmpty()) {
+                // Try to send command, stopping after first successful attempt:
+                for (Node node : nodes) {
+                    try {
+                        node.send(command);
+                        // Break after first success, we just want to send command to one node per cluster:
+                        successful = true;
+                        break;
+                    } catch (ProcessingException ex) {
+                        LOG.error(ex.getMessage(), ex);
+                        error = ex.getErrorMessage();
+                    }
                 }
-            }
-            // If no success, throw exception:
-            if (!successful) {
-                throw new UpdateOperationException(error);
+                // If all nodes failed, throw exception:
+                if (!successful) {
+                    throw new UpdateOperationException(error);
+                }
+            } else {
+                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Cannot perform operation. Some clusters of your ensemble may be down or unreachable."));
             }
         }
     }
