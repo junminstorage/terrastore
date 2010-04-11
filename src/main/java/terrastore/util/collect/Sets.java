@@ -38,4 +38,8 @@ public class Sets {
     public static <E> Set<E> limited(Set<E> source, int limit) {
         return new LimitedSet<E>(source, limit);
     }
+
+    public static <E> Set<E> cons(E element, Set<E> set) {
+        return com.google.common.collect.Sets.union(linked(element), set);
+    }
 }
