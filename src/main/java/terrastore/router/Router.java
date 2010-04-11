@@ -107,13 +107,15 @@ public interface Router {
      * Find the route for all {@link terrastore.communication.Node}s belonging to the given {@link terrastore.communication.Cluster}.
      *
      * @param cluster The cluster whose nodes must be returned.
-     * @return A set of all nodes belonging to the cluster.
+     * @return A set of all nodes belonging to the cluster:
+     * the actual order of returned nodes depends on the actual Router implementation.
      */
     public Set<Node> clusterRoute(Cluster cluster);
 
     /**
      * Find the route for all {@link terrastore.communication.Node}s of all {@link terrastore.communication.Cluster}s.
-     * @return A map containing all clusters with the related set of nodes.
+     * @return A map containing all clusters with the related set of nodes:
+     * the actual order of returned nodes per cluster depends on the actual Router implementation
      */
     public Map<Cluster, Set<Node>> broadcastRoute();
 
