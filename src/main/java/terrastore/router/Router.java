@@ -108,14 +108,14 @@ public interface Router {
      *
      * @param cluster The cluster whose nodes must be returned.
      * @return A set of all nodes belonging to the cluster.
-     * @throws MissingRouteException If something wrong happens while finding routes.
      */
-    public Set<Node> clusterRoute(Cluster cluster) throws MissingRouteException;
+    public Set<Node> clusterRoute(Cluster cluster);
 
     /**
-     * Find a route for one node per cluster.
+     * Find the route for all {@link terrastore.communication.Node}s of all {@link terrastore.communication.Cluster}s.
+     * @return A map containing all clusters with the related set of nodes.
      */
-    public Map<Cluster, Set<Node>> broadcastRoute() throws MissingRouteException;
+    public Map<Cluster, Set<Node>> broadcastRoute();
 
     /**
      * Cleanup all routes.

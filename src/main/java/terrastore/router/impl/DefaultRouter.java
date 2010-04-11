@@ -175,22 +175,18 @@ public class DefaultRouter implements Router {
     }
 
     @Override
-    public Set<Node> clusterRoute(Cluster cluster) throws MissingRouteException {
+    public Set<Node> clusterRoute(Cluster cluster) {
         stateLock.readLock().lock();
         try {
             Set<Node> nodes = clusterPartitioner.getNodesFor(cluster);
-            if (!nodes.isEmpty()) {
-                return nodes;
-            } else {
-                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
-            }
+            return nodes;
         } finally {
             stateLock.readLock().unlock();
         }
     }
 
     @Override
-    public Map<Cluster, Set<Node>> broadcastRoute() throws MissingRouteException {
+    public Map<Cluster, Set<Node>> broadcastRoute() {
         stateLock.readLock().lock();
         try {
             Map<Cluster, Set<Node>> nodes = new HashMap<Cluster, Set<Node>>(clustersCache.size());
@@ -199,11 +195,7 @@ public class DefaultRouter implements Router {
                     nodes.put(cluster, Sets.hash(localNode));
                 } else {
                     Set<Node> clusterNodes = clusterPartitioner.getNodesFor(cluster);
-                    if (!clusterNodes.isEmpty()) {
-                        nodes.put(cluster, clusterNodes);
-                    } else {
-                        throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
-                    }
+                    nodes.put(cluster, clusterNodes);
                 }
             }
             return nodes;

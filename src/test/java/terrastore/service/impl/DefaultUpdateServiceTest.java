@@ -15,6 +15,7 @@
  */
 package terrastore.service.impl;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -117,19 +118,20 @@ public class DefaultUpdateServiceTest {
     }
 
     @Test(expected = UpdateOperationException.class)
-    public void testAddBucketFailsWhenMissingRoute() throws Exception {
+    public void testAddBucketFailsWhenNoNodesForCluster() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
-        expectLastCall().andThrow(new MissingRouteException(new ErrorMessage(0, "")));
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Collections.emptySet()})).once();
 
-        replay(router);
+        replay(cluster1, router);
 
         try {
             DefaultUpdateService service = new DefaultUpdateService(router);
             service.addBucket("bucket");
         } finally {
-            verify(router);
+            verify(cluster1, router);
         }
     }
 
@@ -203,19 +205,20 @@ public class DefaultUpdateServiceTest {
     }
 
     @Test(expected = UpdateOperationException.class)
-    public void testRemoveBucketFailsWhenMissingRoute() throws Exception {
+    public void testRemoveBucketFailsWhenNoNodesForCluster() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
-        expectLastCall().andThrow(new MissingRouteException(new ErrorMessage(0, "")));
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Collections.emptySet()})).once();
 
-        replay(router);
+        replay(cluster1, router);
 
         try {
             DefaultUpdateService service = new DefaultUpdateService(router);
             service.removeBucket("bucket");
         } finally {
-            verify(router);
+            verify(cluster1, router);
         }
     }
 

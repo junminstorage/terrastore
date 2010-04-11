@@ -229,51 +229,40 @@ public class DefaultQueryService implements QueryService {
     }
 
     private Set<String> getAllKeysForBucket(String bucket) throws QueryOperationException {
-        try {
-            GetKeysCommand command = new GetKeysCommand(bucket);
-            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-            Set<String> keys = multicastGetAllKeysCommand(perClusterNodes, command);
-            return keys;
-        } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new QueryOperationException(error);
-        }
+        GetKeysCommand command = new GetKeysCommand(bucket);
+        Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+        Set<String> keys = multicastGetAllKeysCommand(perClusterNodes, command);
+        return keys;
     }
 
     private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws QueryOperationException {
-        try {
-            RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
-            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-            Set<String> keys = multicastRangeQueryCommand(perClusterNodes, command);
-            return keys;
-        } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new QueryOperationException(error);
-        }
+        RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
+        Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+        Set<String> keys = multicastRangeQueryCommand(perClusterNodes, command);
+        return keys;
     }
 
     private Set<String> multicastGetAllKeysCommand(Map<Cluster, Set<Node>> perClusterNodes, GetKeysCommand command) throws QueryOperationException {
         Set<String> keys = new HashSet<String>();
         for (Map.Entry<Cluster, Set<Node>> entry : perClusterNodes.entrySet()) {
             Set<Node> nodes = entry.getValue();
-            boolean successful = false;
+            boolean successful = true;
             ErrorMessage error = null;
-            // Try to broadcast operation:
+            // Try to send command, stopping after first successful attempt:
             for (Node node : nodes) {
                 try {
                     Set<String> partial = node.<Set<String>>send(command);
                     keys.addAll(partial);
-                    // Break after first success, we just want to broadcast to one node per cluster:
+                    // Break after first success, we just want to send command to one node per cluster:
                     successful = true;
                     break;
                 } catch (ProcessingException ex) {
                     LOG.error(ex.getMessage(), ex);
                     error = ex.getErrorMessage();
+                    successful = false;
                 }
             }
-            // If no success, throw exception:
+            // If all nodes failed, throw exception:
             if (!successful) {
                 throw new QueryOperationException(error);
             }
@@ -287,22 +276,23 @@ public class DefaultQueryService implements QueryService {
         // That is, we need to retrieve all keys in range order and take only a limited, ordered, subset.
         for (Map.Entry<Cluster, Set<Node>> entry : perClusterNodes.entrySet()) {
             Set<Node> nodes = entry.getValue();
-            boolean successful = false;
+            boolean successful = true;
             ErrorMessage error = null;
-            // Try to broadcast operation:
+            // Try to send command, stopping after first successful attempt:
             for (Node node : nodes) {
                 try {
                     Set<String> partial = node.<Set<String>>send(command);
                     keys.addAll(partial);
-                    // Break after first success, we just want to broadcast to one node per cluster:
+                    // Break after first success, we just want to send command to one node per cluster:
                     successful = true;
                     break;
                 } catch (ProcessingException ex) {
                     LOG.error(ex.getMessage(), ex);
                     error = ex.getErrorMessage();
+                    successful = false;
                 }
             }
-            // If no success, throw exception:
+            // If all nodes failed, throw exception:
             if (!successful) {
                 throw new QueryOperationException(error);
             }

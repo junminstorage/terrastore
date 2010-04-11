@@ -17,6 +17,7 @@ package terrastore.service.impl;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,7 +33,6 @@ import terrastore.communication.protocol.RangeQueryCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
-import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.service.QueryOperationException;
 import terrastore.store.Value;
@@ -202,21 +202,44 @@ public class DefaultQueryServiceTest {
         }
     }
 
-    @Test(expected = QueryOperationException.class)
-    public void testGetAllValuesFailsWithMissingRoute() throws Exception {
+    @Test
+    public void testGetAllValuesIgnoresClusterWithNoNodes() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
-        expectLastCall().andThrow(new MissingRouteException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Collections.emptySet(), Sets.linked(node1, node2)})).once();
 
-        replay(router);
+        node1.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash("test1", "test2")).once();
 
-        try {
-            DefaultQueryService service = new DefaultQueryService(router);
-            service.getAllValues("bucket", 0);
-        } finally {
-            verify(router);
-        }
+        router.routeToNodesFor("bucket", Sets.hash("test1", "test2"));
+        expectLastCall().andReturn(nodeToKeys).once();
+
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(cluster1, cluster2, node1, node2, router);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        Map<String, Value> result = service.getAllValues("bucket", 0);
+        assertEquals(2, result.size());
+        assertEquals(JSON_VALUE, new String(result.get("test1").getBytes()));
+        assertEquals(JSON_VALUE, new String(result.get("test2").getBytes()));
+
+        verify(cluster1, cluster2, node1, node2, router);
     }
 
     @Test
@@ -467,8 +490,8 @@ public class DefaultQueryServiceTest {
         }
     }
 
-    @Test(expected = QueryOperationException.class)
-    public void testQueryByRangeFailsWithMissingRoute() throws Exception {
+    @Test
+    public void testQueryByRangeIgnoresClusterWithNoNodes() throws Exception {
         Comparator stringComparator = new Comparator() {
 
             @Override
@@ -477,22 +500,47 @@ public class DefaultQueryServiceTest {
             }
         };
 
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
         Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
-        expectLastCall().andThrow(new MissingRouteException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Collections.emptySet(), Sets.linked(node1, node2)})).once();
 
-        replay(router);
+        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash("test1", "test2")).once();
 
-        try {
-            Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-            comparators.put("order", stringComparator);
-            DefaultQueryService service = new DefaultQueryService(router);
-            service.setComparators(comparators);
-            service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate(null), 0);
-        } finally {
-            verify(router);
-        }
+        router.routeToNodesFor("bucket", Sets.hash("test1", "test2"));
+        expectLastCall().andReturn(nodeToKeys).once();
+
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(cluster1, cluster2, node1, node2, router);
+
+        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
+        comparators.put("order", stringComparator);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        service.setComparators(comparators);
+
+        Map<String, Value> result = service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate(null), 0);
+        assertEquals(2, result.size());
+        assertEquals("test1", result.keySet().toArray()[0]);
+        assertEquals("test2", result.keySet().toArray()[1]);
+
+        verify(cluster1, cluster2, node1, node2, router);
     }
 
     @Test
@@ -575,5 +623,151 @@ public class DefaultQueryServiceTest {
         } finally {
             verify(router);
         }
+    }
+
+    @Test
+    public void testQueryByPredicateSucceedsBySkippingFailingNodes() throws Exception {
+        Condition trueCondition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                return true;
+            }
+        };
+
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test1", "test2")));
+        Map<String, Value> values = new HashMap<String, Value>();
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash("test1", "test2")).once();
+
+        router.routeToNodesFor("bucket", Sets.hash("test1", "test2"));
+        expectLastCall().andReturn(nodeToKeys).once();
+
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values).once();
+
+        replay(cluster1, node1, node2, router);
+
+        Map<String, Condition> conditions = new HashMap<String, Condition>();
+        conditions.put("test", trueCondition);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        service.setConditions(conditions);
+
+        Map<String, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
+        assertEquals(2, result.size());
+        assertEquals(JSON_VALUE, new String(result.get("test1").getBytes()));
+        assertEquals(JSON_VALUE, new String(result.get("test2").getBytes()));
+
+        verify(cluster1, node1, node2, router);
+    }
+
+    @Test(expected = QueryOperationException.class)
+    public void testQueryByPredicateFailsWhenAllNodesFail() throws Exception {
+        Condition trueCondition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                return true;
+            }
+        };
+
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test1", "test2")));
+        Map<String, Value> values = new HashMap<String, Value>();
+        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+
+        replay(cluster1, node1, node2, router);
+
+        try {
+            Map<String, Condition> conditions = new HashMap<String, Condition>();
+            conditions.put("test", trueCondition);
+
+            DefaultQueryService service = new DefaultQueryService(router);
+            service.setConditions(conditions);
+
+            service.queryByPredicate("bucket", new Predicate("test:true"));
+        } finally {
+            verify(cluster1, node1, node2, router);
+        }
+    }
+
+    @Test
+    public void testQueryByPredicateIgnoresClusterWithNoNodes() throws Exception {
+        Condition trueCondition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                return true;
+            }
+        };
+
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Collections.emptySet(), Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash("test1", "test2")).once();
+
+        router.routeToNodesFor("bucket", Sets.hash("test1", "test2"));
+        expectLastCall().andReturn(nodeToKeys).once();
+
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(cluster1, cluster2, node1, node2, router);
+
+        Map<String, Condition> conditions = new HashMap<String, Condition>();
+        conditions.put("test", trueCondition);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        service.setConditions(conditions);
+
+        Map<String, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
+        assertEquals(2, result.size());
+        assertTrue(result.containsKey("test1"));
+        assertTrue(result.containsKey("test2"));
+
+        verify(cluster1, cluster2, node1, node2, router);
     }
 }

@@ -23,9 +23,9 @@ import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.EnsemblePartitioner;
+import terrastore.router.MissingRouteException;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
-import terrastore.router.MissingRouteException;
 
 /**
  * @author Sergio Bossa
@@ -104,7 +104,7 @@ public class DefaultRouterTest {
     }
 
     @Test
-    public void testClusterRoute() throws MissingRouteException {
+    public void testClusterRoute() {
         EnsemblePartitioner ensemblePartitioner = createMock(EnsemblePartitioner.class);
         ClusterPartitioner clusterPartitioner = createMock(ClusterPartitioner.class);
         Cluster cluster1 = createMock(Cluster.class);
@@ -144,7 +144,7 @@ public class DefaultRouterTest {
     }
 
     @Test
-    public void testBroadcastRoute() throws MissingRouteException {
+    public void testBroadcastRoute() {
         EnsemblePartitioner ensemblePartitioner = createMock(EnsemblePartitioner.class);
         ClusterPartitioner clusterPartitioner = createMock(ClusterPartitioner.class);
         Cluster cluster1 = createMock(Cluster.class);
