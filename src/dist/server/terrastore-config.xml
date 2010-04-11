@@ -70,19 +70,6 @@
         <constructor-arg value="SECRET-KEY"/>
     </bean>
 
-    <bean id="eventBus" class="terrastore.event.impl.AsyncEventBus">
-        <constructor-arg>
-            <bean class="terrastore.util.annotation.AutowiringList">
-                <constructor-arg ref="event-listeners"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.event.EventListener"/>
-            </bean>
-        </constructor-arg>
-        <constructor-arg value="3600"/>
-    </bean>
-
-    <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
-
     <!-- Router -->
 
     <bean id="router" class="terrastore.router.impl.DefaultRouter">
@@ -103,21 +90,40 @@
 
     <bean id="hashFunction" class="terrastore.router.impl.DefaultHashFunction"/>
 
-    <!-- Coordinator -->
+    <!-- Store -->
 
-    <bean id="coordinator" class="terrastore.cluster.impl.TCCoordinator" factory-method="getInstance">
-        <property name="maxFrameLength" value="10485760"/>
-        <property name="router" ref="router"/>
+    <bean id="store" class="terrastore.store.impl.TCStore" factory-method="getInstance">
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="backupManager" ref="backupManager"/>
         <property name="eventBus" ref="eventBus"/>
-        <property name="flushStrategy" ref="flushStrategy"/>
-        <property name="flushCondition" ref="flushCondition"/>
     </bean>
 
     <bean id="snapshotManager" class="terrastore.store.impl.LocalSnapshotManager"/>
 
     <bean id="backupManager" class="terrastore.store.impl.DefaultBackupManager"/>
+
+    <bean id="eventBus" class="terrastore.event.impl.AsyncEventBus" destroy-method="shutdown">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiringList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="3600"/>
+    </bean>
+
+    <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
+
+    <!-- Coordinator -->
+
+    <bean id="coordinator" class="terrastore.cluster.impl.TCCoordinator" factory-method="getInstance">
+        <property name="maxFrameLength" value="10485760"/>
+        <property name="store" ref="store"/>
+        <property name="router" ref="router"/>
+        <property name="flushStrategy" ref="flushStrategy"/>
+        <property name="flushCondition" ref="flushCondition"/>
+    </bean>
 
     <bean id="flushStrategy" class="terrastore.store.impl.SequentialFlushStrategy"/>
 

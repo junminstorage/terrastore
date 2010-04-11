@@ -22,6 +22,7 @@ import org.terracotta.collections.HashcodeLockStrategy;
 import org.terracotta.collections.LockType;
 import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.modules.annotations.Root;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
 import terrastore.store.BackupManager;
@@ -39,11 +40,18 @@ import terrastore.store.StoreOperationException;
 @HonorTransient
 public class TCStore implements Store {
 
+    @Root
+    private static final TCStore INSTANCE = new TCStore();
+    //
     private final ConcurrentDistributedMap<String, Bucket> buckets;
     private transient volatile SnapshotManager snapshotManager;
     private transient volatile BackupManager backupManager;
     private transient volatile EventBus eventBus;
     private transient volatile ExecutorService taskExecutor;
+
+    public static TCStore getInstance() {
+        return INSTANCE;
+    }
 
     public TCStore() {
         buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy());

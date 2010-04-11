@@ -52,12 +52,8 @@ import terrastore.communication.remote.RemoteNode;
 import terrastore.ensemble.Discovery;
 import terrastore.ensemble.impl.DefaultDiscovery;
 import terrastore.ensemble.impl.RemoteNodeFactory;
-import terrastore.event.EventBus;
 import terrastore.router.Router;
-import terrastore.store.BackupManager;
-import terrastore.store.SnapshotManager;
 import terrastore.store.Store;
-import terrastore.store.impl.TCStore;
 
 /**
  * @author Sergio Bossa
@@ -74,7 +70,6 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     @InjectedDsoInstance
     private DsoCluster dsoCluster;
     //
-    private Store store = new TCStore();
     private ReentrantLock stateLock = new ReentrantLock();
     private Map<String, Address> addressTable = new HashMap<String, Address>();
     private Condition setupAddressCondition = stateLock.newCondition();
@@ -95,15 +90,12 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     //
     private volatile transient ExecutorService globalExecutor;
     //
+    private volatile transient Store store;
     private volatile transient Router router;
     private volatile transient FlushStrategy flushStrategy;
     private volatile transient FlushCondition flushCondition;
     //
     private volatile transient Discovery ensembleDiscovery;
-    //
-    private volatile transient SnapshotManager snapshotManager;
-    private volatile transient BackupManager backupManager;
-    private volatile transient EventBus eventBus;
 
     private TCCoordinator() {
     }
@@ -136,23 +128,13 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     }
 
     @Override
+    public void setStore(Store store) {
+        this.store = store;
+    }
+
+    @Override
     public void setRouter(Router router) {
         this.router = router;
-    }
-
-    @Override
-    public void setSnapshotManager(SnapshotManager snapshotManager) {
-        this.snapshotManager = snapshotManager;
-    }
-
-    @Override
-    public void setBackupManager(BackupManager backupManager) {
-        this.backupManager = backupManager;
-    }
-
-    @Override
-    public void setEventBus(EventBus eventBus) {
-        this.eventBus = eventBus;
     }
 
     @Override
@@ -176,10 +158,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
             // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
             globalExecutor = Executors.newFixedThreadPool(globalExecutorThreads);
-            // Do manual injection on shared objects:
-            store.setSnapshotManager(snapshotManager);
-            store.setBackupManager(backupManager);
-            store.setEventBus(eventBus);
+            // Configure global task executor:
             store.setTaskExecutor(globalExecutor);
             // Setup ensemble:
             setupEnsemble(ensembleConfiguration);
@@ -357,7 +336,6 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         localProcessor.stop();
         remoteProcessor.stop();
         ensembleDiscovery.shutdown();
-        eventBus.shutdown();
         globalExecutor.shutdownNow();
     }
 
