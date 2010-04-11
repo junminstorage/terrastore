@@ -178,8 +178,11 @@ public class DefaultRouter implements Router {
     public Set<Node> clusterRoute(Cluster cluster) {
         stateLock.readLock().lock();
         try {
-            Set<Node> nodes = clusterPartitioner.getNodesFor(cluster);
-            return nodes;
+            if (cluster.isLocal()) {
+                return Sets.cons(localNode, clusterPartitioner.getNodesFor(cluster));
+            } else {
+                return clusterPartitioner.getNodesFor(cluster);
+            }
         } finally {
             stateLock.readLock().unlock();
         }
@@ -192,10 +195,9 @@ public class DefaultRouter implements Router {
             Map<Cluster, Set<Node>> nodes = new HashMap<Cluster, Set<Node>>(clustersCache.size());
             for (Cluster cluster : clustersCache) {
                 if (cluster.isLocal()) {
-                    nodes.put(cluster, Sets.hash(localNode));
+                    nodes.put(cluster, Sets.cons(localNode, clusterPartitioner.getNodesFor(cluster)));
                 } else {
-                    Set<Node> clusterNodes = clusterPartitioner.getNodesFor(cluster);
-                    nodes.put(cluster, clusterNodes);
+                    nodes.put(cluster, clusterPartitioner.getNodesFor(cluster));
                 }
             }
             return nodes;
