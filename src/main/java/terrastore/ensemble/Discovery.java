@@ -23,6 +23,15 @@ public interface Discovery {
     public void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException;
 
     /**
+     * Update the given {@link terrastore.communication.Cluster} membership.
+     *
+     * @param cluster The cluster to update.
+     * @throws MissingRouteException If unable to establish a route to the given cluster.
+     * @throws ProcessingException If unable to process membership messages from the given host.
+     */
+    public void update(Cluster cluster) throws MissingRouteException, ProcessingException;
+
+    /**
      * Schedule membership updates toward joined hosts.<br>
      * Please note that membership updates are only exchanged between previously joined hosts.
      *
