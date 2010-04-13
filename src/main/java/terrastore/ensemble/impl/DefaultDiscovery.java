@@ -53,7 +53,7 @@ public class DefaultDiscovery implements Discovery {
     }
 
     @Override
-    public synchronized void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
+    public final synchronized void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
         if (!cluster.isLocal()) {
             String[] hostPortPair = seed.split(":");
             bootstrapNodes.put(cluster, nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed));
@@ -64,7 +64,34 @@ public class DefaultDiscovery implements Discovery {
     }
 
     @Override
-    public synchronized void schedule(long delay, long interval, TimeUnit timeUnit) {
+    public final void update(Cluster cluster) throws MissingRouteException, ProcessingException {
+        try {
+            List<Node> nodes = perClusterNodes.get(cluster);
+            if (nodes == null || nodes.isEmpty()) {
+                LOG.debug("Bootstrapping discovery for cluster {}", cluster);
+                Node bootstrap = bootstrapNodes.get(cluster);
+                if (bootstrap != null) {
+                    try {
+                        bootstrap.connect();
+                        View view = requestMembership(cluster, Arrays.asList(bootstrap));
+                        calculateView(cluster, view);
+                    } finally {
+                        bootstrap.disconnect();
+                    }
+                }
+            } else {
+                LOG.debug("Updating cluster view for {}", cluster);
+                View view = requestMembership(cluster, nodes);
+                calculateView(cluster, view);
+            }
+        } catch (Exception ex) {
+            LOG.info("Error updating membership information for cluster {}", cluster);
+            LOG.debug(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public final synchronized void schedule(long delay, long interval, TimeUnit timeUnit) {
         if (!scheduled && !shutdown) {
             scheduler = Executors.newScheduledThreadPool(bootstrapNodes.size());
             for (final Cluster cluster : bootstrapNodes.keySet()) {
@@ -95,33 +122,10 @@ public class DefaultDiscovery implements Discovery {
     }
 
     private void cancelScheduler() {
-        scheduler.shutdownNow();
-        scheduled = false;
-    }
-
-    private void update(Cluster cluster) throws MissingRouteException, ProcessingException {
-        try {
-            List<Node> nodes = perClusterNodes.get(cluster);
-            if (nodes == null || nodes.isEmpty()) {
-                LOG.debug("Bootstrapping discovery for cluster {}", cluster);
-                Node bootstrap = null;
-                try {
-                    bootstrap = bootstrapNodes.get(cluster);
-                    bootstrap.connect();
-                    View view = requestMembership(cluster, Arrays.asList(bootstrap));
-                    calculateView(cluster, view);
-                } finally {
-                    bootstrap.disconnect();
-                }
-            } else {
-                LOG.debug("Updating cluster view for {}", cluster);
-                View view = requestMembership(cluster, nodes);
-                calculateView(cluster, view);
-            }
-        } catch (Exception ex) {
-            LOG.info("Error updating membership information for cluster {}", cluster);
-            LOG.debug(ex.getMessage(), ex);
+        if (scheduler != null) {
+            scheduler.shutdownNow();
         }
+        scheduled = false;
     }
 
     private View requestMembership(Cluster cluster, List<Node> contactNodes) throws MissingRouteException, ProcessingException {

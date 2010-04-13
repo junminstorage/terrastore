@@ -33,6 +33,8 @@ public class DefaultDiscoveryTest {
         makeThreadSafe(discoveredNode, true);
         discoveredNode.connect();
         expectLastCall().once();
+        discoveredNode.disconnect();
+        expectLastCall().once();
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
@@ -48,17 +50,66 @@ public class DefaultDiscoveryTest {
 
         replay(seed, discoveredNode, nodeFactory, router);
 
+        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
         try {
-            DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
             discovery.join(cluster, "localhost:6000");
             Thread.sleep(3000);
         } finally {
+            discovery.shutdown();
             verify(seed, discoveredNode, nodeFactory, router);
         }
     }
 
     @Test
-    public void testJoinAndScheduleWithNewConnectedNode() throws Exception {
+    public void testSchedule() throws Exception {
+        Cluster cluster = new Cluster("cluster", false);
+
+        Node seed = createMock(Node.class);
+        makeThreadSafe(seed, true);
+        seed.connect();
+        expectLastCall().once();
+        seed.send(EasyMock.<MembershipCommand>anyObject());
+        expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered", "localhost", 6000))));
+        seed.disconnect();
+        expectLastCall().once();
+        //
+        Node discoveredNode = createMock(Node.class);
+        makeThreadSafe(discoveredNode, true);
+        discoveredNode.connect();
+        expectLastCall().once();
+        discoveredNode.disconnect();
+        expectLastCall().once();
+        discoveredNode.send(EasyMock.<MembershipCommand>anyObject());
+        expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered", "localhost", 6000))));
+        //
+        RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
+        makeThreadSafe(nodeFactory, true);
+        nodeFactory.makeNode("localhost", 6000, "localhost:6000");
+        expectLastCall().andReturn(seed).once();
+        nodeFactory.makeNode("localhost", 6000, "discovered");
+        expectLastCall().andReturn(discoveredNode).once();
+        //
+        Router router = createMock(Router.class);
+        makeThreadSafe(router, true);
+        router.addRouteTo(cluster, discoveredNode);
+        expectLastCall().once();
+
+        replay(seed, discoveredNode, nodeFactory, router);
+
+        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
+        try {
+            discovery.join(cluster, "localhost:6000");
+            Thread.sleep(3000);
+            discovery.schedule(0, 10, TimeUnit.SECONDS);
+            Thread.sleep(3000);
+        } finally {
+            discovery.shutdown();
+            verify(seed, discoveredNode, nodeFactory, router);
+        }
+    }
+
+    @Test
+    public void testJoinAndUpdateWithNewConnectedNode() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
         Node seed = createMock(Node.class);
@@ -107,8 +158,8 @@ public class DefaultDiscoveryTest {
         DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
         try {
             discovery.join(cluster, "localhost:6000");
-            discovery.schedule(0, 10, TimeUnit.SECONDS);
             Thread.sleep(3000);
+            discovery.update(cluster);
         } finally {
             discovery.shutdown();
             verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
@@ -116,7 +167,7 @@ public class DefaultDiscoveryTest {
     }
 
     @Test
-    public void testJoinAndScheduleWithDisconnectedNode() throws Exception {
+    public void testJoinAndUpdateWithDisconnectedNode() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
         Node seed = createMock(Node.class);
@@ -171,8 +222,8 @@ public class DefaultDiscoveryTest {
         DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
         try {
             discovery.join(cluster, "localhost:6000");
-            discovery.schedule(0, 10, TimeUnit.SECONDS);
             Thread.sleep(3000);
+            discovery.update(cluster);
         } finally {
             discovery.shutdown();
             verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
@@ -180,7 +231,9 @@ public class DefaultDiscoveryTest {
     }
 
     @Test
-    public void testScheduleDoesNothingIfNoJoins() throws Exception {
+    public void testUpdateDoesNothingIfNoJoin() throws Exception {
+        Cluster cluster = new Cluster("cluster", false);
+
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
         //
@@ -191,8 +244,7 @@ public class DefaultDiscoveryTest {
 
         DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
         try {
-            discovery.schedule(0, 10, TimeUnit.SECONDS);
-            Thread.sleep(3000);
+            discovery.update(cluster);
         } finally {
             discovery.shutdown();
             verify(nodeFactory, router);
