@@ -71,6 +71,10 @@
         </file>
         <file>
             <outputDirectory>terrastore-server</outputDirectory>
+            <source>src/dist/server/monitoring-config.xml</source>
+        </file>
+        <file>
+            <outputDirectory>terrastore-server</outputDirectory>
             <source>src/dist/server/terrastore-config.xml</source>
         </file>
         <file>

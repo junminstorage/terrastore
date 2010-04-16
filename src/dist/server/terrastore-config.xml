@@ -10,6 +10,7 @@
     <import resource="conditions-config.xml"/>
     <import resource="functions-config.xml"/>
     <import resource="events-config.xml"/>
+    <import resource="monitoring-config.xml"/>
 
     <!-- Server -->
 
