@@ -1,4 +1,4 @@
-package terrastore.ensemble.impl;
+package terrastore.cluster.ensemble.impl;
 
 import java.io.Serializable;
 import java.util.Set;

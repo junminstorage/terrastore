@@ -13,12 +13,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster;
+package terrastore.cluster.coordinator;
 
-import terrastore.ensemble.EnsembleConfiguration;
+import java.util.concurrent.ExecutorService;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
-import java.util.concurrent.ExecutorService;
+import terrastore.communication.LocalNodeFactory;
+import terrastore.communication.RemoteNodeFactory;
+import terrastore.cluster.ensemble.Ensemble;
 import terrastore.router.Router;
 import terrastore.store.Store;
 
@@ -38,6 +41,12 @@ public interface Coordinator {
     public void setStore(Store store);
 
     public void setRouter(Router router);
+
+    public void setEnsemble(Ensemble ensemble);
+
+    public void setLocalNodeFactory(LocalNodeFactory localNodeFactory);
+
+    public void setRemoteNodeFactory(RemoteNodeFactory remoteNodeFactory);
 
     public void setFlushStrategy(FlushStrategy flushStrategy);
 

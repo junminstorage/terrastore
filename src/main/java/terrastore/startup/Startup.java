@@ -40,9 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-import terrastore.cluster.Coordinator;
-import terrastore.ensemble.EnsembleConfiguration;
-import terrastore.ensemble.support.EnsembleConfigurationUtils;
+import terrastore.cluster.coordinator.Coordinator;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
+import terrastore.cluster.ensemble.EnsembleConfigurationUtils;
 
 /**
  * @author Sergio Bossa

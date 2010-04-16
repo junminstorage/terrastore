@@ -1,16 +1,18 @@
-package terrastore.ensemble;
+package terrastore.cluster.ensemble;
 
 import java.util.concurrent.TimeUnit;
 import terrastore.communication.Cluster;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.RemoteNodeFactory;
 import terrastore.router.MissingRouteException;
+import terrastore.router.Router;
 
 /**
- * Discovery process to join ensemble clusters and schedule membership updates.
+ * Ensemble interface to join other clusters and schedule membership updates.
  *
  * @author Sergio Bossa
  */
-public interface Discovery {
+public interface Ensemble {
 
     /**
      * Join the given {@link terrastore.communication.Cluster}, using the given seed host specified as an <i>host</i>:<i>port</i> string.
@@ -45,4 +47,18 @@ public interface Discovery {
      * Shutdown by cancelling scheduled updates and disconnecting discovered nodes.
      */
     public void shutdown();
+
+    /**
+     * Get the {@link terrastore.router.Router} used to manage cluster routes.
+     *
+     * @return The {@link terrastore.router.Router} instance.
+     */
+    public Router getRouter();
+
+    /**
+     * Get the {@link terrastore.communication.RemoteNodeFactory} used to create remote nodes.
+     *
+     * @return The {@link terrastore.communication.RemoteNodeFactory} instance.
+     */
+    public RemoteNodeFactory getRemoteNodeFactory();
 }

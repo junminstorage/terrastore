@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
 
@@ -68,7 +69,7 @@ public class RemoteNode implements Node {
     private volatile Channel clientChannel;
     private volatile boolean connected;
 
-    public RemoteNode(String host, int port, String name, int maxFrameLength, long timeoutInMillis) {
+    protected RemoteNode(String host, int port, String name, int maxFrameLength, long timeoutInMillis) {
         this.host = host;
         this.port = port;
         this.name = name;
@@ -244,6 +245,30 @@ public class RemoteNode implements Node {
             pipeline.addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
             pipeline.addLast("HANDLER", clientHandler);
             return pipeline;
+        }
+    }
+
+    public static class Factory implements RemoteNodeFactory {
+
+        private int defaultMaxFrameLength;
+        private int defaultNodeTimeout;
+
+        @Override
+        public Node makeRemoteNode(String host, int port, String name) {
+            return new RemoteNode(host, port, name, defaultMaxFrameLength, defaultNodeTimeout);
+        }
+
+        @Override
+        public RemoteNode makeRemoteNode(String host, int port, String name, int maxFrameLength, long nodeTimeout) {
+            return new RemoteNode(host, port, name, maxFrameLength, nodeTimeout);
+        }
+
+        public void setDefaultMaxFrameLength(int defaultMaxFrameLength) {
+            this.defaultMaxFrameLength = defaultMaxFrameLength;
+        }
+
+        public void setDefaultNodeTimeout(int defaultNodeTimeout) {
+            this.defaultNodeTimeout = defaultNodeTimeout;
         }
     }
 }

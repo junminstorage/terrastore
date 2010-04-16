@@ -5,7 +5,7 @@ import java.util.Set;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.ensemble.impl.View;
+import terrastore.cluster.ensemble.impl.View;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Store;

@@ -1,8 +1,7 @@
-package terrastore.ensemble;
+package terrastore.cluster.ensemble;
 
 import java.io.ByteArrayInputStream;
 import org.junit.Test;
-import terrastore.ensemble.support.EnsembleConfigurationUtils;
 
 /**
  * @author Sergio Bossa

@@ -115,14 +115,29 @@
 
     <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
 
-    <!-- Coordinator -->
+    <!-- Cluster -->
 
-    <bean id="coordinator" class="terrastore.cluster.impl.TCCoordinator" factory-method="getInstance">
-        <property name="maxFrameLength" value="10485760"/>
+    <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator" factory-method="getInstance">
+        <property name="maxFrameLength" value="104857600"/>
         <property name="store" ref="store"/>
         <property name="router" ref="router"/>
+        <property name="ensemble" ref="ensemble"/>
+        <property name="localNodeFactory" ref="localNodeFactory"/>
+        <property name="remoteNodeFactory" ref="remoteNodeFactory"/>
         <property name="flushStrategy" ref="flushStrategy"/>
         <property name="flushCondition" ref="flushCondition"/>
+    </bean>
+
+    <bean id="ensemble" class="terrastore.cluster.ensemble.impl.DefaultEnsemble">
+        <constructor-arg index="0" ref="router"/>
+        <constructor-arg index="1" ref="remoteNodeFactory"/>
+    </bean>
+
+    <bean id="localNodeFactory" class="terrastore.communication.local.LocalNode$Factory"/>
+
+    <bean id="remoteNodeFactory" class="terrastore.communication.remote.RemoteNode$Factory">
+        <property name="defaultMaxFrameLength" value="1048576"/>
+        <property name="defaultNodeTimeout" value="10000"/>
     </bean>
 
     <bean id="flushStrategy" class="terrastore.store.impl.SequentialFlushStrategy"/>

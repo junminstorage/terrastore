@@ -1,4 +1,4 @@
-package terrastore.ensemble.impl;
+package terrastore.cluster.ensemble.impl;
 
 import com.google.common.collect.Sets;
 import java.util.Arrays;
@@ -7,6 +7,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
+import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.MembershipCommand;
 import terrastore.router.Router;
 import static org.easymock.EasyMock.*;
@@ -14,7 +15,7 @@ import static org.easymock.EasyMock.*;
 /**
  * @author Sergio Bossa
  */
-public class DefaultDiscoveryTest {
+public class DefaultEnsembleTest {
 
     @Test
     public void testJoin() throws Exception {
@@ -38,9 +39,9 @@ public class DefaultDiscoveryTest {
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeNode("localhost", 6000, "localhost:6000");
+        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
         expectLastCall().andReturn(seed).once();
-        nodeFactory.makeNode("localhost", 6000, "discovered");
+        nodeFactory.makeRemoteNode("localhost", 6000, "discovered");
         expectLastCall().andReturn(discoveredNode).once();
         //
         Router router = createMock(Router.class);
@@ -50,12 +51,14 @@ public class DefaultDiscoveryTest {
 
         replay(seed, discoveredNode, nodeFactory, router);
 
-        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
+        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
         try {
-            discovery.join(cluster, "localhost:6000");
+            ensemble.join(cluster, "localhost:6000");
             Thread.sleep(3000);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
         } finally {
-            discovery.shutdown();
+            ensemble.shutdown();
             verify(seed, discoveredNode, nodeFactory, router);
         }
     }
@@ -84,9 +87,9 @@ public class DefaultDiscoveryTest {
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeNode("localhost", 6000, "localhost:6000");
+        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
         expectLastCall().andReturn(seed).once();
-        nodeFactory.makeNode("localhost", 6000, "discovered");
+        nodeFactory.makeRemoteNode("localhost", 6000, "discovered");
         expectLastCall().andReturn(discoveredNode).once();
         //
         Router router = createMock(Router.class);
@@ -96,14 +99,16 @@ public class DefaultDiscoveryTest {
 
         replay(seed, discoveredNode, nodeFactory, router);
 
-        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
+        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
         try {
-            discovery.join(cluster, "localhost:6000");
+            ensemble.join(cluster, "localhost:6000");
             Thread.sleep(3000);
-            discovery.schedule(0, 10, TimeUnit.SECONDS);
+            ensemble.schedule(0, 10, TimeUnit.SECONDS);
             Thread.sleep(3000);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
         } finally {
-            discovery.shutdown();
+            ensemble.shutdown();
             verify(seed, discoveredNode, nodeFactory, router);
         }
     }
@@ -139,11 +144,11 @@ public class DefaultDiscoveryTest {
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeNode("localhost", 6000, "localhost:6000");
+        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
         expectLastCall().andReturn(seed).once();
-        nodeFactory.makeNode("localhost", 6000, "discovered1");
+        nodeFactory.makeRemoteNode("localhost", 6000, "discovered1");
         expectLastCall().andReturn(discoveredNode1).once();
-        nodeFactory.makeNode("localhost", 6001, "discovered2");
+        nodeFactory.makeRemoteNode("localhost", 6001, "discovered2");
         expectLastCall().andReturn(discoveredNode2).once();
         //
         Router router = createMock(Router.class);
@@ -155,13 +160,15 @@ public class DefaultDiscoveryTest {
 
         replay(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
 
-        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
+        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
         try {
-            discovery.join(cluster, "localhost:6000");
+            ensemble.join(cluster, "localhost:6000");
             Thread.sleep(3000);
-            discovery.update(cluster);
+            ensemble.update(cluster);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
         } finally {
-            discovery.shutdown();
+            ensemble.shutdown();
             verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
@@ -201,11 +208,11 @@ public class DefaultDiscoveryTest {
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeNode("localhost", 6000, "localhost:6000");
+        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
         expectLastCall().andReturn(seed).once();
-        nodeFactory.makeNode("localhost", 6000, "discovered1");
+        nodeFactory.makeRemoteNode("localhost", 6000, "discovered1");
         expectLastCall().andReturn(discoveredNode1).once();
-        nodeFactory.makeNode("localhost", 6001, "discovered2");
+        nodeFactory.makeRemoteNode("localhost", 6001, "discovered2");
         expectLastCall().andReturn(discoveredNode2).once();
         //
         Router router = createMock(Router.class);
@@ -219,13 +226,15 @@ public class DefaultDiscoveryTest {
 
         replay(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
 
-        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
+        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
         try {
-            discovery.join(cluster, "localhost:6000");
+            ensemble.join(cluster, "localhost:6000");
             Thread.sleep(3000);
-            discovery.update(cluster);
+            ensemble.update(cluster);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
         } finally {
-            discovery.shutdown();
+            ensemble.shutdown();
             verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
@@ -242,11 +251,11 @@ public class DefaultDiscoveryTest {
 
         replay(nodeFactory, router);
 
-        DefaultDiscovery discovery = new DefaultDiscovery(router, nodeFactory);
+        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
         try {
-            discovery.update(cluster);
+            ensemble.update(cluster);
         } finally {
-            discovery.shutdown();
+            ensemble.shutdown();
             verify(nodeFactory, router);
         }
     }

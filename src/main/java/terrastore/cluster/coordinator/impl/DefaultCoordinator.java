@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster.impl;
+package terrastore.cluster.coordinator.impl;
 
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
@@ -38,20 +38,18 @@ import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import org.terracotta.modules.annotations.Root;
 import terrastore.communication.Node;
-import terrastore.cluster.Coordinator;
+import terrastore.cluster.coordinator.Coordinator;
 import terrastore.communication.ProcessingException;
-import terrastore.ensemble.EnsembleConfiguration;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.communication.Cluster;
+import terrastore.communication.LocalNodeFactory;
+import terrastore.communication.RemoteNodeFactory;
 import terrastore.router.MissingRouteException;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
-import terrastore.communication.local.LocalNode;
 import terrastore.communication.local.LocalProcessor;
 import terrastore.communication.remote.RemoteProcessor;
-import terrastore.communication.remote.RemoteNode;
-import terrastore.ensemble.Discovery;
-import terrastore.ensemble.impl.DefaultDiscovery;
-import terrastore.ensemble.impl.RemoteNodeFactory;
+import terrastore.cluster.ensemble.Ensemble;
 import terrastore.router.Router;
 import terrastore.store.Store;
 
@@ -60,12 +58,12 @@ import terrastore.store.Store;
  */
 @InstrumentedClass
 @HonorTransient
-public class TCCoordinator implements Coordinator, DsoClusterListener {
+public class DefaultCoordinator implements Coordinator, DsoClusterListener {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TCCoordinator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultCoordinator.class);
     //
     @Root
-    private static final TCCoordinator INSTANCE = new TCCoordinator();
+    private static final DefaultCoordinator INSTANCE = new DefaultCoordinator();
     //
     @InjectedDsoInstance
     private DsoCluster dsoCluster;
@@ -92,15 +90,17 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     //
     private volatile transient Store store;
     private volatile transient Router router;
+    private volatile transient Ensemble ensemble;
+    private volatile transient LocalNodeFactory localNodeFactory;
+    private volatile transient RemoteNodeFactory remoteNodeFactory;
     private volatile transient FlushStrategy flushStrategy;
     private volatile transient FlushCondition flushCondition;
-    //
-    private volatile transient Discovery ensembleDiscovery;
+    
 
-    private TCCoordinator() {
+    private DefaultCoordinator() {
     }
 
-    public static TCCoordinator getInstance() {
+    public static DefaultCoordinator getInstance() {
         return INSTANCE;
     }
 
@@ -135,6 +135,21 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
     @Override
     public void setRouter(Router router) {
         this.router = router;
+    }
+
+    @Override
+    public void setEnsemble(Ensemble ensemble) {
+        this.ensemble = ensemble;
+    }
+
+    @Override
+    public void setLocalNodeFactory(LocalNodeFactory localNodeFactory) {
+        this.localNodeFactory = localNodeFactory;
+    }
+
+    @Override
+    public void setRemoteNodeFactory(RemoteNodeFactory remoteNodeFactory) {
+        this.remoteNodeFactory = remoteNodeFactory;
     }
 
     @Override
@@ -258,7 +273,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
 
     private void setupThisNode() {
         localProcessor = new LocalProcessor(localProcessorThreads, store);
-        LocalNode thisNode = new LocalNode(thisNodeHost, thisNodePort, thisNodeName, localProcessor);
+        Node thisNode = localNodeFactory.makeLocalNode(thisNodeHost, thisNodePort, thisNodeName, localProcessor);
         localProcessor.start();
         thisNode.connect();
         nodes.put(thisNodeName, thisNode);
@@ -291,7 +306,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         if (remoteNodeAddress != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {
-                Node remoteNode = new RemoteNode(
+                Node remoteNode = remoteNodeFactory.makeRemoteNode(
                         remoteNodeAddress.getHost(),
                         remoteNodeAddress.getPort(),
                         remoteNodeName,
@@ -335,7 +350,7 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
         }
         localProcessor.stop();
         remoteProcessor.stop();
-        ensembleDiscovery.shutdown();
+        ensemble.shutdown();
         globalExecutor.shutdownNow();
     }
 
@@ -372,20 +387,13 @@ public class TCCoordinator implements Coordinator, DsoClusterListener {
             }
         }
         router.setupClusters(new HashSet<Cluster>(clusters.values()));
-        ensembleDiscovery = new DefaultDiscovery(router, new RemoteNodeFactory() {
-
-            @Override
-            public Node makeNode(String host, int port, String name) {
-                return new RemoteNode(host, port, name, maxFrameLength, nodeTimeout);
-            }
-        });
         for (Map.Entry<String, String> entry : ensembleConfiguration.getSeeds().entrySet()) {
             String cluster = entry.getKey();
             String seed = entry.getValue();
             LOG.info("Joining remote cluster {} with seed {}", cluster, seed);
-            ensembleDiscovery.join(clusters.get(cluster), seed);
+            ensemble.join(clusters.get(cluster), seed);
         }
-        ensembleDiscovery.schedule(ensembleConfiguration.getDiscoveryInterval(), ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
+        ensemble.schedule(ensembleConfiguration.getDiscoveryInterval(), ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
     }
 
     @InstrumentedClass

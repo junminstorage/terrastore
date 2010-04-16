@@ -1,4 +1,4 @@
-package terrastore.ensemble;
+package terrastore.cluster.ensemble;
 
 import java.util.HashMap;
 import java.util.LinkedList;
