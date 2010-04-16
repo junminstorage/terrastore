@@ -17,6 +17,7 @@ package terrastore.communication.local;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.communication.LocalNodeFactory;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
@@ -37,7 +38,7 @@ public class LocalNode implements Node {
     private final String name;
     private final LocalProcessor processor;
 
-    public LocalNode(String host, int port, String name, LocalProcessor processor) {
+    protected LocalNode(String host, int port, String name, LocalProcessor processor) {
         this.host = host;
         this.port = port;
         this.name = name;
@@ -91,5 +92,13 @@ public class LocalNode implements Node {
     @Override
     public String toString() {
         return name;
+    }
+
+    public static class Factory implements LocalNodeFactory {
+
+        @Override
+        public Node makeLocalNode(String host, int port, String name, LocalProcessor processor) {
+            return new LocalNode(host, port, name, processor);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package terrastore.ensemble;
+package terrastore.cluster.ensemble;
 
 /**
  * @author Sergio Bossa

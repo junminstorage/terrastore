@@ -1,4 +1,4 @@
-package terrastore.ensemble.impl;
+package terrastore.cluster.ensemble.impl;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -20,33 +20,36 @@ import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.ensemble.impl.View.Member;
+import terrastore.communication.RemoteNodeFactory;
+import terrastore.cluster.ensemble.impl.View.Member;
 import terrastore.communication.protocol.MembershipCommand;
-import terrastore.ensemble.Discovery;
+import terrastore.cluster.ensemble.Ensemble;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 
 /**
- * Default {@link terrastore.ensemble.Discovery} implementation.
+ * Default {@link terrastore.ensemble.Ensemble} implementation.
  *
  * @author Sergio Bossa
  */
-public class DefaultDiscovery implements Discovery {
+public class DefaultEnsemble implements Ensemble {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultDiscovery.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultEnsemble.class);
     //
     private final Router router;
-    private final RemoteNodeFactory nodeFactory;
+    private final RemoteNodeFactory remoteNodeFactory;
+    //
     private final ConcurrentMap<Cluster, Node> bootstrapNodes;
     private final ConcurrentMap<Cluster, List<Node>> perClusterNodes;
     private final ConcurrentMap<Cluster, View> perClusterViews;
     private volatile ScheduledExecutorService scheduler;
+    //
     private volatile boolean scheduled;
     private volatile boolean shutdown;
 
-    public DefaultDiscovery(Router router, RemoteNodeFactory nodeFactory) {
+    public DefaultEnsemble(Router router, RemoteNodeFactory nodeFactory) {
         this.router = router;
-        this.nodeFactory = nodeFactory;
+        this.remoteNodeFactory = nodeFactory;
         this.bootstrapNodes = new ConcurrentHashMap<Cluster, Node>();
         this.perClusterNodes = new ConcurrentHashMap<Cluster, List<Node>>();
         this.perClusterViews = new ConcurrentHashMap<Cluster, View>();
@@ -56,7 +59,7 @@ public class DefaultDiscovery implements Discovery {
     public final synchronized void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
         if (!cluster.isLocal()) {
             String[] hostPortPair = seed.split(":");
-            bootstrapNodes.put(cluster, nodeFactory.makeNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed));
+            bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed));
             update(cluster);
         } else {
             throw new IllegalArgumentException("No need to join local cluster: " + cluster);
@@ -121,6 +124,16 @@ public class DefaultDiscovery implements Discovery {
         disconnectAllClustersNodes();
     }
 
+    @Override
+    public Router getRouter() {
+        return router;
+    }
+
+    @Override
+    public RemoteNodeFactory getRemoteNodeFactory() {
+        return remoteNodeFactory;
+    }
+    
     private void cancelScheduler() {
         if (scheduler != null) {
             scheduler.shutdownNow();
@@ -177,7 +190,7 @@ public class DefaultDiscovery implements Discovery {
                 }
             }
             for (View.Member member : joiningMembers) {
-                Node node = nodeFactory.makeNode(member.getHost(), member.getPort(), member.getName());
+                Node node = remoteNodeFactory.makeRemoteNode(member.getHost(), member.getPort(), member.getName());
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
@@ -187,7 +200,7 @@ public class DefaultDiscovery implements Discovery {
             LOG.debug("No current view for cluster {}", cluster);
             LOG.debug("Updated view for cluster {} :  {}", cluster, updatedView);
             for (View.Member member : updatedView.getMembers()) {
-                Node node = nodeFactory.makeNode(member.getHost(), member.getPort(), member.getName());
+                Node node = remoteNodeFactory.makeRemoteNode(member.getHost(), member.getPort(), member.getName());
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);

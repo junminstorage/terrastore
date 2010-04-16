@@ -1,10 +1,10 @@
-package terrastore.ensemble.support;
+package terrastore.cluster.ensemble;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import org.codehaus.jackson.map.ObjectMapper;
-import terrastore.ensemble.EnsembleConfiguration;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
 
 /**
  * @author Sergio Bossa
