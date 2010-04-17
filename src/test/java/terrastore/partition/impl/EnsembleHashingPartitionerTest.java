@@ -15,10 +15,10 @@
  */
 package terrastore.partition.impl;
 
-import com.google.common.collect.Sets;
 import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.router.impl.HashFunction;
+import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -47,7 +47,7 @@ public class EnsembleHashingPartitionerTest {
 
         EnsembleHashingPartitioner partitioner = new EnsembleHashingPartitioner(fn);
 
-        partitioner.setupClusters(Sets.newHashSet(cluster1, cluster2, cluster3));
+        partitioner.setupClusters(Sets.hash(cluster1, cluster2, cluster3));
         
         assertSame(cluster1, partitioner.getClusterFor("bucket", "1"));
         assertSame(cluster2, partitioner.getClusterFor("bucket", "2"));
