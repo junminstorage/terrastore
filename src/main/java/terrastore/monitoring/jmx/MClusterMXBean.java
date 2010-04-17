@@ -6,4 +6,12 @@ package terrastore.monitoring.jmx;
 public interface MClusterMXBean {
 
     String getName();
+
+    String getStatus();
+
+    public enum Status {
+
+        AVAILABLE,
+        UNAVAILABLE;
+    }
 }

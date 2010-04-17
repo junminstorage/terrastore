@@ -1,5 +1,6 @@
 package terrastore.monitoring.jmx;
 
+import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -42,13 +43,15 @@ public class JMXClusterMonitoring {
                     .append(":type=").append(TERRASTORE_CLUSTER_TYPE).append(",")
                     .append("name=").append(cluster.getName());
             ObjectName name = new ObjectName(nameBuilder.toString());
-            mbeanServer.registerMBean(new MCluster(cluster.getName()), name);
-            registerNodes(cluster);
+            Set<Node> nodes = router.clusterRoute(cluster);
+            String status = nodes.isEmpty() ? MClusterMXBean.Status.UNAVAILABLE.toString() : MClusterMXBean.Status.AVAILABLE.toString();
+            mbeanServer.registerMBean(new MCluster(cluster.getName(), status), name);
+            registerClusterNodes(cluster, nodes);
         }
     }
 
-    private void registerNodes(Cluster cluster) throws Exception {
-        for (Node node : router.clusterRoute(cluster)) {
+    private void registerClusterNodes(Cluster cluster, Set<Node> nodes) throws Exception {
+        for (Node node : nodes) {
             StringBuilder nameBuilder = new StringBuilder(TERRASTORE_CLUSTER_DOMAIN).append(".").append(cluster.getName())
                     .append(":type=").append(TERRASTORE_NODE_TYPE).append(",")
                     .append("name=").append(node.getName());
@@ -60,13 +63,20 @@ public class JMXClusterMonitoring {
     public static class MCluster implements MClusterMXBean {
 
         private final String name;
+        private final String status;
 
-        public MCluster(String name) {
+        public MCluster(String name, String status) {
             this.name = name;
+            this.status = status;
         }
 
         public String getName() {
             return name;
+        }
+
+        @Override
+        public String getStatus() {
+            return status;
         }
 
         @Override
