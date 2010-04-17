@@ -15,7 +15,6 @@
  */
 package terrastore.router.impl;
 
-import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -25,6 +24,7 @@ import terrastore.communication.Node;
 import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.EnsemblePartitioner;
 import terrastore.router.MissingRouteException;
+import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -43,7 +43,7 @@ public class DefaultRouterTest {
         Cluster cluster2 = createMock(Cluster.class);
         Node node = createMock(Node.class);
 
-        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        ensemblePartitioner.setupClusters(Sets.hash(cluster1, cluster2));
         expectLastCall().once();
         ensemblePartitioner.getClusterFor(bucket);
         expectLastCall().andReturn(cluster1).once();
@@ -61,7 +61,7 @@ public class DefaultRouterTest {
         replay(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node);
 
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
-        router.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        router.setupClusters(Sets.hash(cluster1, cluster2));
         router.addRouteTo(cluster1, node);
         assertSame(node, router.routeToNodeFor(bucket));
 
@@ -79,7 +79,7 @@ public class DefaultRouterTest {
         Cluster cluster2 = createMock(Cluster.class);
         Node node = createMock(Node.class);
 
-        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        ensemblePartitioner.setupClusters(Sets.hash(cluster1, cluster2));
         expectLastCall().once();
         ensemblePartitioner.getClusterFor(bucket, key);
         expectLastCall().andReturn(cluster1).once();
@@ -97,7 +97,7 @@ public class DefaultRouterTest {
         replay(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node);
 
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
-        router.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        router.setupClusters(Sets.hash(cluster1, cluster2));
         router.addRouteTo(cluster1, node);
         assertSame(node, router.routeToNodeFor(bucket, key));
 
@@ -113,14 +113,14 @@ public class DefaultRouterTest {
         Node node1 = createMock(Node.class);
         Node node2 = createMock(Node.class);
 
-        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        ensemblePartitioner.setupClusters(Sets.hash(cluster1, cluster2));
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node1);
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node2);
         expectLastCall().once();
         clusterPartitioner.getNodesFor(cluster1);
-        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        expectLastCall().andReturn(Sets.hash(node1, node2)).once();
         cluster1.getName();
         expectLastCall().andReturn("cluster1").anyTimes();
         cluster1.isLocal();
@@ -135,7 +135,7 @@ public class DefaultRouterTest {
         replay(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node1, node2);
 
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
-        router.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        router.setupClusters(Sets.hash(cluster1, cluster2));
         router.addRouteToLocalNode(node1);
         router.addRouteTo(cluster1, node1);
         router.addRouteTo(cluster1, node2);
@@ -155,14 +155,14 @@ public class DefaultRouterTest {
         Node node1 = createMock(Node.class);
         Node node2 = createMock(Node.class);
 
-        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1));
+        ensemblePartitioner.setupClusters(Sets.hash(cluster1));
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node1);
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node2);
         expectLastCall().once();
         clusterPartitioner.getNodesFor(cluster1);
-        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        expectLastCall().andReturn(Sets.hash(node1, node2)).once();
         cluster1.isLocal();
         expectLastCall().andReturn(true).once();
         cluster1.getName();
@@ -175,7 +175,7 @@ public class DefaultRouterTest {
         replay(ensemblePartitioner, clusterPartitioner, cluster1, node1, node2);
 
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
-        router.setupClusters(Sets.newHashSet(cluster1));
+        router.setupClusters(Sets.hash(cluster1));
         router.addRouteToLocalNode(node1);
         router.addRouteTo(cluster1, node1);
         router.addRouteTo(cluster1, node2);
@@ -195,16 +195,16 @@ public class DefaultRouterTest {
         Node node1 = createMock(Node.class);
         Node node2 = createMock(Node.class);
 
-        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        ensemblePartitioner.setupClusters(Sets.hash(cluster1, cluster2));
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node1);
         expectLastCall().once();
         clusterPartitioner.addNode(cluster2, node2);
         expectLastCall().once();
         clusterPartitioner.getNodesFor(cluster1);
-        expectLastCall().andReturn(Sets.newHashSet(node1)).once();
+        expectLastCall().andReturn(Sets.hash(node1)).once();
         clusterPartitioner.getNodesFor(cluster2);
-        expectLastCall().andReturn(Sets.newHashSet(node2)).once();
+        expectLastCall().andReturn(Sets.hash(node2)).once();
         cluster1.isLocal();
         expectLastCall().andReturn(true).anyTimes();
         cluster2.isLocal();
@@ -221,7 +221,7 @@ public class DefaultRouterTest {
         replay(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node1, node2);
 
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
-        router.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        router.setupClusters(Sets.hash(cluster1, cluster2));
         router.addRouteToLocalNode(node1);
         router.addRouteTo(cluster1, node1);
         router.addRouteTo(cluster2, node2);
@@ -244,14 +244,14 @@ public class DefaultRouterTest {
         Node node1 = createMock(Node.class);
         Node node2 = createMock(Node.class);
 
-        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        ensemblePartitioner.setupClusters(Sets.hash(cluster1, cluster2));
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node1);
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node2);
         expectLastCall().once();
         clusterPartitioner.getNodesFor(cluster1);
-        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        expectLastCall().andReturn(Sets.hash(node1, node2)).once();
         clusterPartitioner.getNodesFor(cluster2);
         expectLastCall().andReturn(Collections.emptySet()).once();
         cluster1.isLocal();
@@ -270,7 +270,7 @@ public class DefaultRouterTest {
         replay(ensemblePartitioner, clusterPartitioner, cluster1, cluster2, node1, node2);
 
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
-        router.setupClusters(Sets.newHashSet(cluster1, cluster2));
+        router.setupClusters(Sets.hash(cluster1, cluster2));
         router.addRouteToLocalNode(node1);
         router.addRouteTo(cluster1, node1);
         router.addRouteTo(cluster1, node2);
@@ -292,14 +292,14 @@ public class DefaultRouterTest {
         Node node1 = createMock(Node.class);
         Node node2 = createMock(Node.class);
 
-        ensemblePartitioner.setupClusters(Sets.newHashSet(cluster1));
+        ensemblePartitioner.setupClusters(Sets.hash(cluster1));
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node1);
         expectLastCall().once();
         clusterPartitioner.addNode(cluster1, node2);
         expectLastCall().once();
         clusterPartitioner.getNodesFor(cluster1);
-        expectLastCall().andReturn(Sets.newHashSet(node1, node2)).once();
+        expectLastCall().andReturn(Sets.hash(node1, node2)).once();
         cluster1.isLocal();
         expectLastCall().andReturn(true).anyTimes();
         cluster1.getName();
@@ -312,7 +312,7 @@ public class DefaultRouterTest {
         replay(ensemblePartitioner, clusterPartitioner, cluster1, node1, node2);
 
         DefaultRouter router = new DefaultRouter(clusterPartitioner, ensemblePartitioner);
-        router.setupClusters(Sets.newHashSet(cluster1));
+        router.setupClusters(Sets.hash(cluster1));
         router.addRouteToLocalNode(node1);
         router.addRouteTo(cluster1, node1);
         router.addRouteTo(cluster1, node2);

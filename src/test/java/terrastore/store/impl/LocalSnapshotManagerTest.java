@@ -15,7 +15,6 @@
  */
 package terrastore.store.impl;
 
-import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -31,6 +30,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import terrastore.store.Bucket;
 import terrastore.store.SortedSnapshot;
+import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -54,7 +54,7 @@ public class LocalSnapshotManagerTest {
     public void testComputeNewSortedSnapshot() {
         Bucket bucket = createMock(Bucket.class);
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet("v", "c", "a")).once();
+        expectLastCall().andReturn(Sets.hash("v", "c", "a")).once();
 
         replay(bucket);
 
@@ -69,7 +69,7 @@ public class LocalSnapshotManagerTest {
     public void testComputeNewSortedSnapshotAndGetSame() {
         Bucket bucket = createMock(Bucket.class);
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet("v", "c", "a")).once();
+        expectLastCall().andReturn(Sets.hash("v", "c", "a")).once();
         
         replay(bucket);
         
@@ -87,7 +87,7 @@ public class LocalSnapshotManagerTest {
     public void testComputeTwoDifferentSortedSnapshots() {
         Bucket bucket = createMock(Bucket.class);
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet("v", "c", "a")).times(2);
+        expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(2);
 
         replay(bucket);
 
@@ -106,7 +106,7 @@ public class LocalSnapshotManagerTest {
     public void testComputeNewSortedSnapshotAndComputeAgainBecauseExpired() throws InterruptedException {
         Bucket bucket = createMock(Bucket.class);
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet("v", "c", "a")).times(2);
+        expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(2);
 
         replay(bucket);
 
@@ -128,7 +128,7 @@ public class LocalSnapshotManagerTest {
 
         Bucket bucket = createMock(Bucket.class);
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet("v", "c", "a")).times(1);
+        expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(1);
         makeThreadSafe(bucket, true);
 
         replay(bucket);
@@ -158,7 +158,7 @@ public class LocalSnapshotManagerTest {
 
         Bucket bucket = createMock(Bucket.class);
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet("v", "c", "a")).times(nThreads);
+        expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(nThreads);
         makeThreadSafe(bucket, true);
 
         replay(bucket);

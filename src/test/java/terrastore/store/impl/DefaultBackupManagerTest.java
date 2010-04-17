@@ -15,7 +15,6 @@
  */
 package terrastore.store.impl;
 
-import com.google.common.collect.Sets;
 import java.io.File;
 import java.nio.charset.Charset;
 import org.junit.Before;
@@ -24,6 +23,7 @@ import terrastore.startup.Constants;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.types.JsonValue;
+import terrastore.util.collect.Sets;
 import static org.easymock.EasyMock.*;
 
 /**
@@ -47,7 +47,7 @@ public class DefaultBackupManagerTest {
         Bucket bucket = createMock(Bucket.class);
 
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet(KEY_1, KEY_2));
+        expectLastCall().andReturn(Sets.hash(KEY_1, KEY_2));
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.get(KEY_1);
@@ -75,7 +75,7 @@ public class DefaultBackupManagerTest {
         Bucket bucket = createMock(Bucket.class);
 
         bucket.keys();
-        expectLastCall().andReturn(Sets.newHashSet(KEY_1));
+        expectLastCall().andReturn(Sets.hash(KEY_1));
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.get(KEY_1);

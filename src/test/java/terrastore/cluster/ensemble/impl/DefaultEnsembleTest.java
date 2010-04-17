@@ -1,7 +1,5 @@
 package terrastore.cluster.ensemble.impl;
 
-import com.google.common.collect.Sets;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -10,6 +8,7 @@ import terrastore.communication.Node;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.MembershipCommand;
 import terrastore.router.Router;
+import terrastore.util.collect.Sets;
 import static org.easymock.EasyMock.*;
 
 /**
@@ -26,7 +25,7 @@ public class DefaultEnsembleTest {
         seed.connect();
         expectLastCall().once();
         seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered", "localhost", 6000))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered", "localhost", 6000))));
         seed.disconnect();
         expectLastCall().once();
         //
@@ -72,7 +71,7 @@ public class DefaultEnsembleTest {
         seed.connect();
         expectLastCall().once();
         seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered", "localhost", 6000))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered", "localhost", 6000))));
         seed.disconnect();
         expectLastCall().once();
         //
@@ -83,7 +82,7 @@ public class DefaultEnsembleTest {
         discoveredNode.disconnect();
         expectLastCall().once();
         discoveredNode.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered", "localhost", 6000))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered", "localhost", 6000))));
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
@@ -122,7 +121,7 @@ public class DefaultEnsembleTest {
         seed.connect();
         expectLastCall().once();
         seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered1", "localhost", 6000))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered1", "localhost", 6000))));
         seed.disconnect();
         expectLastCall().once();
         //
@@ -133,7 +132,7 @@ public class DefaultEnsembleTest {
         discoveredNode1.disconnect();
         expectLastCall().once();
         discoveredNode1.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.newHashSet(new View.Member("discovered1", "localhost", 6000), new View.Member("discovered2", "localhost", 6001))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered1", "localhost", 6000), new View.Member("discovered2", "localhost", 6001))));
         //
         Node discoveredNode2 = createMock(Node.class);
         makeThreadSafe(discoveredNode2, true);
@@ -182,7 +181,7 @@ public class DefaultEnsembleTest {
         seed.connect();
         expectLastCall().once();
         seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.newLinkedHashSet(Arrays.asList(new View.Member("discovered1", "localhost", 6000), new View.Member("discovered2", "localhost", 6001)))));
+        expectLastCall().andReturn(new View("cluster", Sets.linked(new View.Member("discovered1", "localhost", 6000), new View.Member("discovered2", "localhost", 6001))));
         seed.disconnect();
         expectLastCall().once();
         //
@@ -195,7 +194,7 @@ public class DefaultEnsembleTest {
         discoveredNode1.disconnect();
         expectLastCall().once();
         discoveredNode1.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.newLinkedHashSet(Arrays.asList(new View.Member("discovered1", "localhost", 6000)))));
+        expectLastCall().andReturn(new View("cluster", Sets.linked(new View.Member("discovered1", "localhost", 6000))));
         //
         Node discoveredNode2 = createMock(Node.class);
         makeThreadSafe(discoveredNode2, true);
