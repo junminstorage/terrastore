@@ -11,7 +11,7 @@
     <import resource="functions-config.xml"/>
     <import resource="events-config.xml"/>
     <import resource="monitoring-config.xml"/>
-    <import resource="classpath:extensions/*.xml"/>
+    <import resource="classpath:*-extension.xml"/>
 
     <!-- Server -->
 
