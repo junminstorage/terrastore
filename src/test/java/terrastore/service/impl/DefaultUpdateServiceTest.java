@@ -38,6 +38,7 @@ import terrastore.store.types.JsonValue;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import static org.easymock.classextension.EasyMock.*;
+import static org.junit.Assert.*;
 
 /**
  * @author Sergio Bossa
@@ -194,7 +195,7 @@ public class DefaultUpdateServiceTest {
 
         DefaultUpdateService service = new DefaultUpdateService(router);
         service.setFunctions(functions);
-        service.updateValue("bucket", "test1", new Update("update", 1000, new HashMap<String, Object>()));
+        assertEquals(new JsonValue(JSON_VALUE.getBytes()), service.updateValue("bucket", "test1", new Update("update", 1000, new HashMap<String, Object>())));
 
         verify(node, router);
     }

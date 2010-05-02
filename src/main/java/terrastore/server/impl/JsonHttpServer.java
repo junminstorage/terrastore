@@ -107,7 +107,8 @@ public class JsonHttpServer implements Server {
     @POST
     @Path("/{bucket}/{key}/update")
     @Consumes("application/json")
-    public void updateValue(@PathParam("bucket") String bucket, @PathParam("key") String key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
+    @Produces("application/json")
+    public Value updateValue(@PathParam("bucket") String bucket, @PathParam("key") String key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
         try {
             if (function == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No update function provided!");
@@ -118,7 +119,7 @@ public class JsonHttpServer implements Server {
             }
             LOG.debug("Updating value with key {} from bucket {}", key, bucket);
             Update update = new Update(function, timeout, parameters);
-            updateService.updateValue(bucket, key, update);
+            return updateService.updateValue(bucket, key, update);
         } catch (UpdateOperationException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();

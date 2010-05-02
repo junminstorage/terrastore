@@ -107,14 +107,14 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
-    public void updateValue(String bucket, String key, Update update) throws UpdateOperationException {
+    public Value updateValue(String bucket, String key, Update update) throws UpdateOperationException {
         try {
             LOG.debug("Updating value with key {} from bucket {}", key, bucket);
             Function function = functions.get(update.getFunctionName());
             if (function != null) {
                 Node node = router.routeToNodeFor(bucket, key);
                 UpdateCommand command = new UpdateCommand(bucket, key, update, function);
-                node.<Value>send(command);
+                return node.<Value>send(command);
             } else {
                 throw new UpdateOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "No function found: " + update.getFunctionName()));
             }
