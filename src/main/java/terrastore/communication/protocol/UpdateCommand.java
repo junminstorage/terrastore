@@ -50,7 +50,7 @@ public class UpdateCommand extends AbstractCommand<Value> {
     }
 
     public Value executeOn(Store store) throws StoreOperationException {
-        Bucket bucket = store.get(bucketName);
+        Bucket bucket = store.getOrCreate(bucketName);
         if (bucket != null) {
             return bucket.update(key, update, function);
         } else {

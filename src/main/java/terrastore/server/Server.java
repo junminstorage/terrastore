@@ -29,14 +29,6 @@ import terrastore.store.Value;
 public interface Server {
 
     /**
-     * Add the given bucket.
-     *
-     * @param bucket The name of the bucket to add.
-     * @throws ServerOperationException If an error occurs.
-     */
-    public void addBucket(String bucket) throws ServerOperationException;
-
-    /**
      * Remove the given bucket.
      *
      * @param bucket The name of the bucket to remove.

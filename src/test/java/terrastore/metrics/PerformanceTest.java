@@ -71,11 +71,6 @@ public class PerformanceTest {
         final ExecutorService threadPool = Executors.newFixedThreadPool(CONCURRENCY);
         final CountDownLatch termination = new CountDownLatch(writes);
 
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
         final String payload = getPayload();
         warmUp(warmup, bucket, payload);
 
@@ -117,11 +112,6 @@ public class PerformanceTest {
 
         int warmup = 1000;
         int writes = 1000;
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         warmUp(warmup, bucket, payload);
 

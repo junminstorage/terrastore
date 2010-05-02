@@ -60,34 +60,8 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testCreateBucketsAndGetNamesOnOtherNode() throws Exception {
-        String bucket1 = UUID.randomUUID().toString();
-        String bucket2 = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket1);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-        addBucket = makePutMethod(NODE1_PORT, bucket2);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
-        GetMethod getBuckets = makeGetMethod(NODE2_PORT, "");
-        HTTP_CLIENT.executeMethod(getBuckets);
-        assertEquals(HttpStatus.SC_OK, getBuckets.getStatusCode());
-        System.err.println(getBuckets.getResponseBodyAsString());
-        getBuckets.releaseConnection();
-    }
-
-    @Test
-    public void testCreateBucketPutValueAndGetOnOtherNode() throws Exception {
+    public void testPutValueAndGetOnOtherNode() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         TestValue value = new TestValue("value", 1);
         PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
@@ -105,13 +79,8 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testCreateBucketPutValueAndConditionallyGetWithSuccess() throws Exception {
+    public void testPutValueAndConditionallyGetWithSuccess() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         TestValue value = new TestValue("value", 1);
         PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
@@ -129,13 +98,8 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testCreateBucketPutValueAndConditionallyGetNotFound() throws Exception {
+    public void testPutValueAndConditionallyGetNotFound() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         TestValue value = new TestValue("value", 1);
         PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
@@ -151,13 +115,8 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testCreateBucketPutValueAndConditionallyPutAgainWithSuccess() throws Exception {
+    public void testPutValueAndConditionallyPutAgainWithSuccess() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         TestValue value = new TestValue("value1", 1);
         PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
@@ -182,13 +141,8 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testCreateBucketPutValueAndConditionallyPutAgainWithConflict() throws Exception {
+    public void testPutValueAndConditionallyPutAgainWithConflict() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         TestValue value = new TestValue("value1", 1);
         PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
@@ -213,13 +167,8 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testCreateBucketPutValueAndDeleteBothOnOtherNode() throws Exception {
+    public void testPutValueAndDeleteValueAndBucketOnOtherNode() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         TestValue value = new TestValue("value", 1);
         PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
@@ -242,11 +191,6 @@ public class IntegrationTest {
     @Test
     public void testGetAllValuesWithNoLimit() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         int size = 10;
 
@@ -275,11 +219,6 @@ public class IntegrationTest {
     public void testGetAllValuesWithLimit() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
         int size = 10;
 
         for (int i = 1; i <= size; i++) {
@@ -305,11 +244,6 @@ public class IntegrationTest {
     @Test
     public void testRangeQueryWithDefaultComparator() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         int size = 10;
 
@@ -338,11 +272,6 @@ public class IntegrationTest {
     public void testRangeQueryWithStringKeys() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
         int size = 10;
 
         for (int i = 1; i <= size; i++) {
@@ -370,11 +299,6 @@ public class IntegrationTest {
     public void testRangeQueryWithNumberKeys() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
         int size = 10;
 
         for (int i = 1; i <= size; i++) {
@@ -400,11 +324,6 @@ public class IntegrationTest {
     @Test
     public void testRangeQueryWithLimit() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         int size = 10;
 
@@ -432,11 +351,6 @@ public class IntegrationTest {
     public void testRangeQueryWithNoEndKeyAndNoLimit() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
         int size = 10;
 
         for (int i = 1; i <= size; i++) {
@@ -463,11 +377,6 @@ public class IntegrationTest {
     public void testRangeQueryWithPredicate() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
         int size = 10;
 
         for (int i = 1; i <= size; i++) {
@@ -493,11 +402,6 @@ public class IntegrationTest {
     public void testPredicateQuery() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
-
         int size = 10;
 
         for (int i = 1; i <= size; i++) {
@@ -522,11 +426,6 @@ public class IntegrationTest {
     @Test
     public void testUpdateValue() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         TestValue value = new TestValue("value", 1);
         PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
@@ -554,11 +453,6 @@ public class IntegrationTest {
     @Test
     public void testBackup() throws Exception {
         String bucket = UUID.randomUUID().toString();
-
-        PutMethod addBucket = makePutMethod(NODE1_PORT, bucket);
-        HTTP_CLIENT.executeMethod(addBucket);
-        assertEquals(HttpStatus.SC_NO_CONTENT, addBucket.getStatusCode());
-        addBucket.releaseConnection();
 
         int size = 10;
 

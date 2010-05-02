@@ -27,12 +27,12 @@ import terrastore.event.EventBus;
 public interface Store {
 
     /**
-     * Add a named {@link Bucket}.<br>
-     * This operation is idempotent.
+     * Get a named {@link Bucket}, or create it if not existing.
      *
-     * @param bucket The bucket name, which must be unique.
+     * @param bucket The bucket name.
+     * @return The named bucket.
      */
-    public void add(String bucket);
+    public Bucket getOrCreate(String bucket);
 
     /**
      * Remove a named {@link Bucket}.<br>
@@ -46,10 +46,9 @@ public interface Store {
      * Get a named {@link Bucket}.
      *
      * @param bucket The bucket name.
-     * @return The named bucket.
-     * @throws StoreOperationException If the bucket doesn't exist.
+     * @return The named bucket, or null if no such a bucket is found.
      */
-    public Bucket get(String bucket) throws StoreOperationException;
+    public Bucket get(String bucket);
 
     /**
      *Get all {@link Bucket}s of this store.

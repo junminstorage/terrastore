@@ -64,7 +64,7 @@ public class PutValueCommand extends AbstractCommand {
     }
 
     public Object executeOn(Store store) throws StoreOperationException {
-        Bucket bucket = store.get(bucketName);
+        Bucket bucket = store.getOrCreate(bucketName);
         if (bucket != null) {
             if (conditional) {
                 boolean put = bucket.conditionalPut(key, value, predicate, valueCondition);

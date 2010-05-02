@@ -33,14 +33,6 @@ import terrastore.store.operators.Function;
 public interface UpdateService {
 
     /**
-     * Add the given bucket.
-     *
-     * @param bucket The name of the bucket to add.
-     * @throws UpdateOperationException If a bucket with same name already exists.
-     */
-    public void addBucket(String bucket) throws UpdateOperationException;
-
-    /**
      * Remove the given bucket.
      *
      * @param bucket The name of the bucket to remove.
