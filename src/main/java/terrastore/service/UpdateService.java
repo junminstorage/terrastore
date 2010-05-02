@@ -68,9 +68,10 @@ public interface UpdateService {
      * @param bucket The name of the bucket holding the value to update.
      * @param key The key of the value to update.
      * @param update The update object.
+     * @return The updated value
      * @throws UpdateOperationException If errors occur during update.
      */
-    public void updateValue(String bucket, String key, Update update) throws UpdateOperationException;
+    public Value updateValue(String bucket, String key, Update update) throws UpdateOperationException;
 
     /**
      * Get all supported {@link terrastore.store.operators.Function}s by name.

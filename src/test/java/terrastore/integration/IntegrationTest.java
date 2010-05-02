@@ -438,7 +438,9 @@ public class IntegrationTest {
         PostMethod postUpdate = makePostMethodForUpdate(NODE2_PORT, bucket + "/value/update", 1000, "replace");
         postUpdate.setRequestEntity(new StringRequestEntity(fromObjectToJson(params), "application/json", null));
         HTTP_CLIENT.executeMethod(postUpdate);
-        assertEquals(HttpStatus.SC_NO_CONTENT, postUpdate.getStatusCode());
+        assertEquals(HttpStatus.SC_OK, postUpdate.getStatusCode());
+        assertEquals(new TestValue("value2", 2), fromJsonToObject(postUpdate.getResponseBodyAsString()));
+        System.err.println(postUpdate.getResponseBodyAsString());
         postUpdate.releaseConnection();
 
         GetMethod getValue = makeGetMethod(NODE2_PORT, bucket + "/value");

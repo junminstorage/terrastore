@@ -529,7 +529,7 @@ public class JsonHttpServerTest {
         BackupService backupService = createMock(BackupService.class);
 
         updateService.updateValue(eq("bucket"), eq("key"), eq(new Update("update", 1000, params)));
-        expectLastCall().once();
+        expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
         replay(updateService, queryService, backupService);
 
@@ -541,7 +541,8 @@ public class JsonHttpServerTest {
         method.setRequestEntity(new StringRequestEntity(UPDATE_PARAMS, "application/json", null));
         client.executeMethod(method);
 
-        assertEquals(HttpStatus.SC_NO_CONTENT, method.getStatusCode());
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        assertEquals(JSON_VALUE, method.getResponseBodyAsString());
 
         method.releaseConnection();
 

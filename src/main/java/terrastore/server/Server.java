@@ -66,9 +66,10 @@ public interface Server {
      * @param function The name of the server-side function performing the actual update.
      * @param timeoutInMillis The timeout for the update operation (update operations lasting more than the given timeout will be aborted).
      * @param parameters The update operation parameters.
+     * @return The updated value
      * @throws ServerOperationException If an error occurs.
      */
-    public void updateValue(String bucket, String key, String function, Long timeoutInMillis, Parameters parameters) throws ServerOperationException;
+    public Value updateValue(String bucket, String key, String function, Long timeoutInMillis, Parameters parameters) throws ServerOperationException;
 
     /**
      * Get the name of all buckets.
