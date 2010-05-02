@@ -46,6 +46,6 @@ fi
 echo "Starting Terrastore Server ..."
 
 . ${TC_INSTALL_DIR}/bin/dso-env.sh -q
-export JAVA_OPTS="$TC_JAVA_OPTS $JAVA_OPTS -XX:+UseParallelGC -Dlogback.configurationFile=${TERRASTORE_HOME}/terrastore-logback.xml"
+export JAVA_OPTS="$TC_JAVA_OPTS $JAVA_OPTS -XX:+UseParallelGC -Dcom.sun.management.jmxremote -Dlogback.configurationFile=${TERRASTORE_HOME}/terrastore-logback.xml"
 
 java ${JAVA_OPTS} -classpath "$CLASSPATH" terrastore.startup.Startup "$@"
