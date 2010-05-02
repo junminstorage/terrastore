@@ -62,20 +62,6 @@ public class JsonHttpServer implements Server {
         this.backupService = backupService;
     }
 
-    @PUT
-    @Path("/{bucket}")
-    @Consumes("application/json")
-    public void addBucket(@PathParam("bucket") String bucket) throws ServerOperationException {
-        try {
-            LOG.debug("Adding bucket {}", bucket);
-            updateService.addBucket(bucket);
-        } catch (UpdateOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new ServerOperationException(error);
-        }
-    }
-
     @DELETE
     @Path("/{bucket}")
     @Consumes("application/json")

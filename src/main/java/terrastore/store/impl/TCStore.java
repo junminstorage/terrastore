@@ -23,7 +23,6 @@ import org.terracotta.collections.LockType;
 import org.terracotta.modules.annotations.HonorTransient;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import org.terracotta.modules.annotations.Root;
-import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
@@ -31,7 +30,6 @@ import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.store.SnapshotManager;
 import terrastore.store.Store;
-import terrastore.store.StoreOperationException;
 
 /**
  * @author Sergio Bossa
@@ -57,23 +55,40 @@ public class TCStore implements Store {
         buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy());
     }
 
-    public void add(String bucket) {
-        Bucket toAdd = new TCBucket(bucket);
-        buckets.putIfAbsent(bucket, toAdd);
+    @Override
+    public Bucket getOrCreate(String bucket) {
+        Bucket requested = buckets.unlockedGet(bucket);
+        requested = requested != null ? requested : buckets.get(bucket);
+        if (requested == null) {
+            buckets.lockEntry(bucket);
+            try {
+                requested = buckets.get(bucket);
+                if (requested == null) {
+                    Bucket created = new TCBucket(bucket);
+                    buckets.putNoReturn(bucket, created);
+                    requested = created;
+                }
+            } finally {
+                buckets.unlockEntry(bucket);
+            }
+        }
+        hydrateBucket(requested);
+        return requested;
     }
 
+    @Override
     public void remove(String bucket) {
         buckets.remove(bucket);
     }
 
-    public Bucket get(String bucket) throws StoreOperationException {
+    public Bucket get(String bucket) {
         Bucket requested = buckets.unlockedGet(bucket);
         requested = requested != null ? requested : buckets.get(bucket);
         if (requested != null) {
             hydrateBucket(requested);
             return requested;
         } else {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Bucket not found: " + bucket));
+            return null;
         }
     }
 

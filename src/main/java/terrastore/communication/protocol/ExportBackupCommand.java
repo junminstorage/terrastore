@@ -43,7 +43,7 @@ public class ExportBackupCommand extends AbstractCommand {
     }
 
     public Object executeOn(Store store) throws StoreOperationException {
-        Bucket bucket = store.get(bucketName);
+        Bucket bucket = store.getOrCreate(bucketName);
         bucket.exportBackup(destination);
         return null;
     }

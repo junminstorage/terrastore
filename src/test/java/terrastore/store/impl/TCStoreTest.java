@@ -15,8 +15,13 @@
  */
 package terrastore.store.impl;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.store.Bucket;
 import terrastore.store.StoreOperationException;
 import static org.junit.Assert.*;
 
@@ -33,53 +38,84 @@ public class TCStoreTest {
     }
 
     @Test
-    public void testAddAndGetBucket() throws StoreOperationException {
+    public void testGetOrCreate() throws StoreOperationException {
         String bucket = "bucket";
-        store.add(bucket);
-        assertNotNull(store.get(bucket));
+        Bucket created = store.getOrCreate(bucket);
+        assertNotNull(created);
+        Bucket got = store.getOrCreate(bucket);
+        assertNotNull(got);
+        assertSame(created, got);
+    }
+
+    @Test
+    public void testGetOrCreateThenGet() throws StoreOperationException {
+        String bucket = "bucket";
+        Bucket created = store.getOrCreate(bucket);
+        assertNotNull(created);
+        Bucket got = store.get(bucket);
+        assertNotNull(got);
+        assertSame(created, got);
+    }
+
+    @Test
+    public void testGetNullBucket() throws StoreOperationException {
+        String bucket = "bucket";
+        Bucket notExistent = store.get(bucket);
+        assertNull(notExistent);
+    }
+
+    @Test
+    public void testGetOrCreateOnMultiThread() throws StoreOperationException {
+        final String bucket = "bucket";
+        final AtomicReference<Bucket> bucketRef = new AtomicReference<Bucket>();
+        final AtomicBoolean failed = new AtomicBoolean(false);
+        for (int i = 0; i < 1000; i++) {
+            ExecutorService executor = Executors.newCachedThreadPool();
+            executor.submit(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (failed.get()) {
+                        Bucket current = store.getOrCreate(bucket);
+                        Bucket old = bucketRef.getAndSet(current);
+                        if (old != null && old != current) {
+                            failed.set(true);
+                        }
+                    }
+                }
+            });
+        }
+        assertFalse(failed.get());
     }
 
     @Test
     public void testGetAllBuckets() throws StoreOperationException {
         String bucket1 = "bucket1";
         String bucket2 = "bucket2";
-        store.add(bucket1);
-        store.add(bucket2);
+        store.getOrCreate(bucket1);
+        store.getOrCreate(bucket2);
         assertEquals(2, store.buckets().size());
     }
 
-    @Test(expected = StoreOperationException.class)
-    public void testGetNullBucket() throws StoreOperationException {
-        String bucket = "bucket";
-        store.get(bucket);
-    }
-
-    @Test(expected = StoreOperationException.class)
-    public void testAddAndRemoveBucket() throws StoreOperationException {
-        String bucket = "bucket";
-        store.add(bucket);
-        assertNotNull(store.get(bucket));
-        store.remove(bucket);
-        store.get(bucket);
-    }
-
     @Test
-    public void testAddSameBucketTwiceIsIdempotent() {
+    public void testRemoveBucket() throws StoreOperationException {
         String bucket = "bucket";
-        store.add(bucket);
-        store.add(bucket);
+        Bucket created1 = store.getOrCreate(bucket);
+        store.remove(bucket);
+        Bucket created2 = store.getOrCreate(bucket);
+        assertNotSame(created1, created2);
     }
 
     @Test
     public void testRemoveSameBucketTwiceIsIdempotent() {
         String bucket = "bucket";
-        store.add(bucket);
+        store.getOrCreate(bucket);
         store.remove(bucket);
         store.remove(bucket);
     }
 
     @Test
-    public void testRemoveNullBucketHasNoEffect() throws StoreOperationException {
+    public void testRemoveNotExistentBucketHasNoEffect() throws StoreOperationException {
         String bucket = "bucket";
         store.remove(bucket);
     }

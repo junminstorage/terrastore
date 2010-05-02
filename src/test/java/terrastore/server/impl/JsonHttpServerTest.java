@@ -122,34 +122,6 @@ public class JsonHttpServerTest {
     }
 
     @Test
-    public void testAddBucket() throws Exception {
-        UpdateService updateService = createMock(UpdateService.class);
-        QueryService queryService = createMock(QueryService.class);
-        BackupService backupService = createMock(BackupService.class);
-
-        updateService.addBucket("bucket");
-        expectLastCall().once();
-
-        replay(updateService, queryService, backupService);
-
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
-        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
-        HttpClient client = new HttpClient();
-        PutMethod method = new PutMethod("http://localhost:8080/bucket");
-        method.setRequestHeader("Content-Type", "application/json");
-        method.setRequestEntity(new StringRequestEntity("", "application/json", null));
-        client.executeMethod(method);
-
-        assertEquals(HttpStatus.SC_NO_CONTENT, method.getStatusCode());
-
-        method.releaseConnection();
-
-        stopServer(server);
-
-        verify(updateService, queryService, backupService);
-    }
-
-    @Test
     public void testRemoveBucket() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -584,7 +556,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        updateService.addBucket("bucket");
+        updateService.removeBucket("bucket");
         expectLastCall().andThrow(new UpdateOperationException(new ErrorMessage(500, "error"))).once();
 
         replay(updateService, queryService, backupService);
@@ -592,9 +564,8 @@ public class JsonHttpServerTest {
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
-        PutMethod method = new PutMethod("http://localhost:8080/bucket");
+        DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket");
         method.setRequestHeader("Content-Type", "application/json");
-        method.setRequestEntity(new StringRequestEntity("", "application/json", null));
         client.executeMethod(method);
 
         assertEquals(500, method.getStatusCode());

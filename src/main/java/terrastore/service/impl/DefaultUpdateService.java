@@ -24,8 +24,6 @@ import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.AddBucketCommand;
-import terrastore.communication.protocol.Command;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
@@ -55,25 +53,12 @@ public class DefaultUpdateService implements UpdateService {
         this.router = router;
     }
 
-    public void addBucket(String bucket) throws UpdateOperationException {
-        try {
-            LOG.debug("Adding bucket {}", bucket);
-            AddBucketCommand command = new AddBucketCommand(bucket);
-            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-            multicastAddRemoveBucketCommand(perClusterNodes, command);
-        } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
-            ErrorMessage error = ex.getErrorMessage();
-            throw new UpdateOperationException(error);
-        }
-    }
-
     public void removeBucket(String bucket) throws UpdateOperationException {
         try {
             LOG.debug("Removing bucket {}", bucket);
             RemoveBucketCommand command = new RemoveBucketCommand(bucket);
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-            multicastAddRemoveBucketCommand(perClusterNodes, command);
+            multicastRemoveBucketCommand(perClusterNodes, command);
         } catch (MissingRouteException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -169,11 +154,9 @@ public class DefaultUpdateService implements UpdateService {
         this.conditions.putAll(conditions);
     }
 
-    private void multicastAddRemoveBucketCommand(Map<Cluster, Set<Node>> perClusterNodes, Command command) throws MissingRouteException, UpdateOperationException {
-        for (Map.Entry<Cluster, Set<Node>> entry : perClusterNodes.entrySet()) {
-            Set<Node> nodes = entry.getValue();
-            boolean successful = false;
-            ErrorMessage error = null;
+    private void multicastRemoveBucketCommand(Map<Cluster, Set<Node>> perClusterNodes, RemoveBucketCommand command) throws MissingRouteException, UpdateOperationException {
+        for (Set<Node> nodes : perClusterNodes.values()) {
+            boolean successful = true;
             // There must be connected cluster nodes, else throw MissingRouteException:
             if (!nodes.isEmpty()) {
                 // Try to send command, stopping after first successful attempt:
@@ -185,15 +168,15 @@ public class DefaultUpdateService implements UpdateService {
                         break;
                     } catch (ProcessingException ex) {
                         LOG.error(ex.getMessage(), ex);
-                        error = ex.getErrorMessage();
+                        successful = false;
                     }
                 }
                 // If all nodes failed, throw exception:
                 if (!successful) {
-                    throw new UpdateOperationException(error);
+                    throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "The operation has been only partially applied. Some clusters of your ensemble may be down or unreachable."));
                 }
             } else {
-                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Cannot perform operation. Some clusters of your ensemble may be down or unreachable."));
+                throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "The operation has been only partially applied. Some clusters of your ensemble may be down or unreachable."));
             }
         }
     }

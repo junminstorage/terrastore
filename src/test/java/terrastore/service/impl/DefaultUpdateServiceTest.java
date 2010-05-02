@@ -25,12 +25,10 @@ import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.AddBucketCommand;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
-import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.service.UpdateOperationException;
 import terrastore.store.features.Predicate;
@@ -47,93 +45,6 @@ import static org.easymock.classextension.EasyMock.*;
 public class DefaultUpdateServiceTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
-
-    @Test
-    public void testAddBucket() throws Exception {
-        Cluster cluster1 = createMock(Cluster.class);
-        Cluster cluster2 = createMock(Cluster.class);
-        Node node1 = createMock(Node.class);
-        Node node2 = createMock(Node.class);
-        Router router = createMock(Router.class);
-
-        router.broadcastRoute();
-        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
-        node1.send(EasyMock.<AddBucketCommand>anyObject());
-        expectLastCall().andReturn(null).once();
-        node2.send(EasyMock.<AddBucketCommand>anyObject());
-        expectLastCall().andReturn(null).once();
-
-        replay(cluster1, cluster2, node1, node2, router);
-
-        DefaultUpdateService service = new DefaultUpdateService(router);
-        service.addBucket("bucket");
-
-        verify(cluster1, cluster2, node1, node2, router);
-    }
-
-    @Test
-    public void testAddBucketSucceedsBySkippingFailingNodes() throws Exception {
-        Cluster cluster1 = createMock(Cluster.class);
-        Node node1 = createMock(Node.class);
-        Node node2 = createMock(Node.class);
-        Router router = createMock(Router.class);
-
-        router.broadcastRoute();
-        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
-        node1.send(EasyMock.<AddBucketCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
-        node2.send(EasyMock.<AddBucketCommand>anyObject());
-        expectLastCall().andReturn(null).once();
-
-        replay(cluster1, node1, node2, router);
-
-        DefaultUpdateService service = new DefaultUpdateService(router);
-        service.addBucket("bucket");
-
-        verify(cluster1, node1, node2, router);
-    }
-
-    @Test(expected = UpdateOperationException.class)
-    public void testAddBucketFailsWhenAllNodesFail() throws Exception {
-        Cluster cluster1 = createMock(Cluster.class);
-        Node node1 = createMock(Node.class);
-        Node node2 = createMock(Node.class);
-        Router router = createMock(Router.class);
-
-        router.broadcastRoute();
-        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.hash(node1, node2)})).once();
-        node1.send(EasyMock.<AddBucketCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
-        node2.send(EasyMock.<AddBucketCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
-
-        replay(cluster1, node1, node2, router);
-
-        try {
-            DefaultUpdateService service = new DefaultUpdateService(router);
-            service.addBucket("bucket");
-        } finally {
-            verify(cluster1, node1, node2, router);
-        }
-    }
-
-    @Test(expected = UpdateOperationException.class)
-    public void testAddBucketFailsWhenNoNodesForCluster() throws Exception {
-        Cluster cluster1 = createMock(Cluster.class);
-        Router router = createMock(Router.class);
-
-        router.broadcastRoute();
-        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Collections.emptySet()})).once();
-
-        replay(cluster1, router);
-
-        try {
-            DefaultUpdateService service = new DefaultUpdateService(router);
-            service.addBucket("bucket");
-        } finally {
-            verify(cluster1, router);
-        }
-    }
 
     @Test
     public void testRemoveBucket() throws Exception {
