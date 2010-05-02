@@ -22,4 +22,24 @@
         <constructor-arg ref="router"/>
     </bean>
 
+    <bean id="clusterMonitoringTask" class="org.springframework.scheduling.timer.ScheduledTimerTask">
+        <property name="delay" value="0"/>
+        <property name="period" value="60000"/>
+        <property name="timerTask" ref="clusterMonitoringInvoker"/>
+    </bean>
+
+    <bean id="clusterMonitoringInvoker" class="org.springframework.scheduling.timer.MethodInvokingTimerTaskFactoryBean">
+        <property name="targetObject" ref="clusterMonitoring"/>
+        <property name="targetMethod" value="update"/>
+    </bean>
+
+    <bean id="monitoringTimer" class="org.springframework.scheduling.timer.TimerFactoryBean">
+        <property name="daemon" value="true"/>
+        <property name="scheduledTimerTasks">
+            <list>
+                <ref bean="clusterMonitoringTask" />
+            </list>
+        </property>
+    </bean>
+
 </beans>
