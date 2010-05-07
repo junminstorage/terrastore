@@ -15,6 +15,7 @@
  */
 package terrastore.util.collect;
 
+import terrastore.util.collect.support.KeyExtractor;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,7 +50,7 @@ public class Maps {
         return new DrainMap<K, V>(maps, destination);
     }
 
-    private static <K, V> void fill(Map<K, V> map, K[] keys, V[] values) {
+    public static <K, V> void fill(Map<K, V> map, K[] keys, V[] values) {
         if (keys.length == values.length) {
             int index = 0;
             for (K key : keys) {
@@ -57,6 +58,12 @@ public class Maps {
             }
         } else {
             throw new IllegalArgumentException("Both keys and values arrays must have same length!");
+        }
+    }
+
+    public static <K, V> void fill(Map<K, V> map, KeyExtractor<K, V> keyExtractor, V[] values) {
+        for (V value : values) {
+            map.put(keyExtractor.extractFrom(value), value);
         }
     }
 }
