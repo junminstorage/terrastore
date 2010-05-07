@@ -39,3 +39,4 @@ $path_to_server/bin> sh start.sh --master host:9510
 The default master port is 9510 (which can be changed through the
 terrastore-install too as well).
 
+---------------------------------------
