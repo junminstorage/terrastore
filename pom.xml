@@ -459,6 +459,7 @@
                                 <include>terrastore/event/EventListener*</include>
                                 <include>terrastore/store/operators/*</include>
                                 <include>terrastore/annotation/*</include>
+                                <include>terrastore/partition/CustomPartitionerStrategy*</include>
                             </includes>
                         </configuration>
                     </execution>
