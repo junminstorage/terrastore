@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.partition.ClusterPartitioner;
+import terrastore.partition.CustomPartitionerStrategy;
 
 /**
  * {@link terrastore.partition.ClusterPartitioner} implementation delegating to
@@ -35,11 +36,11 @@ import terrastore.partition.ClusterPartitioner;
 public class ClusterCustomPartitioner implements ClusterPartitioner {
 
     private final ReadWriteLock stateLock;
-    private final ClusterPartitionerStrategy strategy;
+    private final CustomPartitionerStrategy strategy;
     private final Map<String, Node> allNodes;
     private final Map<Cluster, Set<Node>> perClusterNodes;
 
-    public ClusterCustomPartitioner(ClusterPartitionerStrategy strategy) {
+    public ClusterCustomPartitioner(CustomPartitionerStrategy strategy) {
         this.strategy = strategy;
         this.stateLock = new ReentrantReadWriteLock();
         this.allNodes = new HashMap<String, Node>();
@@ -100,9 +101,9 @@ public class ClusterCustomPartitioner implements ClusterPartitioner {
     public Node getNodeFor(Cluster cluster, String bucket) {
         stateLock.readLock().lock();
         try {
-            ClusterPartitionerStrategy.Partition partition = strategy.getPartitionFor(cluster.getName(), bucket);
-            if (partition != null) {
-                return allNodes.get(keyFor(cluster.getName(), partition.getHost(), partition.getPort()));
+            CustomPartitionerStrategy.Node node = strategy.getNodeFor(cluster.getName(), bucket);
+            if (node != null) {
+                return allNodes.get(keyFor(cluster.getName(), node.getHost(), node.getPort()));
             } else {
                 throw new IllegalStateException("Null partition for bucket " + bucket);
             }
@@ -115,9 +116,9 @@ public class ClusterCustomPartitioner implements ClusterPartitioner {
     public Node getNodeFor(Cluster cluster, String bucket, String key) {
         stateLock.readLock().lock();
         try {
-            ClusterPartitionerStrategy.Partition partition = strategy.getPartitionFor(cluster.getName(), bucket, key);
-            if (partition != null) {
-                return allNodes.get(keyFor(cluster.getName(), partition.getHost(), partition.getPort()));
+            CustomPartitionerStrategy.Node node = strategy.getNodeFor(cluster.getName(), bucket, key);
+            if (node != null) {
+                return allNodes.get(keyFor(cluster.getName(), node.getHost(), node.getPort()));
             } else {
                 throw new IllegalStateException("Null partition for bucket " + bucket + " and key " + key);
             }

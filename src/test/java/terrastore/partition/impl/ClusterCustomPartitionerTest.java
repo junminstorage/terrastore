@@ -3,6 +3,7 @@ package terrastore.partition.impl;
 import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
+import terrastore.partition.CustomPartitionerStrategy;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -22,7 +23,7 @@ public class ClusterCustomPartitionerTest {
         expect(node2.getHost()).andReturn("host2").anyTimes();
         expect(node2.getPort()).andReturn(8000).anyTimes();
 
-        ClusterPartitionerStrategy strategy = createMock(ClusterPartitionerStrategy.class);
+        CustomPartitionerStrategy strategy = createMock(CustomPartitionerStrategy.class);
 
         replay(cluster, node1, node2, strategy);
 
@@ -54,7 +55,7 @@ public class ClusterCustomPartitionerTest {
         expect(node2.getHost()).andReturn("host2").anyTimes();
         expect(node2.getPort()).andReturn(8000).anyTimes();
 
-        ClusterPartitionerStrategy strategy = createMock(ClusterPartitionerStrategy.class);
+        CustomPartitionerStrategy strategy = createMock(CustomPartitionerStrategy.class);
 
         replay(cluster1, cluster2, node1, node2, strategy);
 
@@ -88,15 +89,15 @@ public class ClusterCustomPartitionerTest {
         expect(node2.getHost()).andReturn("host2").anyTimes();
         expect(node2.getPort()).andReturn(8000).anyTimes();
 
-        ClusterPartitionerStrategy strategy = createMock(ClusterPartitionerStrategy.class);
-        strategy.getPartitionFor("cluster1", "bucket1");
-        expectLastCall().andReturn(new ClusterPartitionerStrategy.Partition("host1", 8000)).once();
-        strategy.getPartitionFor("cluster2", "bucket2");
-        expectLastCall().andReturn(new ClusterPartitionerStrategy.Partition("host2", 8000)).once();
-        strategy.getPartitionFor("cluster1", "bucket1", "key1");
-        expectLastCall().andReturn(new ClusterPartitionerStrategy.Partition("host1", 8000)).once();
-        strategy.getPartitionFor("cluster2", "bucket2", "key2");
-        expectLastCall().andReturn(new ClusterPartitionerStrategy.Partition("host2", 8000)).once();
+        CustomPartitionerStrategy strategy = createMock(CustomPartitionerStrategy.class);
+        strategy.getNodeFor("cluster1", "bucket1");
+        expectLastCall().andReturn(new CustomPartitionerStrategy.Node("host1", 8000)).once();
+        strategy.getNodeFor("cluster2", "bucket2");
+        expectLastCall().andReturn(new CustomPartitionerStrategy.Node("host2", 8000)).once();
+        strategy.getNodeFor("cluster1", "bucket1", "key1");
+        expectLastCall().andReturn(new CustomPartitionerStrategy.Node("host1", 8000)).once();
+        strategy.getNodeFor("cluster2", "bucket2", "key2");
+        expectLastCall().andReturn(new CustomPartitionerStrategy.Node("host2", 8000)).once();
 
         replay(cluster1, cluster2, node1, node2, strategy);
 
