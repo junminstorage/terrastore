@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.partition.ClusterPartitioner;
-import terrastore.partition.CustomClusterPartitioner;
+import terrastore.partition.CustomClusterPartitionerStrategy;
 
 /**
  * {@link terrastore.partition.ClusterPartitioner} implementation delegating to
@@ -36,11 +36,11 @@ import terrastore.partition.CustomClusterPartitioner;
 public class ClusterCustomPartitioner implements ClusterPartitioner {
 
     private final ReadWriteLock stateLock;
-    private final CustomClusterPartitioner strategy;
+    private final CustomClusterPartitionerStrategy strategy;
     private final Map<String, Node> allNodes;
     private final Map<Cluster, Set<Node>> perClusterNodes;
 
-    public ClusterCustomPartitioner(CustomClusterPartitioner strategy) {
+    public ClusterCustomPartitioner(CustomClusterPartitionerStrategy strategy) {
         this.strategy = strategy;
         this.stateLock = new ReentrantReadWriteLock();
         this.allNodes = new HashMap<String, Node>();
@@ -101,7 +101,7 @@ public class ClusterCustomPartitioner implements ClusterPartitioner {
     public Node getNodeFor(Cluster cluster, String bucket) {
         stateLock.readLock().lock();
         try {
-            CustomClusterPartitioner.Node node = strategy.getNodeFor(cluster.getName(), bucket);
+            CustomClusterPartitionerStrategy.Node node = strategy.getNodeFor(cluster.getName(), bucket);
             if (node != null) {
                 return allNodes.get(keyFor(cluster.getName(), node.getHost(), node.getPort()));
             } else {
@@ -116,7 +116,7 @@ public class ClusterCustomPartitioner implements ClusterPartitioner {
     public Node getNodeFor(Cluster cluster, String bucket, String key) {
         stateLock.readLock().lock();
         try {
-            CustomClusterPartitioner.Node node = strategy.getNodeFor(cluster.getName(), bucket, key);
+            CustomClusterPartitionerStrategy.Node node = strategy.getNodeFor(cluster.getName(), bucket, key);
             if (node != null) {
                 return allNodes.get(keyFor(cluster.getName(), node.getHost(), node.getPort()));
             } else {
