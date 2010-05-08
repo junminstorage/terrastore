@@ -81,11 +81,21 @@
 
     <!-- Partitioner -->
 
-    <bean id="ensemblePartitioner" class="terrastore.partition.impl.EnsembleHashingPartitioner">
+    <bean id="ensemblePartitioner" class="terrastore.partition.impl.support.EnsemblePartitionerFactoryBean">
+        <constructor-arg ref="ensemblePartitionerBean"/>
+        <constructor-arg ref="scanner"/>
+    </bean>
+
+    <bean id="clusterPartitioner" class="terrastore.partition.impl.support.ClusterPartitionerFactoryBean">
+        <constructor-arg ref="clusterPartitionerBean"/>
+        <constructor-arg ref="scanner"/>
+    </bean>
+
+    <bean id="ensemblePartitionerBean" class="terrastore.partition.impl.EnsembleHashingPartitioner">
         <constructor-arg ref="hashFunction"/>
     </bean>
 
-    <bean id="clusterPartitioner" class="terrastore.partition.impl.ClusterHashingPartitioner">
+    <bean id="clusterPartitionerBean" class="terrastore.partition.impl.ClusterHashingPartitioner">
         <constructor-arg value="1024"/>
         <constructor-arg ref="hashFunction"/>
     </bean>
