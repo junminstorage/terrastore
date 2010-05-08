@@ -3,28 +3,11 @@ package terrastore.partition;
 /**
  * @author Sergio Bossa
  */
-public interface CustomPartitionerStrategy {
-
-    public Cluster getClusterFor(String bucket);
-
-    public Cluster getClusterFor(String bucket, String key);
+public interface CustomClusterPartitioner {
 
     public Node getNodeFor(String cluster, String bucket);
 
     public Node getNodeFor(String cluster, String bucket, String key);
-
-    public static class Cluster {
-
-        private final String name;
-
-        public Cluster(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
 
     public static class Node {
 
