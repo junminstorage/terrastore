@@ -62,20 +62,12 @@ public class GetValueCommand extends AbstractCommand<Value> {
 
     public Value executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
-        if (bucket != null) {
-            if (conditional) {
-                Value value = bucket.conditionalGet(key, predicate, condition);
-                if (value != null) {
-                    return value;
-                } else {
-                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE,
-                            "Unsatisfied condition: " + predicate.getConditionType() + ":" + predicate.getConditionExpression() + " for key: " + key));
-                }
-            } else {
-                return bucket.get(key);
-            }
-        } else {
-            return null;
+        if (null == bucket) {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
         }
+        if (conditional) {
+            return bucket.conditionalGet(key, predicate, condition);
+        }
+        return bucket.get(key);
     }
 }

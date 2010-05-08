@@ -126,12 +126,12 @@ public class TCBucket implements Bucket {
         if (value != null) {
             if (value.dispatch(key, predicate, condition)) {
                 return value;
-            } else {
-                return null;
-            }
-        } else {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
-        }
+            } 
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE,
+                    "Unsatisfied condition: " + predicate.getConditionType() + ":" + predicate.getConditionExpression() + " for key: " + key));
+        } 
+        
+        throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
     }
 
     public void remove(String key) throws StoreOperationException {
