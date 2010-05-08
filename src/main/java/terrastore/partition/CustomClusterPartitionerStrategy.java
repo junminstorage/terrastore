@@ -3,7 +3,7 @@ package terrastore.partition;
 /**
  * @author Sergio Bossa
  */
-public interface CustomClusterPartitioner {
+public interface CustomClusterPartitionerStrategy {
 
     public Node getNodeFor(String cluster, String bucket);
 

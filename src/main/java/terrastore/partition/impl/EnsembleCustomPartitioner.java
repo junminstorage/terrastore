@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import terrastore.communication.Cluster;
-import terrastore.partition.CustomEnsemblePartitioner;
+import terrastore.partition.CustomEnsemblePartitionerStrategy;
 import terrastore.partition.EnsemblePartitioner;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.support.ReflectionKeyExtractor;
@@ -20,10 +20,10 @@ import terrastore.util.collect.support.ReflectionKeyExtractor;
 public class EnsembleCustomPartitioner implements EnsemblePartitioner {
 
     private final ReadWriteLock stateLock;
-    private final CustomEnsemblePartitioner strategy;
+    private final CustomEnsemblePartitionerStrategy strategy;
     private final Map<String, Cluster> clusters;
 
-    public EnsembleCustomPartitioner(CustomEnsemblePartitioner strategy) {
+    public EnsembleCustomPartitioner(CustomEnsemblePartitionerStrategy strategy) {
         this.strategy = strategy;
         this.stateLock = new ReentrantReadWriteLock();
         this.clusters = new HashMap<String, Cluster>();
@@ -43,7 +43,7 @@ public class EnsembleCustomPartitioner implements EnsemblePartitioner {
     public Cluster getClusterFor(String bucket) {
         stateLock.readLock().lock();
         try {
-            CustomEnsemblePartitioner.Cluster cluster = strategy.getClusterFor(bucket);
+            CustomEnsemblePartitionerStrategy.Cluster cluster = strategy.getClusterFor(bucket);
             if (cluster != null) {
                 return clusters.get(cluster.getName());
             } else {
@@ -58,7 +58,7 @@ public class EnsembleCustomPartitioner implements EnsemblePartitioner {
     public Cluster getClusterFor(String bucket, String key) {
         stateLock.readLock().lock();
         try {
-            CustomEnsemblePartitioner.Cluster cluster = strategy.getClusterFor(bucket, key);
+            CustomEnsemblePartitionerStrategy.Cluster cluster = strategy.getClusterFor(bucket, key);
             if (cluster != null) {
                 return clusters.get(cluster.getName());
             } else {
