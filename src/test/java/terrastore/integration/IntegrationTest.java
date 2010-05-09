@@ -79,6 +79,15 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testGetNotFound() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        GetMethod getValue = makeGetMethod(NODE1_PORT, bucket + "/value");
+        HTTP_CLIENT.executeMethod(getValue);
+        assertEquals(HttpStatus.SC_NOT_FOUND, getValue.getStatusCode());
+    }
+
+    @Test
     public void testPutValueAndConditionallyGetWithSuccess() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
