@@ -15,7 +15,6 @@
  */
 package terrastore.communication.process;
 
-import terrastore.communication.process.ExecutorBasedThreadPool;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

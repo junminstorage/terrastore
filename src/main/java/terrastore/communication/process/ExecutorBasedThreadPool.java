@@ -41,7 +41,7 @@ public class ExecutorBasedThreadPool extends ThreadPoolExecutor implements Threa
     }
 
     public ExecutorBasedThreadPool(int threads) {
-        super(Runtime.getRuntime().availableProcessors(), threads, 60, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
+        super(threads, threads, 60, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
         stateLock = new ReentrantLock();
         pauseCondition = stateLock.newCondition();
         inactiveCondition = stateLock.newCondition();
