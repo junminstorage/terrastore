@@ -16,11 +16,15 @@
         <antcall target="common-master">
             <param name="config" value="terracotta-config.xml"/>
             <param name="master" value="terrastore-single-master"/>
+            <param name="master.host.token" value="@master.server.host@"/>
+            <param name="master.host" value="%i"/>
         </antcall>
 
     </target>
 
     <target name="ha-master-1" if="install.dir" description="Install Terrastore ha master 1.">
+
+        <antcall target="version"/>
 
         <antcall target="common-master">
             <param name="config" value="terracotta-config-ha.xml"/>
@@ -79,6 +83,24 @@
         <property name="master.ha.port" value="9530"/>
         <property name="server.reconnection.timeout" value="1"/>
         <property name="server.healthcheck.timeout" value="3"/>
+        
+        <condition property="master.host" value="%i">
+            <not>
+                <isset property="master.host.1"/>
+            </not>
+        </condition>
+
+        <condition property="master.host.1" value="%i">
+            <not>
+                <isset property="master.host.1"/>
+            </not>
+        </condition>
+
+        <condition property="master.host.2" value="%i">
+            <not>
+                <isset property="master.host.2"/>
+            </not>
+        </condition>
 
         <delete dir="${java.io.tmpdir}/terrastore-install"/>
 
@@ -88,6 +110,15 @@
         <copy file="terrastore-master/terracotta-master.log4j.properties" tofile="${java.io.tmpdir}/terrastore-install/terrastore-master/.tc.custom.log4j.properties"/>
 
         <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/${config}">
+            <replacefilter
+                token="@master.host@"
+                value="${master.host}"/>
+            <replacefilter
+                token="@master.host.1@"
+                value="${master.host.1}"/>
+                <replacefilter
+                token="@master.host.2@"
+                value="${master.host.2}"/>
             <replacefilter
                 token="@master.server.port@"
                 value="${master.server.port}"/>
