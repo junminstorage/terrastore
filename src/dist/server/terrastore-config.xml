@@ -130,7 +130,7 @@
     <!-- Cluster -->
 
     <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator" factory-method="getInstance">
-        <property name="maxFrameLength" value="104857600"/>
+        <property name="maxFrameLength" value="10485760"/>
         <property name="store" ref="store"/>
         <property name="router" ref="router"/>
         <property name="ensemble" ref="ensemble"/>
