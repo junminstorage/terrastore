@@ -34,9 +34,8 @@ The active master will be the first to be started.
 * Starting master(s) and server(s):
 
 $path_to_master/bin> sh start.sh
-$path_to_server/bin> sh start.sh --master host:9510
+$path_to_server/bin> sh start.sh --httpPort 8080 --nodePort 6000 --master host:9510
 
 The default master port is 9510 (which can be changed through the
-terrastore-install too as well).
+terrastore-install tool as well).
 
----------------------------------------
