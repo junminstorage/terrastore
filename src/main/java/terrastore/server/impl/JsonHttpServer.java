@@ -64,7 +64,6 @@ public class JsonHttpServer implements Server {
 
     @DELETE
     @Path("/{bucket}")
-    @Consumes("application/json")
     public void removeBucket(@PathParam("bucket") String bucket) throws ServerOperationException {
         try {
             LOG.debug("Removing bucket {}", bucket);
@@ -92,7 +91,6 @@ public class JsonHttpServer implements Server {
 
     @DELETE
     @Path("/{bucket}/{key}")
-    @Consumes("application/json")
     public void removeValue(@PathParam("bucket") String bucket, @PathParam("key") String key) throws ServerOperationException {
         try {
             LOG.debug("Removing value with key {} from bucket {}", key, bucket);
@@ -217,7 +215,6 @@ public class JsonHttpServer implements Server {
 
     @POST
     @Path("/{bucket}/import")
-    @Consumes("application/json")
     public void importBackup(@PathParam("bucket") String bucket, @QueryParam("source") String source, @QueryParam("secret") String secret) throws ServerOperationException {
         try {
             if (source == null) {
@@ -238,7 +235,6 @@ public class JsonHttpServer implements Server {
 
     @POST
     @Path("/{bucket}/export")
-    @Consumes("application/json")
     public void exportBackup(@PathParam("bucket") String bucket, @QueryParam("destination") String destination, @QueryParam("secret") String secret) throws ServerOperationException {
         try {
             if (destination == null) {
