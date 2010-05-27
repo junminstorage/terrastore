@@ -38,6 +38,7 @@ import terrastore.store.features.Range;
 import terrastore.store.operators.Condition;
 import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
+import static org.easymock.classextension.EasyMock.*;
 
 /**
  * @author Sergio Bossa
@@ -194,10 +195,17 @@ public class TCBucketTest {
         bucket.get(key);
     }
 
-    @Test(expected = StoreOperationException.class)
-    public void testRemoveNullValue() throws StoreOperationException {
+    @Test
+    public void testRemoveIsIdempotent() throws StoreOperationException {
+        EventBus bus = createMock(EventBus.class);
+
+        replay(bus);
+
         String key = "key";
+        bucket.setEventBus(bus);
         bucket.remove(key);
+
+        verify(bus);
     }
 
     @Test(expected = StoreOperationException.class)

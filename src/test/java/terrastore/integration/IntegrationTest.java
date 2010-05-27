@@ -198,6 +198,26 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testDeleteValueIsIdempotent() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        TestValue value = new TestValue("value", 1);
+        PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
+        putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+        HTTP_CLIENT.executeMethod(putValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        putValue.releaseConnection();
+
+        DeleteMethod deleteValue = makeDeleteMethod(NODE2_PORT, bucket + "/value");
+        HTTP_CLIENT.executeMethod(deleteValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, deleteValue.getStatusCode());
+        deleteValue.releaseConnection();
+        HTTP_CLIENT.executeMethod(deleteValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, deleteValue.getStatusCode());
+        deleteValue.releaseConnection();
+    }
+
+    @Test
     public void testGetAllValuesWithNoLimit() throws Exception {
         String bucket = UUID.randomUUID().toString();
 

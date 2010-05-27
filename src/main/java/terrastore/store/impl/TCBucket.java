@@ -139,10 +139,9 @@ public class TCBucket implements Bucket {
         lock(key);
         try {
             Value removed = bucket.remove(key);
-            if (removed == null) {
-                throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
+            if (removed != null) {
+                TCBucket.eventBus.get().publish(new ValueRemovedEvent(name, key));
             }
-            TCBucket.eventBus.get().publish(new ValueRemovedEvent(name, key));
         } finally {
             unlock(key);
         }
