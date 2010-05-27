@@ -80,7 +80,6 @@ public class JsonHttpServerTest {
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/import?source=source&secret=secret");
-        method.setRequestHeader("Content-Type", "application/json");
         method.setRequestEntity(new StringRequestEntity("", "application/json", null));
         client.executeMethod(method);
 
@@ -108,7 +107,6 @@ public class JsonHttpServerTest {
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/export?destination=destination&secret=secret");
-        method.setRequestHeader("Content-Type", "application/json");
         method.setRequestEntity(new StringRequestEntity("", "application/json", null));
         client.executeMethod(method);
 
@@ -136,7 +134,6 @@ public class JsonHttpServerTest {
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket");
-        method.setRequestHeader("Content-Type", "application/json");
         client.executeMethod(method);
 
         assertEquals(HttpStatus.SC_NO_CONTENT, method.getStatusCode());
@@ -219,7 +216,6 @@ public class JsonHttpServerTest {
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/test1");
-        method.setRequestHeader("Content-Type", "application/json");
         client.executeMethod(method);
 
         assertEquals(HttpStatus.SC_NO_CONTENT, method.getStatusCode());
