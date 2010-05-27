@@ -171,6 +171,8 @@ public class TCBucket implements Bucket {
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
             }
+        } catch (StoreOperationException ex) {
+            throw ex;
         } catch (TimeoutException ex) {
             task.cancel(true);
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Update cancelled due to long execution time."));
