@@ -15,7 +15,6 @@
  */
 package terrastore.service;
 
-import terrastore.server.*;
 import terrastore.common.ErrorMessage;
 
 /**
