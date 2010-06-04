@@ -12,6 +12,11 @@
     </scm>
     <dependencies>
         <dependency>
+            <groupId>jsr166y</groupId>
+            <artifactId>jsr166y</artifactId>
+            <version>20100604</version>
+        </dependency>
+        <dependency>
             <groupId>args4j</groupId>
             <artifactId>args4j</artifactId>
             <version>2.0.14</version>

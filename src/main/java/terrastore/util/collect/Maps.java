@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Sergio Bossa
@@ -46,8 +47,8 @@ public class Maps {
         return new UnionMap<K, V>(maps);
     }
 
-    public static <K, V> Map<K, V> drain(List<Map<K, V>> maps, Map<K, V> destination) {
-        return new DrainMap<K, V>(maps, destination);
+    public static <K, V> Map<K, V> composite(Set<K> keys, List<Map<K, V>> values) {
+        return new CompositeMap<K, V>(keys, values);
     }
 
     public static <K, V> void fill(Map<K, V> map, K[] keys, V[] values) {

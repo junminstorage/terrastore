@@ -18,6 +18,7 @@ package terrastore.service.impl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +47,7 @@ import terrastore.store.features.Range;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.util.collect.Maps;
+import terrastore.util.collect.ParallelUtils;
 import terrastore.util.collect.Sets;
 
 /**
@@ -144,8 +146,7 @@ public class DefaultQueryService implements QueryService {
                 Map<String, Value> partial = node.<Map<String, Value>>send(command);
                 allKeyValues.add(partial);
             }
-            // TODO: we may use fork/join to build the final map out of all sub-maps.
-            return Maps.drain(allKeyValues, new TreeMap<String, Value>(keyComparator));
+            return Maps.composite(keysInRange, allKeyValues);
         } catch (MissingRouteException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
@@ -273,15 +274,14 @@ public class DefaultQueryService implements QueryService {
     }
 
     private Set<String> multicastRangeQueryCommand(Map<Cluster, Set<Node>> perClusterNodes, RangeQueryCommand command) throws QueryOperationException {
-        // Use a sorted set to order retrieved keys because we need to apply a limit to the whole set:
-        SortedSet<String> keys = new TreeSet<String>();
-        // That is, we need to retrieve all keys in range order and take only a limited, ordered, subset.
+        // Collect all sets of sorted keys in a list:
+        List<Set<String>> keys = new LinkedList<Set<String>>();
         for (Set<Node> nodes : perClusterNodes.values()) {
             // Try to send command, stopping after first successful attempt:
             for (Node node : nodes) {
                 try {
                     Set<String> partial = node.<Set<String>>send(command);
-                    keys.addAll(partial);
+                    keys.add(partial);
                     // Break after first success, we just want to send command to one node per cluster:
                     break;
                 } catch (ProcessingException ex) {
@@ -289,7 +289,8 @@ public class DefaultQueryService implements QueryService {
                 }
             }
         }
-        return keys;
+        // Parallel merge of all sorted sets:
+        return ParallelUtils.parallelMerge(keys);
     }
 
     private Comparator getComparator(String comparatorName) {
