@@ -440,6 +440,71 @@ public class DefaultQueryServiceTest {
         verify(cluster1, cluster2, node1, node2, router);
     }
 
+    @Test
+    public void testQueryByRangeWithPredicateRestrictingValues() throws Exception {
+        Comparator stringComparator = new Comparator() {
+
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        };
+
+        Condition trueCondition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                return true;
+            }
+        };
+
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+        Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
+        nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
+        nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
+        Map<String, Value> values1 = new HashMap<String, Value>();
+        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        Map<String, Value> values2 = new HashMap<String, Value>();
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
+
+        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash("test1")).once();
+        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash("test2")).once();
+
+        router.routeToNodesFor("bucket", Sets.hash("test1", "test2"));
+        expectLastCall().andReturn(nodeToKeys).once();
+
+        node1.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values1).once();
+        // Restricting values by returning nothing, simulating a predicate cutting out a value:
+        node2.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(values2).once();
+
+        replay(cluster1, cluster2, node1, node2, router);
+
+        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
+        comparators.put("order", stringComparator);
+        Map<String, Condition> conditions = new HashMap<String, Condition>();
+        conditions.put("test", trueCondition);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        service.setComparators(comparators);
+        service.setConditions(conditions);
+
+        Map<String, Value> result = service.queryByRange("bucket", new Range("test1", "test2", 0, "order"), new Predicate("test:true"), 0);
+        assertEquals(1, result.size());
+        assertEquals("test1", result.keySet().toArray()[0]);
+
+        verify(cluster1, cluster2, node1, node2, router);
+    }
+
     @Test(expected = QueryOperationException.class)
     public void testQueryByRangeWithPredicateFailsDueToNoConditionFound() throws Exception {
         Comparator stringComparator = new Comparator() {

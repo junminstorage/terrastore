@@ -16,6 +16,9 @@
 package terrastore.util.collect;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -41,5 +44,9 @@ public class Sets {
 
     public static <E> Set<E> cons(E element, Set<E> set) {
         return com.google.common.collect.Sets.union(linked(element), set);
+    }
+
+    public static <E extends Comparable> Set<E> merge(Set<E> first, Set<E> second) {
+        return new MergeSet<E>(first, second);
     }
 }
