@@ -40,7 +40,7 @@ public class ParallelUtils {
     private static class ParallelMergeTask<E extends Comparable> extends RecursiveAction {
 
         private final List<Set<E>> sets;
-        private Set<E> merged;
+        private volatile Set<E> merged;
 
         public ParallelMergeTask(List<Set<E>> sets) {
             this.sets = sets;
