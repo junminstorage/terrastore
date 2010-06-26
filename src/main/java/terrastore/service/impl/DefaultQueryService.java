@@ -15,10 +15,8 @@
  */
 package terrastore.service.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,11 +64,21 @@ public class DefaultQueryService implements QueryService {
 
     @Override
     public Set<String> getBuckets() throws QueryOperationException {
-        LOG.debug("Getting bucket names.");
-        GetBucketsCommand command = new GetBucketsCommand();
-        Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-        Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
-        return buckets;
+        try {
+            LOG.debug("Getting bucket names.");
+            GetBucketsCommand command = new GetBucketsCommand();
+            Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+            Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
+            return buckets;
+        } catch (RuntimeException ex) {
+            LOG.error(ex.getCause().getMessage(), ex.getCause());
+            if (ex.getCause() instanceof ProcessingException) {
+                ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                throw new QueryOperationException(error);
+            } else {
+                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
+            }
+        }
     }
 
     @Override
@@ -104,32 +112,27 @@ public class DefaultQueryService implements QueryService {
             LOG.debug("Getting all values from bucket {}", bucket);
             Set<String> allKeys = Sets.limited(getAllKeysForBucket(bucket), limit);
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
-            List<Map<String, Value>> allKeyValues = ParallelUtils.<Map.Entry<Node, Set<String>>, Map<String, Value>, List<Map<String, Value>>>parallelMap(
-                    new ArrayList<Map.Entry<Node, Set<String>>>(nodeToKeys.entrySet()),
-                    new MapCollector<Map<String, Value>, List<Map<String, Value>>>() {
+            List<Map<String, Value>> allKeyValues = ParallelUtils.parallelMap(
+                    nodeToKeys.entrySet(),
+                    new MapTask<Map.Entry<Node, Set<String>>, Map<String, Value>>() {
 
                         @Override
-                        public List<Map<String, Value>> createCollector() {
-                            return new LinkedList<Map<String, Value>>();
-                        }
-                    },
-                    new MapTask<Map.Entry<Node, Set<String>>, Map<String, Value>, List<Map<String, Value>>>() {
-
-                        @Override
-                        public List<Map<String, Value>> map(Map.Entry<Node, Set<String>> nodeToKeys, MapCollector<Map<String, Value>, List<Map<String, Value>>> collector) {
+                        public Map<String, Value> map(Map.Entry<Node, Set<String>> nodeToKeys) {
                             try {
-                                List<Map<String, Value>> result = collector.createCollector();
                                 Node node = nodeToKeys.getKey();
                                 Set<String> keys = nodeToKeys.getValue();
                                 GetValuesCommand command = new GetValuesCommand(bucket, keys);
-                                result.add(node.<Map<String, Value>>send(command));
-                                return result;
+                                return node.<Map<String, Value>>send(command);
                             } catch (ProcessingException ex) {
-                                LOG.error(ex.getMessage(), ex);
-                                ErrorMessage error = ex.getErrorMessage();
-                                return null;
-                                //throw new QueryOperationException(error);
+                                throw new RuntimeException(ex);
                             }
+                        }
+                    },
+                    new MapCollector<Map<String, Value>, List<Map<String, Value>>>() {
+
+                        @Override
+                        public List<Map<String, Value>> collect(List<Map<String, Value>> allKeyValues) {
+                            return allKeyValues;
                         }
                     });
             return Maps.union(allKeyValues);
@@ -137,6 +140,14 @@ public class DefaultQueryService implements QueryService {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
+        } catch (RuntimeException ex) {
+            LOG.error(ex.getCause().getMessage(), ex.getCause());
+            if (ex.getCause() instanceof ProcessingException) {
+                ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                throw new QueryOperationException(error);
+            } else {
+                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
+            }
         }
     }
 
@@ -148,21 +159,13 @@ public class DefaultQueryService implements QueryService {
             final Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
             Set<String> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range, keyComparator, timeToLive), range.getLimit());
             Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
-            List<Map<String, Value>> allKeyValues = ParallelUtils.<Map.Entry<Node, Set<String>>, Map<String, Value>, List<Map<String, Value>>>parallelMap(
-                    new ArrayList<Map.Entry<Node, Set<String>>>(nodeToKeys.entrySet()),
-                    new MapCollector<Map<String, Value>, List<Map<String, Value>>>() {
+            List<Map<String, Value>> allKeyValues = ParallelUtils.parallelMap(
+                    nodeToKeys.entrySet(),
+                    new MapTask<Map.Entry<Node, Set<String>>, Map<String, Value>>() {
 
                         @Override
-                        public List<Map<String, Value>> createCollector() {
-                            return new LinkedList<Map<String, Value>>();
-                        }
-                    },
-                    new MapTask<Map.Entry<Node, Set<String>>, Map<String, Value>, List<Map<String, Value>>>() {
-
-                        @Override
-                        public List<Map<String, Value>> map(Map.Entry<Node, Set<String>> nodeToKeys, MapCollector<Map<String, Value>, List<Map<String, Value>>> collector) {
+                        public Map<String, Value> map(Map.Entry<Node, Set<String>> nodeToKeys) {
                             try {
-                                List<Map<String, Value>> result = collector.createCollector();
                                 Node node = nodeToKeys.getKey();
                                 Set<String> keys = nodeToKeys.getValue();
                                 GetValuesCommand command = null;
@@ -171,14 +174,17 @@ public class DefaultQueryService implements QueryService {
                                 } else {
                                     command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
                                 }
-                                result.add(node.<Map<String, Value>>send(command));
-                                return result;
+                                return node.<Map<String, Value>>send(command);
                             } catch (ProcessingException ex) {
-                                LOG.error(ex.getMessage(), ex);
-                                ErrorMessage error = ex.getErrorMessage();
-                                return null;
-                                //throw new QueryOperationException(error);
+                                throw new RuntimeException(ex);
                             }
+                        }
+                    },
+                    new MapCollector<Map<String, Value>, List<Map<String, Value>>>() {
+
+                        @Override
+                        public List<Map<String, Value>> collect(List<Map<String, Value>> allKeyValues) {
+                            return allKeyValues;
                         }
                     });
             return Maps.composite(keysInRange, allKeyValues);
@@ -186,6 +192,14 @@ public class DefaultQueryService implements QueryService {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
+        } catch (RuntimeException ex) {
+            LOG.error(ex.getCause().getMessage(), ex.getCause());
+            if (ex.getCause() instanceof ProcessingException) {
+                ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                throw new QueryOperationException(error);
+            } else {
+                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
+            }
         }
     }
 
@@ -197,32 +211,27 @@ public class DefaultQueryService implements QueryService {
             if (valueCondition != null) {
                 Set<String> allKeys = getAllKeysForBucket(bucket);
                 Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
-                List<Map<String, Value>> allKeyValues = ParallelUtils.<Map.Entry<Node, Set<String>>, Map<String, Value>, List<Map<String, Value>>>parallelMap(
-                        new ArrayList<Map.Entry<Node, Set<String>>>(nodeToKeys.entrySet()),
-                        new MapCollector<Map<String, Value>, List<Map<String, Value>>>() {
+                List<Map<String, Value>> allKeyValues = ParallelUtils.parallelMap(
+                        nodeToKeys.entrySet(),
+                        new MapTask<Map.Entry<Node, Set<String>>, Map<String, Value>>() {
 
                             @Override
-                            public List<Map<String, Value>> createCollector() {
-                                return new LinkedList<Map<String, Value>>();
-                            }
-                        },
-                        new MapTask<Map.Entry<Node, Set<String>>, Map<String, Value>, List<Map<String, Value>>>() {
-
-                            @Override
-                            public List<Map<String, Value>> map(Map.Entry<Node, Set<String>> nodeToKeys, MapCollector<Map<String, Value>, List<Map<String, Value>>> collector) {
+                            public Map<String, Value> map(Map.Entry<Node, Set<String>> nodeToKeys) {
                                 try {
-                                    List<Map<String, Value>> result = collector.createCollector();
                                     Node node = nodeToKeys.getKey();
                                     Set<String> keys = nodeToKeys.getValue();
                                     GetValuesCommand command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
-                                    result.add(node.<Map<String, Value>>send(command));
-                                    return result;
+                                    return node.<Map<String, Value>>send(command);
                                 } catch (ProcessingException ex) {
-                                    LOG.error(ex.getMessage(), ex);
-                                    ErrorMessage error = ex.getErrorMessage();
-                                    return null;
-                                    //throw new QueryOperationException(error);
+                                    throw new RuntimeException(ex);
                                 }
+                            }
+                        },
+                        new MapCollector<Map<String, Value>, List<Map<String, Value>>>() {
+
+                            @Override
+                            public List<Map<String, Value>> collect(List<Map<String, Value>> allKeyValues) {
+                                return allKeyValues;
                             }
                         });
                 return Maps.union(allKeyValues);
@@ -233,6 +242,14 @@ public class DefaultQueryService implements QueryService {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
+        } catch (RuntimeException ex) {
+            LOG.error(ex.getCause().getMessage(), ex.getCause());
+            if (ex.getCause() instanceof ProcessingException) {
+                ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                throw new QueryOperationException(error);
+            } else {
+                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
+            }
         }
     }
 
@@ -270,41 +287,33 @@ public class DefaultQueryService implements QueryService {
         this.conditions.putAll(conditions);
     }
 
-    private Set<String> getAllKeysForBucket(String bucket) throws QueryOperationException {
+    private Set<String> getAllKeysForBucket(String bucket) {
         GetKeysCommand command = new GetKeysCommand(bucket);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<String> keys = multicastGetAllKeysCommand(perClusterNodes, command);
         return keys;
     }
 
-    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws QueryOperationException {
+    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) {
         RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<String> keys = multicastRangeQueryCommand(perClusterNodes, command);
         return keys;
     }
 
-    private Set<String> multicastGetBucketsCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetBucketsCommand command) throws QueryOperationException {
+    private Set<String> multicastGetBucketsCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetBucketsCommand command) {
         // Parallel collection of all buckets:
-        Set<String> result = ParallelUtils.<Set<Node>, String, Set<String>>parallelMap(
-                new ArrayList<Set<Node>>(perClusterNodes.values()),
-                new MapCollector<String, Set<String>>() {
+        Set<String> result = ParallelUtils.parallelMap(
+                perClusterNodes.values(),
+                new MapTask<Set<Node>, Set<String>>() {
 
                     @Override
-                    public Set<String> createCollector() {
-                        return new HashSet<String>();
-                    }
-                },
-                new MapTask<Set<Node>, String, Set<String>>() {
-
-                    @Override
-                    public Set<String> map(Set<Node> nodes, MapCollector<String, Set<String>> collector) {
-                        Set<String> buckets = collector.createCollector();
+                    public Set<String> map(Set<Node> nodes) {
+                        Set<String> buckets = new HashSet<String>();
                         // Try to send command, stopping after first successful attempt:
                         for (Node node : nodes) {
                             try {
-                                Set<String> partial = node.<Set<String>>send(command);
-                                buckets.addAll(partial);
+                                buckets = node.<Set<String>>send(command);
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
                             } catch (ProcessingException ex) {
@@ -313,26 +322,26 @@ public class DefaultQueryService implements QueryService {
                         }
                         return buckets;
                     }
+                },
+                new MapCollector<Set<String>, Set<String>>() {
+
+                    @Override
+                    public Set<String> collect(List<Set<String>> keys) {
+                        return Sets.union(keys);
+                    }
                 });
         return result;
     }
 
-    private Set<String> multicastGetAllKeysCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetKeysCommand command) throws QueryOperationException {
+    private Set<String> multicastGetAllKeysCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetKeysCommand command) {
         // Parallel collection of all keys:
-        Set<String> result = ParallelUtils.<Set<Node>, String, Set<String>>parallelMap(
-                new ArrayList<Set<Node>>(perClusterNodes.values()),
-                new MapCollector<String, Set<String>>() {
+        Set<String> result = ParallelUtils.parallelMap(
+                perClusterNodes.values(),
+                new MapTask<Set<Node>, Set<String>>() {
 
                     @Override
-                    public Set<String> createCollector() {
-                        return new HashSet<String>();
-                    }
-                },
-                new MapTask<Set<Node>, String, Set<String>>() {
-
-                    @Override
-                    public Set<String> map(Set<Node> nodes, MapCollector<String, Set<String>> collector) {
-                        Set<String> keys = collector.createCollector();
+                    public Set<String> map(Set<Node> nodes) {
+                        Set<String> keys = new HashSet<String>();
                         // Try to send command, stopping after first successful attempt:
                         for (Node node : nodes) {
                             try {
@@ -345,31 +354,30 @@ public class DefaultQueryService implements QueryService {
                         }
                         return keys;
                     }
+                },
+                new MapCollector<Set<String>, Set<String>>() {
+
+                    @Override
+                    public Set<String> collect(List<Set<String>> keys) {
+                        return Sets.union(keys);
+                    }
                 });
         return result;
     }
 
-    private Set<String> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final RangeQueryCommand command) throws QueryOperationException {
+    private Set<String> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final RangeQueryCommand command) {
         // Parallel collection of all sets of sorted keys in a list:
-        List<Set<String>> keys = ParallelUtils.<Set<Node>, Set<String>, List<Set<String>>>parallelMap(
-                new ArrayList<Set<Node>>(perClusterNodes.values()),
-                new MapCollector<Set<String>, List<Set<String>>>() {
+        Set<String> keys = ParallelUtils.parallelMap(
+                perClusterNodes.values(),
+                new MapTask<Set<Node>, Set<String>>() {
 
                     @Override
-                    public List<Set<String>> createCollector() {
-                        return new LinkedList<Set<String>>();
-                    }
-                },
-                new MapTask<Set<Node>, Set<String>, List<Set<String>>>() {
-
-                    @Override
-                    public List<Set<String>> map(Set<Node> nodes, MapCollector<Set<String>, List<Set<String>>> collector) {
-                        List<Set<String>> keys = collector.createCollector();
+                    public Set<String> map(Set<Node> nodes) {
+                        Set<String> keys = new HashSet<String>();
                         // Try to send command, stopping after first successful attempt:
                         for (Node node : nodes) {
                             try {
-                                Set<String> partial = node.<Set<String>>send(command);
-                                keys.add(partial);
+                                keys = node.<Set<String>>send(command);
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
                             } catch (ProcessingException ex) {
@@ -378,9 +386,16 @@ public class DefaultQueryService implements QueryService {
                         }
                         return keys;
                     }
+                },
+                new MapCollector<Set<String>, Set<String>>() {
+
+                    @Override
+                    public Set<String> collect(List<Set<String>> keys) {
+                        // Parallel merge of all sorted sets:
+                        return ParallelUtils.parallelMerge(keys);
+                    }
                 });
-        // Parallel merge of all sorted sets:
-        return ParallelUtils.parallelMerge(keys);
+        return keys;
     }
 
     private Comparator getComparator(String comparatorName) {
