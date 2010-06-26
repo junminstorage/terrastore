@@ -20,31 +20,27 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import jsr166y.ForkJoinPool;
 import jsr166y.ForkJoinTask;
 import jsr166y.RecursiveAction;
 import jsr166y.RecursiveTask;
 import terrastore.util.collect.MergeSet;
+import terrastore.util.global.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
  */
 public class ParallelUtils {
 
-    // TODO: make this configurable?
-    private final static ForkJoinPool POOL = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
-    //
-
     public static <E extends Comparable> Set<E> parallelMerge(List<Set<E>> sets) {
         ParallelMergeTask task = new ParallelMergeTask<E>(sets);
-        POOL.execute(task);
+        GlobalExecutor.getExecutor().execute(task);
         task.join();
         return task.getMerged();
     }
 
     public static <I, O, C extends Collection> C parallelMap(Collection<I> input, MapTask<I, O> mapper, MapCollector<O, C> collector) {
         ParallelMapTask<I, O, C> task = new ParallelMapTask<I, O, C>(input, mapper, collector);
-        POOL.execute(task);
+        GlobalExecutor.getExecutor().execute(task);
         task.join();
         return task.getOutput();
     }
