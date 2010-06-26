@@ -41,29 +41,26 @@ public class ParallelUtilsTest {
     }
 
     @Test
-    public void testParallelMap() {
+    public void testParallelMap() throws Exception {
         List<String> result = ParallelUtils.parallelMap(
-                Lists.newArrayList("David Gilmour", "Jimmy Page", "Carlos Santana"),
-                new MapCollector<String, List<String>>() {
+                Arrays.asList("David Gilmour", "Jimmy Page", "Carlos Santana"),
+                new MapTask<String, List<String>>() {
 
                     @Override
-                    public List<String> createCollector() {
-                        return new LinkedList<String>();
+                    public List<String> map(String input) {
+                        String[] tokens = input.split(" ");
+                        return Arrays.asList(tokens);
                     }
                 },
-                new MapTask<String, String, List<String>>() {
+                new MapCollector<List<String>, List<String>>() {
 
                     @Override
-                    public List<String> map(String input, MapCollector<String, List<String>> collector) {
-                        List<String> result = collector.createCollector();
-                        try {
-                            String[] tokens = input.split(" ");
-                            result.addAll(Arrays.asList(tokens));
-                            return result;
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            return result;
+                    public List<String> collect(List<List<String>> outputs) {
+                        List<String> result = new LinkedList<String>();
+                        for (List<String> o : outputs) {
+                            result.addAll(o);
                         }
+                        return result;
                     }
                 });
         assertEquals(6, result.size());
@@ -73,5 +70,34 @@ public class ParallelUtilsTest {
         assertTrue(result.contains("Page"));
         assertTrue(result.contains("Carlos"));
         assertTrue(result.contains("Santana"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testParallelMapWithException() throws Exception {
+        List<String> result = ParallelUtils.parallelMap(
+                Arrays.asList("David Gilmour", "George Orwell", "Carlos Santana"),
+                new MapTask<String, List<String>>() {
+
+                    @Override
+                    public List<String> map(String input) {
+                        if (input.equals("George Orwell")) {
+                            throw new IllegalStateException("Not a guitar player!");
+                        } else {
+                            String[] tokens = input.split(" ");
+                            return Arrays.asList(tokens);
+                        }
+                    }
+                },
+                new MapCollector<List<String>, List<String>>() {
+
+                    @Override
+                    public List<String> collect(List<List<String>> outputs) {
+                        List<String> result = new LinkedList<String>();
+                        for (List<String> o : outputs) {
+                            result.addAll(o);
+                        }
+                        return result;
+                    }
+                });
     }
 }

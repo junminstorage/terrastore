@@ -16,9 +16,7 @@
 package terrastore.util.collect;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -40,6 +38,10 @@ public class Sets {
 
     public static <E> Set<E> limited(Set<E> source, int limit) {
         return new LimitedSet<E>(source, limit);
+    }
+
+    public static <E> Set<E> union(List<Set<E>> sets) {
+        return new UnionSet<E>(sets);
     }
 
     public static <E> Set<E> cons(E element, Set<E> set) {
