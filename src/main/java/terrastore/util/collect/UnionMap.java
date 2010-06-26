@@ -19,6 +19,7 @@ import com.google.common.collect.AbstractIterator;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -62,9 +63,11 @@ public class UnionMap<K, V> extends AbstractMap<K, V> {
 
         @Override
         public int size() {
+            UnionIterator iterator = new UnionIterator();
             int size = 0;
-            for (Map<K, V> map : maps) {
-                size += map.size();
+            while (iterator.hasNext()) {
+                iterator.next();
+                size++;
             }
             return size;
         }
@@ -72,24 +75,31 @@ public class UnionMap<K, V> extends AbstractMap<K, V> {
         private class UnionIterator extends AbstractIterator<Entry<K, V>> {
 
             private int currentMapIndex = 0;
+            private Set<K> computedKeys = new HashSet<K>();
             private Iterator<Entry<K, V>> currentMapIterator;
 
             @Override
             protected Entry<K, V> computeNext() {
-                if (currentMapIterator == null || !currentMapIterator.hasNext()) {
-                    currentMapIterator = null;
-                    while (currentMapIndex < maps.size() && currentMapIterator == null) {
-                        Map<K, V> currentMap = maps.get(currentMapIndex);
-                        if (currentMap.size() > 0) {
-                            currentMapIterator = currentMap.entrySet().iterator();
+                while (true) {
+                    if (currentMapIterator == null || !currentMapIterator.hasNext()) {
+                        currentMapIterator = null;
+                        while (currentMapIndex < maps.size() && currentMapIterator == null) {
+                            Map<K, V> currentMap = maps.get(currentMapIndex);
+                            if (currentMap.size() > 0) {
+                                currentMapIterator = currentMap.entrySet().iterator();
+                            }
+                            currentMapIndex++;
                         }
-                        currentMapIndex++;
                     }
-                }
-                if (currentMapIterator != null && currentMapIterator.hasNext()) {
-                    return currentMapIterator.next();
-                } else {
-                    return endOfData();
+                    if (currentMapIterator != null && currentMapIterator.hasNext()) {
+                        Entry<K, V> entry = currentMapIterator.next();
+                        if (!computedKeys.contains(entry.getKey())) {
+                            computedKeys.add(entry.getKey());
+                            return entry;
+                        }
+                    } else {
+                        return endOfData();
+                    }
                 }
             }
         }

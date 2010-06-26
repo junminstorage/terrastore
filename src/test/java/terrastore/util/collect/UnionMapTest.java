@@ -24,7 +24,6 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Sergio Bossa
  */
 public class UnionMapTest {
@@ -133,5 +132,25 @@ public class UnionMapTest {
             i++;
         }
         assertEquals(0, i);
+    }
+
+    @Test
+    public void testDuplicatesAreIgnored() {
+        Map<String, String> map1 = new HashMap<String, String>();
+        map1.put("k1", "v1");
+        map1.put("k2", "v2");
+        Map<String, String> map2 = new HashMap<String, String>();
+        map2.put("k2", "v2");
+        map2.put("k3", "v3");
+        maps = new LinkedList<Map<String, String>>();
+        maps.add(map1);
+        maps.add(map2);
+        UnionMap<String, String> union = new UnionMap<String, String>(maps);
+        int i = 0;
+        for (Map.Entry<String, String> entry : union.entrySet()) {
+            i++;
+            assertEquals("k" + i, entry.getKey());
+        }
+        assertEquals(3, i);
     }
 }
