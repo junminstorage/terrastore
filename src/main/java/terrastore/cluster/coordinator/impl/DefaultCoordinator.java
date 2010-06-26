@@ -27,8 +27,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,6 +50,7 @@ import terrastore.communication.remote.RemoteProcessor;
 import terrastore.cluster.ensemble.Ensemble;
 import terrastore.router.Router;
 import terrastore.store.Store;
+import terrastore.util.global.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
@@ -86,8 +85,6 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     private volatile transient int remoteProcessorThreads;
     private volatile transient int globalExecutorThreads;
     //
-    private volatile transient ExecutorService globalExecutor;
-    //
     private volatile transient Store store;
     private volatile transient Router router;
     private volatile transient Ensemble ensemble;
@@ -95,18 +92,12 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     private volatile transient RemoteNodeFactory remoteNodeFactory;
     private volatile transient FlushStrategy flushStrategy;
     private volatile transient FlushCondition flushCondition;
-    
 
     private DefaultCoordinator() {
     }
 
     public static DefaultCoordinator getInstance() {
         return INSTANCE;
-    }
-
-    @Override
-    public ExecutorService getGlobalExecutor() {
-        return globalExecutor;
     }
 
     @Override
@@ -172,9 +163,9 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             thisNodePort = port;
             // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
-            globalExecutor = Executors.newFixedThreadPool(globalExecutorThreads);
             // Configure global task executor:
-            store.setTaskExecutor(globalExecutor);
+            GlobalExecutor.setParallelism(globalExecutorThreads);
+            store.setTaskExecutor(GlobalExecutor.getExecutor());
             // Setup ensemble:
             setupEnsemble(ensembleConfiguration);
             // Add cluster listener to listen to events:
@@ -351,7 +342,6 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         localProcessor.stop();
         remoteProcessor.stop();
         ensemble.shutdown();
-        globalExecutor.shutdownNow();
     }
 
     private void cleanupEverything() {

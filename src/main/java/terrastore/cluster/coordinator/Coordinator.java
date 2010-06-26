@@ -51,6 +51,4 @@ public interface Coordinator {
     public void setFlushStrategy(FlushStrategy flushStrategy);
 
     public void setFlushCondition(FlushCondition flushCondition);
-
-    public ExecutorService getGlobalExecutor();
 }
