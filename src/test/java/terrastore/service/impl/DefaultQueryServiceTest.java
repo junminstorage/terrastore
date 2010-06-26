@@ -58,7 +58,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
@@ -179,7 +181,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
@@ -220,7 +224,9 @@ public class DefaultQueryServiceTest {
     public void testGetAllValuesSucceedsBySkippingFailingNodes() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test1", "test2")));
@@ -257,7 +263,9 @@ public class DefaultQueryServiceTest {
     public void testGetAllValuesIgnoresAllNodesFailing() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
@@ -284,7 +292,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
@@ -332,7 +342,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
@@ -395,7 +407,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
@@ -461,7 +475,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
@@ -555,7 +571,9 @@ public class DefaultQueryServiceTest {
 
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test1", "test2")));
@@ -603,7 +621,9 @@ public class DefaultQueryServiceTest {
 
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
 
         router.broadcastRoute();
@@ -641,7 +661,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
@@ -694,7 +716,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
@@ -775,7 +799,9 @@ public class DefaultQueryServiceTest {
 
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test1", "test2")));
@@ -864,7 +890,9 @@ public class DefaultQueryServiceTest {
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
         Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
         Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));

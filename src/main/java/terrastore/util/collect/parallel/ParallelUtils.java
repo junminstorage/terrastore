@@ -13,13 +13,17 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.util.collect;
+package terrastore.util.collect.parallel;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import jsr166y.ForkJoinPool;
 import jsr166y.RecursiveAction;
+import jsr166y.RecursiveTask;
+import terrastore.util.collect.MergeSet;
 
 /**
  * @author Sergio Bossa
@@ -35,6 +39,13 @@ public class ParallelUtils {
         POOL.execute(task);
         task.join();
         return task.getMerged();
+    }
+
+    public static <I, O, C extends Collection<O>> C parallelMap(List<I> input, MapCollector<O, C> collector, MapTask<I, O, C> mapper) {
+        ParallelMapTask<I, O, C> task = new ParallelMapTask<I, O, C>(input, collector, mapper);
+        POOL.execute(task);
+        task.join();
+        return task.getOutput();
     }
 
     private static class ParallelMergeTask<E extends Comparable> extends RecursiveAction {
@@ -70,6 +81,45 @@ public class ParallelUtils {
 
         public Set<E> getMerged() {
             return merged;
+        }
+    }
+
+    private static class ParallelMapTask<I, O, C extends Collection<O>> extends RecursiveAction {
+
+        private final List<I> input;
+        private final MapCollector<O, C> collector;
+        private final MapTask<I, O, C> mapper;
+        private volatile C output;
+
+        public ParallelMapTask(List<I> input, MapCollector<O, C> collector, MapTask<I, O, C> mapper) {
+            this.input = input;
+            this.collector = collector;
+            this.mapper = mapper;
+            this.output = collector.createCollector();
+        }
+
+        @Override
+        protected void compute() {
+            if (input.size() == 1) {
+                output = mapper.map(input.iterator().next(), collector);
+            } else if (input.size() > 1) {
+                int middle = input.size() / 2;
+                ParallelMapTask<I, O, C> t1 = new ParallelMapTask<I, O, C>(input.subList(0, middle), collector, mapper);
+                ParallelMapTask<I, O, C> t2 = new ParallelMapTask<I, O, C>(input.subList(middle, input.size()), collector, mapper);
+                t1.fork();
+                t2.fork();
+                t1.join();
+                t2.join();
+                output = collector.createCollector();
+                output.addAll(t1.output);
+                output.addAll(t2.output);
+            } else {
+                output = collector.createCollector();
+            }
+        }
+
+        public C getOutput() {
+            return output;
         }
     }
 }
