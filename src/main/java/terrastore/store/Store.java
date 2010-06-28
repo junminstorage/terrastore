@@ -87,11 +87,4 @@ public interface Store {
      * @param backupManager The {@link BackupManager} instance.
      */
     public void setBackupManager(BackupManager backupManager);
-
-    /**
-     * Set the executor to use for asynchronously running tasks.
-     *
-     * @param taskExecutor The executor.
-     */
-    public void setTaskExecutor(ExecutorService taskExecutor);
 }

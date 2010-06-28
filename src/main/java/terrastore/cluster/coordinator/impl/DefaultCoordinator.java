@@ -165,7 +165,6 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             nodes = new ConcurrentHashMap<String, Node>();
             // Configure global task executor:
             GlobalExecutor.setParallelism(globalExecutorThreads);
-            store.setTaskExecutor(GlobalExecutor.getExecutor());
             // Setup ensemble:
             setupEnsemble(ensembleConfiguration);
             // Add cluster listener to listen to events:

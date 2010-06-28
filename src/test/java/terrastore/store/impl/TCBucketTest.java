@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
 import terrastore.event.Event;
@@ -55,7 +54,6 @@ public class TCBucketTest {
         bucket.setSnapshotManager(new LocalSnapshotManager());
         bucket.setBackupManager(new DefaultBackupManager());
         bucket.setEventBus(new DisabledEventBus());
-        bucket.setTaskExecutor(Executors.newCachedThreadPool());
     }
 
     @Test

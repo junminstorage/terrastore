@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -51,6 +50,7 @@ import terrastore.store.Value;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
+import terrastore.util.global.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
@@ -64,7 +64,6 @@ public class TCBucket implements Bucket {
     private static final transient ThreadLocal<EventBus> eventBus = new ThreadLocal<EventBus>();
     private static final transient ThreadLocal<SnapshotManager> snapshotManager = new ThreadLocal<SnapshotManager>();
     private static final transient ThreadLocal<BackupManager> backupManager = new ThreadLocal<BackupManager>();
-    private static final transient ThreadLocal<ExecutorService> taskExecutor = new ThreadLocal<ExecutorService>();
     //
     @InjectedDsoInstance
     private DsoCluster dsoCluster;
@@ -157,7 +156,7 @@ public class TCBucket implements Bucket {
         try {
             final Value value = bucket.get(key);
             if (value != null) {
-                task = taskExecutor.get().submit(new Callable<Value>() {
+                task = GlobalExecutor.getExecutor().submit(new Callable<Value>() {
 
                     @Override
                     public Value call() {
@@ -233,11 +232,6 @@ public class TCBucket implements Bucket {
     @Override
     public void setBackupManager(BackupManager backupManager) {
         TCBucket.backupManager.set(backupManager);
-    }
-
-    @Override
-    public void setTaskExecutor(ExecutorService taskExecutor) {
-        TCBucket.taskExecutor.set(taskExecutor);
     }
 
     private void lock(String key) {
