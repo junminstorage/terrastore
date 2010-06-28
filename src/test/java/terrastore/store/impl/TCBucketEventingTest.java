@@ -17,7 +17,6 @@ package terrastore.store.impl;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
 import terrastore.event.EventBus;
@@ -43,7 +42,6 @@ public class TCBucketEventingTest {
     @Before
     public void setUp() {
         bucket = new TCBucket("bucket");
-        bucket.setTaskExecutor(Executors.newCachedThreadPool());
     }
 
     @Test

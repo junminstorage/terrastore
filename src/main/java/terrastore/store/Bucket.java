@@ -173,11 +173,4 @@ public interface Bucket {
      * @param eventBus The event bus instance.
      */
     public void setEventBus(EventBus eventBus);
-
-    /**
-     * Set the executor to use for asynchronously running tasks.
-     *
-     * @param taskExecutor The executor.
-     */
-    public void setTaskExecutor(ExecutorService taskExecutor);
 }
