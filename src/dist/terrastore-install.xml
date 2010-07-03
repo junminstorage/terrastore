@@ -45,7 +45,6 @@
             </then>
         </if>
 
-        <echo message="Start master ..."/>
         <forget>
             <exec executable="${quickstart.dir}/master/bin/start.sh"/>
         </forget>
@@ -54,7 +53,6 @@
             <http url="http://localhost:9510/groupinfo" />
         </waitfor>
 
-        <echo message="Start first server ..."/>
         <forget>
             <exec executable="${quickstart.dir}/server1/bin/start.sh">
                 <arg value="--httpPort"/>
@@ -72,7 +70,6 @@
             <http url="http://localhost:8080/" />
         </waitfor>
 
-        <echo message="Start second server ..."/>
         <forget>
             <exec executable="${quickstart.dir}/server2/bin/start.sh">
                 <arg value="--httpPort"/>
@@ -89,6 +86,11 @@
         <waitfor maxwait="3" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
             <http url="http://localhost:8081/"/>
         </waitfor>
+
+        <sleep seconds="5"/>
+        <echo message="Started master node."/>
+        <echo message="Started first server node at 127.0.0.1:8080"/>
+        <echo message="Started second server node at 127.0.0.1:8081"/>
 
         <input message="Type enter to quit without stopping the cluster, or press Ctrl-C to quit and stop all processes..."/>
 
