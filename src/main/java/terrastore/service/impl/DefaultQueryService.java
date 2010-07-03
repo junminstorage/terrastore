@@ -46,6 +46,7 @@ import terrastore.util.collect.parallel.ParallelUtils;
 import terrastore.util.collect.Sets;
 import terrastore.util.collect.parallel.MapCollector;
 import terrastore.util.collect.parallel.MapTask;
+import terrastore.util.collect.parallel.ParallelExecutionException;
 
 /**
  * @author Sergio Bossa
@@ -71,6 +72,14 @@ public class DefaultQueryService implements QueryService {
             Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
             return buckets;
         } catch (RuntimeException ex) {
+            LOG.error(ex.getCause().getMessage(), ex.getCause());
+            if (ex.getCause() instanceof ProcessingException) {
+                ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                throw new QueryOperationException(error);
+            } else {
+                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
+            }
+        } catch (ParallelExecutionException ex) {
             LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
@@ -140,7 +149,7 @@ public class DefaultQueryService implements QueryService {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
-        } catch (RuntimeException ex) {
+        } catch (ParallelExecutionException ex) {
             LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
@@ -192,7 +201,7 @@ public class DefaultQueryService implements QueryService {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
-        } catch (RuntimeException ex) {
+        } catch (ParallelExecutionException ex) {
             LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
@@ -242,7 +251,7 @@ public class DefaultQueryService implements QueryService {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new QueryOperationException(error);
-        } catch (RuntimeException ex) {
+        } catch (ParallelExecutionException ex) {
             LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
@@ -287,21 +296,21 @@ public class DefaultQueryService implements QueryService {
         this.conditions.putAll(conditions);
     }
 
-    private Set<String> getAllKeysForBucket(String bucket) {
+    private Set<String> getAllKeysForBucket(String bucket) throws ParallelExecutionException {
         GetKeysCommand command = new GetKeysCommand(bucket);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<String> keys = multicastGetAllKeysCommand(perClusterNodes, command);
         return keys;
     }
 
-    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) {
+    private Set<String> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws ParallelExecutionException {
         RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<String> keys = multicastRangeQueryCommand(perClusterNodes, command);
         return keys;
     }
 
-    private Set<String> multicastGetBucketsCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetBucketsCommand command) {
+    private Set<String> multicastGetBucketsCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetBucketsCommand command) throws ParallelExecutionException {
         // Parallel collection of all buckets:
         Set<String> result = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
@@ -333,7 +342,7 @@ public class DefaultQueryService implements QueryService {
         return result;
     }
 
-    private Set<String> multicastGetAllKeysCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetKeysCommand command) {
+    private Set<String> multicastGetAllKeysCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetKeysCommand command) throws ParallelExecutionException {
         // Parallel collection of all keys:
         Set<String> result = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
@@ -365,7 +374,7 @@ public class DefaultQueryService implements QueryService {
         return result;
     }
 
-    private Set<String> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final RangeQueryCommand command) {
+    private Set<String> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final RangeQueryCommand command) throws ParallelExecutionException {
         // Parallel collection of all sets of sorted keys in a list:
         Set<String> keys = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
@@ -391,8 +400,12 @@ public class DefaultQueryService implements QueryService {
 
                     @Override
                     public Set<String> collect(List<Set<String>> keys) {
-                        // Parallel merge of all sorted sets:
-                        return ParallelUtils.parallelMerge(keys);
+                        try {
+                            // Parallel merge of all sorted sets:
+                            return ParallelUtils.parallelMerge(keys);
+                        } catch (ParallelExecutionException ex) {
+                            throw new IllegalStateException(ex.getCause());
+                        }
                     }
                 });
         return keys;

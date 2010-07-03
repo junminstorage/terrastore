@@ -20,9 +20,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import jsr166y.ForkJoinTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import jsr166y.RecursiveAction;
-import jsr166y.RecursiveTask;
 import terrastore.util.collect.MergeSet;
 import terrastore.util.global.GlobalExecutor;
 
@@ -31,18 +32,36 @@ import terrastore.util.global.GlobalExecutor;
  */
 public class ParallelUtils {
 
-    public static <E extends Comparable> Set<E> parallelMerge(List<Set<E>> sets) {
+    public static <E extends Comparable> Set<E> parallelMerge(List<Set<E>> sets) throws ParallelExecutionException {
         ParallelMergeTask task = new ParallelMergeTask<E>(sets);
-        GlobalExecutor.getExecutor().execute(task);
+        GlobalExecutor.getForkJoinPool().execute(task);
         task.join();
         return task.getMerged();
     }
 
-    public static <I, O, C extends Collection> C parallelMap(Collection<I> input, MapTask<I, O> mapper, MapCollector<O, C> collector) {
-        ParallelMapTask<I, O, C> task = new ParallelMapTask<I, O, C>(input, mapper, collector);
-        GlobalExecutor.getExecutor().execute(task);
-        task.join();
-        return task.getOutput();
+    public static <I, O, C extends Collection> C parallelMap(final Collection<I> input, final MapTask<I, O> mapper, final MapCollector<O, C> collector) throws ParallelExecutionException {
+        try {
+            List<Callable<O>> tasks = new ArrayList<Callable<O>>(input.size());
+            for (final I current : input) {
+                tasks.add(new Callable<O>() {
+
+                    @Override
+                    public O call() {
+                        return mapper.map(current);
+                    }
+                });
+            }
+            List<Future<O>> results = GlobalExecutor.getExecutor().invokeAll(tasks);
+            List<O> outputs = new ArrayList<O>(results.size());
+            for (Future<O> result : results) {
+                outputs.add(result.get());
+            }
+            return collector.collect(outputs);
+        } catch (ExecutionException ex) {
+            throw new ParallelExecutionException(ex.getCause());
+        } catch (InterruptedException ex) {
+            throw new ParallelExecutionException(ex.getCause());
+        }
     }
 
     private static class ParallelMergeTask<E extends Comparable> extends RecursiveAction {
@@ -78,44 +97,6 @@ public class ParallelUtils {
 
         public Set<E> getMerged() {
             return merged;
-        }
-    }
-
-    private static class ParallelMapTask<I, O, C extends Collection> extends RecursiveAction {
-
-        private final Collection<I> input;
-        private final MapTask<I, O> mapper;
-        private final MapCollector<O, C> collector;
-        private volatile C output;
-
-        public ParallelMapTask(Collection<I> input, MapTask<I, O> mapper, MapCollector<O, C> collector) {
-            this.input = input;
-            this.mapper = mapper;
-            this.collector = collector;
-        }
-
-        @Override
-        protected void compute() {
-            List<ForkJoinTask<O>> tasks = new ArrayList<ForkJoinTask<O>>(input.size());
-            for (final I current : input) {
-                tasks.add(new RecursiveTask<O>() {
-
-                    @Override
-                    protected O compute() {
-                        return mapper.map(current);
-                    }
-                });
-            }
-            invokeAll(tasks);
-            List<O> outputs = new ArrayList<O>(input.size());
-            for (ForkJoinTask<O> task : tasks) {
-                outputs.add(task.join());
-            }
-            output = collector.collect(outputs);
-        }
-
-        public C getOutput() {
-            return output;
         }
     }
 }

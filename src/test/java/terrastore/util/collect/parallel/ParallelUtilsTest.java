@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
 public class ParallelUtilsTest {
 
     @Test
-    public void testParallelMerge() {
+    public void testParallelMerge() throws ParallelExecutionException {
         Set<String> merged = ParallelUtils.parallelMerge(Lists.newArrayList(
                 Sets.linked("6", "7", "8"),
                 Sets.linked("11", "12"),
@@ -41,7 +41,7 @@ public class ParallelUtilsTest {
     }
 
     @Test
-    public void testParallelMap() throws Exception {
+    public void testParallelMap() throws ParallelExecutionException {
         List<String> result = ParallelUtils.parallelMap(
                 Arrays.asList("David Gilmour", "Jimmy Page", "Carlos Santana"),
                 new MapTask<String, List<String>>() {
@@ -72,7 +72,7 @@ public class ParallelUtilsTest {
         assertTrue(result.contains("Santana"));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = ParallelExecutionException.class)
     public void testParallelMapWithException() throws Exception {
         List<String> result = ParallelUtils.parallelMap(
                 Arrays.asList("David Gilmour", "George Orwell", "Carlos Santana"),
