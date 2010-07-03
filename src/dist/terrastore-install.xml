@@ -1,6 +1,120 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="terrastore-install" basedir=".">
 
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="ant/ant-contrib.jar"/>
+        </classpath>
+    </taskdef>
+
+    <target name="quickstart" if="quickstart.dir" description="Terrastore quickstart.">
+
+        <antcall target="version"/>
+
+        <if>
+            <not><available file="${quickstart.dir}/master"/></not>
+            <then>
+                <echo message="Install master on: ${quickstart.dir}/master"/>
+                <antcall target="common-master">
+                    <param name="install.dir" value="${quickstart.dir}/master"/>
+                    <param name="config" value="terracotta-config.xml"/>
+                    <param name="master" value="terrastore-single-master"/>
+                    <param name="master.host.token" value="@master.server.host@"/>
+                    <param name="master.host" value="%i"/>
+                </antcall>
+            </then>
+        </if>
+
+        <if>
+            <not><available file="${quickstart.dir}/server1"/></not>
+            <then>
+                <echo message="Install server on: ${quickstart.dir}/server1"/>
+                <antcall target="common-server">
+                    <param name="install.dir" value="${quickstart.dir}/server1"/>
+                </antcall>
+            </then>
+        </if>
+
+        <if>
+            <not><available file="${quickstart.dir}/server2"/></not>
+            <then>
+                <echo message="Install server on: ${quickstart.dir}/server2"/>
+                <antcall target="common-server">
+                    <param name="install.dir" value="${quickstart.dir}/server2"/>
+                </antcall>
+            </then>
+        </if>
+
+        <echo message="Start master ..."/>
+        <forget daemon="true">
+            <exec executable="${quickstart.dir}/master/bin/start.sh" spawn="false"/>
+        </forget>
+
+        <waitfor maxwait="1" maxwaitunit="minute" checkevery="500" checkeveryunit="millisecond">
+            <http url="http://localhost:9510/groupinfo" />
+        </waitfor>
+
+        <echo message="Start first server ..."/>
+        <forget daemon="true">
+            <exec executable="${quickstart.dir}/server1/bin/start.sh" spawn="false">
+                <arg value="--httpPort"/>
+                <arg value="8080"/>
+                <arg value="--nodePort"/>
+                <arg value="6000"/>
+                <arg value="--shutdownPort"/>
+                <arg value="0"/>
+                <arg value="--master"/>
+                <arg value="localhost:9510"/>
+            </exec>
+        </forget>
+
+        <waitfor maxwait="1" maxwaitunit="minute" checkevery="500" checkeveryunit="millisecond">
+            <http url="http://localhost:8080/" />
+        </waitfor>
+
+        <echo message="Start second server ..."/>
+        <forget daemon="true">
+            <exec executable="${quickstart.dir}/server2/bin/start.sh" spawn="false">
+                <arg value="--httpPort"/>
+                <arg value="8081"/>
+                <arg value="--nodePort"/>
+                <arg value="6001"/>
+                <arg value="--shutdownPort"/>
+                <arg value="0"/>
+                <arg value="--master"/>
+                <arg value="localhost:9510"/>
+            </exec>
+        </forget>
+
+        <waitfor maxwait="1" maxwaitunit="minute" checkevery="500" checkeveryunit="millisecond">
+            <http url="http://localhost:8081/"/>
+        </waitfor>
+
+        <input message="Type q and then press enter to quit..." validargs="q"/>
+
+        <property environment="env"/>
+        <exec executable="${env.JAVA_HOME}/bin/jps" output="pid.out.file"/>
+        <loadfile srcfile="pid.out.file" property="pid.out">
+            <filterchain>
+                <linecontains>
+                    <contains value="TCServerMain"/>
+                </linecontains>
+                <tokenfilter>
+                    <deletecharacters chars="TCServerMain"/>
+                    <trim/>
+                    <ignoreblank/>
+                </tokenfilter>
+                <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+        <exec executable="kill">
+            <arg value="-9"/>
+            <arg value="${pid.out}"/>
+        </exec>
+        <delete file="pid.out.file"/>
+
+    </target>
+
     <target name="server" if="install.dir" description="Install Terrastore server.">
 
         <antcall target="version"/>
@@ -9,7 +123,7 @@
 
     </target>
 
-    <target name="single-master" if="install.dir" description="Install single Terrastore master">
+    <target name="single-master" if="install.dir" description="Install single Terrastore master.">
 
         <antcall target="version"/>
 
@@ -45,7 +159,7 @@
     </target>
 
     <target name="version">
-        <echo message="Terrastore Install Tool - Version ${project.version}"/>
+        <echo message="Terrastore Install Tool - Version 0.5.2-SNAPSHOT"/>
     </target>
 
     <target name="common-server">
@@ -83,7 +197,7 @@
         <property name="master.ha.port" value="9530"/>
         <property name="server.reconnection.timeout" value="1"/>
         <property name="server.healthcheck.timeout" value="3"/>
-        
+
         <condition property="master.host" value="%i">
             <not>
                 <isset property="master.host.1"/>
@@ -116,7 +230,7 @@
             <replacefilter
                 token="@master.host.1@"
                 value="${master.host.1}"/>
-                <replacefilter
+            <replacefilter
                 token="@master.host.2@"
                 value="${master.host.2}"/>
             <replacefilter
