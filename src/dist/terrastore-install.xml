@@ -46,17 +46,17 @@
         </if>
 
         <echo message="Start master ..."/>
-        <forget daemon="true">
-            <exec executable="${quickstart.dir}/master/bin/start.sh" spawn="false"/>
+        <forget>
+            <exec executable="${quickstart.dir}/master/bin/start.sh"/>
         </forget>
 
-        <waitfor maxwait="1" maxwaitunit="minute" checkevery="500" checkeveryunit="millisecond">
+        <waitfor maxwait="1" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
             <http url="http://localhost:9510/groupinfo" />
         </waitfor>
 
         <echo message="Start first server ..."/>
-        <forget daemon="true">
-            <exec executable="${quickstart.dir}/server1/bin/start.sh" spawn="false">
+        <forget>
+            <exec executable="${quickstart.dir}/server1/bin/start.sh">
                 <arg value="--httpPort"/>
                 <arg value="8080"/>
                 <arg value="--nodePort"/>
@@ -68,13 +68,13 @@
             </exec>
         </forget>
 
-        <waitfor maxwait="1" maxwaitunit="minute" checkevery="500" checkeveryunit="millisecond">
+        <waitfor maxwait="3" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
             <http url="http://localhost:8080/" />
         </waitfor>
 
         <echo message="Start second server ..."/>
-        <forget daemon="true">
-            <exec executable="${quickstart.dir}/server2/bin/start.sh" spawn="false">
+        <forget>
+            <exec executable="${quickstart.dir}/server2/bin/start.sh">
                 <arg value="--httpPort"/>
                 <arg value="8081"/>
                 <arg value="--nodePort"/>
@@ -86,32 +86,11 @@
             </exec>
         </forget>
 
-        <waitfor maxwait="1" maxwaitunit="minute" checkevery="500" checkeveryunit="millisecond">
+        <waitfor maxwait="3" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
             <http url="http://localhost:8081/"/>
         </waitfor>
 
-        <input message="Type q and then press enter to quit..." validargs="q"/>
-
-        <property environment="env"/>
-        <exec executable="${env.JAVA_HOME}/bin/jps" output="pid.out.file"/>
-        <loadfile srcfile="pid.out.file" property="pid.out">
-            <filterchain>
-                <linecontains>
-                    <contains value="TCServerMain"/>
-                </linecontains>
-                <tokenfilter>
-                    <deletecharacters chars="TCServerMain"/>
-                    <trim/>
-                    <ignoreblank/>
-                </tokenfilter>
-                <striplinebreaks/>
-            </filterchain>
-        </loadfile>
-        <exec executable="kill">
-            <arg value="-9"/>
-            <arg value="${pid.out}"/>
-        </exec>
-        <delete file="pid.out.file"/>
+        <input message="Type enter to quit without stopping the cluster, or press Ctrl-C to quit and stop all processes..."/>
 
     </target>
 
