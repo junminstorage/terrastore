@@ -15,21 +15,49 @@
  */
 package terrastore.util.global;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import jsr166y.ForkJoinPool;
+import jsr166y.ForkJoinWorkerThread;
 
 /**
  * @author Sergio Bossa
  */
 public class GlobalExecutor {
 
-    private static final int DEFAULT_PARALLELISM = Runtime.getRuntime().availableProcessors() * 2;
-    private static final ForkJoinPool POOL = new ForkJoinPool(DEFAULT_PARALLELISM);
+    private static volatile ExecutorService EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
 
-    public static void setParallelism(int parallelism) {
-        POOL.setParallelism(parallelism);
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    });
+    private static volatile ForkJoinPool POOL = new ForkJoinPool(Runtime.getRuntime().availableProcessors(), new ForkJoinPool.ForkJoinWorkerThreadFactory() {
+
+        @Override
+        public ForkJoinWorkerThread newThread(ForkJoinPool fjp) {
+            ForkJoinWorkerThread t = new ForkJoinWorkerThread(fjp) {};
+            t.setDaemon(true);
+            return t;
+        }
+    });
+
+    public static void setExecutor(ExecutorService executor) {
+        EXECUTOR = executor;
     }
 
-    public static ForkJoinPool getExecutor() {
+    public static ExecutorService getExecutor() {
+        return EXECUTOR;
+    }
+
+    public static void setForkJoinPool(ForkJoinPool pool) {
+        POOL = pool;
+    }
+
+    public static ForkJoinPool getForkJoinPool() {
         return POOL;
     }
 }

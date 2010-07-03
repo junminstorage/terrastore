@@ -27,9 +27,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import jsr166y.ForkJoinPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.modules.annotations.HonorTransient;
@@ -84,6 +87,8 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     private volatile transient int localProcessorThreads;
     private volatile transient int remoteProcessorThreads;
     private volatile transient int globalExecutorThreads;
+    private volatile transient ExecutorService globalExecutor;
+    private volatile transient ForkJoinPool globalFJPool;
     //
     private volatile transient Store store;
     private volatile transient Router router;
@@ -163,8 +168,11 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             thisNodePort = port;
             // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
-            // Configure global task executor:
-            GlobalExecutor.setParallelism(globalExecutorThreads);
+            // Configure global task executor and fj pool:
+            globalExecutor = Executors.newFixedThreadPool(globalExecutorThreads);
+            globalFJPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() * 2);
+            GlobalExecutor.setExecutor(globalExecutor);
+            GlobalExecutor.setForkJoinPool(globalFJPool);
             // Setup ensemble:
             setupEnsemble(ensembleConfiguration);
             // Add cluster listener to listen to events:
@@ -341,6 +349,8 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         localProcessor.stop();
         remoteProcessor.stop();
         ensemble.shutdown();
+        globalExecutor.shutdown();
+        globalFJPool.shutdown();
     }
 
     private void cleanupEverything() {
