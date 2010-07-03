@@ -20,6 +20,10 @@
             <filtered>true</filtered>
         </file>
         <file>
+            <outputDirectory>ant</outputDirectory>
+            <source>src/dist/ant-contrib.jar</source>
+        </file>
+        <file>
             <outputDirectory></outputDirectory>
             <source>terrastore_license.txt</source>
         </file>
