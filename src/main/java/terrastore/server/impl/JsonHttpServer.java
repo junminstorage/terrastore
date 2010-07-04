@@ -26,6 +26,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
 import terrastore.server.Parameters;
@@ -69,8 +70,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Removing bucket {}", bucket);
             updateService.removeBucket(bucket);
         } catch (UpdateOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -83,8 +84,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
             updateService.putValue(bucket, key, value, new Predicate(predicate));
         } catch (UpdateOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -96,8 +97,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Removing value with key {} from bucket {}", key, bucket);
             updateService.removeValue(bucket, key);
         } catch (UpdateOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -119,8 +120,8 @@ public class JsonHttpServer implements Server {
             Update update = new Update(function, timeout, parameters);
             return updateService.updateValue(bucket, key, update);
         } catch (UpdateOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -133,8 +134,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Getting buckets.");
             return new Buckets(queryService.getBuckets());
         } catch (QueryOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -147,8 +148,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Getting value with key {} from bucket {}", key, bucket);
             return queryService.getValue(bucket, key, new Predicate(predicate));
         } catch (QueryOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -161,8 +162,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Getting all values from bucket {}", bucket);
             return new Values(queryService.getAllValues(bucket, limit));
         } catch (QueryOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -188,8 +189,8 @@ public class JsonHttpServer implements Server {
                     predicate,
                     timeToLive));
         } catch (QueryOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -207,8 +208,8 @@ public class JsonHttpServer implements Server {
             Predicate predicate = new Predicate(predicateExpression);
             return new Values(queryService.queryByPredicate(bucket, predicate));
         } catch (QueryOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -227,8 +228,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Importing backup for bucket {} from {}", bucket, source);
             backupService.importBackup(bucket, source, secret);
         } catch (BackupOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
@@ -247,8 +248,8 @@ public class JsonHttpServer implements Server {
             LOG.debug("Exporting backup for bucket {} to {}", bucket, destination);
             backupService.exportBackup(bucket, destination, secret);
         } catch (BackupOperationException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }

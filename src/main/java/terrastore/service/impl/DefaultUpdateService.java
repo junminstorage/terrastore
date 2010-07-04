@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
@@ -60,8 +61,8 @@ public class DefaultUpdateService implements UpdateService {
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
             multicastRemoveBucketCommand(perClusterNodes, command);
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new UpdateOperationException(error);
         }
     }
@@ -79,12 +80,12 @@ public class DefaultUpdateService implements UpdateService {
             }
             node.send(command);
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new UpdateOperationException(error);
         }
     }
@@ -96,12 +97,12 @@ public class DefaultUpdateService implements UpdateService {
             RemoveValueCommand command = new RemoveValueCommand(bucket, key);
             node.send(command);
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new UpdateOperationException(error);
         }
     }
@@ -119,12 +120,12 @@ public class DefaultUpdateService implements UpdateService {
                 throw new UpdateOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "No function found: " + update.getFunctionName()));
             }
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new UpdateOperationException(error);
         } catch (ProcessingException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new UpdateOperationException(error);
         }
     }

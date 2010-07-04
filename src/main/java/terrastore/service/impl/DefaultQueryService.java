@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
@@ -72,9 +73,9 @@ public class DefaultQueryService implements QueryService {
             Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
             return buckets;
         } catch (ParallelExecutionException ex) {
-            LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                ErrorLogger.LOG(LOG, error, ex.getCause());
                 throw new QueryOperationException(error);
             } else {
                 throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
@@ -97,12 +98,12 @@ public class DefaultQueryService implements QueryService {
             Value result = node.<Value>send(command);
             return result;
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new QueryOperationException(error);
         } catch (ProcessingException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new QueryOperationException(error);
         }
     }
@@ -138,13 +139,13 @@ public class DefaultQueryService implements QueryService {
                     });
             return Maps.union(allKeyValues);
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new QueryOperationException(error);
         } catch (ParallelExecutionException ex) {
-            LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                ErrorLogger.LOG(LOG, error, ex.getCause());
                 throw new QueryOperationException(error);
             } else {
                 throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
@@ -190,13 +191,13 @@ public class DefaultQueryService implements QueryService {
                     });
             return Maps.composite(keysInRange, allKeyValues);
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new QueryOperationException(error);
         } catch (ParallelExecutionException ex) {
-            LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                ErrorLogger.LOG(LOG, error, ex.getCause());
                 throw new QueryOperationException(error);
             } else {
                 throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
@@ -240,13 +241,13 @@ public class DefaultQueryService implements QueryService {
                 throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong predicate!"));
             }
         } catch (MissingRouteException ex) {
-            LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
             throw new QueryOperationException(error);
         } catch (ParallelExecutionException ex) {
-            LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                ErrorLogger.LOG(LOG, error, ex.getCause());
                 throw new QueryOperationException(error);
             } else {
                 throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
