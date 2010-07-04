@@ -71,14 +71,6 @@ public class DefaultQueryService implements QueryService {
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
             Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
             return buckets;
-        } catch (RuntimeException ex) {
-            LOG.error(ex.getCause().getMessage(), ex.getCause());
-            if (ex.getCause() instanceof ProcessingException) {
-                ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
-                throw new QueryOperationException(error);
-            } else {
-                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
-            }
         } catch (ParallelExecutionException ex) {
             LOG.error(ex.getCause().getMessage(), ex.getCause());
             if (ex.getCause() instanceof ProcessingException) {
