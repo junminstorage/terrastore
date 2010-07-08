@@ -16,9 +16,10 @@
 package terrastore.util.collect;
 
 import java.util.AbstractSet;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,33 +27,34 @@ import java.util.Set;
  */
 public class MergeSet<E extends Comparable> extends AbstractSet<E> {
 
-    private final Set<E> mergedSet;
+    private final List<E> merged;
 
     public MergeSet(Set<E> first, Set<E> second) {
-        this.mergedSet = merge(first, second);
+        this.merged = merge(first, second);
     }
 
     @Override
     public Iterator<E> iterator() {
-        return mergedSet.iterator();
+        return merged.iterator();
     }
 
     @Override
     public int size() {
-        return mergedSet.size();
+        return merged.size();
     }
 
-    private Set<E> merge(Set<E> first, Set<E> second) {
-        Set<E> result = new LinkedHashSet<E>();
+    private List<E> merge(Set<E> first, Set<E> second) {
+        List<E> result = new ArrayList<E>(first.size() + second.size());
         Iterator<E> iIt = first.iterator();
         Iterator<E> jIt = second.iterator();
         if (!iIt.hasNext() && !jIt.hasNext()) {
-            return Collections.EMPTY_SET;
+            return Collections.EMPTY_LIST;
         } else if (iIt.hasNext() && !jIt.hasNext()) {
-            return first;
+            return new ArrayList<E>(first);
         } else if (!iIt.hasNext() && jIt.hasNext()) {
-            return second;
+            return new ArrayList<E>(second);
         } else {
+            int index = 0;
             E iV = iIt.next();
             E jV = jIt.next();
             E pivot = null;
@@ -71,31 +73,34 @@ public class MergeSet<E extends Comparable> extends AbstractSet<E> {
                 pivotScroller = iIt;
                 currentScroller = jIt;
             }
-            while (true) {
-                result.add(current);
-                if (currentScroller.hasNext()) {
-                    while (currentScroller.hasNext()) {
-                        E candidate = currentScroller.next();
-                        if (candidate.compareTo(pivot) < 0) {
-                            result.add(candidate);
-                        } else {
-                            current = pivot;
-                            pivot = candidate;
-                            swapper = pivotScroller;
-                            pivotScroller = currentScroller;
-                            currentScroller = swapper;
-                            break;
-                        }
-                    }
+            index = addToMerged(index, current, result);
+            while (currentScroller.hasNext()) {
+                E candidate = currentScroller.next();
+                if (candidate.compareTo(pivot) < 0) {
+                    index = addToMerged(index, candidate, result);
                 } else {
-                    result.add(pivot);
-                    while (pivotScroller.hasNext()) {
-                        result.add(pivotScroller.next());
-                    }
-                    break;
+                    index = addToMerged(index, pivot, result);
+                    current = pivot;
+                    pivot = candidate;
+                    swapper = pivotScroller;
+                    pivotScroller = currentScroller;
+                    currentScroller = swapper;
                 }
             }
-            return result;
+            index = addToMerged(index, pivot, result);
+            while (pivotScroller.hasNext()) {
+                index = addToMerged(index, pivotScroller.next(), result);
+            }
+        }
+        return result;
+    }
+
+    private int addToMerged(int index, E candidate, List<E> merged) {
+        if (index == 0 || !merged.get(index - 1).equals(candidate)) {
+            merged.add(index, candidate);
+            return index + 1;
+        } else {
+            return index;
         }
     }
 }
