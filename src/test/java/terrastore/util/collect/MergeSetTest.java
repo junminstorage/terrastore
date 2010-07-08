@@ -16,7 +16,10 @@
 package terrastore.util.collect;
 
 import java.util.LinkedHashSet;
+import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
+import org.apache.commons.lang.time.StopWatch;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -38,9 +41,24 @@ public class MergeSetTest {
     }
 
     @Test
-    public void testMergeWithNonEmptySets() {
+    public void testMergeWithEqualSets() {
+        Set<String> result = Sets.merge(Sets.linked("1", "2"), Sets.linked("1", "2"));
+        assertEquals(Sets.linked("1", "2"), result);
+    }
+
+    @Test
+    public void testMergeWithDifferentSets() {
         Set<String> result = Sets.merge(Sets.linked("1", "2"), Sets.linked("3", "4"));
         assertEquals(Sets.linked("1", "2", "3", "4"), result);
+
+        result = Sets.merge(Sets.linked("1", "2"), Sets.linked("2", "3"));
+        assertEquals(Sets.linked("1", "2", "3"), result);
+
+        result = Sets.merge(Sets.linked("1", "1"), Sets.linked("2", "2"));
+        assertEquals(Sets.linked("1", "2"), result);
+
+        result = Sets.merge(Sets.linked("1", "2"), Sets.linked("1", "3"));
+        assertEquals(Sets.linked("1", "2", "3"), result);
 
         result = Sets.merge(Sets.linked("1", "2", "3"), Sets.linked("4", "5"));
         assertEquals(Sets.linked("1", "2", "3", "4", "5"), result);
@@ -53,5 +71,26 @@ public class MergeSetTest {
 
         result = Sets.merge(Sets.linked("2", "4"), Sets.linked("1", "3", "5"));
         assertEquals(Sets.linked("1", "2", "3", "4", "5"), result);
+    }
+
+    @Test
+    public void testPerf() {
+        Set<String> first = new TreeSet<String>();
+        Random r1 = new Random(System.nanoTime());
+        for (int i = 0; i < 100000; i++) {
+            first.add("" + r1.nextLong());
+        }
+
+        Set<String> second = new TreeSet<String>();
+        Random r2 = new Random(System.nanoTime());
+        for (int i = 0; i < 100000; i++) {
+            second.add("" + r2.nextLong());
+        }
+        
+        StopWatch sw = new StopWatch();
+        sw.start();
+        Sets.merge(first, second);
+        sw.stop();
+        System.out.println("Elapsed time in millis: " + sw.getTime());
     }
 }
