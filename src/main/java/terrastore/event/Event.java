@@ -15,12 +15,14 @@
  */
 package terrastore.event;
 
+import java.io.Serializable;
+
 /**
  * Represent an event related to a key/value pair under a specific bucket.
  *
  * @author Sergio Bossa
  */
-public interface Event {
+public interface Event extends Serializable {
 
     /**
      * Get the name of the bucket containing the key/value entry

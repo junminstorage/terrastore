@@ -114,17 +114,6 @@
 
     <bean id="backupManager" class="terrastore.store.impl.DefaultBackupManager"/>
 
-    <bean id="eventBus" class="terrastore.event.impl.AsyncEventBus" destroy-method="shutdown">
-        <constructor-arg>
-            <bean class="terrastore.util.annotation.AutowiringList">
-                <constructor-arg ref="event-listeners"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.event.EventListener"/>
-            </bean>
-        </constructor-arg>
-        <constructor-arg value="3600"/>
-    </bean>
-
     <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
 
     <!-- Cluster -->
