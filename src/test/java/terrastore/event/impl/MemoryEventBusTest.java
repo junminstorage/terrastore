@@ -26,11 +26,12 @@ import org.easymock.IAnswer;
 import org.junit.Test;
 import terrastore.event.EventListener;
 import static org.easymock.classextension.EasyMock.*;
+import static org.junit.Assert.*;
 
 /**
  * @author Sergio Bossa
  */
-public class AsyncEventBusTest {
+public class MemoryEventBusTest {
 
     @Test
     public void testValueChangedEvent() throws Exception {
@@ -59,7 +60,7 @@ public class AsyncEventBusTest {
 
         replay(listener);
 
-        AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
 
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
 
@@ -75,7 +76,6 @@ public class AsyncEventBusTest {
         final CountDownLatch listenerLatch = new CountDownLatch(1);
         String bucket = "bucket";
         String key = "key";
-        byte[] value = "value".getBytes("UTF-8");
 
         EventListener listener = createMock(EventListener.class);
         makeThreadSafe(listener, true);
@@ -97,7 +97,7 @@ public class AsyncEventBusTest {
 
         replay(listener);
 
-        AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
 
         eventBus.publish(new ValueRemovedEvent(bucket, key));
 
@@ -152,7 +152,7 @@ public class AsyncEventBusTest {
 
         replay(listener1, listener2);
 
-        AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener1, listener2));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
 
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
 
@@ -198,7 +198,7 @@ public class AsyncEventBusTest {
 
         replay(listener1, listener2);
 
-        AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener1, listener2));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
 
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
 
@@ -253,7 +253,7 @@ public class AsyncEventBusTest {
 
         replay(listener1, listener2);
 
-        AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener1, listener2));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
 
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
@@ -294,7 +294,7 @@ public class AsyncEventBusTest {
 
         replay(listener);
 
-        final AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener));
+        final MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
         final ExecutorService publisher = Executors.newCachedThreadPool();
         for (int i = 0; i < threads; i++) {
             publisher.submit(new Runnable() {
@@ -340,7 +340,7 @@ public class AsyncEventBusTest {
 
         replay(listener);
 
-        AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener), 1);
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), 1);
 
         eventBus.publish(new ValueChangedEvent(bucket, key, value));
         Thread.sleep(3000);
@@ -368,11 +368,59 @@ public class AsyncEventBusTest {
 
         replay(listener);
         try {
-            AsyncEventBus eventBus = new AsyncEventBus(Arrays.asList(listener));
+            MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
             eventBus.shutdown();
             eventBus.publish(new ValueChangedEvent(bucket, key, value));
         } finally {
             verify(listener);
         }
+    }
+
+    @Test
+    public void testLenientBehavior() throws Exception {
+        final CountDownLatch listenerLatch = new CountDownLatch(2);
+        String bucket = "bucket";
+        String key = "key";
+        byte[] value = "value".getBytes("UTF-8");
+
+        EventListener listener1 = createMock(EventListener.class);
+        EventListener listener2 = createMock(EventListener.class);
+        makeThreadSafe(listener1, true);
+        makeThreadSafe(listener2, true);
+        listener1.observes(bucket);
+        expectLastCall().andReturn(true);
+        listener2.observes(bucket);
+        expectLastCall().andReturn(true);
+        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        expectLastCall().andThrow(new RuntimeException()).once();
+        listener2.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        expectLastCall().andAnswer(new IAnswer<Object>() {
+
+            @Override
+            public Object answer() throws Throwable {
+                listenerLatch.countDown();
+                return null;
+            }
+        }).once();
+        listener1.init();
+        expectLastCall().once();
+        listener2.init();
+        expectLastCall().once();
+        listener1.cleanup();
+        expectLastCall().once();
+        listener2.cleanup();
+        expectLastCall().once();
+
+        replay(listener1, listener2);
+
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
+
+        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+
+        assertFalse(listenerLatch.await(3, TimeUnit.SECONDS));
+
+        eventBus.shutdown();
+
+        verify(listener1, listener2);
     }
 }
