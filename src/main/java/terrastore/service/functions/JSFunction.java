@@ -62,7 +62,10 @@ public class JSFunction implements Function {
     
     private static final long serialVersionUID = -2772030179595908762L;
     private static final Logger LOG = LoggerFactory.getLogger(JSFunction.class);
-    private static final String WRAPPER = "" + "function wrapper(key, value, params) { " + "   return JSON.stringify(" + UPDATE_FUNCTION + "(key, value, params)); " + "}";
+    private static final String WRAPPER = "" + 
+                                          "function wrapper(key, value, params) { " + 
+                                          "   return JSON.stringify(" + UPDATE_FUNCTION + "(key, value, params)); " + 
+                                          "}";
 
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
         LOG.debug(MessageFormat.format("key:{0} | value:{1} | parameters:{2}", key, value, parameters));
