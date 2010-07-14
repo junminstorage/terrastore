@@ -17,8 +17,10 @@ package terrastore.store.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.event.Event;
 import terrastore.event.EventBus;
 import terrastore.event.ValueChangedEvent;
 import terrastore.event.ValueRemovedEvent;
@@ -49,8 +51,9 @@ public class TCBucketEventingTest {
         String key = "key";
         Value value = new JsonValue(JSON_VALUE.getBytes());
 
+        Capture<Event> capturedEvent = new Capture<Event>();
         EventBus eventBus = createMock(EventBus.class);
-        eventBus.publish(eq(new ValueChangedEvent("bucket", key, value.getBytes())));
+        eventBus.publish(capture(capturedEvent));
         expectLastCall().once();
 
         replay(eventBus);
@@ -58,6 +61,11 @@ public class TCBucketEventingTest {
         bucket.setEventBus(eventBus);
         bucket.put(key, value);
         assertEquals(value, bucket.get(key));
+
+        assertEquals(ValueChangedEvent.class, capturedEvent.getValue().getClass());
+        assertEquals("bucket", capturedEvent.getValue().getBucket());
+        assertEquals("key", capturedEvent.getValue().getKey());
+        assertArrayEquals(JSON_VALUE.getBytes(), capturedEvent.getValue().getValue());
 
         verify(eventBus);
     }
@@ -67,19 +75,37 @@ public class TCBucketEventingTest {
         String key = "key";
         Value value = new JsonValue(JSON_VALUE.getBytes());
 
+        Capture<Event> capturedEvent1 = new Capture<Event>();
+        Capture<Event> capturedEvent2 = new Capture<Event>();
         EventBus eventBus = createMock(EventBus.class);
-        eventBus.publish(eq(new ValueChangedEvent("bucket", key, value.getBytes())));
-        expectLastCall().once();
-        eventBus.publish(eq(new ValueRemovedEvent("bucket", key)));
+
+        bucket.setEventBus(eventBus);
+
+        eventBus.publish(capture(capturedEvent1));
         expectLastCall().once();
 
         replay(eventBus);
 
-        bucket.setEventBus(eventBus);
         bucket.put(key, value);
         assertEquals(value, bucket.get(key));
+        assertEquals(ValueChangedEvent.class, capturedEvent1.getValue().getClass());
+        assertEquals("bucket", capturedEvent1.getValue().getBucket());
+        assertEquals("key", capturedEvent1.getValue().getKey());
+        assertArrayEquals(JSON_VALUE.getBytes(), capturedEvent1.getValue().getValue());
+        
+        verify(eventBus);
+        reset(eventBus);
+        
+        eventBus.publish(capture(capturedEvent2));
+        expectLastCall().once();
+
+        replay(eventBus);
+        
         bucket.remove(key);
         assertFalse(bucket.keys().contains(key));
+        assertEquals(ValueRemovedEvent.class, capturedEvent2.getValue().getClass());
+        assertEquals("bucket", capturedEvent2.getValue().getBucket());
+        assertEquals("key", capturedEvent2.getValue().getKey());
 
         verify(eventBus);
     }
@@ -101,19 +127,39 @@ public class TCBucketEventingTest {
             }
         };
 
+        Capture<Event> capturedEvent1 = new Capture<Event>();
+        Capture<Event> capturedEvent2 = new Capture<Event>();
         EventBus eventBus = createMock(EventBus.class);
-        eventBus.publish(eq(new ValueChangedEvent("bucket", key, value.getBytes())));
+
+        bucket.setEventBus(eventBus);
+
+        eventBus.publish(capture(capturedEvent1));
         expectLastCall().once();
-        eventBus.publish(eq(new ValueChangedEvent("bucket", key, updated.getBytes())));
+        
+        replay(eventBus);
+        
+        bucket.put(key, value);
+        assertEquals(value, bucket.get(key));
+        assertEquals(ValueChangedEvent.class, capturedEvent1.getValue().getClass());
+        assertEquals("bucket", capturedEvent1.getValue().getBucket());
+        assertEquals("key", capturedEvent1.getValue().getKey());
+        assertArrayEquals(JSON_VALUE.getBytes(), capturedEvent1.getValue().getValue());
+
+        verify(eventBus);
+        reset(eventBus);
+
+        eventBus.publish(capture(capturedEvent2));
         expectLastCall().once();
 
         replay(eventBus);
-
-        bucket.setEventBus(eventBus);
-        bucket.put(key, value);
-        assertEquals(value, bucket.get(key));
+        
         bucket.update(key, update, function);
         assertEquals(updated, bucket.get(key));
+        
+        assertEquals(ValueChangedEvent.class, capturedEvent2.getValue().getClass());
+        assertEquals("bucket", capturedEvent2.getValue().getBucket());
+        assertEquals("key", capturedEvent2.getValue().getKey());
+        assertArrayEquals(JSON_UPDATED.getBytes(), capturedEvent2.getValue().getValue());
 
         verify(eventBus);
     }

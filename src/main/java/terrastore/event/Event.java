@@ -25,6 +25,13 @@ import java.io.Serializable;
 public interface Event extends Serializable {
 
     /**
+     * Get the unique id of this event.
+     *
+     * @return The unique id.
+     */
+    public String getId();
+
+    /**
      * Get the name of the bucket containing the key/value entry
      * this event refers to.
      *

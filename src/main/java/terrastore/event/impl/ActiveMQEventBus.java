@@ -49,7 +49,7 @@ import terrastore.event.EventListener;
  * so, events enqueued on a given node may be processed on another different node.<br>
  * {@link terrastore.event.Event}s referring to the same key in the same bucket are guaranteed to be sequentially processed in FIFO order.<br>
  * Failing {@link terrastore.event.EventListener}s cause event redelivery: as a consequence, the same event may be processed twice by previously
- * successful listeners, so implement your listeners accordingly.
+ * successful listeners, so you should implement your listeners to be idempotent (taking {@link terrastore.event.Event#getId()} into account).
  *
  * @author Sergio Bossa
  */

@@ -15,6 +15,7 @@
  */
 package terrastore.event;
 
+import java.util.UUID;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
@@ -23,14 +24,21 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
  */
 public abstract class AbstractEvent implements Event {
 
+    private final String id;
     protected final String bucket;
     protected final String key;
     protected final byte[] value;
 
     public AbstractEvent(String bucket, String key, byte[] value) {
+        this.id = UUID.randomUUID().toString();
         this.bucket = bucket;
         this.key = key;
         this.value = value;
+    }
+
+    @Override
+    public String getId() {
+        return id;
     }
 
     @Override
@@ -52,7 +60,7 @@ public abstract class AbstractEvent implements Event {
     public boolean equals(Object obj) {
         if (obj instanceof AbstractEvent) {
             AbstractEvent other = (AbstractEvent) obj;
-            return new EqualsBuilder().append(this.bucket, other.bucket).append(this.key, other.key).append(this.value, other.value).isEquals();
+            return new EqualsBuilder().append(this.id, other.id).isEquals();
         } else {
             return false;
         }
@@ -60,6 +68,6 @@ public abstract class AbstractEvent implements Event {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(this.bucket).append(this.key).append(this.value).toHashCode();
+        return new HashCodeBuilder().append(this.id).toHashCode();
     }
 }
