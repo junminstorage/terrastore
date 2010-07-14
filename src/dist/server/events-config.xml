@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+
+    <!--
+        Configure here your terrastore.event.EventListener.
+        As an alternative, you may want to annotate your event listener with terrastore.annotation.AutoDetect: Terrastore
+        will autodetect your annotated class, create an instance and autowire it here.
+
+        Please note that the order of declaration is the order event listeners will be called: for autodetected listeners,
+        you must give a proper value to terrastore.annotation.AutoDetect#order (lower order means higher precedence in the list).
+
+        Listeners manually declared here always have precedence over autodetected ones: this means that manually declared listeners
+        will be always called prior to autodected ones.
+    -->
+
+    <util:list id="event-listeners">
+    </util:list>
+
+    <!-- Configure the event bus to use -->
+
+    <bean id="eventBus" class="terrastore.event.impl.MemoryEventBus" destroy-method="shutdown">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiringList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="3600"/>
+    </bean>
+
+    <!--
+    <bean id="eventBus" class="terrastore.event.impl.ActiveMQEventBus" destroy-method="shutdown">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiringList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="tcp://localhost:61616"/>
+    </bean>
+    -->
+    
+</beans>

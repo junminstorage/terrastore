@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+   All content copyright (c) 2003-2008 Terracotta, Inc.,
+   except as may otherwise be noted in a separate copyright notice.
+   All rights reserved.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.terracotta.modules</groupId>
+    <artifactId>tim-concurrent-collections-root</artifactId>
+    <version>1.3.2</version>
+  </parent>
+  
+  <packaging>jar</packaging>
+  <artifactId>tim-concurrent-collections</artifactId>
+  <name>tim-concurrent-collections</name>
+  <description>
+     Collection classes that are specifically designed and optimized for Terracotta DSO
+  </description>
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.modules</groupId>
+      <artifactId>tim-util</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>test-jar</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.terracotta.maven.plugins</groupId>
+        <artifactId>tc-maven-plugin</artifactId>
+        <configuration>
+          <bundleActivator>org.terracotta.collections.ConcurrentCollectionsTerracottaConfigurator</bundleActivator>
+          <importPackage>org.terracotta.modules.configuration</importPackage>
+          <terracottaProjectStatus>Recommended</terracottaProjectStatus>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>http://java.sun.com/javase/6/docs/api/</link>
+          </links>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+  
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+</project>
