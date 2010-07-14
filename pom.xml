@@ -12,11 +12,6 @@
     </scm>
     <dependencies>
         <dependency>
-            <groupId>rhino</groupId>
-            <artifactId>js</artifactId>
-            <version>1.7R2</version>
-        </dependency>
-        <dependency>
             <groupId>jsr166y</groupId>
             <artifactId>jsr166y</artifactId>
             <version>20100604</version>
