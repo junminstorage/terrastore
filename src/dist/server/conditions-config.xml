@@ -26,6 +26,10 @@
             <bean class="terrastore.service.conditions.JXPathCondition"/>
         </entry>
 
+        <entry key="js">
+            <bean class="terrastore.service.conditions.JSCondition"/>
+        </entry>
+
     </util:map>
 
 </beans>
