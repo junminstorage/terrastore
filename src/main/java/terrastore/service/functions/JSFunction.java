@@ -18,86 +18,79 @@ package terrastore.service.functions;
 import terrastore.store.operators.Function;
 import terrastore.store.types.JsonValue;
 import terrastore.util.json.JsonUtils;
-
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.UnsupportedEncodingException;
-import java.text.MessageFormat;
 import java.util.Map;
 
 /**
- * {@link terrastore.store.operators.Function} implementation evaluating JS function,<br>
- * you can access key and actual value as parameter function, the order is:<br>
+ * {@link terrastore.store.operators.Function} implementation evaluating a JavaScript function passed as a parameter named {@link #FUNCTION_NAME}.<br>
+ * The name of the JavaScript function itself must be equal to {@link #FUNCTION_NAME}, and must accept three parameters:
  * <ul>
- * <li>1-param)key</li>
- * <li>2-param)value</li>
- * <li>3-param)parameters</li>
+ * <li>The key of the value to update.</li>
+ * <li>The value to update</li>
+ * <li>The user-defined parameters map.</li>
  * </ul>
- * attention please to set function name with {@link #UPDATE_FUNCTION}. then return the modified map otherwise
- * will be thrown an {@link IllegalStateException}.<br>
- * Function Example:
- * 
+ * Here is an example:
  * <pre>
  * {@code
- * function updateFunction(key, value, params) {
- *     value.id = 'new value';
+ * function update(key, value, params) {
+ *     value.something = params.newValue;
  *     return value;
- * }
  * }
  * </pre>
  * 
  * @author Giuseppe Santoro
+ * @author Sergio Bossa
  */
 public class JSFunction implements Function {
-    
-    public static final String UPDATE_FUNCTION = "updateFunction";
-    
-    private static final long serialVersionUID = -2772030179595908762L;
+
+    public static final String FUNCTION_NAME = "update";
+    //
+    private static final long serialVersionUID = 12345678901L;
     private static final Logger LOG = LoggerFactory.getLogger(JSFunction.class);
-    private static final String WRAPPER = "" + 
-                                          "function wrapper(key, value, params) { " + 
-                                          "   return JSON.stringify(" + UPDATE_FUNCTION + "(key, value, params)); " + 
-                                          "}";
+    private static final String WRAPPER = ""
+            + "function wrapper(update, key, value, params) { "
+            + "   return JSON.stringify(update(key, value, params)); "
+            + "}";
+    //
+    private final ScriptEngine engine;
+    private volatile IllegalStateException exception;
+
+    public JSFunction() {
+        engine = new ScriptEngineManager().getEngineByName("JavaScript");
+        try {
+            if (engine != null && engine.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
+                engine.eval(new FileReader(this.getClass().getClassLoader().getResource("json.js").getFile()));
+                engine.eval(WRAPPER);
+            } else if (engine == null) {
+                exception = new IllegalStateException("No JavaScript engine found.");
+            } else {
+                exception = new IllegalStateException("The JavaScript engine is not thread-safe.");
+            }
+        } catch (Exception ex) {
+            exception = new IllegalStateException("Error in script execution.", ex);
+        }
+    }
 
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
-        LOG.debug(MessageFormat.format("key:{0} | value:{1} | parameters:{2}", key, value, parameters));
-        ScriptEngineManager mgr = new ScriptEngineManager();
-        ScriptEngine engine = mgr.getEngineByName("JavaScript");
-        try {
-            engine.eval(new FileReader(this.getClass().getClassLoader().getResource("json.js").getFile()));
-            engine.eval(parameters.get(UPDATE_FUNCTION).toString());
-            Object valueNO = engine.eval("(" + JsonUtils.fromMap(value).toString() + ")");
-            Object paramsNO = engine.eval("(" + JsonUtils.fromMap(parameters).toString() + ")");
-            engine.eval(WRAPPER);
-            Invocable inv = (Invocable) engine;
-            Object o = inv.invokeFunction("wrapper", key, valueNO, paramsNO);
-            return JsonUtils.toUnmodifiableMap(new JsonValue(o.toString().getBytes("UTF-8")));
-
-        } catch (ScriptException e) {
-            LOG.error("Error in script execution.", e);
-            throw new IllegalArgumentException("Error in script execution.", e);
-
-        } catch (NoSuchMethodException e) {
-            LOG.error("NoSuchMethodException", e);
-            throw new IllegalArgumentException("NoSuchMethodException", e);
-
-        } catch (FileNotFoundException e) {
-            LOG.error("Json.js not found.", e);
-            throw new IllegalStateException("Json.js not found.", e);
-
-        } catch (UnsupportedEncodingException e) {
-            LOG.error("UnsupportedEncodingException", e);
-            throw new IllegalStateException("UnsupportedEncodingException", e);
-
+        if (exception == null) {
+            try {
+                Object result = ((Invocable) engine).invokeFunction("wrapper",
+                        engine.eval("(" + parameters.get(FUNCTION_NAME).toString() + ")"),
+                        key,
+                        engine.eval("(" + JsonUtils.fromMap(value).toString() + ")"),
+                        engine.eval("(" + JsonUtils.fromMap(parameters).toString() + ")"));
+                return JsonUtils.toUnmodifiableMap(new JsonValue(result.toString().getBytes()));
+            } catch (Exception ex) {
+                LOG.error("Error in script execution.", ex);
+                throw new IllegalStateException("Error in script execution.", ex);
+            }
+        } else {
+            throw exception;
         }
-
     }
 }

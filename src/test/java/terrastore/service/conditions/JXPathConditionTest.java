@@ -29,7 +29,7 @@ public class JXPathConditionTest {
 
     @Test
     public void testSatisfiedWithJsonValue() throws Exception {
-        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("jxpath.json")));
+        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
         Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
         String jxpath1 = "/id[.='6626190681']";
         String jxpath2 = "//time_zone";
@@ -40,7 +40,7 @@ public class JXPathConditionTest {
 
     @Test
     public void testNotSatisfiedWithJsonValue() throws Exception {
-        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("jxpath.json")));
+        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
         Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
         String jxpath = "/key[.='wrong']";
         JXPathCondition condition = new JXPathCondition();
