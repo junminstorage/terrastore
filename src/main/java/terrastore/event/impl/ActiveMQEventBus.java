@@ -43,13 +43,16 @@ import terrastore.event.EventBus;
 import terrastore.event.EventListener;
 
 /**
- * Durable and reliable {@link terrastore.event.EventBus} implementation based on the ActiveMQ message broker.<br>
+ * Durable and reliable {@link terrastore.event.EventBus} implementation based on the ActiveMQ message broker.
+ * <br><br>
  * All events related to the same bucket are synchronously enqueued in the same JMS queue, named terrastore.<em>bucketName</em>,
  * and asynchronously processed by configured {@link terrastore.event.EventListener}s on a casual Terrastore node;
- * so, events enqueued on a given node may be processed on another different node.<br>
- * {@link terrastore.event.Event}s referring to the same key in the same bucket are guaranteed to be sequentially processed in FIFO order.<br>
- * Failing {@link terrastore.event.EventListener}s cause event redelivery: as a consequence, the same event may be processed twice by previously
- * successful listeners, so you should implement your listeners to be idempotent (taking {@link terrastore.event.Event#getId()} into account).
+ * so, events enqueued on a given node may be concurrently processed on different nodes.<br>
+ * However, {@link terrastore.event.Event}s referring to the same key in the same bucket are guaranteed to be sequentially processed in FIFO order,
+ * to preserve per-document consistency.
+ * <br><br>
+ * Failing {@link terrastore.event.EventListener}s cause event redelivery: as a consequence, the same event may be processed several times by previously
+ * successful listeners, and you should implement your listeners to be idempotent (for example by taking {@link terrastore.event.Event#getId()} into account).
  *
  * @author Sergio Bossa
  */
