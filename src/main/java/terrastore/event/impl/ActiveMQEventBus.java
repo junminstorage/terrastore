@@ -68,6 +68,7 @@ public class ActiveMQEventBus implements EventBus {
     private volatile boolean shutdown;
 
     public ActiveMQEventBus(List<EventListener> eventListeners, String broker) throws Exception {
+        LOG.info("Configuring event bus: {}", this.getClass());
         this.eventListeners = eventListeners;
         this.jmsConnectionFactory = new PooledConnectionFactory(broker);
         this.producer = new JmsTemplate(jmsConnectionFactory);
@@ -111,6 +112,7 @@ public class ActiveMQEventBus implements EventBus {
 
     private void initListeners(List<EventListener> eventListeners) {
         for (EventListener listener : eventListeners) {
+            LOG.info("Configuring listener: {}", listener.getClass());
             listener.init();
         }
     }
@@ -128,6 +130,7 @@ public class ActiveMQEventBus implements EventBus {
             Set<ActiveMQQueue> queues = destinations.getQueues();
             for (ActiveMQQueue queue : queues) {
                 if (queue.getQueueName().startsWith(TERRASTORE_QUEUE_PREFIX)) {
+                    LOG.info("Listening to queue: {}", queue.getQueueName());
                     DefaultMessageListenerContainer consumer = new DefaultMessageListenerContainer();
                     consumer.setConnectionFactory(jmsConnectionFactory);
                     consumer.setSessionTransacted(true);

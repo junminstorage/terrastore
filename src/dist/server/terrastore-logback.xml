@@ -32,6 +32,11 @@
         <appender-ref ref="MESSAGE"/>
     </logger>
 
+    <logger name="terrastore.event" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
     <logger name="terrastore.startup" additivity="false">
         <level value="INFO"/>
         <appender-ref ref="MESSAGE"/>

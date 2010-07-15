@@ -21,31 +21,5 @@
 
     <util:list id="event-listeners">
     </util:list>
-
-    <!-- Configure the event bus to use -->
-
-    <bean id="eventBus" class="terrastore.event.impl.MemoryEventBus" destroy-method="shutdown">
-        <constructor-arg>
-            <bean class="terrastore.util.annotation.AutowiringList">
-                <constructor-arg ref="event-listeners"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.event.EventListener"/>
-            </bean>
-        </constructor-arg>
-        <constructor-arg value="3600"/>
-    </bean>
-
-    <!--
-    <bean id="eventBus" class="terrastore.event.impl.ActiveMQEventBus" destroy-method="shutdown">
-        <constructor-arg>
-            <bean class="terrastore.util.annotation.AutowiringList">
-                <constructor-arg ref="event-listeners"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.event.EventListener"/>
-            </bean>
-        </constructor-arg>
-        <constructor-arg value="tcp://localhost:61616"/>
-    </bean>
-    -->
     
 </beans>
