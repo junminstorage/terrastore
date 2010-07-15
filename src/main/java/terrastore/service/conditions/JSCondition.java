@@ -15,24 +15,25 @@
  */
 package terrastore.service.conditions;
 
-import java.text.MessageFormat;
 import java.util.Map;
-
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import terrastore.store.operators.Condition;
 import terrastore.util.json.JsonUtils;
 
 /**
- * {@link terrastore.store.operators.Condition} implementation evaluating JS expression(function)
- * This class will evaluate JS expression, please see above.<br>
- * Expression Example:
+ * {@link terrastore.store.operators.Condition} implementation evaluating a JavaScript conditional expression over the key or value object.
+ * <br><br>
+ * Here is an example of conditional expression evaluated over the key:
+ * <pre>
+ * {@code
+ * key == '123'
+ * }
+ * </pre>
+ * And here is an example over the value object:
  * <pre>
  * {@code
  * value.'id' == '123'
@@ -40,39 +41,51 @@ import terrastore.util.json.JsonUtils;
  * </pre>
  *
  * @author Giuseppe Santoro
+ * @author Sergio Bossa
  */
 public class JSCondition implements Condition {
-    
-    private static final long serialVersionUID = 6861326254722412197L;
-    private static final Logger LOG = LoggerFactory.getLogger(JSCondition.class);
-    private static final String WRAPPER = "" +
-            "   function wrapper(key, value) { " +
-            "      if( %1$2s ) {" +
-            "         return true;" +
-            "      }" +
-            "      return false; " +
-            "   }";
 
+    private static final long serialVersionUID = 12345678901L;
+    private static final Logger LOG = LoggerFactory.getLogger(JSCondition.class);
+    private static final String WRAPPER = ""
+            + "   function wrapper(key, value) { "
+            + "      if(#condition#) {"
+            + "         return true;"
+            + "      }"
+            + "      return false; "
+            + "   }";
+    //
+    private final ScriptEngine engine;
+    private volatile IllegalStateException exception;
+
+    public JSCondition() {
+        engine = new ScriptEngineManager().getEngineByName("JavaScript");
+        try {
+            if (engine == null) {
+                exception = new IllegalStateException("No JavaScript engine found.");
+            } else if (!engine.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
+                exception = new IllegalStateException("The JavaScript engine is not thread-safe.");
+            }
+        } catch (Exception ex) {
+            exception = new IllegalStateException("Error in script execution.", ex);
+        }
+    }
 
     @Override
     public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
-        LOG.debug(MessageFormat.format("key:{0} | value:{1} | expression:{2}", key, value, expression));
-        ScriptEngineManager mgr = new ScriptEngineManager();
-        ScriptEngine engine = mgr.getEngineByName("JavaScript");
-        try {
-            Object valueNO = engine.eval("(" + JsonUtils.fromMap(value).toString() + ")");
-            engine.eval(String.format(WRAPPER, expression));
-            Invocable inv = (Invocable) engine;
-            return (Boolean) inv.invokeFunction("wrapper", key, valueNO);
-            
-        } catch (ScriptException e) {
-            LOG.error("Error in script execution.", e);
-            throw new IllegalArgumentException("Error in script execution.", e);
-
-        } catch (NoSuchMethodException e) {
-            LOG.error("NoSuchMethodException", e);
-            throw new IllegalArgumentException("NoSuchMethodException", e);
-
+        if (exception == null) {
+            try {
+                engine.eval(WRAPPER.replaceFirst("#condition#", expression));
+                return (Boolean) ((Invocable) engine).invokeFunction(
+                        "wrapper",
+                        key,
+                        engine.eval("(" + JsonUtils.fromMap(value).toString() + ")"));
+            } catch (Exception ex) {
+                LOG.error("Error in script execution.", ex);
+                throw new IllegalStateException("Error in script execution.", ex);
+            }
+        } else {
+            throw exception;
         }
     }
 }

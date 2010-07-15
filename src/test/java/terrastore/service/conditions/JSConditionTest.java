@@ -19,20 +19,19 @@ import org.junit.Test;
 import terrastore.store.types.JsonValue;
 import terrastore.util.io.InputReader;
 import terrastore.util.json.JsonUtils;
-
 import java.util.Map;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
  * @author Giuseppe Santoro
+ * @author Sergio Bossa
  */
 public class JSConditionTest {
 
     @Test
     public void testSatisfiedWithJsonValue() throws Exception {
-        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("jxpath.json")));
+        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
         Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
         String function = "value['favorited']";
         JSCondition condition = new JSCondition();
@@ -41,7 +40,7 @@ public class JSConditionTest {
 
     @Test
     public void testNotSatisfiedWithJsonValue() throws Exception {
-        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("jxpath.json")));
+        String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
         Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
         String function = "value.id == 6626190681";
         JSCondition condition = new JSCondition();
