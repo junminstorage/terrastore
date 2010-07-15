@@ -60,6 +60,7 @@ public class MemoryEventBus implements EventBus {
     }
 
     public MemoryEventBus(List<EventListener> eventListeners, int maxIdleTimeInSeconds) {
+        LOG.info("Configuring event bus: {}", this.getClass());
         this.eventListeners = eventListeners;
         this.maxIdleTimeInSeconds = maxIdleTimeInSeconds;
         this.enabled = this.eventListeners.size() > 0;
@@ -100,6 +101,7 @@ public class MemoryEventBus implements EventBus {
 
     private void initListeners(List<EventListener> eventListeners) {
         for (EventListener listener : eventListeners) {
+            LOG.info("Configuring listener: {}", listener.getClass());
             listener.init();
         }
     }

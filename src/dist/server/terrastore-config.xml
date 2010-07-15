@@ -13,6 +13,10 @@
     <import resource="monitoring-config.xml"/>
     <import resource="classpath:*-extension.xml"/>
 
+    <bean class="org.springframework.web.context.support.ServletContextPropertyPlaceholderConfigurer">
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+    </bean>
+
     <!-- Server -->
 
     <bean id="server" class="terrastore.server.impl.JsonHttpServer">
@@ -107,7 +111,7 @@
     <bean id="store" class="terrastore.store.impl.TCStore" factory-method="getInstance">
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="backupManager" ref="backupManager"/>
-        <property name="eventBus" ref="eventBus"/>
+        <property name="eventBus" ref="${eventBus.impl}EventBus"/>
     </bean>
 
     <bean id="snapshotManager" class="terrastore.store.impl.LocalSnapshotManager"/>
@@ -115,6 +119,30 @@
     <bean id="backupManager" class="terrastore.store.impl.DefaultBackupManager"/>
 
     <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
+
+    <!-- Events -->
+
+    <bean id="memoryEventBus" class="terrastore.event.impl.MemoryEventBus" destroy-method="shutdown" lazy-init="true">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiringList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="3600"/>
+    </bean>
+
+    <bean id="amqEventBus" class="terrastore.event.impl.ActiveMQEventBus" destroy-method="shutdown"  lazy-init="true">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiringList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="${eventBus.amq.broker}"/>
+    </bean>
 
     <!-- Cluster -->
 

@@ -51,6 +51,7 @@ public class Startup {
 
     private static final Logger LOG = LoggerFactory.getLogger(Startup.class);
     private static final String DEFAULT_CLUSTER_NAME = "terrastore-cluster";
+    private static final String DEFAULT_EVENT_BUS = "memory";
     private static final String DEFAULT_HTTP_HOST = "127.0.0.1";
     private static final int DEFAULT_HTTP_PORT = 8080;
     private static final String DEFAULT_NODE_HOST = "NULL";
@@ -108,6 +109,7 @@ public class Startup {
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
     private int httpThreads = DEFAULT_HTTP_THREADS;
     private int workerThreads = DEFAULT_WORKER_THREADS;
+    private String eventBus = DEFAULT_EVENT_BUS;
 
     @Option(name = "--master", required = false)
     public void setMaster(String toIgnore) {
@@ -158,6 +160,11 @@ public class Startup {
     @Option(name = "--workerThreads", required = false)
     public void setWorkerThreads(int workerThreads) {
         this.workerThreads = workerThreads;
+    }
+
+    @Option(name = "--eventBus", required = false)
+    public void setEventBus(String eventBus) {
+        this.eventBus = eventBus;
     }
 
     public void start() {
@@ -239,8 +246,17 @@ public class Startup {
 
     private Map<String, String> getContextParams() {
         Map<String, String> contextParams = new HashMap<String, String>();
+        // Spring context location:
         contextParams.put("contextConfigLocation", getConfigFileLocation());
+        // Resteasy providers:
         contextParams.put("resteasy.use.builtin.providers", "false");
+        // EventBus:
+        if (eventBus.startsWith("amq")) {
+            contextParams.put("eventBus.impl", "amq");
+            contextParams.put("eventBus.amq.broker", eventBus.substring(4));
+        } else {
+            contextParams.put("eventBus.impl", "memory");
+        }
         return contextParams;
     }
 
