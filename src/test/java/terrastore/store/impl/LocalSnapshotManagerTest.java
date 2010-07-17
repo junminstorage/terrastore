@@ -25,8 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import terrastore.store.Bucket;
 import terrastore.store.SortedSnapshot;
@@ -39,20 +37,11 @@ import static org.easymock.classextension.EasyMock.*;
  */
 public class LocalSnapshotManagerTest {
 
-    public LocalSnapshotManagerTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
     @Test
     public void testComputeNewSortedSnapshot() {
         Bucket bucket = createMock(Bucket.class);
+        bucket.getName();
+        expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
         expectLastCall().andReturn(Sets.hash("v", "c", "a")).once();
 
@@ -64,28 +53,32 @@ public class LocalSnapshotManagerTest {
 
         verify(bucket);
     }
-    
+
     @Test
     public void testComputeNewSortedSnapshotAndGetSame() {
         Bucket bucket = createMock(Bucket.class);
+        bucket.getName();
+        expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
         expectLastCall().andReturn(Sets.hash("v", "c", "a")).once();
-        
+
         replay(bucket);
-        
+
         LocalSnapshotManager snapshotManager = new LocalSnapshotManager();
         SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(bucket, new StringComparator(), "string", 1000);
         assertNotNull(snapshot);
-        
+
         SortedSnapshot read = snapshotManager.getOrComputeSortedSnapshot(bucket, new StringComparator(), "string", 1000);
         assertSame(snapshot, read);
-                
+
         verify(bucket);
     }
 
     @Test
     public void testComputeTwoDifferentSortedSnapshots() {
         Bucket bucket = createMock(Bucket.class);
+        bucket.getName();
+        expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
         expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(2);
 
@@ -105,6 +98,8 @@ public class LocalSnapshotManagerTest {
     @Test
     public void testComputeNewSortedSnapshotAndComputeAgainBecauseExpired() throws InterruptedException {
         Bucket bucket = createMock(Bucket.class);
+        bucket.getName();
+        expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
         expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(2);
 
@@ -117,7 +112,7 @@ public class LocalSnapshotManagerTest {
         Thread.sleep(500);
 
         SortedSnapshot read = snapshotManager.getOrComputeSortedSnapshot(bucket, new StringComparator(), "string", 100);
-        assertNotSame(snapshot, read);
+        assertSame(snapshot, read);
 
         verify(bucket);
     }
@@ -127,6 +122,8 @@ public class LocalSnapshotManagerTest {
         int nThreads = 100;
 
         Bucket bucket = createMock(Bucket.class);
+        bucket.getName();
+        expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
         expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(1);
         makeThreadSafe(bucket, true);
@@ -157,6 +154,8 @@ public class LocalSnapshotManagerTest {
         int nThreads = 100;
 
         Bucket bucket = createMock(Bucket.class);
+        bucket.getName();
+        expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
         expectLastCall().andReturn(Sets.hash("v", "c", "a")).times(nThreads);
         makeThreadSafe(bucket, true);
@@ -201,7 +200,13 @@ public class LocalSnapshotManagerTest {
 
         @Override
         public SortedSnapshot call() throws Exception {
-            return snapshotManager.getOrComputeSortedSnapshot(bucket, new StringComparator(), "string", timeToLive);
+            try {
+                Thread.sleep(10);
+                return snapshotManager.getOrComputeSortedSnapshot(bucket, new StringComparator(), "string", timeToLive);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw ex;
+            }
         }
     }
 }

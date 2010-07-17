@@ -39,11 +39,19 @@ public class LocalSnapshotManager implements SnapshotManager {
 
     @Override
     public SortedSnapshot getOrComputeSortedSnapshot(Bucket bucket, Comparator<String> comparator, String name, long timeToLive) {
-        SortedSnapshot snapshot = snapshots.get(name);
-        while (snapshot == null || snapshot.isExpired(timeToLive)) {
-            snapshot = tryComputingSnapshot(bucket, comparator, name);
+        String snapshotName = getSnapshotName(bucket, name);
+        SortedSnapshot snapshot = snapshots.get(snapshotName);
+        boolean expired = false;
+        while (snapshot == null || (expired = snapshot.isExpired(timeToLive)) == true) {
+            if (snapshot != null && expired) {
+                snapshot = tryUpdatingSnapshot(snapshot, bucket);
+            } else if (snapshot == null) {
+                snapshot = tryComputingSnapshot(snapshotName, bucket, comparator);
+            } else {
+                break;
+            }
             if (snapshot == null) {
-                snapshot = waitForSnapshot(name);
+                snapshot = waitForSnapshot(snapshotName);
             } else {
                 break;
             }
@@ -51,28 +59,46 @@ public class LocalSnapshotManager implements SnapshotManager {
         return snapshot;
     }
 
-    private SortedSnapshot waitForSnapshot(String name) {
-        this.computationLock.lock();
-        try {
-            return snapshots.get(name);
-        } finally {
-            computationLock.unlock();
-        }
+    private String getSnapshotName(Bucket bucket, String name) {
+        return bucket + ":" + name;
     }
 
-    private SortedSnapshot tryComputingSnapshot(Bucket bucket, Comparator<String> comparator, String name) {
+    private SortedSnapshot tryComputingSnapshot(String snapshotName, Bucket bucket, Comparator<String> comparator) {
         boolean locked = this.computationLock.tryLock();
         if (locked) {
             try {
                 Set<String> keys = bucket.keys();
-                SortedSnapshot snapshot = new SortedSnapshot(keys, comparator);
-                snapshots.put(name, snapshot);
+                SortedSnapshot snapshot = new SortedSnapshot(snapshotName, keys, comparator);
+                snapshots.put(snapshotName, snapshot);
                 return snapshot;
             } finally {
                 computationLock.unlock();
             }
         } else {
             return null;
+        }
+    }
+
+    private SortedSnapshot tryUpdatingSnapshot(SortedSnapshot snapshot, Bucket bucket) {
+        boolean locked = this.computationLock.tryLock();
+        if (locked) {
+            try {
+                snapshot.update(bucket.keys());
+                return snapshot;
+            } finally {
+                computationLock.unlock();
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private SortedSnapshot waitForSnapshot(String snapshotName) {
+        this.computationLock.lock();
+        try {
+            return snapshots.get(snapshotName);
+        } finally {
+            computationLock.unlock();
         }
     }
 }
