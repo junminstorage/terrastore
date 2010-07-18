@@ -39,6 +39,7 @@ import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
@@ -79,7 +80,7 @@ public class JsonHttpServer implements Server {
     @PUT
     @Path("/{bucket}/{key}")
     @Consumes("application/json")
-    public void putValue(@PathParam("bucket") String bucket, @PathParam("key") String key, Value value, @QueryParam("predicate") String predicate) throws ServerOperationException {
+    public void putValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, Value value, @QueryParam("predicate") String predicate) throws ServerOperationException {
         try {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
             updateService.putValue(bucket, key, value, new Predicate(predicate));
@@ -92,7 +93,7 @@ public class JsonHttpServer implements Server {
 
     @DELETE
     @Path("/{bucket}/{key}")
-    public void removeValue(@PathParam("bucket") String bucket, @PathParam("key") String key) throws ServerOperationException {
+    public void removeValue(@PathParam("bucket") String bucket, @PathParam("key") Key key) throws ServerOperationException {
         try {
             LOG.debug("Removing value with key {} from bucket {}", key, bucket);
             updateService.removeValue(bucket, key);
@@ -107,7 +108,7 @@ public class JsonHttpServer implements Server {
     @Path("/{bucket}/{key}/update")
     @Consumes("application/json")
     @Produces("application/json")
-    public Value updateValue(@PathParam("bucket") String bucket, @PathParam("key") String key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
+    public Value updateValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
         try {
             if (function == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No update function provided!");
@@ -143,7 +144,7 @@ public class JsonHttpServer implements Server {
     @GET
     @Path("/{bucket}/{key}")
     @Produces("application/json")
-    public Value getValue(@PathParam("bucket") String bucket, @PathParam("key") String key, @QueryParam("predicate") String predicate) throws ServerOperationException {
+    public Value getValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("predicate") String predicate) throws ServerOperationException {
         try {
             LOG.debug("Getting value with key {} from bucket {}", key, bucket);
             return queryService.getValue(bucket, key, new Predicate(predicate));
@@ -171,7 +172,7 @@ public class JsonHttpServer implements Server {
     @GET
     @Path("/{bucket}/range")
     @Produces("application/json")
-    public Values queryByRange(@PathParam("bucket") String bucket, @QueryParam("startKey") String startKey, @QueryParam("endKey") String endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
+    public Values queryByRange(@PathParam("bucket") String bucket, @QueryParam("startKey") Key startKey, @QueryParam("endKey") Key endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
         try {
             if (startKey == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");

@@ -20,6 +20,7 @@ import terrastore.communication.Node;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -37,7 +38,7 @@ public class RoutingBasedFlushConditionTest {
 
         router.routeToLocalNode();
         expectLastCall().andReturn(local).once();
-        router.routeToNodeFor("bucket", "key");
+        router.routeToNodeFor("bucket", new Key("key"));
         expectLastCall().andReturn(other).once();
         bucket.getName();
         expectLastCall().andReturn("bucket").once();
@@ -45,7 +46,7 @@ public class RoutingBasedFlushConditionTest {
         replay(router, bucket, local, other);
 
         RoutingBasedFlushCondition condition = new RoutingBasedFlushCondition(router);
-        assertTrue(condition.isSatisfied(bucket, "key"));
+        assertTrue(condition.isSatisfied(bucket, new Key("key")));
 
         verify(router, bucket, local, other);
     }
@@ -58,7 +59,7 @@ public class RoutingBasedFlushConditionTest {
 
         router.routeToLocalNode();
         expectLastCall().andReturn(local).once();
-        router.routeToNodeFor("bucket", "key");
+        router.routeToNodeFor("bucket", new Key("key"));
         expectLastCall().andReturn(local).once();
         bucket.getName();
         expectLastCall().andReturn("bucket").once();
@@ -66,7 +67,7 @@ public class RoutingBasedFlushConditionTest {
         replay(router, bucket, local);
 
         RoutingBasedFlushCondition condition = new RoutingBasedFlushCondition(router);
-        assertFalse(condition.isSatisfied(bucket, "key"));
+        assertFalse(condition.isSatisfied(bucket, new Key("key")));
 
         verify(router, bucket, local);
     }

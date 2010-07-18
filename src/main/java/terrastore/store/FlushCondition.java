@@ -30,5 +30,5 @@ public interface FlushCondition {
      * @param key The key to eventually flush.
      * @return True if to be flushed, false otherwise.
      */
-    public boolean isSatisfied(Bucket bucket, String key);
+    public boolean isSatisfied(Bucket bucket, Key key);
 }

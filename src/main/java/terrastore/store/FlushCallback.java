@@ -27,5 +27,5 @@ public interface FlushCallback {
      *
      * @param key The key to doFlush.
      */
-    public void doFlush(String key);
+    public void doFlush(Key key);
 }

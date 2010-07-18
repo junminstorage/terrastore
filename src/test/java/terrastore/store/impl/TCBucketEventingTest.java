@@ -24,6 +24,7 @@ import terrastore.event.Event;
 import terrastore.event.EventBus;
 import terrastore.event.ValueChangedEvent;
 import terrastore.event.ValueRemovedEvent;
+import terrastore.store.Key;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Update;
@@ -48,7 +49,7 @@ public class TCBucketEventingTest {
 
     @Test
     public void testPutFiresEventBus() throws StoreOperationException {
-        String key = "key";
+        Key key = new Key("key");
         Value value = new JsonValue(JSON_VALUE.getBytes());
 
         Capture<Event> capturedEvent = new Capture<Event>();
@@ -72,7 +73,7 @@ public class TCBucketEventingTest {
 
     @Test
     public void testPutAndRemoveFireEventBus() throws StoreOperationException {
-        String key = "key";
+        Key key = new Key("key");
         Value value = new JsonValue(JSON_VALUE.getBytes());
 
         Capture<Event> capturedEvent1 = new Capture<Event>();
@@ -112,7 +113,7 @@ public class TCBucketEventingTest {
 
     @Test
     public void testPutAndUpdateFireEventBus() throws StoreOperationException {
-        String key = "key";
+        Key key = new Key("key");
         Value value = new JsonValue(JSON_VALUE.getBytes());
         Value updated = new JsonValue(JSON_UPDATED.getBytes());
         Map<String, Object> params = new HashMap<String, Object>();

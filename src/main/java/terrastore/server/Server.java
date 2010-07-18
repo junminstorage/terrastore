@@ -18,6 +18,7 @@ package terrastore.server;
 import terrastore.service.BackupService;
 import terrastore.service.QueryService;
 import terrastore.service.UpdateService;
+import terrastore.store.Key;
 import terrastore.store.Value;
 
 /**
@@ -47,7 +48,7 @@ public interface Server {
      * @param predicate The predicate to evaluate in case of conditional put, or null for no predicate.
      * @throws ServerOperationException If an error occurs.
      */
-    public void putValue(String bucket, String key, Value value, String predicate) throws ServerOperationException;
+    public void putValue(String bucket, Key key, Value value, String predicate) throws ServerOperationException;
 
     /**
      * Remove a value from the given bucket under the given key.
@@ -56,7 +57,7 @@ public interface Server {
      * @param key The key of the value to remove.
      * @throws ServerOperationException If an error occurs.
      */
-    public void removeValue(String bucket, String key) throws ServerOperationException;
+    public void removeValue(String bucket, Key key) throws ServerOperationException;
 
     /**
      * Execute an update on a value from the given bucket under the given key.
@@ -69,7 +70,7 @@ public interface Server {
      * @return The updated value
      * @throws ServerOperationException If an error occurs.
      */
-    public Value updateValue(String bucket, String key, String function, Long timeoutInMillis, Parameters parameters) throws ServerOperationException;
+    public Value updateValue(String bucket, Key key, String function, Long timeoutInMillis, Parameters parameters) throws ServerOperationException;
 
     /**
      * Get the name of all buckets.
@@ -89,7 +90,7 @@ public interface Server {
      * @param predicate The predicate to evaluate; predicate can be null or empty.
      * @throws ServerOperationException If an error occurs.
      */
-    public Value getValue(String bucket, String key, String predicate) throws ServerOperationException;
+    public Value getValue(String bucket, Key key, String predicate) throws ServerOperationException;
 
     /**
      * Get all key/value entries into the given bucket.
@@ -123,7 +124,7 @@ public interface Server {
      * @return A map containing key/value pairs
      * @throws ServerOperationException If an error occurs.
      */
-    public Values queryByRange(String bucket, String startKey, String endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
+    public Values queryByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whosevalue satisfies the given predicate.

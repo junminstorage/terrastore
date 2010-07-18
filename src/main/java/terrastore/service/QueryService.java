@@ -18,6 +18,7 @@ package terrastore.service;
 import java.util.Map;
 import java.util.Set;
 import terrastore.router.Router;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
@@ -51,7 +52,7 @@ public interface QueryService {
      * @param predicate The predicate to evaluate; predicate can be null or empty.
      * @throws QueryOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public Value getValue(String bucket, String key, Predicate predicate) throws QueryOperationException;
+    public Value getValue(String bucket, Key key, Predicate predicate) throws QueryOperationException;
 
     /**
      * Get all values contained by the given bucket.
@@ -61,7 +62,7 @@ public interface QueryService {
      * @return A map containing all key/value pairs
      * @throws QueryOperationException If a bucket with the given name doesn't exist.
      */
-    public Map<String, Value> getAllValues(String bucket, int limit) throws QueryOperationException;
+    public Map<Key, Value> getAllValues(String bucket, int limit) throws QueryOperationException;
 
     /**
      * Execute a range query returning all key/value pairs whose key falls into the given range, and whose value satisfies the given predicate (if any).
@@ -87,7 +88,7 @@ public interface QueryService {
      * @return An ordered map containing key/value pairs.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
-    public Map<String, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException;
+    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
@@ -103,7 +104,7 @@ public interface QueryService {
      * @return A map containing key/value pairs.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no condition is specified or no matching is found.
      */
-    public Map<String, Value> queryByPredicate(String bucket, Predicate predicate) throws QueryOperationException;
+    public Map<Key, Value> queryByPredicate(String bucket, Predicate predicate) throws QueryOperationException;
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.

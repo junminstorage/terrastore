@@ -20,6 +20,7 @@ import terrastore.communication.Node;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 
 /**
  * Flush condition based on the routing path: keys whose routing path doesn't belong
@@ -36,7 +37,7 @@ public class RoutingBasedFlushCondition implements FlushCondition {
     }
 
     @Override
-    public boolean isSatisfied(Bucket bucket, String key) {
+    public boolean isSatisfied(Bucket bucket, Key key) {
         try {
             Node localNode = router.routeToLocalNode();
             Node actual = router.routeToNodeFor(bucket.getName(), key);

@@ -18,6 +18,7 @@ package terrastore.store.features;
 import java.io.Serializable;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import terrastore.store.Key;
 
 /**
  * Range object carrying data about range queries.
@@ -27,23 +28,23 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public class Range implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
-    private String startKey;
-    private String endKey;
+    private Key startKey;
+    private Key endKey;
     private int limit;
     private String keyComparatorName;
 
-    public Range(String startKey, String endKey, int limit, String keyComparatorName) {
+    public Range(Key startKey, Key endKey, int limit, String keyComparatorName) {
         this.startKey = startKey;
         this.endKey = endKey;
         this.limit = limit;
         this.keyComparatorName = keyComparatorName;
     }
 
-    public String getStartKey() {
+    public Key getStartKey() {
         return startKey;
     }
 
-    public String getEndKey() {
+    public Key getEndKey() {
         return endKey;
     }
 

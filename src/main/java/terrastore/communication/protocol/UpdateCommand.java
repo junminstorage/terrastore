@@ -20,6 +20,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
@@ -32,11 +33,11 @@ import terrastore.store.operators.Function;
 public class UpdateCommand extends AbstractCommand<Value> {
 
     private final String bucketName;
-    private final String key;
+    private final Key key;
     private final Update update;
     private final Function function;
 
-    public UpdateCommand(String bucketName, String key, Update update, Function function) {
+    public UpdateCommand(String bucketName, Key key, Update update, Function function) {
         this.bucketName = bucketName;
         this.key = key;
         this.update = update;

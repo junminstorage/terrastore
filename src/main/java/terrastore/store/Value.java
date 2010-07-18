@@ -32,7 +32,7 @@ public interface Value extends Serializable {
 
     public byte[] getBytes();
 
-    public Value dispatch(String key, Update update, Function function);
+    public Value dispatch(Key key, Update update, Function function);
 
-    public boolean dispatch(String key, Predicate predicate, Condition condition);
+    public boolean dispatch(Key key, Predicate predicate, Condition condition);
 }

@@ -18,6 +18,7 @@ package terrastore.partition;
 import java.util.Set;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
+import terrastore.store.Key;
 
 /**
  * The ClusterPartitioner manages clusters with related set of nodes, by organizing each set of cluster nodes in a
@@ -67,7 +68,7 @@ public interface ClusterPartitioner {
      * @param bucket
      * @return The cluster node corresponding to the given bucket and key.
      */
-    public Node getNodeFor(Cluster cluster, String bucket, String key);
+    public Node getNodeFor(Cluster cluster, String bucket, Key key);
 
     /**
      * Cleanup all partition tables.

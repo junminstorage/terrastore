@@ -22,6 +22,7 @@ import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
+import terrastore.store.Key;
 
 /**
  * Sequentially doFlush all key/value entries in a given bucket.<br>
@@ -35,8 +36,8 @@ public class SequentialFlushStrategy implements FlushStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(SequentialFlushStrategy.class);
 
     @Override
-    public void flush(Bucket bucket, Collection<String> keys, FlushCondition flushCondition, FlushCallback flushCallback) {
-        for (String key : keys) {
+    public void flush(Bucket bucket, Collection<Key> keys, FlushCondition flushCondition, FlushCallback flushCallback) {
+        for (Key key : keys) {
             if (flushCondition.isSatisfied(bucket, key)) {
                 flushCallback.doFlush(key);
                 LOG.debug("Flushed key: {}", key);

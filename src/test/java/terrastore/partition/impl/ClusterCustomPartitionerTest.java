@@ -19,6 +19,7 @@ import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.partition.CustomClusterPartitionerStrategy;
+import terrastore.store.Key;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -122,8 +123,8 @@ public class ClusterCustomPartitionerTest {
 
         assertEquals(node1, partitioner.getNodeFor(cluster1, "bucket1"));
         assertEquals(node2, partitioner.getNodeFor(cluster2, "bucket2"));
-        assertEquals(node1, partitioner.getNodeFor(cluster1, "bucket1", "key1"));
-        assertEquals(node2, partitioner.getNodeFor(cluster2, "bucket2", "key2"));
+        assertEquals(node1, partitioner.getNodeFor(cluster1, "bucket1", new Key("key1")));
+        assertEquals(node2, partitioner.getNodeFor(cluster2, "bucket2", new Key("key2")));
 
         verify(cluster1, cluster2, node1, node2, strategy);
     }

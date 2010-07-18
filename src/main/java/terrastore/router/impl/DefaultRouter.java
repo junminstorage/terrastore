@@ -31,6 +31,7 @@ import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.EnsemblePartitioner;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
+import terrastore.store.Key;
 import terrastore.util.collect.Sets;
 
 /**
@@ -133,7 +134,7 @@ public class DefaultRouter implements Router {
     }
 
     @Override
-    public Node routeToNodeFor(String bucket, String key) throws MissingRouteException {
+    public Node routeToNodeFor(String bucket, Key key) throws MissingRouteException {
         stateLock.readLock().lock();
         try {
             Cluster cluster = ensemblePartitioner.getClusterFor(bucket, key);
@@ -155,15 +156,15 @@ public class DefaultRouter implements Router {
     }
 
     @Override
-    public Map<Node, Set<String>> routeToNodesFor(String bucket, Set<String> keys) throws MissingRouteException {
+    public Map<Node, Set<Key>> routeToNodesFor(String bucket, Set<Key> keys) throws MissingRouteException {
         stateLock.readLock().lock();
         try {
-            Map<Node, Set<String>> nodeToKeys = new HashMap<Node, Set<String>>();
-            for (String key : keys) {
+            Map<Node, Set<Key>> nodeToKeys = new HashMap<Node, Set<Key>>();
+            for (Key key : keys) {
                 Node route = routeToNodeFor(bucket, key);
-                Set<String> routedKeys = nodeToKeys.get(route);
+                Set<Key> routedKeys = nodeToKeys.get(route);
                 if (routedKeys == null) {
-                    routedKeys = new HashSet<String>();
+                    routedKeys = new HashSet<Key>();
                     nodeToKeys.put(route, routedKeys);
                 }
                 routedKeys.add(key);

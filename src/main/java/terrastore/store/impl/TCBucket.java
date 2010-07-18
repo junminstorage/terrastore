@@ -41,6 +41,7 @@ import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
+import terrastore.store.Key;
 import terrastore.store.SnapshotManager;
 import terrastore.store.SortedSnapshot;
 import terrastore.store.StoreOperationException;
@@ -69,36 +70,36 @@ public class TCBucket implements Bucket {
     private DsoCluster dsoCluster;
     //
     private final String name;
-    private final ConcurrentDistributedMap<String, Value> bucket;
+    private final ConcurrentDistributedMap<Key, Value> bucket;
 
     public TCBucket(String name) {
         this.name = name;
-        this.bucket = new ConcurrentDistributedMap<String, Value>(LockType.WRITE, new HashcodeLockStrategy());
+        this.bucket = new ConcurrentDistributedMap<Key, Value>(LockType.WRITE, new HashcodeLockStrategy());
     }
 
     public String getName() {
         return name;
     }
 
-    public void put(String key, Value value) {
+    public void put(Key key, Value value) {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
             bucket.unlockedPutNoReturn(key, value);
-            TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key, value.getBytes()));
+            TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
         } finally {
             unlock(key);
         }
     }
 
-    public boolean conditionalPut(String key, Value value, Predicate predicate, Condition condition) {
+    public boolean conditionalPut(Key key, Value value, Predicate predicate, Condition condition) {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
             Value old = bucket.get(key);
             if (old == null || old.dispatch(key, predicate, condition)) {
                 bucket.unlockedPutNoReturn(key, value);
-                TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key, value.getBytes()));
+                TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
                 return true;
             } else {
                 return false;
@@ -108,7 +109,7 @@ public class TCBucket implements Bucket {
         }
     }
 
-    public Value get(String key) throws StoreOperationException {
+    public Value get(Key key) throws StoreOperationException {
         Value value = bucket.unlockedGet(key);
         value = value != null ? value : bucket.get(key);
         if (value != null) {
@@ -119,7 +120,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException {
+    public Value conditionalGet(Key key, Predicate predicate, Condition condition) throws StoreOperationException {
         Value value = bucket.unlockedGet(key);
         value = value != null ? value : bucket.get(key);
         if (value != null) {
@@ -133,13 +134,13 @@ public class TCBucket implements Bucket {
         }
     }
 
-    public void remove(String key) throws StoreOperationException {
+    public void remove(Key key) throws StoreOperationException {
         // Use explicit locking to remove and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
             Value removed = bucket.remove(key);
             if (removed != null) {
-                TCBucket.eventBus.get().publish(new ValueRemovedEvent(name, key));
+                TCBucket.eventBus.get().publish(new ValueRemovedEvent(name, key.toString()));
             }
         } finally {
             unlock(key);
@@ -147,7 +148,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Value update(final String key, final Update update, final Function function) throws StoreOperationException {
+    public Value update(final Key key, final Update update, final Function function) throws StoreOperationException {
         long timeout = update.getTimeoutInMillis();
         Future<Value> task = null;
         // Use explicit locking to update and block concurrent operations on the same key,
@@ -165,7 +166,7 @@ public class TCBucket implements Bucket {
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.unlockedPutNoReturn(key, result);
-                TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key, result.getBytes()));
+                TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key.toString(), result.getBytes()));
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -182,11 +183,11 @@ public class TCBucket implements Bucket {
         }
     }
 
-    public Set<String> keys() {
+    public Set<Key> keys() {
         return bucket.keySet();
     }
 
-    public Set<String> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
+    public Set<Key> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
         SortedSnapshot snapshot = TCBucket.snapshotManager.get().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
     }
@@ -194,12 +195,12 @@ public class TCBucket implements Bucket {
     @Override
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition) {
         if (dsoCluster != null) {
-            Collection<String> keys = dsoCluster.getKeysForLocalValues(bucket);
+            Collection<Key> keys = dsoCluster.getKeysForLocalValues(bucket);
             LOG.info("Request to flush {} keys on bucket {}", keys.size(), name);
             flushStrategy.flush(this, keys, flushCondition, new FlushCallback() {
 
                 @Override
-                public void doFlush(String key) {
+                public void doFlush(Key key) {
                     Value value = bucket.get(key);
                     bucket.flush(key, value);
                 }
@@ -234,12 +235,12 @@ public class TCBucket implements Bucket {
         TCBucket.backupManager.set(backupManager);
     }
 
-    private void lock(String key) {
+    private void lock(Key key) {
         FinegrainedLock lock = bucket.createFinegrainedLock(key);
         lock.lock();
     }
 
-    private void unlock(String key) {
+    private void unlock(Key key) {
         FinegrainedLock lock = bucket.createFinegrainedLock(key);
         lock.unlock();
     }

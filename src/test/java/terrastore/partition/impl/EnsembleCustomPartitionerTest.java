@@ -18,6 +18,7 @@ package terrastore.partition.impl;
 import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.partition.CustomEnsemblePartitionerStrategy;
+import terrastore.store.Key;
 import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 import static org.easymock.EasyMock.*;
@@ -44,7 +45,7 @@ public class EnsembleCustomPartitionerTest {
         partitioner.setupClusters(Sets.hash(cluster1, cluster2));
 
         assertSame(cluster1, partitioner.getClusterFor("bucket"));
-        assertSame(cluster2, partitioner.getClusterFor("bucket", "key"));
+        assertSame(cluster2, partitioner.getClusterFor("bucket", new Key("key")));
 
         verify(strategy);
     }

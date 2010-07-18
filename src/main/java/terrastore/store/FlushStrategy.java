@@ -35,5 +35,5 @@ public interface FlushStrategy {
      * @param flushCondition The condition to evaluate for key flushing.
      * @param flushCallback Execute the actual flushing.
      */
-    public void flush(Bucket bucket, Collection<String> keys, FlushCondition flushCondition, FlushCallback flushCallback);
+    public void flush(Bucket bucket, Collection<Key> keys, FlushCondition flushCondition, FlushCallback flushCallback);
 }

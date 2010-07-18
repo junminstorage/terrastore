@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import terrastore.communication.Cluster;
 import terrastore.partition.CustomEnsemblePartitionerStrategy;
 import terrastore.partition.EnsemblePartitioner;
+import terrastore.store.Key;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.support.ReflectionKeyExtractor;
 
@@ -70,10 +71,10 @@ public class EnsembleCustomPartitioner implements EnsemblePartitioner {
     }
 
     @Override
-    public Cluster getClusterFor(String bucket, String key) {
+    public Cluster getClusterFor(String bucket, Key key) {
         stateLock.readLock().lock();
         try {
-            CustomEnsemblePartitionerStrategy.Cluster cluster = strategy.getClusterFor(bucket, key);
+            CustomEnsemblePartitionerStrategy.Cluster cluster = strategy.getClusterFor(bucket, key.toString());
             if (cluster != null) {
                 return clusters.get(cluster.getName());
             } else {

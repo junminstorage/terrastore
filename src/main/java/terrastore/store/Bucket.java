@@ -18,7 +18,6 @@ package terrastore.store;
 import terrastore.store.features.Update;
 import java.util.Comparator;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import terrastore.event.EventBus;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
@@ -46,7 +45,7 @@ public interface Bucket {
      * @param key The key of the value to put.
      * @param value The value to put.
      */
-    public void put(String key, Value value);
+    public void put(Key key, Value value);
 
     /**
      * Put the given {@link Value} into this bucket under the given key only if no value existed before,
@@ -59,7 +58,7 @@ public interface Bucket {
      * @param condition The condition to evaluate on the old value.
      * @return True if the value has been actually put, false otherwise.
      */
-    public boolean conditionalPut(String key, Value value, Predicate predicate, Condition condition);
+    public boolean conditionalPut(Key key, Value value, Predicate predicate, Condition condition);
 
     /**
      * Get the {@link Value} under the given key.
@@ -68,7 +67,7 @@ public interface Bucket {
      * @return The value corresponding to the given key.
      * @throws StoreOperationException If no value is found for the given key.
      */
-    public Value get(String key) throws StoreOperationException;
+    public Value get(Key key) throws StoreOperationException;
 
     /**
      * Get the {@link Value} under the given key if satisfying the given {@link terrastore.store.operators.Condition}.
@@ -80,7 +79,7 @@ public interface Bucket {
      * doesn't satisfy the condition.
      * @throws StoreOperationException If no value is found for the given key.
      */
-    public Value conditionalGet(String key, Predicate predicate, Condition condition) throws StoreOperationException;
+    public Value conditionalGet(Key key, Predicate predicate, Condition condition) throws StoreOperationException;
 
     /**
      * Remove the {@link Value} under the given key.<br>
@@ -90,7 +89,7 @@ public interface Bucket {
      * @param key The key of the value to remove.
      * @throws StoreOperationException If no value to remove is found for the given key.
      */
-    public void remove(String key) throws StoreOperationException;
+    public void remove(Key key) throws StoreOperationException;
 
     /**
      * Update the {@link Value} under the given key.<br>
@@ -103,14 +102,14 @@ public interface Bucket {
      * @return The updated value.
      * @throws StoreOperationException If errors occur during updating.
      */
-    public Value update(String key, Update update, Function function) throws StoreOperationException;
+    public Value update(Key key, Update update, Function function) throws StoreOperationException;
 
     /**
      * Get all keys contained into this bucket.
      *
      * @return The set of keys.
      */
-    public Set<String> keys();
+    public Set<Key> keys();
 
     /**
      * Get a set of all keys falling into the given range, sorted as determined by the given comparator.<br>
@@ -123,7 +122,7 @@ public interface Bucket {
      * @param timeToLive Number of milliseconds determining the snapshot max age.
      * @return The sorted set of keys in range.
      */
-    public Set<String> keysInRange(Range range, Comparator<String> keyComparator, long timeToLive);
+    public Set<Key> keysInRange(Range range, Comparator<String> keyComparator, long timeToLive);
 
     /**
      * Flush all key/value entries contained into this bucket.

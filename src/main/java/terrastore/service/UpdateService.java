@@ -17,6 +17,7 @@ package terrastore.service;
 
 import java.util.Map;
 import terrastore.router.Router;
+import terrastore.store.Key;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
@@ -51,7 +52,7 @@ public interface UpdateService {
      * @param predicate The predicate object containing the condition to evaluate.
      * @throws UpdateOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public void putValue(String bucket, String key, Value value, Predicate predicate) throws UpdateOperationException;
+    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws UpdateOperationException;
 
     /**
      * Remove a value from the given bucket under the given key.
@@ -60,7 +61,7 @@ public interface UpdateService {
      * @param key The key of the value.
      * @throws UpdateOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public void removeValue(String bucket, String key) throws UpdateOperationException;
+    public void removeValue(String bucket, Key key) throws UpdateOperationException;
 
     /**
      * Update the value from the given bucket under the given key.
@@ -71,7 +72,7 @@ public interface UpdateService {
      * @return The updated value
      * @throws UpdateOperationException If errors occur during update.
      */
-    public Value updateValue(String bucket, String key, Update update) throws UpdateOperationException;
+    public Value updateValue(String bucket, Key key, Update update) throws UpdateOperationException;
 
     /**
      * Get all supported {@link terrastore.store.operators.Function}s by name.

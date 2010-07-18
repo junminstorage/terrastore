@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import terrastore.communication.Cluster;
 import terrastore.partition.EnsemblePartitioner;
 import terrastore.router.impl.HashFunction;
+import terrastore.store.Key;
 
 /**
  * {@link terrastore.partition.EnsemblePartitioner} implementation based on consistent hashing and ordering.
@@ -68,7 +69,7 @@ public class EnsembleHashingPartitioner implements EnsemblePartitioner {
     }
 
     @Override
-    public Cluster getClusterFor(String bucket, String key) {
+    public Cluster getClusterFor(String bucket, Key key) {
         stateLock.readLock().lock();
         try {
             int index = hashFunction.hash(bucket + key, clusters.length);

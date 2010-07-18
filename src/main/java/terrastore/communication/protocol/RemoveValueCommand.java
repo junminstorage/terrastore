@@ -20,6 +20,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 
@@ -29,9 +30,9 @@ import terrastore.store.StoreOperationException;
 public class RemoveValueCommand extends AbstractCommand {
 
     private final String bucketName;
-    private final String key;
+    private final Key key;
 
-    public RemoveValueCommand(String bucketName, String key) {
+    public RemoveValueCommand(String bucketName, Key key) {
         this.bucketName = bucketName;
         this.key = key;
     }
