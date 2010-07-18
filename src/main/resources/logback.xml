@@ -18,6 +18,26 @@
     </root>
 
     <logger name="terrastore" additivity="false">
+        <level value="WARN"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.cluster" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.ensemble" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.event" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.startup" additivity="false">
         <level value="INFO"/>
         <appender-ref ref="MESSAGE"/>
     </logger>
