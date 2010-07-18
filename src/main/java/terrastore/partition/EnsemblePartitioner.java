@@ -17,6 +17,7 @@ package terrastore.partition;
 
 import java.util.Set;
 import terrastore.communication.Cluster;
+import terrastore.store.Key;
 
 /**
  * The EnsemblePartitioner manages ensemble clusters, creating a fixed partition table for configured clusters.
@@ -47,5 +48,5 @@ public interface EnsemblePartitioner {
      * @param key
      * @return The cluster corresponding to the given bucket and key.
      */
-    public Cluster getClusterFor(String bucket, String key);
+    public Cluster getClusterFor(String bucket, Key key);
 }

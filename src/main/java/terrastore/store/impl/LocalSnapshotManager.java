@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.SnapshotManager;
 import terrastore.store.SortedSnapshot;
 
@@ -67,7 +68,7 @@ public class LocalSnapshotManager implements SnapshotManager {
         boolean locked = this.computationLock.tryLock();
         if (locked) {
             try {
-                Set<String> keys = bucket.keys();
+                Set<Key> keys = bucket.keys();
                 SortedSnapshot snapshot = new SortedSnapshot(snapshotName, keys, comparator);
                 snapshots.put(snapshotName, snapshot);
                 return snapshot;

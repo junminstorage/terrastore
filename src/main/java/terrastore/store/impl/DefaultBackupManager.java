@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.types.JsonValue;
@@ -63,12 +64,12 @@ public class DefaultBackupManager implements BackupManager {
             File resource = getResource(destination);
             LOG.info("Exporting bucket {} to {}", bucket.getName(), resource.getAbsolutePath());
             dataStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(resource)));
-            for (String key : bucket.keys()) {
+            for (Key key : bucket.keys()) {
                 Value value = bucket.get(key);
                 if (value != null) {
                     byte[] content = value.getBytes();
                     // Write key:
-                    dataStream.writeUTF(key);
+                    dataStream.writeUTF(key.toString());
                     // Write value:
                     dataStream.writeInt(content.length);
                     dataStream.write(content, 0, content.length);
@@ -100,7 +101,7 @@ public class DefaultBackupManager implements BackupManager {
             dataStream = new DataInputStream(new BufferedInputStream(new FileInputStream(resource)));
             while (true) {
                 // Read key:
-                String key = dataStream.readUTF();
+                Key key = new Key(dataStream.readUTF());
                 // Read value:
                 int contentLength = dataStream.readInt();
                 byte[] content = new byte[contentLength];

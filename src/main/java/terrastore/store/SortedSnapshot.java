@@ -46,13 +46,13 @@ public class SortedSnapshot {
     private BTreeIndexFactory<String, String> indexFactory;
     private long timestamp;
 
-    public SortedSnapshot(String name, Set<String> keys, Comparator<String> comparator) {
+    public SortedSnapshot(String name, Set<Key> keys, Comparator<String> comparator) {
         this.stateLock = new ReentrantReadWriteLock();
         this.comparator = comparator;
         computeIndex(getFile(name), keys, comparator);
     }
 
-    public Set<String> keysInRange(String start, String end, int limit) {
+    public Set<Key> keysInRange(Key start, Key end, int limit) {
         stateLock.readLock().lock();
         try {
             return queryIndex(start, end, limit);
@@ -71,7 +71,7 @@ public class SortedSnapshot {
         }
     }
 
-    public void update(Set<String> keys) {
+    public void update(Set<Key> keys) {
         stateLock.writeLock().lock();
         try {
             recomputeIndex(keys);
@@ -97,7 +97,7 @@ public class SortedSnapshot {
         }
     }
 
-    private void computeIndex(File file, Set<String> keys, Comparator<String> comparator) {
+    private void computeIndex(File file, Set<Key> keys, Comparator<String> comparator) {
         pageFactory = new PageFileFactory();
         pageFactory.setPageSize((short) 512);
         pageFactory.setFile(file);
@@ -144,19 +144,19 @@ public class SortedSnapshot {
         });
 
         SortedIndex<String, String> index = indexFactory.create(pageFactory.getPageFile());
-        for (String key : keys) {
-            index.put(key, "");
+        for (Key key : keys) {
+            index.put(key.toString(), "");
         }
         pageFactory.getPageFile().flush();
 
         timestamp = System.currentTimeMillis();
     }
 
-    private void recomputeIndex(final Set<String> keys) {
+    private void recomputeIndex(final Set<Key> keys) {
         SortedIndex<String, String> index = indexFactory.open(pageFactory.getPageFile());
         // Put new keys:
-        for (String key : keys) {
-            index.putIfAbsent(key, "");
+        for (Key key : keys) {
+            index.putIfAbsent(key.toString(), "");
         }
         // Remove old keys still in index:
         int surplus = index.size() - keys.size();
@@ -170,7 +170,7 @@ public class SortedSnapshot {
 
                 @Override
                 public boolean isInterestedInKey(String key, Comparator comparator) {
-                    return !keys.contains(key);
+                    return !keys.contains(new Key(key));
                 }
             });
             while (iterator.hasNext() && surplus-- > 0) {
@@ -184,15 +184,17 @@ public class SortedSnapshot {
         timestamp = System.currentTimeMillis();
     }
 
-    private Set<String> queryIndex(String start, String end, int limit) {
+    private Set<Key> queryIndex(Key start, Key end, int limit) {
+        String startString = start.toString();
+        String endString = end == null ? null : end.toString();
         SortedIndex<String, String> index = indexFactory.open(pageFactory.getPageFile());
-        LinkedHashSet<String> result = new LinkedHashSet<String>();
-        Iterator<Entry<String, String>> entries = index.iterator(start);
+        LinkedHashSet<Key> result = new LinkedHashSet<Key>();
+        Iterator<Entry<String, String>> entries = index.iterator(startString);
         int counter = 1;
         while (entries.hasNext()) {
             Entry<String, String> entry = entries.next();
-            if ((end == null || comparator.compare(entry.getKey(), end) <= 0) && (limit == 0 || counter++ <= limit)) {
-                result.add(entry.getKey());
+            if ((endString == null || comparator.compare(entry.getKey(), endString) <= 0) && (limit == 0 || counter++ <= limit)) {
+                result.add(new Key(entry.getKey()));
             } else {
                 break;
             }

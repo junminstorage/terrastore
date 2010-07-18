@@ -29,159 +29,177 @@ public class SortedSnapshotTest {
 
     @Test
     public void testKeysInRange() {
-        Set<String> keys = new HashSet<String>();
-        keys.add("v");
-        keys.add("a");
-        keys.add("c");
-        keys.add("b");
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("v"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
-        Set<String> sorted = snapshot.keysInRange("b", "c", 0);
+        Set<Key> sorted = snapshot.keysInRange(new Key("b"), new Key("c"), 0);
         assertEquals(2, sorted.size());
-        assertEquals("b", sorted.toArray()[0]);
-        assertEquals("c", sorted.toArray()[1]);
+        assertEquals(new Key("b"), sorted.toArray()[0]);
+        assertEquals(new Key("c"), sorted.toArray()[1]);
+        snapshot.discard();
+    }
+
+    @Test
+    public void testFullRange() {
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("v"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
+
+        SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
+        Set<Key> sorted = snapshot.keysInRange(new Key("a"), new Key("v"), 0);
+        assertEquals(4, sorted.size());
+        assertEquals(new Key("a"), sorted.toArray()[0]);
+        assertEquals(new Key("b"), sorted.toArray()[1]);
+        assertEquals(new Key("c"), sorted.toArray()[2]);
+        assertEquals(new Key("v"), sorted.toArray()[3]);
         snapshot.discard();
     }
 
     @Test
     public void testKeysInRangeWithStartOnly() {
-        Set<String> keys = new HashSet<String>();
-        keys.add("v");
-        keys.add("a");
-        keys.add("c");
-        keys.add("b");
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("v"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
-        Set<String> sorted = snapshot.keysInRange("c", null, 0);
+        Set<Key> sorted = snapshot.keysInRange(new Key("c"), null, 0);
         assertEquals(2, sorted.size());
-        assertEquals("c", sorted.toArray()[0]);
-        assertEquals("v", sorted.toArray()[1]);
+        assertEquals(new Key("c"), sorted.toArray()[0]);
+        assertEquals(new Key("v"), sorted.toArray()[1]);
         snapshot.discard();
     }
 
     @Test
     public void testKeysInRangeWithLimit() {
-        Set<String> keys = new HashSet<String>();
-        keys.add("v");
-        keys.add("a");
-        keys.add("c");
-        keys.add("b");
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("v"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
-        Set<String> sorted = snapshot.keysInRange("a", "c", 2);
+        Set<Key> sorted = snapshot.keysInRange(new Key("a"), new Key("c"), 2);
         assertEquals(2, sorted.size());
-        assertEquals("a", sorted.toArray()[0]);
-        assertEquals("b", sorted.toArray()[1]);
+        assertEquals(new Key("a"), sorted.toArray()[0]);
+        assertEquals(new Key("b"), sorted.toArray()[1]);
         snapshot.discard();
     }
 
     @Test
     public void testUpdateWithMoreKeys() {
-        Set<String> keys = new HashSet<String>();
-        keys.add("d");
-        keys.add("a");
-        keys.add("c");
-        keys.add("b");
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("d"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
-        Set<String> sorted = snapshot.keysInRange("a", "z", 0);
+        Set<Key> sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(4, sorted.size());
 
-        keys.add("e");
+        keys.add(new Key("e"));
         snapshot.update(keys);
-        sorted = snapshot.keysInRange("a", "z", 0);
+        sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(5, sorted.size());
-        assertEquals("a", sorted.toArray()[0]);
-        assertEquals("b", sorted.toArray()[1]);
-        assertEquals("c", sorted.toArray()[2]);
-        assertEquals("d", sorted.toArray()[3]);
-        assertEquals("e", sorted.toArray()[4]);
+        assertEquals(new Key("a"), sorted.toArray()[0]);
+        assertEquals(new Key("b"), sorted.toArray()[1]);
+        assertEquals(new Key("c"), sorted.toArray()[2]);
+        assertEquals(new Key("d"), sorted.toArray()[3]);
+        assertEquals(new Key("e"), sorted.toArray()[4]);
 
         snapshot.discard();
     }
 
     @Test
     public void testUpdateWithLessKeys() {
-        Set<String> keys = new HashSet<String>();
-        keys.add("d");
-        keys.add("a");
-        keys.add("c");
-        keys.add("b");
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("d"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
-        Set<String> sorted = snapshot.keysInRange("a", "z", 0);
+        Set<Key> sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(4, sorted.size());
 
-        keys.remove("d");
+        keys.remove(new Key("d"));
         snapshot.update(keys);
-        sorted = snapshot.keysInRange("a", "z", 0);
+        sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(3, sorted.size());
-        assertEquals("a", sorted.toArray()[0]);
-        assertEquals("b", sorted.toArray()[1]);
-        assertEquals("c", sorted.toArray()[2]);
+        assertEquals(new Key("a"), sorted.toArray()[0]);
+        assertEquals(new Key("b"), sorted.toArray()[1]);
+        assertEquals(new Key("c"), sorted.toArray()[2]);
 
         snapshot.discard();
     }
 
     @Test
     public void testUpdateWithEqualNumberButDifferentKeys() {
-        Set<String> keys = new HashSet<String>();
-        keys.add("d");
-        keys.add("a");
-        keys.add("c");
-        keys.add("b");
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("d"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
-        Set<String> sorted = snapshot.keysInRange("a", "z", 0);
+        Set<Key> sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(4, sorted.size());
 
-        keys.remove("a");
-        keys.remove("b");
-        keys.remove("c");
-        keys.remove("d");
-        keys.add("e");
-        keys.add("f");
-        keys.add("g");
-        keys.add("h");
+        keys.remove(new Key("a"));
+        keys.remove(new Key("b"));
+        keys.remove(new Key("c"));
+        keys.remove(new Key("d"));
+        keys.add(new Key("e"));
+        keys.add(new Key("f"));
+        keys.add(new Key("g"));
+        keys.add(new Key("h"));
         snapshot.update(keys);
-        sorted = snapshot.keysInRange("a", "z", 0);
+        sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(4, sorted.size());
-        assertEquals("e", sorted.toArray()[0]);
-        assertEquals("f", sorted.toArray()[1]);
-        assertEquals("g", sorted.toArray()[2]);
-        assertEquals("h", sorted.toArray()[3]);
+        assertEquals(new Key("e"), sorted.toArray()[0]);
+        assertEquals(new Key("f"), sorted.toArray()[1]);
+        assertEquals(new Key("g"), sorted.toArray()[2]);
+        assertEquals(new Key("h"), sorted.toArray()[3]);
 
         snapshot.discard();
     }
 
     @Test
     public void testUpdateWithDifferentNumberAndDifferentKeys() {
-        Set<String> keys = new HashSet<String>();
-        keys.add("d");
-        keys.add("a");
-        keys.add("c");
-        keys.add("b");
+        Set<Key> keys = new HashSet<Key>();
+        keys.add(new Key("d"));
+        keys.add(new Key("a"));
+        keys.add(new Key("c"));
+        keys.add(new Key("b"));
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
-        Set<String> sorted = snapshot.keysInRange("a", "z", 0);
+        Set<Key> sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(4, sorted.size());
 
-        keys.remove("a");
-        keys.remove("b");
-        keys.remove("c");
-        keys.remove("d");
-        keys.add("z");
+        keys.remove(new Key("a"));
+        keys.remove(new Key("b"));
+        keys.remove(new Key("c"));
+        keys.remove(new Key("d"));
+        keys.add(new Key("z"));
         snapshot.update(keys);
-        sorted = snapshot.keysInRange("a", "z", 0);
+        sorted = snapshot.keysInRange(new Key("a"), new Key("z"), 0);
         assertEquals(1, sorted.size());
-        assertEquals("z", sorted.toArray()[0]);
+        assertEquals(new Key("z"), sorted.toArray()[0]);
 
         snapshot.discard();
     }
 
     @Test
     public void testIsExpired() throws InterruptedException {
-        Set<String> keys = new HashSet<String>();
+        Set<Key> keys = new HashSet<Key>();
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
         Thread.sleep(1000);
@@ -191,7 +209,7 @@ public class SortedSnapshotTest {
 
     @Test
     public void testIsNotExpired() throws InterruptedException {
-        Set<String> keys = new HashSet<String>();
+        Set<Key> keys = new HashSet<Key>();
 
         SortedSnapshot snapshot = new SortedSnapshot("bucket", keys, new StringComparator());
         Thread.sleep(1000);
@@ -201,11 +219,11 @@ public class SortedSnapshotTest {
 
     @Test
     public void testPerf() {
-        Set<String> keys = new HashSet<String>();
-        int total = 300000;
+        Set<Key> keys = new HashSet<Key>();
+        int total = 100000;
 
         for (int i = 0; i < total; i++) {
-            keys.add("" + i);
+            keys.add(new Key("" + i));
         }
 
         StopWatch indexing = new StopWatch();
@@ -216,18 +234,18 @@ public class SortedSnapshotTest {
 
         StopWatch querying = new StopWatch();
         querying.start();
-        Set<String> sorted = snapshot.keysInRange("100", "102", 2);
+        Set<Key> sorted = snapshot.keysInRange(new Key("100"), new Key("102"), 2);
         querying.stop();
         assertEquals(2, sorted.size());
-        assertEquals("100", sorted.toArray()[0]);
-        assertEquals("101", sorted.toArray()[1]);
+        assertEquals(new Key("100"), sorted.toArray()[0]);
+        assertEquals(new Key("101"), sorted.toArray()[1]);
         System.out.println("Querying: " + querying.getTime());
 
         for (int i = 10; i < 110; i++) {
-            keys.remove("" + i);
+            keys.remove(new Key("" + i));
         }
         for (int i = total; i < total + 10000; i++) {
-            keys.add("" + i);
+            keys.add(new Key("" + i));
         }
 
         StopWatch updating = new StopWatch();
@@ -238,7 +256,7 @@ public class SortedSnapshotTest {
 
         StopWatch querying2 = new StopWatch();
         querying2.start();
-        sorted = snapshot.keysInRange("100", "102", 2);
+        sorted = snapshot.keysInRange(new Key("100"), new Key("102"), 2);
         querying2.stop();
         assertEquals(0, sorted.size());
         System.out.println("Querying 2: " + querying2.getTime());

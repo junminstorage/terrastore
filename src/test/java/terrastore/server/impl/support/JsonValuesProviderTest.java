@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.junit.Test;
 import terrastore.server.Values;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
@@ -36,9 +37,9 @@ public class JsonValuesProviderTest {
     @Test
     public void testWrite() throws Exception {
         JsonValuesProvider provider = new JsonValuesProvider();
-        Map<String, Value> map = new TreeMap<String, Value>();
-        map.put("key1", new JsonValue(JSON_VALUE_1.getBytes("UTF-8")));
-        map.put("key2", new JsonValue(JSON_VALUE_2.getBytes("UTF-8")));
+        Map<Key, Value> map = new TreeMap<Key, Value>();
+        map.put(new Key("key1"), new JsonValue(JSON_VALUE_1.getBytes("UTF-8")));
+        map.put(new Key("key2"), new JsonValue(JSON_VALUE_2.getBytes("UTF-8")));
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         provider.writeTo(new Values(map), null, null, null, null, null, stream);

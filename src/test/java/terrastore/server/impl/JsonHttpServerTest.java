@@ -18,6 +18,7 @@ package terrastore.server.impl;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +45,7 @@ import terrastore.service.BackupService;
 import terrastore.service.QueryService;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
@@ -151,7 +153,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        updateService.putValue(eq("bucket"), eq("test1"), EasyMock.<Value>anyObject(), eq(new Predicate(null)));
+        updateService.putValue(eq("bucket"), eq(new Key("test1")), EasyMock.<Value>anyObject(), eq(new Predicate(null)));
         expectLastCall().once();
 
         replay(updateService, queryService, backupService);
@@ -179,7 +181,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        updateService.putValue(eq("bucket"), eq("test1"), EasyMock.<Value>anyObject(), eq(new Predicate("test:condition")));
+        updateService.putValue(eq("bucket"), eq(new Key("test1")), EasyMock.<Value>anyObject(), eq(new Predicate("test:condition")));
         expectLastCall().once();
 
         replay(updateService, queryService, backupService);
@@ -207,7 +209,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        updateService.removeValue("bucket", "test1");
+        updateService.removeValue("bucket", new Key("test1"));
         expectLastCall().once();
 
         replay(updateService, queryService, backupService);
@@ -233,7 +235,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        queryService.getValue(eq("bucket"), eq("test1"), eq(new Predicate(null)));
+        queryService.getValue(eq("bucket"), eq(new Key("test1")), eq(new Predicate(null)));
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
         replay(updateService, queryService, backupService);
@@ -262,7 +264,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        queryService.getValue(eq("bucket"), eq("test1"), eq(new Predicate("test:condition")));
+        queryService.getValue(eq("bucket"), eq(new Key("test1")), eq(new Predicate("test:condition")));
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
         replay(updateService, queryService, backupService);
@@ -287,8 +289,8 @@ public class JsonHttpServerTest {
 
     @Test
     public void testGetAllValues() throws Exception {
-        SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test", new JsonValue(JSON_VALUE.getBytes()));
+        SortedMap<Key, Value> values = new TreeMap<Key, Value>();
+        values.put(new Key("test"), new JsonValue(JSON_VALUE.getBytes()));
         BackupService backupService = createMock(BackupService.class);
 
         UpdateService updateService = createMock(UpdateService.class);
@@ -352,15 +354,15 @@ public class JsonHttpServerTest {
 
     @Test
     public void testQueryByRangeWithNoComparator() throws Exception {
-        SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+        SortedMap<Key, Value> values = new TreeMap<Key, Value>();
+        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range("test1", "test2", 0, "")), eq(new Predicate(null)), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService);
@@ -385,15 +387,15 @@ public class JsonHttpServerTest {
 
     @Test
     public void testQueryByRangeWithLimit() throws Exception {
-        SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+        SortedMap<Key, Value> values = new TreeMap<Key, Value>();
+        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range("test1", "test2", 2, "order")), eq(new Predicate(null)), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 2, "order")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService);
@@ -418,15 +420,15 @@ public class JsonHttpServerTest {
 
     @Test
     public void testQueryByRangeWithNoPredicate() throws Exception {
-        SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+        SortedMap<Key, Value> values = new TreeMap<Key, Value>();
+        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range("test1", "test2", 0, "order")), eq(new Predicate(null)), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService);
@@ -451,15 +453,15 @@ public class JsonHttpServerTest {
 
     @Test
     public void testQueryByRangeWithPredicate() throws Exception {
-        SortedMap<String, Value> values = new TreeMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+        SortedMap<Key, Value> values = new TreeMap<Key, Value>();
+        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range("test1", "test2", 0, "order")), eq(new Predicate("test:condition")), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order")), eq(new Predicate("test:condition")), eq(0L));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService);
@@ -484,9 +486,9 @@ public class JsonHttpServerTest {
 
     @Test
     public void testQueryByPredicate() throws Exception {
-        Map<String, Value> values = new HashMap<String, Value>();
-        values.put("test1", new JsonValue(JSON_VALUE.getBytes()));
-        values.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+        Map<Key, Value> values = new LinkedHashMap<Key, Value>();
+        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
 
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
@@ -524,7 +526,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
 
-        updateService.updateValue(eq("bucket"), eq("key"), eq(new Update("update", 1000, params)));
+        updateService.updateValue(eq("bucket"), eq(new Key("key")), eq(new Update("update", 1000, params)));
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
         replay(updateService, queryService, backupService);

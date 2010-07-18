@@ -18,6 +18,7 @@ package terrastore.partition.impl;
 import org.junit.Test;
 import terrastore.communication.Cluster;
 import terrastore.router.impl.HashFunction;
+import terrastore.store.Key;
 import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
@@ -49,9 +50,9 @@ public class EnsembleHashingPartitionerTest {
 
         partitioner.setupClusters(Sets.hash(cluster1, cluster2, cluster3));
         
-        assertSame(cluster1, partitioner.getClusterFor("bucket", "1"));
-        assertSame(cluster2, partitioner.getClusterFor("bucket", "2"));
-        assertSame(cluster3, partitioner.getClusterFor("bucket", "3"));
+        assertSame(cluster1, partitioner.getClusterFor("bucket", new Key("1")));
+        assertSame(cluster2, partitioner.getClusterFor("bucket", new Key("2")));
+        assertSame(cluster3, partitioner.getClusterFor("bucket", new Key("3")));
 
         verify(cluster1, cluster2, cluster3, fn);
     }

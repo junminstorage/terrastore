@@ -16,6 +16,7 @@
 package terrastore.communication.remote.serialization;
 
 import org.junit.Test;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
@@ -54,12 +55,12 @@ public class JavaSerializerTest {
         }
 
         @Override
-        public Value dispatch(String key, Update update, Function function) {
+        public Value dispatch(Key key, Update update, Function function) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean dispatch(String key, Predicate predicate, Condition condition) {
+        public boolean dispatch(Key key, Predicate predicate, Condition condition) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
     }

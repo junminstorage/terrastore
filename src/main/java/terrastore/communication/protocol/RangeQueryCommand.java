@@ -23,6 +23,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.features.Range;
@@ -31,7 +32,7 @@ import terrastore.util.collect.Sets;
 /**
  * @author Sergio Bossa
  */
-public class RangeQueryCommand extends AbstractCommand<Set<String>> {
+public class RangeQueryCommand extends AbstractCommand<Set<Key>> {
 
     private final String bucketName;
     private final Range range;
@@ -46,18 +47,18 @@ public class RangeQueryCommand extends AbstractCommand<Set<String>> {
     }
 
     @Override
-    public Set<String> executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Set<Key> executeOn(Router router) throws MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         Command command = new RangeQueryCommand(bucketName, range, keyComparator, timeToLive);
         return Sets.serializing(node.<Set<String>>send(command));
     }
 
-    public Set<String> executeOn(Store store) throws StoreOperationException {
+    public Set<Key> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             return Sets.serializing(bucket.keysInRange(range, keyComparator, timeToLive));
         } else {
-            return Collections.<String>emptySet();
+            return Collections.<Key>emptySet();
         }
     }
 }

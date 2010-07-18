@@ -19,6 +19,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import org.terracotta.modules.annotations.InstrumentedClass;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
@@ -48,13 +49,13 @@ public class JsonValue implements Value {
     }
 
     @Override
-    public Value dispatch(String key, Update update, Function function) {
-        return JsonUtils.fromMap(function.apply(key, JsonUtils.toModifiableMap(this), update.getParameters()));
+    public Value dispatch(Key key, Update update, Function function) {
+        return JsonUtils.fromMap(function.apply(key.toString(), JsonUtils.toModifiableMap(this), update.getParameters()));
     }
 
     @Override
-    public boolean dispatch(String key, Predicate predicate, Condition condition) {
-        return condition.isSatisfied(key, JsonUtils.toUnmodifiableMap(this), predicate.getConditionExpression());
+    public boolean dispatch(Key key, Predicate predicate, Condition condition) {
+        return condition.isSatisfied(key.toString(), JsonUtils.toUnmodifiableMap(this), predicate.getConditionExpression());
     }
 
     @Override

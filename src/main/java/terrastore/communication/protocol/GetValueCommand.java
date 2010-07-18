@@ -21,6 +21,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
@@ -33,12 +34,12 @@ import terrastore.store.operators.Condition;
 public class GetValueCommand extends AbstractCommand<Value> {
 
     private final String bucketName;
-    private final String key;
+    private final Key key;
     private final boolean conditional;
     private final Predicate predicate;
     private final Condition condition;
 
-    public GetValueCommand(String bucketName, String key) {
+    public GetValueCommand(String bucketName, Key key) {
         this.bucketName = bucketName;
         this.key = key;
         this.conditional = false;
@@ -46,7 +47,7 @@ public class GetValueCommand extends AbstractCommand<Value> {
         this.condition = null;
     }
 
-    public GetValueCommand(String bucketName, String key, Predicate predicate, Condition condition) {
+    public GetValueCommand(String bucketName, Key key, Predicate predicate, Condition condition) {
         this.bucketName = bucketName;
         this.key = key;
         this.conditional = true;

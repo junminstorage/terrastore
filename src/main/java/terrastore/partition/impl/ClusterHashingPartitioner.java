@@ -32,6 +32,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.router.impl.HashFunction;
 import terrastore.partition.ClusterPartitioner;
+import terrastore.store.Key;
 
 /**
  * {@link terrastore.partition.ClusterPartitioner} implementation based on consistent hashing and ordering.
@@ -117,7 +118,7 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
     }
 
     @Override
-    public Node getNodeFor(Cluster cluster, String bucket, String key) {
+    public Node getNodeFor(Cluster cluster, String bucket, Key key) {
         stateLock.readLock().lock();
         try {
             Partitioner partitioner = partitioners.get(cluster);
@@ -192,7 +193,7 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
             return selectNodeAtPartition(hash);
         }
 
-        public Node getNodeFor(String bucket, String key) {
+        public Node getNodeFor(String bucket, Key key) {
             String toHash = bucket + key;
             int hash = hashFunction.hash(toHash, maxPartitions);
             return selectNodeAtPartition(hash);

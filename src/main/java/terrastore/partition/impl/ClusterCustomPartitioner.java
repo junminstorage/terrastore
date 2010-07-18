@@ -26,6 +26,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.CustomClusterPartitionerStrategy;
+import terrastore.store.Key;
 
 /**
  * {@link terrastore.partition.ClusterPartitioner} implementation delegating to
@@ -113,10 +114,10 @@ public class ClusterCustomPartitioner implements ClusterPartitioner {
     }
 
     @Override
-    public Node getNodeFor(Cluster cluster, String bucket, String key) {
+    public Node getNodeFor(Cluster cluster, String bucket, Key key) {
         stateLock.readLock().lock();
         try {
-            CustomClusterPartitionerStrategy.Node node = strategy.getNodeFor(cluster.getName(), bucket, key);
+            CustomClusterPartitionerStrategy.Node node = strategy.getNodeFor(cluster.getName(), bucket, key.toString());
             if (node != null) {
                 return allNodes.get(keyFor(cluster.getName(), node.getHost(), node.getPort()));
             } else {

@@ -32,6 +32,7 @@ import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.types.JsonValue;
 
@@ -90,12 +91,12 @@ public class JsonUtils {
 
     public static void write(Values values, OutputStream stream) throws IOException {
         JsonGenerator jsonGenerator = new JsonFactory().createJsonGenerator(stream, JsonEncoding.UTF8);
-        Set<Map.Entry<String, Value>> entries = values.entrySet();
+        Set<Map.Entry<Key, Value>> entries = values.entrySet();
         jsonGenerator.writeStartObject();
-        for (Map.Entry<String, Value> entry : entries) {
-            String key = entry.getKey();
+        for (Map.Entry<Key, Value> entry : entries) {
+            Key key = entry.getKey();
             Value value = entry.getValue();
-            jsonGenerator.writeFieldName(key);
+            jsonGenerator.writeFieldName(key.toString());
             jsonGenerator.writeRawValue(value.toString());
         }
         jsonGenerator.writeEndObject();

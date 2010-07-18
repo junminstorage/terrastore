@@ -23,6 +23,7 @@ import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
@@ -33,15 +34,15 @@ import terrastore.util.collect.Maps;
 /**
  * @author Sergio Bossa
  */
-public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
+public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
 
     private final String bucketName;
-    private final Set<String> keys;
+    private final Set<Key> keys;
     private final boolean conditional;
     private final Predicate predicate;
     private final Condition valueCondition;
 
-    public GetValuesCommand(GetValuesCommand command, Set<String> keys) {
+    public GetValuesCommand(GetValuesCommand command, Set<Key> keys) {
         this.bucketName = command.bucketName;
         this.conditional = command.conditional;
         this.predicate = command.predicate;
@@ -49,7 +50,7 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
         this.keys = keys;
     }
 
-    public GetValuesCommand(String bucketName, Set<String> keys) {
+    public GetValuesCommand(String bucketName, Set<Key> keys) {
         this.bucketName = bucketName;
         this.keys = keys;
         this.conditional = false;
@@ -57,7 +58,7 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
         this.valueCondition = null;
     }
 
-    public GetValuesCommand(String bucketName, Set<String> keys, Predicate predicate, Condition valueCondition) {
+    public GetValuesCommand(String bucketName, Set<Key> keys, Predicate predicate, Condition valueCondition) {
         this.bucketName = bucketName;
         this.keys = keys;
         this.conditional = true;
@@ -66,23 +67,23 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
     }
 
     @Override
-    public Map<String, Value> executeOn(Router router) throws MissingRouteException, ProcessingException {
-        Map<Node, Set<String>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
-        Map<String, Value> result = new HashMap<String, Value>();
-        for (Map.Entry<Node, Set<String>> nodeToKeysEntry : nodeToKeys.entrySet()) {
+    public Map<Key, Value> executeOn(Router router) throws MissingRouteException, ProcessingException {
+        Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
+        Map<Key, Value> result = new HashMap<Key, Value>();
+        for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
             Node node = nodeToKeysEntry.getKey();
-            Set<String> nodeKeys = nodeToKeysEntry.getValue();
+            Set<Key> nodeKeys = nodeToKeysEntry.getValue();
             GetValuesCommand command = new GetValuesCommand(this, nodeKeys);
-            result.putAll(node.<Map<String, Value>>send(command));
+            result.putAll(node.<Map<Key, Value>>send(command));
         }
         return Maps.serializing(result);
     }
 
-    public Map<String, Value> executeOn(Store store) throws StoreOperationException {
+    public Map<Key, Value> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            Map<String, Value> entries = new HashMap<String, Value>();
-            for (String key : keys) {
+            Map<Key, Value> entries = new HashMap<Key, Value>();
+            for (Key key : keys) {
                 Value value = null;
                 if (!conditional) {
                     value = bucket.get(key);
@@ -95,7 +96,7 @@ public class GetValuesCommand extends AbstractCommand<Map<String, Value>> {
             }
             return Maps.serializing(entries);
         } else {
-            return new HashMap<String, Value>(0);
+            return new HashMap<Key, Value>(0);
         }
     }
 }

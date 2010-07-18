@@ -26,6 +26,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.router.Router;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
@@ -45,7 +46,7 @@ public class RemoteCommunicationTest {
     public void testSendProcessAndReceive() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
-        String valueKey = "key";
+        Key valueKey = new Key("key");
         Value value = new TestValue(VALUE);
 
         Router router = createMock(Router.class);
@@ -83,7 +84,7 @@ public class RemoteCommunicationTest {
     public void testMultithreadSendProcessAndReceive() throws Exception {
         final String nodeName = "node";
         final String bucketName = "bucket";
-        final String valueKey = "key";
+        final Key valueKey = new Key("key");
         final Value value = new TestValue(VALUE);
 
         final Router router = createMock(Router.class);
@@ -150,7 +151,7 @@ public class RemoteCommunicationTest {
     public void testCommunicationTimeout() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
-        String valueKey = "key";
+        Key valueKey = new Key("key");
 
         Router router = createMock(Router.class);
         Node node = createMock(Node.class);
@@ -179,7 +180,7 @@ public class RemoteCommunicationTest {
     public void testNodeCanAutomaticallyConnect() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
-        String valueKey = "key";
+        Key valueKey = new Key("key");
         final Value value = new TestValue(VALUE);
 
         Router router = createMock(Router.class);
@@ -212,7 +213,7 @@ public class RemoteCommunicationTest {
     public void testNodeCanReconnect() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
-        String valueKey = "key";
+        Key valueKey = new Key("key");
         final Value value = new TestValue(VALUE);
 
         Router router = createMock(Router.class);
@@ -250,7 +251,7 @@ public class RemoteCommunicationTest {
     public void testNodeCanReconnectAfterException() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
-        String valueKey = "key";
+        Key valueKey = new Key("key");
         final Value value = new TestValue(VALUE);
 
         Router router = createMock(Router.class);
@@ -303,12 +304,12 @@ public class RemoteCommunicationTest {
         }
 
         @Override
-        public Value dispatch(String key, Update update, Function function) {
+        public Value dispatch(Key key, Update update, Function function) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean dispatch(String key, Predicate predicate, Condition condition) {
+        public boolean dispatch(Key key, Predicate predicate, Condition condition) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
     }

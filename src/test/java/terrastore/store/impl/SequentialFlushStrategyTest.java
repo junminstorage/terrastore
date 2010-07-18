@@ -21,6 +21,7 @@ import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
+import terrastore.store.Key;
 import terrastore.util.collect.Sets;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -34,15 +35,15 @@ public class SequentialFlushStrategyTest {
         FlushCondition condition = createMock(FlushCondition.class);
         FlushCallback callback = createMock(FlushCallback.class);
         Bucket bucket = createMock(Bucket.class);
-        Set<String> keys = Sets.hash("k1", "k2");
+        Set<Key> keys = Sets.hash(new Key("k1"), new Key("k2"));
 
-        condition.isSatisfied(bucket, "k1");
+        condition.isSatisfied(bucket, new Key("k1"));
         expectLastCall().andReturn(true).once();
-        condition.isSatisfied(bucket, "k2");
+        condition.isSatisfied(bucket, new Key("k2"));
         expectLastCall().andReturn(true).once();
-        callback.doFlush("k1");
+        callback.doFlush(new Key("k1"));
         expectLastCall().once();
-        callback.doFlush("k2");
+        callback.doFlush(new Key("k2"));
         expectLastCall().once();
 
         replay(condition, callback, bucket);
@@ -58,13 +59,13 @@ public class SequentialFlushStrategyTest {
         FlushCondition condition = createMock(FlushCondition.class);
         FlushCallback callback = createMock(FlushCallback.class);
         Bucket bucket = createMock(Bucket.class);
-        Set<String> keys = Sets.hash("k1", "k2");
+        Set<Key> keys = Sets.hash(new Key("k1"), new Key("k2"));
 
-        condition.isSatisfied(bucket, "k1");
+        condition.isSatisfied(bucket, new Key("k1"));
         expectLastCall().andReturn(true).once();
-        condition.isSatisfied(bucket, "k2");
+        condition.isSatisfied(bucket, new Key("k2"));
         expectLastCall().andReturn(false).once();
-        callback.doFlush("k1");
+        callback.doFlush(new Key("k1"));
         expectLastCall().once();
 
         replay(condition, callback, bucket);
@@ -80,11 +81,11 @@ public class SequentialFlushStrategyTest {
         FlushCondition condition = createMock(FlushCondition.class);
         FlushCallback callback = createMock(FlushCallback.class);
         Bucket bucket = createMock(Bucket.class);
-        Set<String> keys = Sets.hash("k1", "k2");
+        Set<Key> keys = Sets.hash(new Key("k1"), new Key("k2"));
 
-        condition.isSatisfied(bucket, "k1");
+        condition.isSatisfied(bucket, new Key("k1"));
         expectLastCall().andReturn(false).once();
-        condition.isSatisfied(bucket, "k2");
+        condition.isSatisfied(bucket, new Key("k2"));
         expectLastCall().andReturn(false).once();
 
         replay(condition, callback, bucket);

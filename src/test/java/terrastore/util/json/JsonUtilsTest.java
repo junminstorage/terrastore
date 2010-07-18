@@ -27,6 +27,7 @@ import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
+import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.types.JsonValue;
 import static org.junit.Assert.*;
@@ -103,8 +104,8 @@ public class JsonUtilsTest {
     @Test
     public void testWriteValues() throws Exception {
         JsonValue value = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Value> map = new HashMap<String, Value>();
-        map.put("value", value);
+        Map<Key, Value> map = new HashMap<Key, Value>();
+        map.put(new Key("value"), value);
         Values values = new Values(map);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonUtils.write(values, stream);

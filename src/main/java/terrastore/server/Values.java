@@ -20,18 +20,19 @@ import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import terrastore.store.Key;
 import terrastore.store.Value;
 
 /**
  * @author Sergio Bossa
  */
-public class Values extends AbstractMap<String, Value> implements Serializable {
+public class Values extends AbstractMap<Key, Value> implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
 
-    private final Map<String, Value> values;
+    private final Map<Key, Value> values;
 
-    public Values(Map<String, Value> values) {
+    public Values(Map<Key, Value> values) {
         this.values = values;
     }
 
@@ -41,7 +42,7 @@ public class Values extends AbstractMap<String, Value> implements Serializable {
     }
 
     @Override
-    public Set<Entry<String, Value>> entrySet() {
+    public Set<Entry<Key, Value>> entrySet() {
         return values.entrySet();
     }
 }

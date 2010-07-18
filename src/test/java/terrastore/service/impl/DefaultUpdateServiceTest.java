@@ -31,6 +31,7 @@ import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
 import terrastore.service.UpdateOperationException;
+import terrastore.store.Key;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
@@ -139,7 +140,7 @@ public class DefaultUpdateServiceTest {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
 
-        router.routeToNodeFor("bucket", "test1");
+        router.routeToNodeFor("bucket", new Key("test1"));
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<PutValueCommand>anyObject());
         expectLastCall().andReturn(null).once();
@@ -147,7 +148,7 @@ public class DefaultUpdateServiceTest {
         replay(node, router);
 
         DefaultUpdateService service = new DefaultUpdateService(router);
-        service.putValue("bucket", "test1", new JsonValue(JSON_VALUE.getBytes()), new Predicate(null));
+        service.putValue("bucket", new Key("test1"), new JsonValue(JSON_VALUE.getBytes()), new Predicate(null));
 
         verify(node, router);
     }
@@ -157,7 +158,7 @@ public class DefaultUpdateServiceTest {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
 
-        router.routeToNodeFor("bucket", "test1");
+        router.routeToNodeFor("bucket", new Key("test1"));
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<RemoveValueCommand>anyObject());
         expectLastCall().andReturn(null).once();
@@ -165,7 +166,7 @@ public class DefaultUpdateServiceTest {
         replay(node, router);
 
         DefaultUpdateService service = new DefaultUpdateService(router);
-        service.removeValue("bucket", "test1");
+        service.removeValue("bucket", new Key("test1"));
 
         verify(node, router);
     }
@@ -183,7 +184,7 @@ public class DefaultUpdateServiceTest {
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
 
-        router.routeToNodeFor("bucket", "test1");
+        router.routeToNodeFor("bucket", new Key("test1"));
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<UpdateCommand>anyObject());
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
@@ -195,7 +196,7 @@ public class DefaultUpdateServiceTest {
 
         DefaultUpdateService service = new DefaultUpdateService(router);
         service.setFunctions(functions);
-        assertEquals(new JsonValue(JSON_VALUE.getBytes()), service.updateValue("bucket", "test1", new Update("update", 1000, new HashMap<String, Object>())));
+        assertEquals(new JsonValue(JSON_VALUE.getBytes()), service.updateValue("bucket", new Key("test1"), new Update("update", 1000, new HashMap<String, Object>())));
 
         verify(node, router);
     }

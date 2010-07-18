@@ -21,6 +21,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.partition.ClusterPartitioner;
 import terrastore.partition.EnsemblePartitioner;
+import terrastore.store.Key;
 
 /**
  * Router interface for defining and finding routes to ensemble {@link terrastore.communication.Cluster}s
@@ -91,7 +92,7 @@ public interface Router {
      * @return The corresponding node.
      * @throws MissingRouteException If no route can be found.
      */
-    public Node routeToNodeFor(String bucket, String key) throws MissingRouteException;
+    public Node routeToNodeFor(String bucket, Key key) throws MissingRouteException;
 
     /**
      * Find the route to a set of nodes for the given bucket name and set of keys.
@@ -101,7 +102,7 @@ public interface Router {
      * @return A map associating each node to its set of keys.
      * @throws MissingRouteException If no route can be found.
      */
-    public Map<Node, Set<String>> routeToNodesFor(String bucket, Set<String> keys) throws MissingRouteException;
+    public Map<Node, Set<Key>> routeToNodesFor(String bucket, Set<Key> keys) throws MissingRouteException;
 
     /**
      * Find the route for all {@link terrastore.communication.Node}s belonging to the given {@link terrastore.communication.Cluster}.
