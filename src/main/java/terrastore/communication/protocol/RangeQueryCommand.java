@@ -50,7 +50,7 @@ public class RangeQueryCommand extends AbstractCommand<Set<Key>> {
     public Set<Key> executeOn(Router router) throws MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         Command command = new RangeQueryCommand(bucketName, range, keyComparator, timeToLive);
-        return Sets.serializing(node.<Set<String>>send(command));
+        return Sets.serializing(node.<Set<Key>>send(command));
     }
 
     public Set<Key> executeOn(Store store) throws StoreOperationException {
