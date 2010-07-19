@@ -8,7 +8,7 @@
 
 
     <!--
-        Configure here your update terrastore.store.operators.Function used to atomically update values.
+        Configure here your terrastore.store.operators.Function used to atomically update values.
         As an alternative, you may want to annotate your function with terrastore.annotation.AutoDetect: Terrastore
         will autodetect your annotated class, create an instance and autowire it here.
 
@@ -31,6 +31,10 @@
 
         <entry key="js">
             <bean class="terrastore.service.functions.JSFunction"/>
+        </entry>
+        
+        <entry key="atomiccounter">
+        	<bean class="terrastore.service.functions.AtomicCounterFunction"/>
         </entry>
 
     </util:map>
