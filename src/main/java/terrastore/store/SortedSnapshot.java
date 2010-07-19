@@ -32,6 +32,7 @@ import org.fusesource.hawtdb.api.BTreeIndexFactory;
 import org.fusesource.hawtdb.api.PageFileFactory;
 import org.fusesource.hawtdb.api.Predicate;
 import org.fusesource.hawtdb.api.SortedIndex;
+import static terrastore.startup.Constants.*;
 
 /**
  * Sorted snapshot of keys.
@@ -89,11 +90,15 @@ public class SortedSnapshot {
         }
     }
 
-    private File getFile(String name) {
-        try {
-            return File.createTempFile("terrastore", name);
-        } catch (IOException ex) {
-            throw new IllegalStateException("Unable to create snapshot file!");
+    private File getFile(String fileName) {
+        String homeDir = System.getenv(TERRASTORE_HOME) != null ? System.getenv(TERRASTORE_HOME) : System.getProperty(TERRASTORE_HOME);
+        if (homeDir != null) {
+            String separator = System.getProperty("file.separator");
+            File file = new File(homeDir + separator + SNAPSHOTS_DIR + separator + fileName + ".hdb");
+            file.delete();
+            return file;
+        } else {
+            throw new IllegalStateException("Terrastore home directory is not set!");
         }
     }
 

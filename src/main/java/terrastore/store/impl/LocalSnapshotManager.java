@@ -61,7 +61,11 @@ public class LocalSnapshotManager implements SnapshotManager {
     }
 
     private String getSnapshotName(Bucket bucket, String name) {
-        return bucket + ":" + name;
+        if (name != null && !name.isEmpty()) {
+            return bucket.getName() + ":" + name;
+        } else {
+            return bucket.getName() + ":" + "default";
+        }
     }
 
     private SortedSnapshot tryComputingSnapshot(String snapshotName, Bucket bucket, Comparator<String> comparator) {

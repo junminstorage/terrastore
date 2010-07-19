@@ -8,4 +8,5 @@ tc-data
 src/test/resources/config/tc-data
 src/dist/master/tc-data
 src/dist/server/tc-data
-src/dist/server/backups/test.bak
+src/dist/server/backups/.+\.bak
+src/dist/server/snapshots/.+\.hdb

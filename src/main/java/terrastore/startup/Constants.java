@@ -22,6 +22,7 @@ public class Constants {
 
     public static final String TERRASTORE_HOME = "TERRASTORE_HOME";
     public static final String BACKUPS_DIR = "backups";
+    public static final String SNAPSHOTS_DIR = "snapshots";
 
     private Constants() {
     }

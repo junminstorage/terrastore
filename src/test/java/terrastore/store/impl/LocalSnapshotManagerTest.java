@@ -15,6 +15,7 @@
  */
 package terrastore.store.impl;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -25,7 +26,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
 import org.junit.Test;
+import terrastore.startup.Constants;
 import terrastore.store.Bucket;
 import terrastore.store.Key;
 import terrastore.store.SortedSnapshot;
@@ -37,6 +40,12 @@ import static org.easymock.classextension.EasyMock.*;
  * @author Sergio Bossa
  */
 public class LocalSnapshotManagerTest {
+
+    @Before
+    public void setUp() {
+        System.setProperty(Constants.TERRASTORE_HOME, System.getProperty("java.io.tmpdir"));
+        new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + Constants.SNAPSHOTS_DIR).mkdir();
+    }
 
     @Test
     public void testComputeNewSortedSnapshot() {

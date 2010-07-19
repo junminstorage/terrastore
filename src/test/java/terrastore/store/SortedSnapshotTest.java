@@ -15,17 +15,26 @@
  */
 package terrastore.store;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang.time.StopWatch;
+import org.junit.Before;
 import org.junit.Test;
+import terrastore.startup.Constants;
 import static org.junit.Assert.*;
 
 /**
  * @author Sergio Bossa
  */
 public class SortedSnapshotTest {
+
+    @Before
+    public void setUp() {
+        System.setProperty(Constants.TERRASTORE_HOME, System.getProperty("java.io.tmpdir"));
+        new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + Constants.SNAPSHOTS_DIR).mkdir();
+    }
 
     @Test
     public void testKeysInRange() {
