@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+    <import resource="comparators-config.xml"/>
+    <import resource="conditions-config.xml"/>
+    <import resource="functions-config.xml"/>
+    <import resource="events-config.xml"/>
+    <import resource="monitoring-config.xml"/>
+    <import resource="classpath:*-extension.xml"/>
+
+    <bean class="org.springframework.web.context.support.ServletContextPropertyPlaceholderConfigurer">
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+    </bean>
+
+    <!-- Server -->
+
+    <bean id="server" class="terrastore.server.impl.JsonHttpServer">
+        <constructor-arg ref="updateService"/>
+        <constructor-arg ref="queryService"/>
+        <constructor-arg ref="backupService"/>
+    </bean>
+
+    <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
+    <bean class="terrastore.server.impl.support.JsonValueProvider"/>
+    <bean class="terrastore.server.impl.support.JsonValuesProvider"/>
+    <bean class="terrastore.server.impl.support.JsonBucketsProvider"/>
+    <bean class="terrastore.server.impl.support.JsonParametersProvider"/>
+    <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
+
+    <!-- Service -->
+
+    <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
+        <constructor-arg ref="router"/>
+        <property name="functions">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="update-functions"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Function"/>
+            </bean>
+        </property>
+        <property name="conditions">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="conditions"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Condition"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
+        <constructor-arg ref="router"/>
+        <property name="comparators">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="comparators"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Comparator"/>
+            </bean>
+        </property>
+        <property name="conditions">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="conditions"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Condition"/>
+            </bean>
+        </property>
+        <property name="defaultComparator" ref="defaultComparator"/>
+    </bean>
+
+    <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
+        <constructor-arg ref="router"/>
+        <constructor-arg value="SECRET-KEY"/>
+    </bean>
+
+    <!-- Router -->
+
+    <bean id="router" class="terrastore.router.impl.DefaultRouter">
+        <constructor-arg ref="clusterPartitioner"/>
+        <constructor-arg ref="ensemblePartitioner"/>
+    </bean>
+
+    <!-- Partitioner -->
+
+    <bean id="ensemblePartitioner" class="terrastore.partition.impl.support.EnsemblePartitionerFactoryBean">
+        <constructor-arg ref="ensemblePartitionerBean"/>
+        <constructor-arg ref="scanner"/>
+    </bean>
+
+    <bean id="clusterPartitioner" class="terrastore.partition.impl.support.ClusterPartitionerFactoryBean">
+        <constructor-arg ref="clusterPartitionerBean"/>
+        <constructor-arg ref="scanner"/>
+    </bean>
+
+    <bean id="ensemblePartitionerBean" class="terrastore.partition.impl.EnsembleHashingPartitioner">
+        <constructor-arg ref="hashFunction"/>
+    </bean>
+
+    <bean id="clusterPartitionerBean" class="terrastore.partition.impl.ClusterHashingPartitioner">
+        <constructor-arg value="1024"/>
+        <constructor-arg ref="hashFunction"/>
+    </bean>
+
+    <bean id="hashFunction" class="terrastore.router.impl.DefaultHashFunction"/>
+
+    <!-- Store -->
+
+    <bean id="store" class="terrastore.store.impl.TCStore" factory-method="getInstance">
+        <property name="snapshotManager" ref="snapshotManager"/>
+        <property name="backupManager" ref="backupManager"/>
+        <property name="eventBus" ref="${eventBus.impl}EventBus"/>
+    </bean>
+
+    <bean id="snapshotManager" class="terrastore.store.impl.LocalSnapshotManager"/>
+
+    <bean id="backupManager" class="terrastore.store.impl.DefaultBackupManager"/>
+
+    <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
+
+    <!-- Events -->
+
+    <bean id="memoryEventBus" class="terrastore.event.impl.MemoryEventBus" destroy-method="shutdown" lazy-init="true">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiringList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="3600"/>
+    </bean>
+
+    <bean id="amqEventBus" class="terrastore.event.impl.ActiveMQEventBus" destroy-method="shutdown"  lazy-init="true">
+        <constructor-arg>
+            <bean class="terrastore.util.annotation.AutowiringList">
+                <constructor-arg ref="event-listeners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.event.EventListener"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="${eventBus.amq.broker}"/>
+    </bean>
+
+    <!-- Cluster -->
+
+    <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator" factory-method="getInstance">
+        <property name="maxFrameLength" value="10485760"/>
+        <property name="store" ref="store"/>
+        <property name="router" ref="router"/>
+        <property name="ensemble" ref="ensemble"/>
+        <property name="localNodeFactory" ref="localNodeFactory"/>
+        <property name="remoteNodeFactory" ref="remoteNodeFactory"/>
+        <property name="flushStrategy" ref="flushStrategy"/>
+        <property name="flushCondition" ref="flushCondition"/>
+    </bean>
+
+    <bean id="ensemble" class="terrastore.cluster.ensemble.impl.DefaultEnsemble">
+        <constructor-arg index="0" ref="router"/>
+        <constructor-arg index="1" ref="remoteNodeFactory"/>
+    </bean>
+
+    <bean id="localNodeFactory" class="terrastore.communication.local.LocalNode$Factory"/>
+
+    <bean id="remoteNodeFactory" class="terrastore.communication.remote.RemoteNode$Factory">
+        <property name="defaultMaxFrameLength" value="1048576"/>
+        <property name="defaultNodeTimeout" value="10000"/>
+    </bean>
+
+    <bean id="flushStrategy" class="terrastore.store.impl.SequentialFlushStrategy"/>
+
+    <bean id="flushCondition" class="terrastore.store.impl.RoutingBasedFlushCondition">
+        <constructor-arg ref="router"/>
+    </bean>
+
+</beans>
