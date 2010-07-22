@@ -13,23 +13,38 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package terrastore.service.functions;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
 import terrastore.store.operators.Function;
 
 /**
  * @author Sven Johansson
+ * @author Sergio Bossa
  */
-@SuppressWarnings("serial")
 public class MergeFunction implements Function {
+
+    private static final long serialVersionUID = 12345678901L;
 
     @Override
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
-        value.putAll(parameters);
+        mergeFields(parameters, value);
         return value;
     }
 
+    private void mergeFields(Map<String, Object> source, Map<String, Object> destination) {
+        for (Entry<String, Object> sourceEntry : source.entrySet()) {
+            if (isMap(sourceEntry.getValue()) && isMap(destination.get(sourceEntry.getKey()))) {
+                mergeFields((Map<String, Object>) sourceEntry.getValue(), (Map<String, Object>) destination.get(sourceEntry.getKey()));
+            } else {
+                destination.put(sourceEntry.getKey(), sourceEntry.getValue());
+            }
+        }
+    }
+
+    private boolean isMap(Object object) {
+        return object != null && Map.class.isAssignableFrom(object.getClass());
+    }
 }
