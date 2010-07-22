@@ -16,32 +16,150 @@
 
 package terrastore.service.functions;
 
-import java.util.HashMap;
-import java.util.Map;
+import terrastore.service.functions.support.FunctionTestFixture;
+import static terrastore.service.functions.support.MapUtil.*;
 
+import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * @author Sven Johansson
  */
-public class MergeFunctionTest {
+public class MergeFunctionTest extends FunctionTestFixture {
 
-    @Test
-    public void testMapsAreMergedWhenFunctionIsApplied() {
-        Map<String, Object> originalValue = new HashMap<String, Object>();
-        originalValue.put("value1", "a value");
-        originalValue.put("value2", "another value");
-        
-        Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("value2", "another replaced value");
-        parameters.put("value3", "a third value");
-        
-        Map<String, Object> resultingValue = new MergeFunction().apply("KEY1", originalValue, parameters);
-        
-        assertEquals("a value", resultingValue.get("value1"));
-        assertEquals("another replaced value", resultingValue.get("value2"));
-        assertEquals("a third value", resultingValue.get("value3"));
+    @Before
+    public void setUp() {
+        function = new MergeFunction();
     }
     
+    @Test
+    public void mapsAreMergedWhenFunctionIsApplied() {
+        givenOriginalValue(
+            map(
+                entry("value1", "a value"),
+                entry("value2", "another value")
+            )
+        );
+        
+        whenFunctionIsAppliedWithParameters(
+            map(
+                entry("value2", "another replaced value"),
+                entry("value3", "a third value")
+            )
+        );
+        
+        thenResultEquals(
+           map(
+                entry("value1", "a value"),
+                entry("value2", "another replaced value"),
+                entry("value3", "a third value")
+           )
+        );
+    }
+    
+    @Test
+    public void unreferencedSiblingsInEmbeddedObjectsAreRetained() {
+        givenOriginalValue(
+            map(
+                entry("embedded", map(
+                    entry("value1", "a value")       
+                ))
+            )
+        );
+        
+        whenFunctionIsAppliedWithParameters(
+            map(
+                entry("embedded", map(
+                    entry("value2", "another value")      
+                ))
+            )
+        );
+        
+        thenResultEquals(
+            map(
+                entry("embedded", map(
+                    entry("value1", "a value"),
+                    entry("value2", "another value")
+                ))
+            )
+        );
+    }
+    
+    @Test
+    public void valueCanBeReplacedByEmbeddedObject() {
+        givenOriginalValue(
+            map(
+                entry("value1", "a value"),
+                entry("value2", "another value")
+            )
+        );
+        
+        whenFunctionIsAppliedWithParameters(
+            map(
+                entry("value2", map(
+                   entry("value", "an embedded value")     
+                ))
+            )
+        );
+        
+        thenResultEquals(
+            map(
+                entry("value1", "a value"),
+                entry("value2", map(
+                    entry("value", "an embedded value")     
+                ))
+            )
+        );
+    }
+
+    @Test
+    public void embeddedObjectIsAdded() {
+        givenOriginalValue(
+            map(
+                entry("value1", "a value")
+            )
+        );
+
+        whenFunctionIsAppliedWithParameters(
+            map(
+                entry("value2", map(
+                   entry("value", "an embedded value")
+                ))
+            )
+        );
+
+        thenResultEquals(
+            map(
+                entry("value1", "a value"),
+                entry("value2", map(
+                   entry("value", "an embedded value")
+                ))
+            )
+        );
+    }
+    
+    @Test
+    public void embeddedObjectCanBeReplacedByValue() {
+        givenOriginalValue(
+            map(
+                entry("value1", "a value"),
+                entry("value2", map(
+                   entry("value", "an embedded value")     
+                ))
+            )
+        );
+        
+        whenFunctionIsAppliedWithParameters(
+            map(
+                entry("value2", "another value")
+            )
+        );
+        
+        thenResultEquals(
+            map(
+                entry("value1", "a value"),
+                entry("value2", "another value")
+            )
+        );
+    }   
 }
