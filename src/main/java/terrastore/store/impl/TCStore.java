@@ -16,12 +16,12 @@
 package terrastore.store.impl;
 
 import java.util.Collection;
+import org.terracotta.annotations.HonorTransient;
+import org.terracotta.annotations.InstrumentedClass;
+import org.terracotta.annotations.Root;
 import org.terracotta.collections.ConcurrentDistributedMap;
-import org.terracotta.collections.HashcodeLockStrategy;
-import org.terracotta.collections.LockType;
-import org.terracotta.modules.annotations.HonorTransient;
-import org.terracotta.modules.annotations.InstrumentedClass;
-import org.terracotta.modules.annotations.Root;
+import org.terracotta.locking.LockType;
+import org.terracotta.locking.strategy.HashcodeLockStrategy;
 import terrastore.event.EventBus;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;

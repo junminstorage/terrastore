@@ -17,7 +17,7 @@ package terrastore.store.types;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.InstrumentedClass;
 import terrastore.store.Bucket;
 import terrastore.store.Key;
 import terrastore.store.Value;

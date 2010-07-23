@@ -26,12 +26,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.annotations.HonorTransient;
+import org.terracotta.annotations.InstrumentedClass;
 import org.terracotta.collections.ConcurrentDistributedMap;
-import org.terracotta.collections.FinegrainedLock;
-import org.terracotta.collections.HashcodeLockStrategy;
-import org.terracotta.collections.LockType;
-import org.terracotta.modules.annotations.HonorTransient;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.locking.ClusteredLock;
+import org.terracotta.locking.LockType;
+import org.terracotta.locking.strategy.HashcodeLockStrategy;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
 import terrastore.event.ValueChangedEvent;
@@ -236,12 +236,12 @@ public class TCBucket implements Bucket {
     }
 
     private void lock(Key key) {
-        FinegrainedLock lock = bucket.createFinegrainedLock(key);
+        ClusteredLock lock = bucket.createFinegrainedLock(key);
         lock.lock();
     }
 
     private void unlock(Key key) {
-        FinegrainedLock lock = bucket.createFinegrainedLock(key);
+        ClusteredLock lock = bucket.createFinegrainedLock(key);
         lock.unlock();
     }
 }

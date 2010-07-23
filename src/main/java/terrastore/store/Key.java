@@ -18,7 +18,7 @@ package terrastore.store;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.InstrumentedClass;
 
 /**
  * @author Sergio Bossa
