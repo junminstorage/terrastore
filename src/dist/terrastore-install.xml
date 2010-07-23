@@ -156,7 +156,7 @@
         <copy todir="${install.dir}/terrastore-master-libs">
             <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/">
                 <include name="*.txt"/>
-                <include name="bin/**"/>
+                <include name="common/**"/>
                 <include name="lib/**"/>
                 <include name="platform/**"/>
             </fileset>
@@ -165,9 +165,7 @@
 
         <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
 
-        <delete file="${install.dir}/terrastore-master-libs/bin/start.sh"/>
-
-        <chmod dir="${install.dir}/terrastore-master-libs/bin" perm="ugo+x" includes="**/*.sh"/>
+        <chmod dir="${install.dir}/terrastore-master-libs/platform/bin" perm="ugo+x" includes="**/*.sh"/>
 
     </target>
 
@@ -243,10 +241,6 @@
         <copy todir="${install.dir}">
             <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
         </copy>
-
-        <delete file="${install.dir}/bin/dso-env.sh"/>
-        <delete file="${install.dir}/bin/boot-jar-path.sh"/>
-        <delete file="${install.dir}/bin/make-boot-jar.sh"/>
 
         <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
 
