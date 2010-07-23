@@ -15,7 +15,6 @@
  */
 package terrastore.cluster.coordinator;
 
-import java.util.concurrent.ExecutorService;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
@@ -31,6 +30,8 @@ import terrastore.store.Store;
 public interface Coordinator {
 
     public void start(String host, int port, EnsembleConfiguration configuration);
+
+    public void setReconnectTimeout(long reconnectTimeout);
 
     public void setNodeTimeout(long nodeTimeout);
 

@@ -58,6 +58,7 @@ public class Startup {
     private static final int DEFAULT_NODE_PORT = 8226;
     private static final int DEFAULT_SHUTDOWN_PORT = 8180;
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
+    private static final long DEFAULT_RECONNECT_TIMEOUT = 10000;
     private static final long DEFAULT_NODE_TIMEOUT = 10000;
     private static final int DEFAULT_HTTP_THREADS = 100;
     private static final int MIN_WORKER_THREADS = 10;
@@ -106,6 +107,7 @@ public class Startup {
     private String nodeHost = DEFAULT_NODE_HOST;
     private int nodePort = DEFAULT_NODE_PORT;
     private int shutdownPort = DEFAULT_SHUTDOWN_PORT;
+    private long reconnectTimeout = DEFAULT_RECONNECT_TIMEOUT;
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
     private int httpThreads = DEFAULT_HTTP_THREADS;
     private int workerThreads = DEFAULT_WORKER_THREADS;
@@ -145,6 +147,11 @@ public class Startup {
     @Option(name = "--shutdownPort", required = false)
     public void setShutdownPort(int shutdownPort) {
         this.shutdownPort = shutdownPort;
+    }
+
+    @Option(name = "--reconnectTimeout", required = false)
+    public void setReconnectTimeout(long reconnectTimeout) {
+        this.reconnectTimeout = reconnectTimeout;
     }
 
     @Option(name = "--nodeTimeout", required = false)
@@ -197,6 +204,7 @@ public class Startup {
         LOG.info(POWEREDBY_MESSAGE);
         LOG.info("Listening for HTTP requests on {}:{}", httpHost, httpPort);
         LOG.info("Listening for node requests on {}:{}", nodeHost, nodePort);
+        LOG.info("Reconnection timeout (in milliseconds) set to {}", reconnectTimeout);
         LOG.info("Node communication timeout (in milliseconds) set to {}", nodeTimeout);
         LOG.info("Number of http threads: {}", httpThreads);
         LOG.info("Number of worker threads: {}", workerThreads);
@@ -230,6 +238,7 @@ public class Startup {
 
     private void startCoordinator(Context context) throws BeansException {
         Coordinator coordinator = getCoordinatorFromServletContext(context);
+        coordinator.setReconnectTimeout(reconnectTimeout);
         coordinator.setNodeTimeout(nodeTimeout);
         coordinator.setWokerThreads(workerThreads);
         coordinator.start(nodeHost, nodePort, ensembleConfiguration);

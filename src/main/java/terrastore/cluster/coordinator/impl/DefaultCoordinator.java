@@ -74,6 +74,11 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     private Map<String, Address> addressTable = new HashMap<String, Address>();
     private Condition setupAddressCondition = stateLock.newCondition();
     //
+    private volatile transient ReentrantLock reconnectionLock;
+    private volatile transient Condition reconnectionCondition;
+    private volatile transient long reconnectTimeout;
+    private volatile transient boolean connected;
+    //
     private volatile transient Cluster thisCluster;
     private volatile transient String thisNodeName;
     private volatile transient String thisNodeHost;
@@ -103,6 +108,11 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
 
     public static DefaultCoordinator getInstance() {
         return INSTANCE;
+    }
+
+    @Override
+    public void setReconnectTimeout(long reconnectTimeout) {
+        this.reconnectTimeout = reconnectTimeout;
     }
 
     @Override
@@ -162,6 +172,8 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         stateLock.lock();
         try {
             // Configure local data:
+            reconnectionLock = new ReentrantLock();
+            reconnectionCondition = reconnectionLock.newCondition();
             thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
             thisNodeName = getServerId(dsoCluster.getCurrentNode());
             thisNodeHost = host;
@@ -185,6 +197,13 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     }
 
     public void operationsEnabled(DsoClusterEvent event) {
+        reconnectionLock.lock();
+        try {
+            connected = true;
+            reconnectionCondition.signalAll();
+        } finally {
+            reconnectionLock.unlock();
+        }
     }
 
     public void nodeJoined(DsoClusterEvent event) {
@@ -236,14 +255,43 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     }
 
     public void operationsDisabled(DsoClusterEvent event) {
-        try {
-            LOG.info("Disabling this node {}:{}", thisCluster.getName(), thisNodeName);
-            shutdownEverything();
-            cleanupEverything();
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-        } finally {
-            doExit();
+        if (connected) {
+            new Thread() {
+
+                @Override
+                public void run() {
+                    connected = false;
+                    reconnectionLock.lock();
+                    try {
+                        LOG.info("Attempting reconnection for this node {}:{}", thisCluster.getName(), thisNodeName);
+                        long timeoutInNanos = TimeUnit.MILLISECONDS.toNanos(reconnectTimeout);
+                        while (!connected) {
+                            if (timeoutInNanos > 0) {
+                                timeoutInNanos = reconnectionCondition.awaitNanos(timeoutInNanos);
+                            } else {
+                                break;
+                            }
+                        }
+                    } catch (InterruptedException ex) {
+                        // abort
+                    } finally {
+                        reconnectionLock.unlock();
+                    }
+                    if (!connected) {
+                        try {
+                            LOG.info("Disabling this node {}:{}", thisCluster.getName(), thisNodeName);
+                            shutdownEverything();
+                            cleanupEverything();
+                        } catch (Exception ex) {
+                            LOG.error(ex.getMessage(), ex);
+                        } finally {
+                            doExit();
+                        }
+                    } else {
+                        LOG.info("Successful reconnection for this node {}:{}", thisCluster.getName(), thisNodeName);
+                    }
+                }
+            }.start();
         }
     }
 
@@ -359,19 +407,13 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     }
 
     private void doExit() {
-        new Thread() {
-
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception ex) {
-                } finally {
-                    LOG.info("Exiting this node {}:{}", thisCluster.getName(), thisNodeName);
-                    System.exit(0);
-                }
-            }
-        }.start();
+        try {
+            Thread.sleep(1000);
+        } catch (Exception ex) {
+        } finally {
+            LOG.info("Exiting this node {}:{}", thisCluster.getName(), thisNodeName);
+            System.exit(0);
+        }
     }
 
     private void setupEnsemble(EnsembleConfiguration ensembleConfiguration) throws MissingRouteException, ProcessingException {
