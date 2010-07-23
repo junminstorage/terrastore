@@ -232,6 +232,9 @@ public class IntegrationTest {
             putValue.releaseConnection();
         }
 
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
         GetMethod getAllValues = makeGetMethod(NODE2_PORT, bucket);
         HTTP_CLIENT.executeMethod(getAllValues);
         assertEquals(HttpStatus.SC_OK, getAllValues.getStatusCode());
@@ -259,8 +262,10 @@ public class IntegrationTest {
             putValue.releaseConnection();
         }
 
-        int limit = 5;
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
 
+        int limit = 5;
         GetMethod getAllValues = makeGetMethodWithLimit(NODE2_PORT, bucket, limit);
         HTTP_CLIENT.executeMethod(getAllValues);
         assertEquals(HttpStatus.SC_OK, getAllValues.getStatusCode());
@@ -284,6 +289,9 @@ public class IntegrationTest {
             assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
             putValue.releaseConnection();
         }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
 
         GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valueb", "valued");
         HTTP_CLIENT.executeMethod(doRangeQuery);
@@ -312,6 +320,9 @@ public class IntegrationTest {
             putValue.releaseConnection();
         }
 
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
         GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valueb", "valued", "lexical-asc");
         HTTP_CLIENT.executeMethod(doRangeQuery);
         assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
@@ -339,6 +350,9 @@ public class IntegrationTest {
             putValue.releaseConnection();
         }
 
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
         GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "1", "10", "numeric-asc");
         HTTP_CLIENT.executeMethod(doRangeQuery);
         assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
@@ -364,6 +378,9 @@ public class IntegrationTest {
             assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
             putValue.releaseConnection();
         }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
 
         GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valueb", "valued", 2, "lexical-asc");
         HTTP_CLIENT.executeMethod(doRangeQuery);
@@ -391,6 +408,9 @@ public class IntegrationTest {
             putValue.releaseConnection();
         }
 
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
         GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valuej", 0, "lexical-asc");
         HTTP_CLIENT.executeMethod(doRangeQuery);
         assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
@@ -417,6 +437,9 @@ public class IntegrationTest {
             putValue.releaseConnection();
         }
 
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
         GetMethod doRangeQuery = makeGetMethodWithRange(NODE2_PORT, bucket + "/range", "valueb", "valued", "lexical-asc", "jxpath:/stringField[.='value1']");
         HTTP_CLIENT.executeMethod(doRangeQuery);
         assertEquals(HttpStatus.SC_OK, doRangeQuery.getStatusCode());
@@ -441,6 +464,9 @@ public class IntegrationTest {
             assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
             putValue.releaseConnection();
         }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
 
         GetMethod doRangeQuery = makeGetMethodWithPredicate(NODE2_PORT, bucket + "/predicate", "jxpath:/stringField[.='value2']");
         HTTP_CLIENT.executeMethod(doRangeQuery);
