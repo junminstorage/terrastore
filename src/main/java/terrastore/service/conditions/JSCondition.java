@@ -55,37 +55,36 @@ public class JSCondition implements Condition {
             + "      return false; "
             + "   }";
     //
-    private final ScriptEngine engine;
-    private volatile IllegalStateException exception;
-
-    public JSCondition() {
-        engine = new ScriptEngineManager().getEngineByName("JavaScript");
+    private static ScriptEngine ENGINE;
+    private static IllegalStateException EXCEPTION;
+    {
+        ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
         try {
-            if (engine == null) {
-                exception = new IllegalStateException("No JavaScript engine found.");
-            } else if (!engine.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
-                exception = new IllegalStateException("The JavaScript engine is not thread-safe.");
+            if (ENGINE == null) {
+                EXCEPTION = new IllegalStateException("No JavaScript engine found.");
+            } else if (!ENGINE.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
+                EXCEPTION = new IllegalStateException("The JavaScript engine is not thread-safe.");
             }
         } catch (Exception ex) {
-            exception = new IllegalStateException("Error in script execution.", ex);
+            EXCEPTION = new IllegalStateException("Error in script execution.", ex);
         }
     }
 
     @Override
     public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
-        if (exception == null) {
+        if (EXCEPTION == null) {
             try {
-                engine.eval(WRAPPER.replaceFirst("#condition#", expression));
-                return (Boolean) ((Invocable) engine).invokeFunction(
+                ENGINE.eval(WRAPPER.replaceFirst("#condition#", expression));
+                return (Boolean) ((Invocable) ENGINE).invokeFunction(
                         "wrapper",
                         key,
-                        engine.eval("(" + JsonUtils.fromMap(value).toString() + ")"));
+                        ENGINE.eval("(" + JsonUtils.fromMap(value).toString() + ")"));
             } catch (Exception ex) {
                 LOG.error("Error in script execution.", ex);
                 throw new IllegalStateException("Error in script execution.", ex);
             }
         } else {
-            throw exception;
+            throw EXCEPTION;
         }
     }
 }
