@@ -98,6 +98,10 @@
             <outputDirectory>terrastore-server/extensions</outputDirectory>
             <source>src/dist/server/extensions/README.txt</source>
         </file>
+        <file>
+            <outputDirectory>terrastore-server/snapshots</outputDirectory>
+            <source>src/dist/server/snapshots/README.txt</source>
+        </file>
     </files>
     <fileSets>
         <fileSet>
