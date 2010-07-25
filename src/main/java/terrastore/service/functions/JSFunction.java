@@ -57,40 +57,39 @@ public class JSFunction implements Function {
             + "   return JSON.stringify(update(key, value, params)); "
             + "}";
     //
-    private final ScriptEngine engine;
-    private volatile IllegalStateException exception;
-
-    public JSFunction() {
-        engine = new ScriptEngineManager().getEngineByName("JavaScript");
+    private static ScriptEngine ENGINE;
+    private static IllegalStateException EXCEPTION;
+    {
+        ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
         try {
-            if (engine != null && engine.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
-                engine.eval(new FileReader(this.getClass().getClassLoader().getResource("json.js").getFile()));
-                engine.eval(WRAPPER);
-            } else if (engine == null) {
-                exception = new IllegalStateException("No JavaScript engine found.");
+            if (ENGINE != null && ENGINE.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
+                ENGINE.eval(new FileReader(this.getClass().getClassLoader().getResource("json.js").getFile()));
+                ENGINE.eval(WRAPPER);
+            } else if (ENGINE == null) {
+                EXCEPTION = new IllegalStateException("No JavaScript engine found.");
             } else {
-                exception = new IllegalStateException("The JavaScript engine is not thread-safe.");
+                EXCEPTION = new IllegalStateException("The JavaScript engine is not thread-safe.");
             }
         } catch (Exception ex) {
-            exception = new IllegalStateException("Error in script execution.", ex);
+            EXCEPTION = new IllegalStateException("Error in script execution.", ex);
         }
     }
 
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
-        if (exception == null) {
+        if (EXCEPTION == null) {
             try {
-                Object result = ((Invocable) engine).invokeFunction("wrapper",
-                        engine.eval("(" + parameters.remove(FUNCTION_NAME).toString() + ")"),
+                Object result = ((Invocable) ENGINE).invokeFunction("wrapper",
+                        ENGINE.eval("(" + parameters.remove(FUNCTION_NAME).toString() + ")"),
                         key,
-                        engine.eval("(" + JsonUtils.fromMap(value).toString() + ")"),
-                        engine.eval("(" + JsonUtils.fromMap(parameters).toString() + ")"));
+                        ENGINE.eval("(" + JsonUtils.fromMap(value).toString() + ")"),
+                        ENGINE.eval("(" + JsonUtils.fromMap(parameters).toString() + ")"));
                 return JsonUtils.toUnmodifiableMap(new JsonValue(result.toString().getBytes()));
             } catch (Exception ex) {
                 LOG.error("Error in script execution.", ex);
                 throw new IllegalStateException("Error in script execution.", ex);
             }
         } else {
-            throw exception;
+            throw EXCEPTION;
         }
     }
 }
