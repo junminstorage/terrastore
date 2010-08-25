@@ -58,7 +58,7 @@ public class Startup {
     private static final int DEFAULT_NODE_PORT = 8226;
     private static final int DEFAULT_SHUTDOWN_PORT = 8180;
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
-    private static final String DEFAULT_ALLOWED_HOSTS = "";
+    private static final String DEFAULT_ALLOWED_ORIGINS = "";
     private static final long DEFAULT_RECONNECT_TIMEOUT = 10000;
     private static final long DEFAULT_NODE_TIMEOUT = 10000;
     private static final int DEFAULT_HTTP_THREADS = 100;
@@ -113,7 +113,7 @@ public class Startup {
     private int httpThreads = DEFAULT_HTTP_THREADS;
     private int workerThreads = DEFAULT_WORKER_THREADS;
     private String eventBus = DEFAULT_EVENT_BUS;
-    private String allowedHosts = DEFAULT_ALLOWED_HOSTS;
+    private String allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
 
     @Option(name = "--master", required = false)
     public void setMaster(String toIgnore) {
@@ -176,9 +176,9 @@ public class Startup {
         this.eventBus = eventBus;
     }
 
-    @Option(name = "--allowedHosts", required = false)
-    public void setAllowedHosts(String allowedHosts) {
-        this.allowedHosts = allowedHosts;
+    @Option(name = "--allowedOrigins", required = false)
+    public void setAllowedOrigins(String allowedOrigins) {
+        this.allowedOrigins = allowedOrigins;
     }
 
     public void start() {
@@ -274,7 +274,7 @@ public class Startup {
             contextParams.put("eventBus.impl", "memory");
         }
         // Allowed hosts for CORS:
-        contextParams.put("cors.allowed.hosts", allowedHosts);
+        contextParams.put("cors.allowed.origins", allowedOrigins);
         return contextParams;
     }
 

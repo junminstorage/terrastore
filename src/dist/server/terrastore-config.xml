@@ -35,7 +35,7 @@
 
     <bean id="corsController" class="terrastore.server.impl.cors.CorsController"/>
     <bean class="terrastore.server.impl.cors.CorsInterceptor">
-        <constructor-arg index="0" value="${cors.allowed.hosts}"/>
+        <constructor-arg index="0" value="${cors.allowed.origins}"/>
         <constructor-arg index="1" value="POST, GET, PUT, DELETE, OPTIONS"/>
         <constructor-arg index="2" value="CONTENT-TYPE"/>
         <constructor-arg index="3" value="86400"/>
