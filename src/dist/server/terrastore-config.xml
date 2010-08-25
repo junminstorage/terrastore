@@ -24,13 +24,21 @@
         <constructor-arg ref="queryService"/>
         <constructor-arg ref="backupService"/>
     </bean>
-
+    <bean id="corsController" class="terrastore.server.impl.CorsController"/>
+    
+    <bean class="terrastore.server.impl.support.CorsInterceptor">
+        <constructor-arg index="0" value="*"/>
+        <constructor-arg index="1" value="POST, GET, PUT, DELETE, OPTIONS"/>
+        <constructor-arg index="2" value="CONTENT-TYPE"/>
+        <constructor-arg index="3" value="86400"/>
+    </bean>
     <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
     <bean class="terrastore.server.impl.support.JsonValueProvider"/>
     <bean class="terrastore.server.impl.support.JsonValuesProvider"/>
     <bean class="terrastore.server.impl.support.JsonBucketsProvider"/>
     <bean class="terrastore.server.impl.support.JsonParametersProvider"/>
     <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
+    <bean class="org.jboss.resteasy.plugins.providers.StringTextStar"/>
 
     <!-- Service -->
 

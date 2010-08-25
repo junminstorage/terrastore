@@ -1,0 +1,251 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://github.com/jquery/qunit/raw/master/qunit/qunit.css" type="text/css" media="screen"/>
+<script type="text/javascript" src="http://github.com/jquery/qunit/raw/master/qunit/qunit.js"></script>
+
+<script>
+    $(document).ready(function() {
+        var baseURL = "http://localhost:8080";
+        module("Put, Get, Delete");
+
+        test("put a document", function() {
+            stop();
+            var value = "{\"name\" : \"kim\"}";
+            $.ajax({
+                data: value,
+                url: baseURL + "/bucket/test",
+                contentType:"application/json",
+                type: 'PUT',
+                processData: false,
+                success: function(result) {
+                    ok(true, "document put");
+                    setTimeout(function() {
+                        start();
+                    }, 13);
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "put document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+        });
+
+        test("get a bucket", function() {
+            expect(2);
+            stop();
+            $.ajax({
+                url: baseURL + "/bucket",
+                dataType:"json",
+                type: 'GET',
+                success: function(result) {
+                    ok(true, "bucket taken");
+                    equals(result.test.name, "kim", 'field name in document');
+                    setTimeout(function() {
+                        start();
+                    }, 13);
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "get bucket error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+        });
+
+        test("get a document", function() {
+            expect(2);
+            stop();
+            $.ajax({
+                url: baseURL + "/bucket/test",
+                dataType:"json",
+                type: 'GET',
+                success: function(result) {
+                    ok(true, "value taken");
+                    equals(result.name, "kim", 'field name in document');
+                    setTimeout(function() {
+                        start();
+                    }, 13);
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "get document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+        });
+
+        test("delete a document", function() {
+            stop();
+            $.ajax({
+                url: baseURL + "/bucket/test",
+                type: 'DELETE',
+                success: function(result) {
+                    ok(true, "value deleted");
+                    setTimeout(function() {
+                        start();
+                    }, 13);
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "delete document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+        });
+
+        test("delete a bucket", function() {
+            stop();
+            $.ajax({
+                url: baseURL + "/bucket",
+                type: 'DELETE',
+                success: function(result) {
+                    ok(true, "bucket deleted");
+                    setTimeout(function() {
+                        start();
+                    }, 13);
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "delete bucket error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+        });
+
+        module("Update, Predicate Query, Range Query");
+
+        /**
+         * all test are set to async: false to order the execution
+         */
+        test("update a bucket", function() {
+            expect(12);
+            stop();
+            var value = "{\"name\" : \"john\", \"surname\" : \"locke\", \"age\" : 50}";
+            $.ajax({
+                data: value,
+                url: baseURL + "/bucket/lost",
+                contentType:"application/json",
+                type: 'PUT',
+                processData: false,
+                async: false,
+                success: function(result) {
+                    ok(true, "document put");
+                }
+
+            });
+            var value = "{\"name\" : \"anna\", \"surname\" : \"panna\", \"age\" : 29}";
+            $.ajax({
+                data: value,
+                url: baseURL + "/bucket/backup",
+                contentType:"application/json",
+                type: 'PUT',
+                processData: false,
+                async: false,
+                success: function(result) {
+                    ok(true, "document put");
+                }
+
+            });
+            $.ajax({
+                url: baseURL + "/bucket/lost",
+                dataType:"json",
+                type: 'GET',
+                async: false,
+                success: function(result) {
+                    ok(true, "document taken");
+                    equals(result.name, "john", 'field name in document');
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "get document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+
+
+            var updateFunction = function updateFunction(key, value, params) {
+                if(value.age == 50){
+                    value.age = value.age / 2;
+                }
+                return value;
+            };
+
+            $.ajax({
+                url: baseURL + "/bucket/lost/update?function=js&timeout=100000",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({"update" : "" + updateFunction.toString(-1).replace(/[\n\r\t]/g,"") }),
+                dataType:"json",
+                processData: false,
+                async: false,
+                success: function(result) {
+                    ok(true, "document updated");
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "update document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+            $.ajax({
+                url: baseURL + "/bucket/lost",
+                dataType:"json",
+                type: 'GET',
+                async: false,
+                success: function(result) {
+                    ok(true, "document taken");
+                    equals(result.age, 25, 'field age in document');
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "get document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+            $.ajax({
+                url: baseURL + "/bucket/predicate?predicate=js:" + encodeURIComponent("value.name=='anna'"),
+                dataType:"json",
+                type: 'GET',
+                async: false,
+                success: function(result) {
+                    ok(true, "query by predicate");
+                    equals(result.backup.age, 29, 'field age in document');
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "get document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+            $.ajax({
+                url: baseURL + "/bucket/range?comparator=lexical-asc&startKey=backup&endKey=lost&timeToLive=10000&predicate=js:" + encodeURIComponent("value.name=='anna'"),
+                dataType:"json",
+                type: 'GET',
+                async: false,
+                success: function(result) {
+                    ok(true, "document taken");
+                    equals(result.backup.age, 29, 'field age in document');
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    ok(false, "get document error, textStatus:" + textStatus + " and errorThrown:" + errorThrown);
+                }
+
+            });
+            $.ajax({
+                url: baseURL + "/bucket/lost",
+                type: 'DELETE',
+                async: false,
+                success: function(result) {
+                    ok(true, "bucket deleted");
+                }
+            });
+            start();
+        });
+    });
+</script>
+
+</head>
+<body>
+<h1 id="qunit-header">Terrastore Cross-Origin Resources Sharing Tests.</h1>
+
+<h2 id="qunit-banner"></h2>
+
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+</body>
+</html>
