@@ -21,6 +21,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.cluster.ensemble.impl.View;
+import terrastore.communication.CommunicationException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Store;
@@ -32,7 +33,7 @@ import terrastore.store.StoreOperationException;
 public class MembershipCommand extends AbstractCommand<View> {
 
     @Override
-    public View executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public View executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Cluster localCluster = getLocalCluster(router);
         Set<Node> nodes = router.clusterRoute(localCluster);
         Set<View.Member> viewMembers = new HashSet<View.Member>();

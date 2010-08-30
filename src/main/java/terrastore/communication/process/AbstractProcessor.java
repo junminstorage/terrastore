@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.store.StoreOperationException;
@@ -124,6 +125,8 @@ public abstract class AbstractProcessor implements Processor {
             } catch (Exception ex) {
                 if (ex instanceof StoreOperationException) {
                     completionHandler.handleFailure(new ProcessingException(((StoreOperationException) ex).getErrorMessage()));
+                } else if (ex instanceof CommunicationException) {
+                    completionHandler.handleFailure(new ProcessingException(((CommunicationException) ex).getErrorMessage()));
                 } else if (ex instanceof ProcessingException) {
                     completionHandler.handleFailure((ProcessingException) ex);
                 } else {

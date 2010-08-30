@@ -18,6 +18,7 @@ package terrastore.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.ExportBackupCommand;
@@ -41,7 +42,7 @@ public class DefaultBackupService implements BackupService {
     }
 
     @Override
-    public void importBackup(String bucket, String source, String secret) throws BackupOperationException {
+    public void importBackup(String bucket, String source, String secret) throws CommunicationException, BackupOperationException {
         try {
             if (secret.equals(this.secret)) {
                 LOG.info("Importing backup for bucket {} from {}", bucket, source);
@@ -59,7 +60,7 @@ public class DefaultBackupService implements BackupService {
     }
 
     @Override
-    public void exportBackup(String bucket, String destination, String secret) throws BackupOperationException {
+    public void exportBackup(String bucket, String destination, String secret) throws CommunicationException, BackupOperationException {
         try {
             if (secret.equals(this.secret)) {
                 LOG.info("Exporting backup for bucket {} to {}", bucket, destination);

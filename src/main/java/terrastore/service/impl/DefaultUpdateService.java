@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.PutValueCommand;
@@ -55,7 +56,7 @@ public class DefaultUpdateService implements UpdateService {
         this.router = router;
     }
 
-    public void removeBucket(String bucket) throws UpdateOperationException {
+    public void removeBucket(String bucket) throws CommunicationException, UpdateOperationException {
         try {
             LOG.debug("Removing bucket {}", bucket);
             RemoveBucketCommand command = new RemoveBucketCommand(bucket);
@@ -68,7 +69,7 @@ public class DefaultUpdateService implements UpdateService {
         }
     }
 
-    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws UpdateOperationException {
+    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException {
         try {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
@@ -91,7 +92,7 @@ public class DefaultUpdateService implements UpdateService {
         }
     }
 
-    public void removeValue(String bucket, Key key) throws UpdateOperationException {
+    public void removeValue(String bucket, Key key) throws CommunicationException, UpdateOperationException {
         try {
             LOG.debug("Removing value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
@@ -109,7 +110,7 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
-    public Value updateValue(String bucket, Key key, Update update) throws UpdateOperationException {
+    public Value updateValue(String bucket, Key key, Update update) throws CommunicationException, UpdateOperationException {
         try {
             LOG.debug("Updating value with key {} from bucket {}", key, bucket);
             Function function = functions.get(update.getFunctionName());
@@ -168,7 +169,7 @@ public class DefaultUpdateService implements UpdateService {
                         // Break after first success, we just want to send command to one node per cluster:
                         successful = true;
                         break;
-                    } catch (ProcessingException ex) {
+                    } catch (Exception ex) {
                         LOG.error(ex.getMessage(), ex);
                         successful = false;
                     }

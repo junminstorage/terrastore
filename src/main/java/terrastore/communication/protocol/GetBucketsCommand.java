@@ -18,6 +18,7 @@ package terrastore.communication.protocol;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -33,7 +34,7 @@ import terrastore.util.collect.Sets;
 public class GetBucketsCommand extends AbstractCommand<Set<String>> {
 
     @Override
-    public Set<String> executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Set<String> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         return Sets.serializing(node.<Set<String>>send(this));
     }

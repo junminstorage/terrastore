@@ -16,6 +16,7 @@
 package terrastore.communication.protocol;
 
 import terrastore.common.ErrorMessage;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -56,7 +57,7 @@ public class GetValueCommand extends AbstractCommand<Value> {
     }
 
     @Override
-    public Value executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Value executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
         return node.<Value>send(this);
     }

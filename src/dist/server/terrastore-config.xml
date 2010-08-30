@@ -43,41 +43,55 @@
 
     <!-- Service -->
 
-    <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
-        <constructor-arg ref="router"/>
-        <property name="functions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="update-functions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Function"/>
+    <bean id="updateService" class="terrastore.decorator.failure.BackoffFailureHandler" factory-method="newInstance">
+        <constructor-arg index="0">
+            <bean class="terrastore.service.impl.DefaultUpdateService">
+                <constructor-arg ref="router"/>
+                <property name="functions">
+                    <bean class="terrastore.util.annotation.AutowiringMap">
+                        <constructor-arg ref="update-functions"/>
+                        <constructor-arg ref="scanner"/>
+                        <constructor-arg value="terrastore.store.operators.Function"/>
+                    </bean>
+                </property>
+                <property name="conditions">
+                    <bean class="terrastore.util.annotation.AutowiringMap">
+                        <constructor-arg ref="conditions"/>
+                        <constructor-arg ref="scanner"/>
+                        <constructor-arg value="terrastore.store.operators.Condition"/>
+                    </bean>
+                </property>
             </bean>
-        </property>
-        <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="conditions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Condition"/>
-            </bean>
-        </property>
+        </constructor-arg>
+        <constructor-arg index="1" value="terrastore.service.UpdateService"/>
+        <constructor-arg index="2" value="10"/>
+        <constructor-arg index="3" value="1000"/>
     </bean>
 
-    <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
-        <constructor-arg ref="router"/>
-        <property name="comparators">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="comparators"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Comparator"/>
+    <bean id="queryService" class="terrastore.decorator.failure.BackoffFailureHandler" factory-method="newInstance">
+        <constructor-arg index="0">
+            <bean class="terrastore.service.impl.DefaultQueryService">
+                <constructor-arg ref="router"/>
+                <property name="comparators">
+                    <bean class="terrastore.util.annotation.AutowiringMap">
+                        <constructor-arg ref="comparators"/>
+                        <constructor-arg ref="scanner"/>
+                        <constructor-arg value="terrastore.store.operators.Comparator"/>
+                    </bean>
+                </property>
+                <property name="conditions">
+                    <bean class="terrastore.util.annotation.AutowiringMap">
+                        <constructor-arg ref="conditions"/>
+                        <constructor-arg ref="scanner"/>
+                        <constructor-arg value="terrastore.store.operators.Condition"/>
+                    </bean>
+                </property>
+                <property name="defaultComparator" ref="defaultComparator"/>
             </bean>
-        </property>
-        <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="conditions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Condition"/>
-            </bean>
-        </property>
-        <property name="defaultComparator" ref="defaultComparator"/>
+        </constructor-arg>
+        <constructor-arg index="1" value="terrastore.service.QueryService"/>
+        <constructor-arg index="2" value="10"/>
+        <constructor-arg index="3" value="1000"/>
     </bean>
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">

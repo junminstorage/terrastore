@@ -16,6 +16,8 @@
 package terrastore.service;
 
 import java.util.Map;
+import terrastore.communication.CommunicationException;
+import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.features.Update;
@@ -37,9 +39,11 @@ public interface UpdateService {
      * Remove the given bucket.
      *
      * @param bucket The name of the bucket to remove.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If no bucket is found with the given name.
      */
-    public void removeBucket(String bucket) throws UpdateOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public void removeBucket(String bucket) throws CommunicationException, UpdateOperationException;
 
     /**
      * Put a value into the given bucket under the given key, eventually replacing the old value.<br>
@@ -50,18 +54,22 @@ public interface UpdateService {
      * @param key The key of the value.
      * @param value The value to put.
      * @param predicate The predicate object containing the condition to evaluate.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws UpdateOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException;
 
     /**
      * Remove a value from the given bucket under the given key.
      *
      * @param bucket The name of the bucket to remove the value from.
      * @param key The key of the value.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public void removeValue(String bucket, Key key) throws UpdateOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public void removeValue(String bucket, Key key) throws CommunicationException, UpdateOperationException;
 
     /**
      * Update the value from the given bucket under the given key.
@@ -70,9 +78,11 @@ public interface UpdateService {
      * @param key The key of the value to update.
      * @param update The update object.
      * @return The updated value
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If errors occur during update.
      */
-    public Value updateValue(String bucket, Key key, Update update) throws UpdateOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public Value updateValue(String bucket, Key key, Update update) throws CommunicationException, UpdateOperationException;
 
     /**
      * Get all supported {@link terrastore.store.operators.Function}s by name.

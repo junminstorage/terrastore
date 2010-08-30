@@ -17,6 +17,7 @@ package terrastore.communication.protocol;
 
 import java.util.Collections;
 import java.util.Set;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -39,7 +40,7 @@ public class GetKeysCommand extends AbstractCommand<Set<Key>> {
     }
 
     @Override
-    public Set<String> executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Set<String> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         return Sets.serializing(node.<Set<String>>send(this));
     }

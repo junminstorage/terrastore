@@ -41,6 +41,7 @@ import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.RemoteNodeFactory;
@@ -115,40 +116,44 @@ public class RemoteNode implements Node {
     }
 
     @Override
-    public <R> R send(Command<R> command) throws ProcessingException {
+    public <R> R send(Command<R> command) throws CommunicationException, ProcessingException {
         if (!connected) {
             connect();
         }
-        String commandId = configureId(command);
-        try {
-            CountDownLatch responseLatch = new CountDownLatch(1);
-            responseConditions.put(commandId, responseLatch);
-            clientChannel.write(command);
-            LOG.debug("Sent command {}", commandId);
-            //
-            long wait = timeoutInMillis;
-            while (!responses.containsKey(commandId) && wait > 0) {
-                long start = System.currentTimeMillis();
-                try {
-                    responseLatch.await(wait, TimeUnit.MILLISECONDS);
-                    wait = 0;
-                } catch (InterruptedException ex) {
-                    wait = wait - (System.currentTimeMillis() - start);
-                }
-            }
-            //
-            RemoteResponse response = responses.get(commandId);
-            if (response != null && response.isOk()) {
-                // Safe cast: correlation id ensures it's the *correct* command response.
-                return (R) response.getResult();
+        if (clientChannel.isOpen() && clientChannel.isConnected()) {
+            String commandId = configureId(command);
+            try {
+                CountDownLatch responseLatch = new CountDownLatch(1);
+                responseConditions.put(commandId, responseLatch);
+                clientChannel.write(command);
+                LOG.debug("Sent command {}", commandId);
                 //
-            } else if (response != null) {
-                throw new ProcessingException(response.getError());
-            } else {
-                throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
+                long wait = timeoutInMillis;
+                while (!responses.containsKey(commandId) && wait > 0) {
+                    long start = System.currentTimeMillis();
+                    try {
+                        responseLatch.await(wait, TimeUnit.MILLISECONDS);
+                        wait = 0;
+                    } catch (InterruptedException ex) {
+                        wait = wait - (System.currentTimeMillis() - start);
+                    }
+                }
+                //
+                RemoteResponse response = responses.get(commandId);
+                if (response != null && response.isOk()) {
+                    // Safe cast: correlation id ensures it's the *correct* command response.
+                    return (R) response.getResult();
+                    //
+                } else if (response != null) {
+                    throw new ProcessingException(response.getError());
+                } else {
+                    throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
+                }
+            } finally {
+                responses.remove(commandId);
             }
-        } finally {
-            responses.remove(commandId);
+        } else {
+            throw new CommunicationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication error!"));
         }
     }
 

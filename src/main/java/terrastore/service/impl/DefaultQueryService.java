@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetKeysCommand;
@@ -66,7 +67,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Set<String> getBuckets() throws QueryOperationException {
+    public Set<String> getBuckets() throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Getting bucket names.");
             GetBucketsCommand command = new GetBucketsCommand();
@@ -85,7 +86,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Value getValue(String bucket, Key key, Predicate predicate) throws QueryOperationException {
+    public Value getValue(String bucket, Key key, Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Getting value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
@@ -110,7 +111,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<Key, Value> getAllValues(final String bucket, final int limit) throws QueryOperationException {
+    public Map<Key, Value> getAllValues(final String bucket, final int limit) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Getting all values from bucket {}", bucket);
             Set<Key> allKeys = Sets.limited(getAllKeysForBucket(bucket), limit);
@@ -126,7 +127,7 @@ public class DefaultQueryService implements QueryService {
                                 Set<Key> keys = nodeToKeys.getValue();
                                 GetValuesCommand command = new GetValuesCommand(bucket, keys);
                                 return node.<Map<Key, Value>>send(command);
-                            } catch (ProcessingException ex) {
+                            } catch (Exception ex) {
                                 throw new RuntimeException(ex);
                             }
                         }
@@ -155,7 +156,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate, final long timeToLive) throws QueryOperationException {
+    public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate, final long timeToLive) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Range query on bucket {}", bucket);
             final Comparator keyComparator = getComparator(range.getKeyComparatorName());
@@ -178,7 +179,7 @@ public class DefaultQueryService implements QueryService {
                                     command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
                                 }
                                 return node.<Map<Key, Value>>send(command);
-                            } catch (ProcessingException ex) {
+                            } catch (Exception ex) {
                                 throw new RuntimeException(ex);
                             }
                         }
@@ -207,7 +208,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<Key, Value> queryByPredicate(final String bucket, final Predicate predicate) throws QueryOperationException {
+    public Map<Key, Value> queryByPredicate(final String bucket, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Predicate-based query on bucket {}", bucket);
             final Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
@@ -225,7 +226,7 @@ public class DefaultQueryService implements QueryService {
                                     Set<Key> keys = nodeToKeys.getValue();
                                     GetValuesCommand command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
                                     return node.<Map<Key, Value>>send(command);
-                                } catch (ProcessingException ex) {
+                                } catch (Exception ex) {
                                     throw new RuntimeException(ex);
                                 }
                             }
@@ -319,7 +320,7 @@ public class DefaultQueryService implements QueryService {
                                 buckets = node.<Set<String>>send(command);
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
-                            } catch (ProcessingException ex) {
+                            } catch (Exception ex) {
                                 LOG.error(ex.getMessage(), ex);
                             }
                         }
@@ -351,7 +352,7 @@ public class DefaultQueryService implements QueryService {
                                 keys = node.<Set<Key>>send(command);
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
-                            } catch (ProcessingException ex) {
+                            } catch (Exception ex) {
                                 LOG.error(ex.getMessage(), ex);
                             }
                         }
@@ -383,7 +384,7 @@ public class DefaultQueryService implements QueryService {
                                 keys = node.<Set<Key>>send(command);
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
-                            } catch (ProcessingException ex) {
+                            } catch (Exception ex) {
                                 LOG.error(ex.getMessage(), ex);
                             }
                         }

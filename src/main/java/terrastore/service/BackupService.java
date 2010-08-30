@@ -15,6 +15,7 @@
  */
 package terrastore.service;
 
+import terrastore.communication.CommunicationException;
 import terrastore.router.Router;
 
 /**
@@ -26,16 +27,17 @@ import terrastore.router.Router;
  */
 public interface BackupService {
 
-   /**
+    /**
      * Import all bucket key/value entries, without interrupting other operations and preserving
      * existent entries not contained into the given backup.
      *
      * @param bucket The bucket to import entries to.
      * @param source The name of the resource from which reading the backup.
      * @param secret The secret key: import is executed only if it matches the pre-configured secret.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws BackupOperationException If an error occurs.
      */
-    public void importBackup(String bucket, String source, String secret) throws BackupOperationException;
+    public void importBackup(String bucket, String source, String secret) throws CommunicationException, BackupOperationException;
 
     /**
      * Export all bucket key/value entries, without interrupting other operations.
@@ -43,9 +45,10 @@ public interface BackupService {
      * @param bucket The bucket to export entries from.
      * @param destination The name of the resource to which writing the backup.
      * @param secret The secret key: export is executed only if it matches the pre-configured secret.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws BackupOperationException If an error occurs.
      */
-    public void exportBackup(String bucket, String destination, String secret) throws BackupOperationException;
+    public void exportBackup(String bucket, String destination, String secret) throws CommunicationException, BackupOperationException;
 
     /**
      * The pre-configured secret that import/export operation has to match.
