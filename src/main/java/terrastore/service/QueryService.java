@@ -17,6 +17,8 @@ package terrastore.service;
 
 import java.util.Map;
 import java.util.Set;
+import terrastore.communication.CommunicationException;
+import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Value;
@@ -38,9 +40,11 @@ public interface QueryService {
      * Get the name of all buckets.
      *
      * @return A set of all bucket names.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws QueryOperationException If unable to access buckets.
      */
-    public Set<String> getBuckets() throws QueryOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public Set<String> getBuckets() throws CommunicationException, QueryOperationException;
 
     /**
      * Get the value under the given key, contained by the given bucket.<br>
@@ -50,9 +54,11 @@ public interface QueryService {
      * @param key The key of the value to get.
      * @return The value.
      * @param predicate The predicate to evaluate; predicate can be null or empty.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws QueryOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
-    public Value getValue(String bucket, Key key, Predicate predicate) throws QueryOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public Value getValue(String bucket, Key key, Predicate predicate) throws CommunicationException, QueryOperationException;
 
     /**
      * Get all values contained by the given bucket.
@@ -60,9 +66,11 @@ public interface QueryService {
      * @param bucket The bucket whose key/values we want to get.
      * @param limit Max number of elements to retrieve; if zero, all values will be returned.
      * @return A map containing all key/value pairs
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws QueryOperationException If a bucket with the given name doesn't exist.
      */
-    public Map<Key, Value> getAllValues(String bucket, int limit) throws QueryOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public Map<Key, Value> getAllValues(String bucket, int limit) throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a range query returning all key/value pairs whose key falls into the given range, and whose value satisfies the given predicate (if any).
@@ -86,9 +94,11 @@ public interface QueryService {
      * @param timeToLive Number of milliseconds specifying the snapshot age; if set to 0, a new snapshot will be immediately computed
      * and the query executed on the fresh snasphot.
      * @return An ordered map containing key/value pairs.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
-    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws QueryOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
@@ -102,9 +112,11 @@ public interface QueryService {
      * @param bucket The bucket to query.
      * @param predicate The predicate to evaluate on values.
      * @return A map containing key/value pairs.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no condition is specified or no matching is found.
      */
-    public Map<Key, Value> queryByPredicate(String bucket, Predicate predicate) throws QueryOperationException;
+    @HandleFailure(exception = CommunicationException.class)
+    public Map<Key, Value> queryByPredicate(String bucket, Predicate predicate) throws CommunicationException, QueryOperationException;
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.

@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
-import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.router.Router;
 import terrastore.store.Key;
@@ -147,35 +147,6 @@ public class RemoteCommunicationTest {
         }
     }
 
-    @Test(expected = ProcessingException.class)
-    public void testCommunicationTimeout() throws Exception {
-        String nodeName = "node";
-        String bucketName = "bucket";
-        Key valueKey = new Key("key");
-
-        Router router = createMock(Router.class);
-        Node node = createMock(Node.class);
-
-        replay(router, node);
-
-        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 3145728, 10, router);
-        Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 3145728, 1000);
-        GetValueCommand command = new GetValueCommand(bucketName, valueKey);
-
-        try {
-            // Start processor
-            processor.start();
-            // Connect node:
-            sender.connect();
-            // Stop processor so that no communication can happen:
-            processor.stop();
-            // Try to send:
-            sender.<Value>send(command);
-        } finally {
-            verify(router, node);
-        }
-    }
-
     @Test
     public void testNodeCanAutomaticallyConnect() throws Exception {
         String nodeName = "node";
@@ -282,6 +253,35 @@ public class RemoteCommunicationTest {
             sender.<Value>send(command);
         } finally {
             //processor.stop();
+            verify(router, node);
+        }
+    }
+
+    @Test(expected = CommunicationException.class)
+    public void testCommunicationError() throws Exception {
+        String nodeName = "node";
+        String bucketName = "bucket";
+        Key valueKey = new Key("key");
+
+        Router router = createMock(Router.class);
+        Node node = createMock(Node.class);
+
+        replay(router, node);
+
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 3145728, 10, router);
+        Node sender = new RemoteNode("127.0.0.1", 9991, nodeName, 3145728, 1000);
+        GetValueCommand command = new GetValueCommand(bucketName, valueKey);
+
+        try {
+            // Start processor
+            processor.start();
+            // Connect node:
+            sender.connect();
+            // Stop processor so that no communication can happen:
+            processor.stop();
+            // Try to send:
+            sender.<Value>send(command);
+        } finally {
             verify(router, node);
         }
     }

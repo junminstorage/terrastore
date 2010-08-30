@@ -18,6 +18,7 @@ package terrastore.communication.protocol;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -67,7 +68,7 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
     }
 
     @Override
-    public Map<Key, Value> executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Map<Key, Value> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
         Map<Key, Value> result = new HashMap<Key, Value>();
         for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {

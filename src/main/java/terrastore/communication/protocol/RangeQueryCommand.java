@@ -18,6 +18,7 @@ package terrastore.communication.protocol;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -47,7 +48,7 @@ public class RangeQueryCommand extends AbstractCommand<Set<Key>> {
     }
 
     @Override
-    public Set<Key> executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Set<Key> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
         Command command = new RangeQueryCommand(bucketName, range, keyComparator, timeToLive);
         return Sets.serializing(node.<Set<Key>>send(command));

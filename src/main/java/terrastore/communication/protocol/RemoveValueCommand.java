@@ -15,6 +15,7 @@
  */
 package terrastore.communication.protocol;
 
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -38,7 +39,7 @@ public class RemoveValueCommand extends AbstractCommand {
     }
 
     @Override
-    public Object executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Object executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
         return node.send(this);
     }

@@ -17,6 +17,7 @@ package terrastore.communication.local;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.LocalNodeFactory;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -50,7 +51,7 @@ public class LocalNode implements Node {
     }
 
     @Override
-    public <R> R send(Command<R> command) throws ProcessingException {
+    public <R> R send(Command<R> command) throws CommunicationException, ProcessingException {
         R result = processor.<R>process(command);
         return result;
     }

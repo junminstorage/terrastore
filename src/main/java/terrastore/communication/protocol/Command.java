@@ -16,6 +16,7 @@
 package terrastore.communication.protocol;
 
 import java.io.Serializable;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
@@ -30,9 +31,15 @@ import terrastore.store.StoreOperationException;
 public interface Command<R> extends Serializable {
 
     /**
+     * Execute this command on the given {@link terrastore.router.Router} instance.
      *
+     * @param router The router to execute this command on.
+     * @return The result of the executed command, or null if command doesn't return any result.
+     * @throws CommunicationException If unable to communicate.
+     * @throws MissingRouteException If no route is found for the command.
+     * @throws ProcessingException If an error occurs during processing.
      */
-    public R executeOn(Router router) throws MissingRouteException, ProcessingException;
+    public R executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException;
     
     /**
      * Execute this command on the given {@link terrastore.store.Store} instance.

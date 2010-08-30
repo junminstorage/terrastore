@@ -37,9 +37,10 @@ public interface Node {
      *
      * @param command The command to send.
      * @return The result of the executed command.
+     * @throws CommunicationException If unable to communicate with the node.
      * @throws ProcessingException If an error occurs during command processing.
      */
-    public <R> R send(Command<R> command) throws ProcessingException;
+    public <R> R send(Command<R> command) throws CommunicationException, ProcessingException;
 
     /**
      * Disconnect from this node.

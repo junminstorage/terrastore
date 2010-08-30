@@ -15,6 +15,7 @@
  */
 package terrastore.communication.protocol;
 
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -45,7 +46,7 @@ public class UpdateCommand extends AbstractCommand<Value> {
     }
 
     @Override
-    public Value executeOn(Router router) throws MissingRouteException, ProcessingException {
+    public Value executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
         return node.<Value>send(this);
     }
