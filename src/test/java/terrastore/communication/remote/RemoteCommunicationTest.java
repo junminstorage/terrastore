@@ -252,7 +252,7 @@ public class RemoteCommunicationTest {
             // Try to send:
             sender.<Value>send(command);
         } finally {
-            //processor.stop();
+            processor.stop();
             verify(router, node);
         }
     }
