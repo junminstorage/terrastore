@@ -102,7 +102,7 @@ public class DefaultQueryService implements QueryService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new QueryOperationException(error);
+            throw new CommunicationException(error);
         } catch (ProcessingException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -143,7 +143,7 @@ public class DefaultQueryService implements QueryService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new QueryOperationException(error);
+            throw new CommunicationException(error);
         } catch (ParallelExecutionException ex) {
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
@@ -195,7 +195,7 @@ public class DefaultQueryService implements QueryService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new QueryOperationException(error);
+            throw new CommunicationException(error);
         } catch (ParallelExecutionException ex) {
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
@@ -245,7 +245,7 @@ public class DefaultQueryService implements QueryService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new QueryOperationException(error);
+            throw new CommunicationException(error);
         } catch (ParallelExecutionException ex) {
             if (ex.getCause() instanceof ProcessingException) {
                 ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();

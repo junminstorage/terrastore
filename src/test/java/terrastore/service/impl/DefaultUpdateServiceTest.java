@@ -23,6 +23,7 @@ import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.PutValueCommand;
@@ -93,7 +94,7 @@ public class DefaultUpdateServiceTest {
         verify(cluster1, node1, node2, router);
     }
 
-    @Test(expected = UpdateOperationException.class)
+    @Test(expected = CommunicationException.class)
     public void testRemoveBucketFailsWhenAllNodesFail() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
@@ -117,7 +118,7 @@ public class DefaultUpdateServiceTest {
         }
     }
 
-    @Test(expected = UpdateOperationException.class)
+    @Test(expected = CommunicationException.class)
     public void testRemoveBucketFailsWhenNoNodesForCluster() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
         Router router = createMock(Router.class);

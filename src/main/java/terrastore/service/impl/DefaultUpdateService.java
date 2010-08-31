@@ -65,7 +65,7 @@ public class DefaultUpdateService implements UpdateService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new UpdateOperationException(error);
+            throw new CommunicationException(error);
         }
     }
 
@@ -84,7 +84,7 @@ public class DefaultUpdateService implements UpdateService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new UpdateOperationException(error);
+            throw new CommunicationException(error);
         } catch (ProcessingException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -101,7 +101,7 @@ public class DefaultUpdateService implements UpdateService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new UpdateOperationException(error);
+            throw new CommunicationException(error);
         } catch (ProcessingException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -124,7 +124,7 @@ public class DefaultUpdateService implements UpdateService {
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
-            throw new UpdateOperationException(error);
+            throw new CommunicationException(error);
         } catch (ProcessingException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
