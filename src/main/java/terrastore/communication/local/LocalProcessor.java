@@ -18,7 +18,10 @@ package terrastore.communication.local;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.process.AbstractProcessor;
+import terrastore.communication.process.RouterHandler;
 import terrastore.communication.process.StoreHandler;
+import terrastore.communication.process.SynchronousExecutor;
+import terrastore.router.Router;
 import terrastore.store.Store;
 
 /**
@@ -26,14 +29,22 @@ import terrastore.store.Store;
  */
 public class LocalProcessor extends AbstractProcessor {
 
+    private final Router router;
     private final Store store;
 
-    public LocalProcessor(int threads, Store store) {
-        super(threads);
+    public LocalProcessor(int threads, Router router, Store store) {
+        super(new SynchronousExecutor());
+        this.router = router;
         this.store = store;
     }
 
     public <R> R process(Command<R> command) throws ProcessingException {
-        return process(command, new StoreHandler<R>(store));
+        // If paused, it means a membership change is happening, so the command should be re-routed because partitioning may change.
+        // TODO: this check-then-act is not atomic, shouldn't be a problem (just causing some additional routing) but a better solution would be great ...
+        if (isPaused()) {
+            return process(command, new RouterHandler<R>(router));
+        } else {
+            return process(command, new StoreHandler<R>(store));
+        }
     }
 }

@@ -15,8 +15,11 @@
  */
 package terrastore.communication.local;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import terrastore.communication.protocol.Command;
+import terrastore.router.Router;
 import terrastore.store.Store;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
@@ -30,18 +33,55 @@ public class LocalCommunicationTest {
     public void testSynchronousCommunication() throws Exception {
         Object result = new Object();
 
+        Router router = createMock(Router.class);
         Store store = createMock(Store.class);
         Command command = createMock(Command.class);
 
         command.executeOn(store);
         expectLastCall().andReturn(result).once();
 
-        replay(store, command);
+        replay(router, store, command);
 
-        LocalProcessor processor = new LocalProcessor(10, store);
+        LocalProcessor processor = new LocalProcessor(10, router, store);
         LocalNode node = new LocalNode("localhost", 6000, "node", processor);
         assertEquals(result, node.send(command));
 
-        verify(store, command);
+        verify(router, store, command);
+    }
+
+    @Test
+    public void testSynchronousCommunicationOnPauseCausesRouting() throws Exception {
+        final Object expected = new Object();
+
+        Router router = createMock(Router.class);
+        Store store = createMock(Store.class);
+        final Command command = createMock(Command.class);
+
+        command.executeOn(router);
+        expectLastCall().andReturn(expected).once();
+
+        replay(router, store, command);
+
+        final LocalProcessor processor = new LocalProcessor(10, router, store);
+        final LocalNode node = new LocalNode("localhost", 6000, "node", processor);
+        final CountDownLatch success = new CountDownLatch(1);
+
+        processor.pause();
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    assertEquals(expected, node.send(command));
+                    success.countDown();
+                } catch (Exception ex) {
+                }
+            }
+        }).start();
+        Thread.sleep(1000);
+        processor.resume();
+        success.await(60, TimeUnit.SECONDS);
+
+        verify(router, store, command);
     }
 }

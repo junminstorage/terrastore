@@ -15,25 +15,17 @@
  */
 package terrastore.communication.process;
 
-import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.Command;
-
 /**
  * @author Sergio Bossa
  */
-public interface Processor {
+public class SynchronousExecutor extends AbstractExecutor {
 
-    public void start();
+    @Override
+    protected void doExecute(Runnable task) {
+        task.run();
+    }
 
-    public void pause();
-
-    public void resume();
-
-    public void stop();
-
-    public boolean isPaused();
-
-    public <R> R process(Command<R> command, CommandHandler<R> commandHandler) throws ProcessingException;
-
-    public <R> void process(Command<R> command, CommandHandler<R> commandHandler, CompletionHandler<R, ProcessingException> completionHandler);
+    @Override
+    protected void doShutdown() {
+    }
 }
