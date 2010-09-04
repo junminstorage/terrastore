@@ -26,9 +26,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
@@ -38,31 +35,31 @@ import terrastore.communication.ProcessingException;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.cluster.ensemble.impl.View.Member;
 import terrastore.communication.protocol.MembershipCommand;
-import terrastore.cluster.ensemble.Ensemble;
+import terrastore.cluster.ensemble.EnsembleManager;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
+import terrastore.cluster.ensemble.EnsembleScheduler;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 
 /**
- * Default {@link terrastore.ensemble.Ensemble} implementation.
+ * Default {@link terrastore.ensemble.EnsembleManager} implementation.
  *
  * @author Sergio Bossa
  */
-public class DefaultEnsemble implements Ensemble {
+public class DefaultEnsembleManager implements EnsembleManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultEnsemble.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultEnsembleManager.class);
     //
+    private final EnsembleScheduler ensembleScheduler;
     private final Router router;
     private final RemoteNodeFactory remoteNodeFactory;
     //
     private final ConcurrentMap<Cluster, Node> bootstrapNodes;
     private final ConcurrentMap<Cluster, List<Node>> perClusterNodes;
     private final ConcurrentMap<Cluster, View> perClusterViews;
-    private volatile ScheduledExecutorService scheduler;
-    //
-    private volatile boolean scheduled;
-    private volatile boolean shutdown;
 
-    public DefaultEnsemble(Router router, RemoteNodeFactory nodeFactory) {
+    public DefaultEnsembleManager(EnsembleScheduler ensembleScheduler, Router router, RemoteNodeFactory nodeFactory) {
+        this.ensembleScheduler = ensembleScheduler;
         this.router = router;
         this.remoteNodeFactory = nodeFactory;
         this.bootstrapNodes = new ConcurrentHashMap<Cluster, Node>();
@@ -71,18 +68,18 @@ public class DefaultEnsemble implements Ensemble {
     }
 
     @Override
-    public final synchronized void join(Cluster cluster, String seed) throws MissingRouteException, ProcessingException {
+    public final synchronized void join(Cluster cluster, String seed, EnsembleConfiguration ensembleConfiguration) throws MissingRouteException, ProcessingException {
         if (!cluster.isLocal()) {
             String[] hostPortPair = seed.split(":");
             bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed));
-            update(cluster);
+            ensembleScheduler.schedule(cluster, this, ensembleConfiguration);
         } else {
             throw new IllegalArgumentException("No need to join local cluster: " + cluster);
         }
     }
 
     @Override
-    public final void update(Cluster cluster) throws MissingRouteException, ProcessingException {
+    public synchronized final void update(Cluster cluster) throws MissingRouteException, ProcessingException {
         try {
             List<Node> nodes = perClusterNodes.get(cluster);
             if (nodes == null || nodes.isEmpty()) {
@@ -109,34 +106,14 @@ public class DefaultEnsemble implements Ensemble {
     }
 
     @Override
-    public final synchronized void schedule(long delay, long interval, TimeUnit timeUnit) {
-        if (!scheduled && !shutdown) {
-            scheduler = Executors.newScheduledThreadPool(bootstrapNodes.size());
-            for (final Cluster cluster : bootstrapNodes.keySet()) {
-                LOG.info("Scheduling discovery for cluster {}", cluster);
-                scheduler.scheduleWithFixedDelay(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        try {
-                            // Update doesn't need to be synchronized because there's one single thread per-cluster,
-                            // and backing maps are concurrent.
-                            update(cluster);
-                        } catch (Exception ex) {
-                            LOG.warn(ex.getMessage(), ex);
-                        }
-                    }
-                }, delay, interval, timeUnit);
-            }
-            scheduled = true;
-        }
+    public synchronized void shutdown() {
+        cancelScheduler();
+        disconnectAllClustersNodes();
     }
 
     @Override
-    public synchronized void shutdown() {
-        shutdown = true;
-        cancelScheduler();
-        disconnectAllClustersNodes();
+    public EnsembleScheduler getEnsembleScheduler() {
+        return ensembleScheduler;
     }
 
     @Override
@@ -150,10 +127,7 @@ public class DefaultEnsemble implements Ensemble {
     }
     
     private void cancelScheduler() {
-        if (scheduler != null) {
-            scheduler.shutdownNow();
-        }
-        scheduled = false;
+        ensembleScheduler.shutdown();
     }
 
     private View requestMembership(Cluster cluster, List<Node> contactNodes) throws MissingRouteException, ProcessingException {
