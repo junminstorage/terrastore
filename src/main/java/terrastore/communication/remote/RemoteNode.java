@@ -147,7 +147,7 @@ public class RemoteNode implements Node {
                 } else if (response != null) {
                     throw new ProcessingException(response.getError());
                 } else {
-                    throw new ProcessingException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
+                    throw new CommunicationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
                 }
             } finally {
                 responses.remove(commandId);
