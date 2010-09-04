@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Sergio Bossa
  */
-public abstract class AbstractExecutor implements ThreadPool {
+public abstract class AbstractExecutor implements Executor {
 
     private final static int ACTIVE = 1;
     private final static int PAUSED = 2;
