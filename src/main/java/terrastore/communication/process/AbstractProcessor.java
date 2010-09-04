@@ -33,10 +33,10 @@ public abstract class AbstractProcessor implements Processor {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractProcessor.class);
     //
-    private final ThreadPool threadPool;
+    private final Executor executor;
 
-    public AbstractProcessor(ThreadPool threadPool) {
-        this.threadPool = threadPool;
+    public AbstractProcessor(Executor threadPool) {
+        this.executor = threadPool;
     }
 
     @Override
@@ -46,29 +46,29 @@ public abstract class AbstractProcessor implements Processor {
 
     @Override
     public final void pause() {
-        threadPool.pause();
+        executor.pause();
     }
 
     @Override
     public final void resume() {
-        threadPool.resume();
+        executor.resume();
     }
 
     @Override
     public final void stop() {
-        threadPool.shutdown();
+        executor.shutdown();
         doStop();
     }
 
     @Override
     public boolean isPaused() {
-        return threadPool.isPaused();
+        return executor.isPaused();
     }
 
     @Override
     public final <R> R process(final Command<R> command, final CommandHandler<R> commandHandler) throws ProcessingException {
         try {
-            Future<R> future = threadPool.<R>execute(new SyncCallable<R>(command, commandHandler));
+            Future<R> future = executor.<R>execute(new SyncCallable<R>(command, commandHandler));
             return future.get();
         } catch (ExecutionException ex) {
             if (ex.getCause() instanceof StoreOperationException) {
@@ -85,7 +85,7 @@ public abstract class AbstractProcessor implements Processor {
 
     @Override
     public <R> void process(Command<R> command, CommandHandler<R> commandHandler, CompletionHandler<R, ProcessingException> completionHandler) {
-        threadPool.<R>execute(new AsyncCallable<R>(command, commandHandler, completionHandler));
+        executor.<R>execute(new AsyncCallable<R>(command, commandHandler, completionHandler));
     }
 
     protected void doStart() {

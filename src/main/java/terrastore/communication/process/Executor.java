@@ -21,7 +21,7 @@ import java.util.concurrent.Future;
 /**
  * @author Sergio Bossa
  */
-public interface ThreadPool {
+public interface Executor {
 
     public <R> Future<R> execute(Callable<R> callable);
 
