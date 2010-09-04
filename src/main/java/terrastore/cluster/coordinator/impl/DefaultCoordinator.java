@@ -73,6 +73,8 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     private ReentrantLock stateLock = new ReentrantLock();
     private Map<String, Address> addressTable = new HashMap<String, Address>();
     private Condition setupAddressCondition = stateLock.newCondition();
+    private Condition setupMembershipCondition = stateLock.newCondition();
+    private Integer membershipCounter = new Integer(0);
     //
     private volatile transient ReentrantLock reconnectionLock;
     private volatile transient Condition reconnectionCondition;
@@ -212,10 +214,12 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             stateLock.lock();
             try {
                 LOG.info("Joining this node {}:{}", thisCluster.getName(), thisNodeName);
+                startMembershipChange();
                 setupThisNode();
                 setupThisRemoteProcessor();
                 setupAddressTable();
                 setupRemoteNodes();
+                completeMembershipChange();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
@@ -225,14 +229,16 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             stateLock.lock();
             try {
                 LOG.info("Joining remote node {}:{}", thisCluster.getName(), joinedNodeName);
+                pauseProcessing();
+                startMembershipChange();
                 connectRemoteNode(joinedNodeName);
+                flushThisNodeKeys();
+                completeMembershipChange();
+                resumeProcessing();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
                 stateLock.unlock();
-                pauseProcessing();
-                flushThisNodeKeys();
-                resumeProcessing();
             }
         }
     }
@@ -242,14 +248,16 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         if (!isThisNode(leftNodeName)) {
             stateLock.lock();
             try {
+                pauseProcessing();
+                startMembershipChange();
                 disconnectRemoteNode(leftNodeName);
+                flushThisNodeKeys();
+                completeMembershipChange();
+                resumeProcessing();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
                 stateLock.unlock();
-                pauseProcessing();
-                flushThisNodeKeys();
-                resumeProcessing();
             }
         }
     }
@@ -318,7 +326,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     }
 
     private void setupThisNode() {
-        localProcessor = new LocalProcessor(localProcessorThreads, store);
+        localProcessor = new LocalProcessor(localProcessorThreads, router, store);
         Node thisNode = localNodeFactory.makeLocalNode(thisNodeHost, thisNodePort, thisNodeName, localProcessor);
         localProcessor.start();
         thisNode.connect();
@@ -435,6 +443,26 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             ensemble.join(clusters.get(cluster), seed);
         }
         ensemble.schedule(ensembleConfiguration.getDiscoveryInterval(), ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
+    }
+
+    private void startMembershipChange() {
+        if (membershipCounter == 0) {
+            membershipCounter = getDsoCluster().getClusterTopology().getNodes().size();
+        }
+        membershipCounter--;
+    }
+
+    private void completeMembershipChange() {
+        if (membershipCounter > 0) {
+            while (membershipCounter > 0) {
+                try {
+                    setupMembershipCondition.await();
+                } catch (Exception ex) {
+                }
+            }
+        } else {
+            setupMembershipCondition.signalAll();
+        }
     }
 
     @InstrumentedClass

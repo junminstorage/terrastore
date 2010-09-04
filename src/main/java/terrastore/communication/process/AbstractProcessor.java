@@ -35,8 +35,8 @@ public abstract class AbstractProcessor implements Processor {
     //
     private final ThreadPool threadPool;
 
-    public AbstractProcessor(int threads) {
-        this.threadPool = new ExecutorBasedThreadPool(threads);
+    public AbstractProcessor(ThreadPool threadPool) {
+        this.threadPool = threadPool;
     }
 
     @Override
@@ -58,6 +58,11 @@ public abstract class AbstractProcessor implements Processor {
     public final void stop() {
         threadPool.shutdown();
         doStop();
+    }
+
+    @Override
+    public boolean isPaused() {
+        return threadPool.isPaused();
     }
 
     @Override

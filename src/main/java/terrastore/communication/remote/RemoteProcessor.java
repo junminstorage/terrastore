@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.communication.process.AbstractProcessor;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.process.AsynchronousExecutor;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.remote.serialization.JavaSerializer;
 import terrastore.communication.process.CompletionHandler;
@@ -63,7 +64,7 @@ public class RemoteProcessor extends AbstractProcessor {
     private Channel serverChannel;
 
     public RemoteProcessor(String host, int port, int maxFrameLength, int threads, Router router) {
-        super(threads);
+        super(new AsynchronousExecutor(threads));
         this.host = host;
         this.port = port;
         this.router = router;
@@ -118,7 +119,7 @@ public class RemoteProcessor extends AbstractProcessor {
                 Channel channel = event.getChannel();
                 Command command = (Command) event.getMessage();
                 String commandId = command.getId();
-                    process(command, new RouterHandler(router), new RemoteCompletionHandler(channel, commandId));
+                process(command, new RouterHandler(router), new RemoteCompletionHandler(channel, commandId));
             } catch (ClassCastException ex) {
                 LOG.warn("Unexpected command of type: " + event.getMessage().getClass());
                 throw new IllegalStateException("Unexpected command of type: " + event.getMessage().getClass());

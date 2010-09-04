@@ -1,3 +1,5 @@
+.+\.bak
+.+\.orig
 .DS_Store
 nbproject
 nbactions.xml
