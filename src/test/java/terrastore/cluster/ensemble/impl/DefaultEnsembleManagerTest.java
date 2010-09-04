@@ -15,26 +15,37 @@
  */
 package terrastore.cluster.ensemble.impl;
 
-import java.util.concurrent.TimeUnit;
 import org.easymock.EasyMock;
 import org.junit.Test;
+import terrastore.cluster.ensemble.EnsembleManager;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
+import terrastore.cluster.ensemble.EnsembleScheduler;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.MembershipCommand;
 import terrastore.router.Router;
 import terrastore.util.collect.Sets;
-import static org.easymock.EasyMock.*;
+import static org.easymock.classextension.EasyMock.*;
 
 /**
  * @author Sergio Bossa
  */
-public class DefaultEnsembleTest {
+public class DefaultEnsembleManagerTest {
 
     @Test
-    public void testJoin() throws Exception {
+    public void testJoinAndUpdate() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
+        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(configuration, true);
+        EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
+        makeThreadSafe(scheduler, true);
+        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(configuration));
+        expectLastCall().once();
+        scheduler.shutdown();
+        expectLastCall().once();
+        //
         Node seed = createMock(Node.class);
         makeThreadSafe(seed, true);
         seed.connect();
@@ -63,74 +74,33 @@ public class DefaultEnsembleTest {
         router.addRouteTo(cluster, discoveredNode);
         expectLastCall().once();
 
-        replay(seed, discoveredNode, nodeFactory, router);
+        replay(configuration, scheduler, seed, discoveredNode, nodeFactory, router);
 
-        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
         try {
-            ensemble.join(cluster, "localhost:6000");
-            Thread.sleep(3000);
+            ensemble.join(cluster, "localhost:6000", configuration);
+            ensemble.update(cluster);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
             ensemble.shutdown();
-            verify(seed, discoveredNode, nodeFactory, router);
+            verify(configuration, scheduler, seed, discoveredNode, nodeFactory, router);
         }
     }
 
     @Test
-    public void testSchedule() throws Exception {
+    public void testJoinAndUpdateTwoTimesWithNewConnectedNode() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
-        Node seed = createMock(Node.class);
-        makeThreadSafe(seed, true);
-        seed.connect();
+        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(configuration, true);
+        EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
+        makeThreadSafe(scheduler, true);
+        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(configuration));
         expectLastCall().once();
-        seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered", "localhost", 6000))));
-        seed.disconnect();
+        scheduler.shutdown();
         expectLastCall().once();
         //
-        Node discoveredNode = createMock(Node.class);
-        makeThreadSafe(discoveredNode, true);
-        discoveredNode.connect();
-        expectLastCall().once();
-        discoveredNode.disconnect();
-        expectLastCall().once();
-        discoveredNode.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered", "localhost", 6000))));
-        //
-        RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
-        makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
-        expectLastCall().andReturn(seed).once();
-        nodeFactory.makeRemoteNode("localhost", 6000, "discovered");
-        expectLastCall().andReturn(discoveredNode).once();
-        //
-        Router router = createMock(Router.class);
-        makeThreadSafe(router, true);
-        router.addRouteTo(cluster, discoveredNode);
-        expectLastCall().once();
-
-        replay(seed, discoveredNode, nodeFactory, router);
-
-        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
-        try {
-            ensemble.join(cluster, "localhost:6000");
-            Thread.sleep(3000);
-            ensemble.schedule(0, 10, TimeUnit.SECONDS);
-            Thread.sleep(3000);
-        } catch (Throwable ex) {
-            ex.printStackTrace();
-        } finally {
-            ensemble.shutdown();
-            verify(seed, discoveredNode, nodeFactory, router);
-        }
-    }
-
-    @Test
-    public void testJoinAndUpdateWithNewConnectedNode() throws Exception {
-        Cluster cluster = new Cluster("cluster", false);
-
         Node seed = createMock(Node.class);
         makeThreadSafe(seed, true);
         seed.connect();
@@ -172,25 +142,34 @@ public class DefaultEnsembleTest {
         router.addRouteTo(cluster, discoveredNode2);
         expectLastCall().once();
 
-        replay(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+        replay(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
 
-        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
         try {
-            ensemble.join(cluster, "localhost:6000");
-            Thread.sleep(3000);
+            ensemble.join(cluster, "localhost:6000", configuration);
+            ensemble.update(cluster);
             ensemble.update(cluster);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
             ensemble.shutdown();
-            verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+            verify(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
 
     @Test
-    public void testJoinAndUpdateWithDisconnectedNode() throws Exception {
+    public void testJoinAndUpdateTwoTimesWithDisconnectedNode() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
+        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(configuration, true);
+        EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
+        makeThreadSafe(scheduler, true);
+        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(configuration));
+        expectLastCall().once();
+        scheduler.shutdown();
+        expectLastCall().once();
+        //
         Node seed = createMock(Node.class);
         makeThreadSafe(seed, true);
         seed.connect();
@@ -238,18 +217,18 @@ public class DefaultEnsembleTest {
         router.removeRouteTo(cluster, discoveredNode2);
         expectLastCall().once();
 
-        replay(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+        replay(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
 
-        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
         try {
-            ensemble.join(cluster, "localhost:6000");
-            Thread.sleep(3000);
+            ensemble.join(cluster, "localhost:6000", configuration);
+            ensemble.update(cluster);
             ensemble.update(cluster);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
             ensemble.shutdown();
-            verify(seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+            verify(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
 
@@ -257,20 +236,21 @@ public class DefaultEnsembleTest {
     public void testUpdateDoesNothingIfNoJoin() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
+        EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
+        makeThreadSafe(scheduler, true);
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
         //
         Router router = createMock(Router.class);
         makeThreadSafe(router, true);
 
-        replay(nodeFactory, router);
+        replay(scheduler, nodeFactory, router);
 
-        DefaultEnsemble ensemble = new DefaultEnsemble(router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
         try {
             ensemble.update(cluster);
         } finally {
-            ensemble.shutdown();
-            verify(nodeFactory, router);
+            verify(scheduler, nodeFactory, router);
         }
     }
 }

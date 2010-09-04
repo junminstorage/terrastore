@@ -50,7 +50,7 @@ import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.communication.local.LocalProcessor;
 import terrastore.communication.remote.RemoteProcessor;
-import terrastore.cluster.ensemble.Ensemble;
+import terrastore.cluster.ensemble.EnsembleManager;
 import terrastore.router.Router;
 import terrastore.store.Store;
 import terrastore.util.global.GlobalExecutor;
@@ -99,7 +99,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     //
     private volatile transient Store store;
     private volatile transient Router router;
-    private volatile transient Ensemble ensemble;
+    private volatile transient EnsembleManager ensembleManager;
     private volatile transient LocalNodeFactory localNodeFactory;
     private volatile transient RemoteNodeFactory remoteNodeFactory;
     private volatile transient FlushStrategy flushStrategy;
@@ -146,8 +146,8 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     }
 
     @Override
-    public void setEnsemble(Ensemble ensemble) {
-        this.ensemble = ensemble;
+    public void setEnsembleManager(EnsembleManager ensembleManager) {
+        this.ensembleManager = ensembleManager;
     }
 
     @Override
@@ -404,7 +404,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         }
         localProcessor.stop();
         remoteProcessor.stop();
-        ensemble.shutdown();
+        ensembleManager.shutdown();
         globalExecutor.shutdown();
         globalFJPool.shutdown();
     }
@@ -440,9 +440,8 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             String cluster = entry.getKey();
             String seed = entry.getValue();
             LOG.info("Joining remote cluster {} with seed {}", cluster, seed);
-            ensemble.join(clusters.get(cluster), seed);
+            ensembleManager.join(clusters.get(cluster), seed, ensembleConfiguration);
         }
-        ensemble.schedule(ensembleConfiguration.getDiscoveryInterval(), ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
     }
 
     private void startMembershipChange() {
