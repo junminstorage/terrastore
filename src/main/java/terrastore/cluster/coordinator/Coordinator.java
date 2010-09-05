@@ -20,7 +20,7 @@ import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.communication.LocalNodeFactory;
 import terrastore.communication.RemoteNodeFactory;
-import terrastore.cluster.ensemble.Ensemble;
+import terrastore.cluster.ensemble.EnsembleManager;
 import terrastore.router.Router;
 import terrastore.store.Store;
 
@@ -43,7 +43,7 @@ public interface Coordinator {
 
     public void setRouter(Router router);
 
-    public void setEnsemble(Ensemble ensemble);
+    public void setEnsembleManager(EnsembleManager ensembleManager);
 
     public void setLocalNodeFactory(LocalNodeFactory localNodeFactory);
 

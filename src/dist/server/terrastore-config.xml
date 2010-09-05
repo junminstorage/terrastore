@@ -179,17 +179,20 @@
         <property name="maxFrameLength" value="10485760"/>
         <property name="store" ref="store"/>
         <property name="router" ref="router"/>
-        <property name="ensemble" ref="ensemble"/>
+        <property name="ensembleManager" ref="ensembleManager"/>
         <property name="localNodeFactory" ref="localNodeFactory"/>
         <property name="remoteNodeFactory" ref="remoteNodeFactory"/>
         <property name="flushStrategy" ref="flushStrategy"/>
         <property name="flushCondition" ref="flushCondition"/>
     </bean>
 
-    <bean id="ensemble" class="terrastore.cluster.ensemble.impl.DefaultEnsemble">
-        <constructor-arg index="0" ref="router"/>
-        <constructor-arg index="1" ref="remoteNodeFactory"/>
+    <bean id="ensembleManager" class="terrastore.cluster.ensemble.impl.DefaultEnsembleManager">
+        <constructor-arg index="0" ref="ensembleScheduler"/>
+        <constructor-arg index="1" ref="router"/>
+        <constructor-arg index="2" ref="remoteNodeFactory"/>
     </bean>
+
+    <bean id="ensembleScheduler" class="terrastore.cluster.ensemble.impl.FixedEnsembleScheduler"/>
 
     <bean id="localNodeFactory" class="terrastore.communication.local.LocalNode$Factory"/>
 
