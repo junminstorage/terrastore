@@ -78,7 +78,7 @@ public class JsonHttpServerTest {
         backupService.importBackup("bucket", "source", "secret");
         expectLastCall().once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -106,7 +106,7 @@ public class JsonHttpServerTest {
         backupService.exportBackup("bucket", "destination", "secret");
         expectLastCall().once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -134,7 +134,7 @@ public class JsonHttpServerTest {
         updateService.removeBucket("bucket");
         expectLastCall().once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -161,7 +161,7 @@ public class JsonHttpServerTest {
         updateService.putValue(eq("bucket"), eq(new Key("test1")), EasyMock.<Value> anyObject(), eq(new Predicate(null)));
         expectLastCall().once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -190,7 +190,7 @@ public class JsonHttpServerTest {
         updateService.putValue(eq("bucket"), eq(new Key("test1")), EasyMock.<Value> anyObject(), eq(new Predicate("test:condition")));
         expectLastCall().once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -219,7 +219,7 @@ public class JsonHttpServerTest {
         updateService.removeValue("bucket", new Key("test1"));
         expectLastCall().once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -246,7 +246,7 @@ public class JsonHttpServerTest {
         queryService.getValue(eq("bucket"), eq(new Key("test1")), eq(new Predicate(null)));
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -276,7 +276,7 @@ public class JsonHttpServerTest {
         queryService.getValue(eq("bucket"), eq(new Key("test1")), eq(new Predicate("test:condition")));
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -309,7 +309,7 @@ public class JsonHttpServerTest {
         queryService.getAllValues(eq("bucket"), eq(0));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -343,7 +343,7 @@ public class JsonHttpServerTest {
         queryService.getBuckets();
         expectLastCall().andReturn(buckets).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -377,7 +377,7 @@ public class JsonHttpServerTest {
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -411,7 +411,7 @@ public class JsonHttpServerTest {
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 2, "order")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -445,7 +445,7 @@ public class JsonHttpServerTest {
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order")), eq(new Predicate(null)), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -479,7 +479,7 @@ public class JsonHttpServerTest {
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order")), eq(new Predicate("test:condition")), eq(0L));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -513,7 +513,7 @@ public class JsonHttpServerTest {
         queryService.queryByPredicate(eq("bucket"), eq(new Predicate("test:condition")));
         expectLastCall().andReturn(values).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -546,7 +546,7 @@ public class JsonHttpServerTest {
         updateService.updateValue(eq("bucket"), eq(new Key("key")), eq(new Update("update", 1000, params)));
         expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -576,7 +576,7 @@ public class JsonHttpServerTest {
         updateService.removeBucket("bucket");
         expectLastCall().andThrow(new UpdateOperationException(new ErrorMessage(500, "error"))).once();
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
@@ -602,7 +602,7 @@ public class JsonHttpServerTest {
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
 
-        replay(updateService, queryService, backupService);
+        replay(updateService, queryService, backupService, statsService);
 
         JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
         TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
