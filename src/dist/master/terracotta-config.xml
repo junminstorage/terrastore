@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+    <tc-properties>
+        <property name="l2.l1reconnect.enabled" value="true"/>
+        <property name="l2.l1reconnect.timeout.millis" value="@server.reconnection.timeout@"/>
+        <property name="l1.healthcheck.l2.ping.enabled" value="true"/>
+        <property name="l1.healthcheck.l2.socketConnect" value="true"/>
+        <property name="l1.healthcheck.l2.ping.interval" value="1000"/>
+        <property name="l1.healthcheck.l2.ping.probes" value="@server.healthcheck.timeout@"/>
+    </tc-properties>
+    <servers>
+        <server host="@master.host@" name="terrastore-single-master">
+            <dso-port>@master.server.port@</dso-port>
+            <jmx-port>@master.jmx.port@</jmx-port>
+            <data>tc-data/server-data</data>
+            <logs>tc-data/server-logs</logs>
+            <statistics>tc-data/server-statistics</statistics>
+            <dso>
+                <persistence>
+                    <mode>permanent-store</mode>
+                </persistence>
+            </dso>
+        </server>
+    </servers>
+    <clients>
+        <modules>
+            <module name="terracotta-toolkit-1.0" version="1.0.0" group-id="org.terracotta.toolkit"/>
+        </modules>
+        <logs>tc-data/client-logs/%i/%D</logs>
+    </clients>
+</tc:tc-config>
