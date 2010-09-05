@@ -34,8 +34,11 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.easymock.classextension.EasyMock;
 import org.jboss.resteasy.plugins.server.tjws.TJWSEmbeddedJaxrsServer;
 import org.junit.Test;
+
+import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.impl.support.JsonBucketsProvider;
+import terrastore.server.impl.support.JsonClusterStatsProvider;
 import terrastore.server.impl.support.JsonErrorMessageProvider;
 import terrastore.server.impl.support.JsonValuesProvider;
 import terrastore.server.impl.support.JsonParametersProvider;
@@ -67,7 +70,43 @@ public class JsonHttpServerTest {
     private static final String JSON_VALUES_x2 = "{\"test1\":" + JSON_VALUE + ",\"test2\":" + JSON_VALUE + "}";
     private static final String UPDATE_PARAMS = "{\"p1\":\"v1\"}";
     private static final String BUCKETS = "[\"test1\",\"test2\"]";
+    private static final String CLUSTER_STATS ="{\"clusters\":[{\"name\":\"cluster-1\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
+    
+    @Test
+    public void testGetStats() throws Exception {
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+        StatsService statsService = createMock(StatsService.class);
 
+        ClusterStats clusterStats = new ClusterStats();
+        ClusterStats.Cluster c = clusterStats.new Cluster("cluster-1");
+        clusterStats.getClusters().add(c);
+        c.getNodes().add(clusterStats.new Node("node-1", "localhost", 8080));
+        
+        statsService.getClusterStats();
+        expectLastCall().andReturn(clusterStats).once();
+
+        replay(updateService, queryService, backupService, statsService);
+
+        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        TJWSEmbeddedJaxrsServer server = startServerWith(serverResource);
+        HttpClient client = new HttpClient();
+        GetMethod method = new GetMethod("http://localhost:8080/_stats/cluster");
+        method.setRequestHeader("Content-Type", "application/json");
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals(CLUSTER_STATS, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService, statsService);
+    }
+    
     @Test
     public void testImportBackup() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
@@ -93,7 +132,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -121,7 +160,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -148,7 +187,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -177,7 +216,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -206,7 +245,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -233,7 +272,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -263,7 +302,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -293,7 +332,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -326,7 +365,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -360,7 +399,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -394,7 +433,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -428,7 +467,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -462,7 +501,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -496,7 +535,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -530,7 +569,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -563,7 +602,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -592,7 +631,7 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     @Test
@@ -618,14 +657,14 @@ public class JsonHttpServerTest {
 
         stopServer(server);
 
-        verify(updateService, queryService, backupService);
+        verify(updateService, queryService, backupService, statsService);
     }
 
     private TJWSEmbeddedJaxrsServer startServerWith(JsonHttpServer resource) throws Exception {
         TJWSEmbeddedJaxrsServer server = new TJWSEmbeddedJaxrsServer();
         server.getDeployment().setRegisterBuiltin(true);
         server.getDeployment().setProviderClasses(
-                Arrays.asList(JsonErrorMessageProvider.class.getName(), JsonValuesProvider.class.getName(), JsonBucketsProvider.class.getName(), JsonParametersProvider.class.getName(), JsonValueProvider.class.getName(), JsonServerOperationExceptionMapper.class.getName()));
+                Arrays.asList(JsonErrorMessageProvider.class.getName(), JsonValuesProvider.class.getName(), JsonBucketsProvider.class.getName(), JsonParametersProvider.class.getName(), JsonValueProvider.class.getName(), JsonServerOperationExceptionMapper.class.getName(), JsonClusterStatsProvider.class.getName()));
         server.getDeployment().setResources(Arrays.<Object> asList(resource));
         server.setPort(8080);
         server.start();
