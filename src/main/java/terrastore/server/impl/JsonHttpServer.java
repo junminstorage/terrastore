@@ -26,6 +26,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import terrastore.common.ClusterStats;
 import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
@@ -38,6 +40,7 @@ import terrastore.service.BackupOperationException;
 import terrastore.service.BackupService;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
+import terrastore.service.StatsService;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.Key;
@@ -58,11 +61,13 @@ public class JsonHttpServer implements Server {
     private final UpdateService updateService;
     private final QueryService queryService;
     private final BackupService backupService;
+    private final StatsService statsService;
 
-    public JsonHttpServer(UpdateService updateService, QueryService queryService, BackupService backupService) {
+    public JsonHttpServer(UpdateService updateService, QueryService queryService, BackupService backupService, StatsService statsService) {
         this.updateService = updateService;
         this.queryService = queryService;
         this.backupService = backupService;
+        this.statsService = statsService;
     }
 
     @DELETE
@@ -251,6 +256,13 @@ public class JsonHttpServer implements Server {
             throw new ServerOperationException(error);
         }
     }
+    
+    @GET
+    @Path("/_stats/cluster")
+    @Produces("application/json")
+    public ClusterStats getClusterStats(){
+        return statsService.getClusterStats();
+    }
 
     @POST
     @Path("/{bucket}/import")
@@ -299,7 +311,7 @@ public class JsonHttpServer implements Server {
             throw new ServerOperationException(error);
         }
     }
-
+    
     public UpdateService getUpdateService() {
         return updateService;
     }

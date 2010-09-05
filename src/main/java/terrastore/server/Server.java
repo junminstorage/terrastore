@@ -15,6 +15,7 @@
  */
 package terrastore.server;
 
+import terrastore.common.ClusterStats;
 import terrastore.service.BackupService;
 import terrastore.service.QueryService;
 import terrastore.service.UpdateService;
@@ -177,4 +178,11 @@ public interface Server {
      * @return The {@link terrastore.service.BackupService} instance.
      */
     public BackupService getBackupService();
+    
+    /**
+     * Get the actual {@link terrastore.common.ClusterStats}.
+     * 
+     * @return The {@link terrastore.common.ClusterStats} instance.
+     */
+    public ClusterStats getClusterStats();
 }

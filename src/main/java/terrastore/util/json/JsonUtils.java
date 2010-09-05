@@ -81,12 +81,8 @@ public class JsonUtils {
         }
     }
 
-    public static void write(ErrorMessage errorMessage, OutputStream stream) throws IOException {
-        JSON_MAPPER.writeValue(stream, errorMessage);
-    }
-
-    public static void write(Buckets buckets, OutputStream stream) throws IOException {
-        JSON_MAPPER.writeValue(stream, buckets);
+    public static <T> void write(T data, OutputStream stream) throws IOException {
+        JSON_MAPPER.writeValue(stream, data);
     }
 
     public static void write(Values values, OutputStream stream) throws IOException {

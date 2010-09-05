@@ -23,6 +23,7 @@
         <constructor-arg ref="updateService"/>
         <constructor-arg ref="queryService"/>
         <constructor-arg ref="backupService"/>
+        <constructor-arg ref="statsService"/>
     </bean>
 
     <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
@@ -31,6 +32,7 @@
     <bean class="terrastore.server.impl.support.JsonBucketsProvider"/>
     <bean class="terrastore.server.impl.support.JsonParametersProvider"/>
     <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
+    <bean class="terrastore.server.impl.support.JsonClusterStatsProvider"/>
     <bean class="org.jboss.resteasy.plugins.providers.StringTextStar"/>
 
     <bean id="corsController" class="terrastore.server.impl.cors.CorsController"/>
@@ -97,6 +99,10 @@
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
         <constructor-arg ref="router"/>
         <constructor-arg value="SECRET-KEY"/>
+    </bean>
+    
+    <bean id="statsService" class="terrastore.service.impl.DefaultStatsService">
+        <constructor-arg ref="router"/>
     </bean>
 
     <!-- Router -->
