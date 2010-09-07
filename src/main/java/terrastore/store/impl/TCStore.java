@@ -15,13 +15,11 @@
  */
 package terrastore.store.impl;
 
-import java.util.Collection;
-import org.terracotta.annotations.HonorTransient;
-import org.terracotta.annotations.InstrumentedClass;
-import org.terracotta.annotations.Root;
-import org.terracotta.collections.ConcurrentDistributedMap;
-import org.terracotta.locking.LockType;
-import org.terracotta.locking.strategy.HashcodeLockStrategy;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import org.terracotta.collections.ClusteredMap;
+import terrastore.internal.tc.TCMaster;
 import terrastore.event.EventBus;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
@@ -33,71 +31,85 @@ import terrastore.store.Store;
 /**
  * @author Sergio Bossa
  */
-@InstrumentedClass
-@HonorTransient
 public class TCStore implements Store {
 
-    @Root
-    private static final TCStore INSTANCE = new TCStore();
-    //
-    private final ConcurrentDistributedMap<String, Bucket> buckets;
-    private transient volatile SnapshotManager snapshotManager;
-    private transient volatile BackupManager backupManager;
-    private transient volatile EventBus eventBus;
-
-    public static TCStore getInstance() {
-        return INSTANCE;
-    }
+    private final ClusteredMap<String, String> buckets;
+    private final ConcurrentMap<String, Bucket> instances;
+    private SnapshotManager snapshotManager;
+    private BackupManager backupManager;
+    private EventBus eventBus;
 
     public TCStore() {
-        buckets = new ConcurrentDistributedMap<String, Bucket>(LockType.WRITE, new HashcodeLockStrategy());
+        buckets = TCMaster.getInstance().getMap(TCStore.class.getName() + ".buckets");
+        instances = new ConcurrentHashMap<String, Bucket>();
     }
 
     @Override
     public Bucket getOrCreate(String bucket) {
-        Bucket requested = buckets.unlockedGet(bucket);
-        requested = requested != null ? requested : buckets.get(bucket);
+        Bucket requested = instances.get(bucket);
         if (requested == null) {
             buckets.lockEntry(bucket);
             try {
-                requested = buckets.get(bucket);
-                if (requested == null) {
+                if (!instances.containsKey(bucket)) {
                     Bucket created = new TCBucket(bucket);
-                    buckets.putNoReturn(bucket, created);
+                    hydrateBucket(created);
+                    instances.put(bucket, created);
+                    if (!buckets.containsKey(bucket)) {
+                        buckets.putNoReturn(bucket, bucket);
+                    }
                     requested = created;
+                } else {
+                    requested = instances.get(bucket);
                 }
             } finally {
                 buckets.unlockEntry(bucket);
             }
         }
-        hydrateBucket(requested);
+        return requested;
+    }
+
+    @Override
+    public Bucket get(String bucket) {
+        Bucket requested = instances.get(bucket);
+        if (requested == null) {
+            buckets.lockEntry(bucket);
+            try {
+                if (!instances.containsKey(bucket)) {
+                    if (buckets.containsKey(bucket)) {
+                        Bucket created = new TCBucket(bucket);
+                        hydrateBucket(created);
+                        instances.put(bucket, created);
+                        requested = created;
+                    }
+                } else {
+                    requested = instances.get(bucket);
+                }
+            } finally {
+                buckets.unlockEntry(bucket);
+            }
+        }
         return requested;
     }
 
     @Override
     public void remove(String bucket) {
-        buckets.remove(bucket);
-    }
-
-    public Bucket get(String bucket) {
-        Bucket requested = buckets.unlockedGet(bucket);
-        requested = requested != null ? requested : buckets.get(bucket);
-        if (requested != null) {
-            hydrateBucket(requested);
-            return requested;
-        } else {
-            return null;
+        buckets.lockEntry(bucket);
+        try {
+            buckets.remove(bucket);
+            instances.remove(bucket);
+        } finally {
+            buckets.unlockEntry(bucket);
         }
     }
 
     @Override
-    public Collection<Bucket> buckets() {
-        return buckets.values();
+    public Set<String> buckets() {
+        return buckets.keySet();
     }
 
     @Override
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition) {
-        for (Bucket bucket : buckets.values()) {
+        for (Bucket bucket : instances.values()) {
             bucket.flush(flushStrategy, flushCondition);
         }
     }

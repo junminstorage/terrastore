@@ -13,8 +13,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.remote.serialization;
+package terrastore.util.io;
 
+import terrastore.util.io.JavaSerializer;
+import terrastore.util.io.Serializer;
 import org.junit.Test;
 import terrastore.store.Key;
 import terrastore.store.Value;

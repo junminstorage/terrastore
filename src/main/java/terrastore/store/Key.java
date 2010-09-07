@@ -18,12 +18,10 @@ package terrastore.store;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import org.terracotta.annotations.InstrumentedClass;
 
 /**
  * @author Sergio Bossa
  */
-@InstrumentedClass
 public class Key implements Comparable<Key>, Serializable {
 
     private static final long serialVersionUID = 12345678901L;
@@ -39,7 +37,7 @@ public class Key implements Comparable<Key>, Serializable {
         this.bytes = bytes;
     }
 
-    public byte[] toBytes() {
+    public byte[] getBytes() {
         return bytes;
     }
 

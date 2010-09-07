@@ -41,7 +41,7 @@ import terrastore.communication.process.AbstractProcessor;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.process.AsynchronousExecutor;
 import terrastore.communication.protocol.Command;
-import terrastore.communication.remote.serialization.JavaSerializer;
+import terrastore.util.io.JavaSerializer;
 import terrastore.communication.process.CompletionHandler;
 import terrastore.communication.process.RouterHandler;
 import terrastore.router.Router;

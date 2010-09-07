@@ -15,15 +15,12 @@
  */
 package terrastore.communication.protocol;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
-import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.util.collect.Sets;
@@ -40,11 +37,7 @@ public class GetBucketsCommand extends AbstractCommand<Set<String>> {
     }
 
     public Set<String> executeOn(Store store) throws StoreOperationException {
-        Collection<Bucket> buckets = store.buckets();
-        Set<String> names = new HashSet<String>();
-        for (Bucket bucket : buckets) {
-            names.add(bucket.getName());
-        }
-        return Sets.serializing(names);
+        Set<String> buckets = store.buckets();
+        return Sets.serializing(buckets);
     }
 }

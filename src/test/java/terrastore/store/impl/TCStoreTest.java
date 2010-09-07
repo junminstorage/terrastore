@@ -17,10 +17,12 @@ package terrastore.store.impl;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.internal.tc.TCMaster;
 import terrastore.store.Bucket;
 import terrastore.store.StoreOperationException;
 import static org.junit.Assert.*;
@@ -34,6 +36,7 @@ public class TCStoreTest {
 
     @Before
     public void setUp() {
+        TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
         store = new TCStore();
     }
 
