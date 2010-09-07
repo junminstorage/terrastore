@@ -40,6 +40,10 @@ public class Sets {
         return new LimitedSet<E>(source, limit);
     }
 
+    public static <I, O> Set<O> transformed(Set<I> source, Transformer<I, O> transformer) {
+        return new TransformedSet<I, O>(source, transformer);
+    }
+
     public static <E> Set<E> union(List<Set<E>> sets) {
         return new UnionSet<E>(sets);
     }

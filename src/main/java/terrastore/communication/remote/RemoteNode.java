@@ -46,7 +46,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.Command;
-import terrastore.communication.remote.serialization.JavaSerializer;
+import terrastore.util.io.JavaSerializer;
 
 /**
  * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes, waiting for the asynchronous response.<br>

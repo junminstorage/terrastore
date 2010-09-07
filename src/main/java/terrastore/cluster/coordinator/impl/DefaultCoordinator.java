@@ -15,13 +15,7 @@
  */
 package terrastore.cluster.coordinator.impl;
 
-import com.tc.cluster.DsoCluster;
-import com.tc.cluster.DsoClusterEvent;
-import com.tc.cluster.DsoClusterListener;
-import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.simulation.SimulatedDsoCluster;
-import com.tc.injection.annotations.InjectedDsoInstance;
-import com.tcclient.cluster.DsoNode;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,13 +25,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import jsr166y.ForkJoinPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.annotations.HonorTransient;
-import org.terracotta.annotations.InstrumentedClass;
-import org.terracotta.annotations.Root;
+import org.terracotta.cluster.ClusterEvent;
+import org.terracotta.cluster.ClusterInfo;
+import org.terracotta.cluster.ClusterListener;
+import org.terracotta.cluster.ClusterNode;
+import org.terracotta.cluster.ClusterTopology;
+import org.terracotta.util.ClusteredAtomicLong;
 import terrastore.communication.Node;
 import terrastore.cluster.coordinator.Coordinator;
 import terrastore.communication.ProcessingException;
@@ -51,6 +49,7 @@ import terrastore.store.FlushStrategy;
 import terrastore.communication.local.LocalProcessor;
 import terrastore.communication.remote.RemoteProcessor;
 import terrastore.cluster.ensemble.EnsembleManager;
+import terrastore.internal.tc.TCMaster;
 import terrastore.router.Router;
 import terrastore.store.Store;
 import terrastore.util.global.GlobalExecutor;
@@ -58,58 +57,46 @@ import terrastore.util.global.GlobalExecutor;
 /**
  * @author Sergio Bossa
  */
-@InstrumentedClass
-@HonorTransient
-public class DefaultCoordinator implements Coordinator, DsoClusterListener {
+public class DefaultCoordinator implements Coordinator, ClusterListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCoordinator.class);
     //
-    @Root
-    private static final DefaultCoordinator INSTANCE = new DefaultCoordinator();
-    //
-    @InjectedDsoInstance
-    private DsoCluster dsoCluster;
-    //
-    private ReentrantLock stateLock = new ReentrantLock();
-    private Map<String, Address> addressTable = new HashMap<String, Address>();
+    private Lock stateLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".stateLock").writeLock();
+    private ClusteredAtomicLong membershipCounter = TCMaster.getInstance().getLong(DefaultCoordinator.class.getName() + ".membershipCounter");
+    private Map<String, String> addressTable = TCMaster.getInstance().getMap(DefaultCoordinator.class.getName() + ".addressTable");
     private Condition setupAddressCondition = stateLock.newCondition();
     private Condition setupMembershipCondition = stateLock.newCondition();
-    private Integer membershipCounter = new Integer(0);
     //
-    private volatile transient ReentrantLock reconnectionLock;
-    private volatile transient Condition reconnectionCondition;
-    private volatile transient long reconnectTimeout;
-    private volatile transient boolean connected;
+    private volatile ReentrantLock reconnectionLock;
+    private volatile Condition reconnectionCondition;
+    private volatile long reconnectTimeout;
+    private volatile boolean connected;
     //
-    private volatile transient Cluster thisCluster;
-    private volatile transient String thisNodeName;
-    private volatile transient String thisNodeHost;
-    private volatile transient int thisNodePort;
-    private volatile transient ConcurrentMap<String, Node> nodes;
-    private volatile transient LocalProcessor localProcessor;
-    private volatile transient RemoteProcessor remoteProcessor;
+    private volatile Cluster thisCluster;
+    private volatile String thisNodeName;
+    private volatile String thisNodeHost;
+    private volatile int thisNodePort;
+    private volatile ConcurrentMap<String, Node> nodes;
+    private volatile LocalProcessor localProcessor;
+    private volatile RemoteProcessor remoteProcessor;
     //
-    private volatile transient int maxFrameLength;
-    private volatile transient long nodeTimeout;
-    private volatile transient int localProcessorThreads;
-    private volatile transient int remoteProcessorThreads;
-    private volatile transient int globalExecutorThreads;
-    private volatile transient ExecutorService globalExecutor;
-    private volatile transient ForkJoinPool globalFJPool;
+    private volatile int maxFrameLength;
+    private volatile long nodeTimeout;
+    private volatile int localProcessorThreads;
+    private volatile int remoteProcessorThreads;
+    private volatile int globalExecutorThreads;
+    private volatile ExecutorService globalExecutor;
+    private volatile ForkJoinPool globalFJPool;
     //
-    private volatile transient Store store;
-    private volatile transient Router router;
-    private volatile transient EnsembleManager ensembleManager;
-    private volatile transient LocalNodeFactory localNodeFactory;
-    private volatile transient RemoteNodeFactory remoteNodeFactory;
-    private volatile transient FlushStrategy flushStrategy;
-    private volatile transient FlushCondition flushCondition;
+    private volatile Store store;
+    private volatile Router router;
+    private volatile EnsembleManager ensembleManager;
+    private volatile LocalNodeFactory localNodeFactory;
+    private volatile RemoteNodeFactory remoteNodeFactory;
+    private volatile FlushStrategy flushStrategy;
+    private volatile FlushCondition flushCondition;
 
-    private DefaultCoordinator() {
-    }
-
-    public static DefaultCoordinator getInstance() {
-        return INSTANCE;
+    public DefaultCoordinator() {
     }
 
     @Override
@@ -177,7 +164,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             reconnectionLock = new ReentrantLock();
             reconnectionCondition = reconnectionLock.newCondition();
             thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
-            thisNodeName = getServerId(dsoCluster.getCurrentNode());
+            thisNodeName = getServerId(getCluster().getCurrentNode());
             thisNodeHost = host;
             thisNodePort = port;
             // Configure transients:
@@ -190,7 +177,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
             // Setup ensemble:
             setupEnsemble(ensembleConfiguration);
             // Add cluster listener to listen to events:
-            getDsoCluster().addClusterListener(this);
+            getCluster().addClusterListener(this);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         } finally {
@@ -198,7 +185,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         }
     }
 
-    public void operationsEnabled(DsoClusterEvent event) {
+    public void operationsEnabled(ClusterEvent event) {
         reconnectionLock.lock();
         try {
             connected = true;
@@ -208,7 +195,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         }
     }
 
-    public void nodeJoined(DsoClusterEvent event) {
+    public void nodeJoined(ClusterEvent event) {
         String joinedNodeName = getServerId(event.getNode());
         if (isThisNode(joinedNodeName)) {
             stateLock.lock();
@@ -243,7 +230,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         }
     }
 
-    public void nodeLeft(DsoClusterEvent event) {
+    public void nodeLeft(ClusterEvent event) {
         String leftNodeName = getServerId(event.getNode());
         if (!isThisNode(leftNodeName)) {
             stateLock.lock();
@@ -262,7 +249,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         }
     }
 
-    public void operationsDisabled(DsoClusterEvent event) {
+    public void operationsDisabled(ClusterEvent event) {
         if (connected) {
             new Thread() {
 
@@ -303,15 +290,16 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         }
     }
 
-    private DsoCluster getDsoCluster() {
-        if (dsoCluster != null) {
-            return dsoCluster;
+    private ClusterInfo getCluster() {
+        ClusterInfo cluster = TCMaster.getInstance().getClusterInfo();
+        if (cluster != null) {
+            return cluster;
         } else {
-            return new SimulatedDsoCluster();
+            throw new IllegalStateException("No cluster found!");
         }
     }
 
-    private String getServerId(DsoNode dsoNode) {
+    private String getServerId(ClusterNode dsoNode) {
         return dsoNode.getId().replace("Client", "Server");
     }
 
@@ -337,13 +325,13 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     }
 
     private void setupAddressTable() {
-        addressTable.put(thisNodeName, new Address(thisNodeHost, thisNodePort));
+        addressTable.put(thisNodeName, Address.toString(new Address(thisNodeHost, thisNodePort)));
         setupAddressCondition.signalAll();
     }
 
     private void setupRemoteNodes() throws InterruptedException {
-        DsoClusterTopology dsoTopology = getDsoCluster().getClusterTopology();
-        for (DsoNode dsoNode : dsoTopology.getNodes()) {
+        ClusterTopology dsoTopology = getCluster().getClusterTopology();
+        for (ClusterNode dsoNode : dsoTopology.getNodes()) {
             String serverId = getServerId(dsoNode);
             if (!isThisNode(serverId)) {
                 String remoteNodeName = serverId;
@@ -356,7 +344,7 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         while (!addressTable.containsKey(remoteNodeName)) {
             setupAddressCondition.await(1000, TimeUnit.MILLISECONDS);
         }
-        Address remoteNodeAddress = addressTable.get(remoteNodeName);
+        Address remoteNodeAddress = Address.fromString(addressTable.get(remoteNodeName));
         if (remoteNodeAddress != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {
@@ -445,15 +433,13 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
     }
 
     private void startMembershipChange() {
-        if (membershipCounter == 0) {
-            membershipCounter = getDsoCluster().getClusterTopology().getNodes().size();
-        }
-        membershipCounter--;
+        membershipCounter.compareAndSet(0, getCluster().getClusterTopology().getNodes().size());
+        membershipCounter.decrementAndGet();
     }
 
     private void completeMembershipChange() {
-        if (membershipCounter > 0) {
-            while (membershipCounter > 0) {
+        if (membershipCounter.get() > 0) {
+            while (membershipCounter.get() > 0) {
                 try {
                     setupMembershipCondition.await();
                 } catch (Exception ex) {
@@ -464,11 +450,19 @@ public class DefaultCoordinator implements Coordinator, DsoClusterListener {
         }
     }
 
-    @InstrumentedClass
-    private static class Address {
+    private static class Address implements Serializable {
 
         private String host;
         private int port;
+
+        public static String toString(Address address) {
+            return address.getHost() + ":" + address.getPort();
+        }
+
+        public static Address fromString(String address) {
+            String[] parts = address.split(":");
+            return new Address(parts[0], Integer.parseInt(parts[1]));
+        }
 
         public Address(String host, int port) {
             this.host = host;

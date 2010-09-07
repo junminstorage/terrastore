@@ -8,24 +8,7 @@
         <property name="l1.healthcheck.l2.ping.interval" value="1000"/>
         <property name="l1.healthcheck.l2.ping.probes" value="3"/>
     </tc-properties>
-    <servers>
-        <server host="%i" name="terrastore-single-master">
-            <dso-port>9510</dso-port>
-            <jmx-port>9520</jmx-port>
-            <data>tc-data/server-data</data>
-            <logs>tc-data/server-logs</logs>
-            <statistics>tc-data/server-statistics</statistics>
-            <dso>
-                <persistence>
-                    <mode>permanent-store</mode>
-                </persistence>
-            </dso>
-        </server>
-    </servers>
     <clients>
-        <modules>
-            <module name="terracotta-toolkit-1.0" version="1.0.0" group-id="org.terracotta.toolkit"/>
-        </modules>
         <logs>tc-data/client-logs/%i/%D</logs>
     </clients>
 </tc:tc-config>
