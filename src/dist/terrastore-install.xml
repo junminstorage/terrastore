@@ -145,27 +145,11 @@
 
     <target name="common-server">
 
-        <delete dir="${java.io.tmpdir}/terrastore-install"/>
-
-        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
-
         <copy todir="${install.dir}">
             <fileset dir="terrastore-server/"/>
         </copy>
 
-        <copy todir="${install.dir}/terrastore-master-libs">
-            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/">
-                <include name="*.txt"/>
-                <include name="common/**"/>
-                <include name="lib/**"/>
-                <include name="platform/**"/>
-            </fileset>
-        </copy>
-        <copy file="terrastore-master/terracotta-server.log4j.properties" tofile="${install.dir}/terrastore-master-libs/.tc.custom.log4j.properties"/>
-
         <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
-
-        <chmod dir="${install.dir}/terrastore-master-libs/platform/bin" perm="ugo+x" includes="**/*.sh"/>
 
     </target>
 

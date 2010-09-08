@@ -8,6 +8,13 @@
         <property name="l1.healthcheck.l2.ping.interval" value="1000"/>
         <property name="l1.healthcheck.l2.ping.probes" value="3"/>
     </tc-properties>
+    <servers>
+        <server host="127.0.0.1">
+            <data>tc-data/server-data</data>
+            <logs>tc-data/server-logs</logs>
+            <statistics>tc-data/server-statistics</statistics>
+        </server>
+    </servers>
     <clients>
         <logs>tc-data/client-logs/%i/%D</logs>
     </clients>
