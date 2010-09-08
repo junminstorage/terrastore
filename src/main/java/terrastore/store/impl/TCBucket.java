@@ -50,7 +50,7 @@ import terrastore.store.features.Range;
 import terrastore.util.collect.Sets;
 import terrastore.util.collect.Transformer;
 import terrastore.util.global.GlobalExecutor;
-import terrastore.util.io.JavaSerializer;
+import terrastore.util.io.MagicSerializer;
 import terrastore.util.io.Serializer;
 
 /**
@@ -70,7 +70,7 @@ public class TCBucket implements Bucket {
     public TCBucket(String name) {
         this.name = name;
         this.bucket = TCMaster.getInstance().getMap(TCBucket.class.getName() + ".bucket." + name);
-        this.valueSerializer = new JavaSerializer<Value>();
+        this.valueSerializer = new MagicSerializer();
     }
 
     public String getName() {

@@ -15,8 +15,6 @@
  */
 package terrastore.util.io;
 
-import terrastore.util.io.JavaSerializer;
-import terrastore.util.io.Serializer;
 import org.junit.Test;
 import terrastore.store.Key;
 import terrastore.store.Value;
@@ -33,7 +31,7 @@ public class JavaSerializerTest {
     @Test
     public void testSerializeDeserialize() {
         Value value = new TestValue(VALUE);
-        Serializer<Value> serializer = new JavaSerializer();
+        JavaSerializer<Value> serializer = new JavaSerializer();
         byte[] serialized = serializer.serialize(value);
         Value deserialized = serializer.deserialize(serialized);
         assertArrayEquals(value.getBytes(), deserialized.getBytes());
