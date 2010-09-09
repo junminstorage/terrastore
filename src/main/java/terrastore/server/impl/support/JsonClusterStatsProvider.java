@@ -41,8 +41,8 @@ public class JsonClusterStatsProvider implements MessageBodyWriter<ClusterStats>
         return ClusterStats.class.isAssignableFrom(type);
     }
 
-    public void writeTo(ClusterStats errorMessage, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        JsonUtils.write(errorMessage, entityStream);
+    public void writeTo(ClusterStats clusterStats, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+        JsonUtils.write(clusterStats, entityStream);
     }
 
     public long getSize(ClusterStats errorMessage, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {

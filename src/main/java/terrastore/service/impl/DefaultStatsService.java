@@ -23,17 +23,16 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ClusterStats;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
-import terrastore.partition.ClusterPartitioner;
 import terrastore.router.Router;
 import terrastore.service.StatsService;
 
-/**
- * 
+/** 
  * @author Giuseppe Santoro
- * 
  */
 public class DefaultStatsService implements StatsService {
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultStatsService.class);
+    //
     private final Router router;
 
     public DefaultStatsService(Router router) {
@@ -42,19 +41,17 @@ public class DefaultStatsService implements StatsService {
 
     @Override
     public ClusterStats getClusterStats() {
-        LOG.debug("Getting cluster statistics.");
         ClusterStats stats = new ClusterStats();
         Set<Cluster> clusters = router.getClusters();
-        ClusterPartitioner clusterPartitioner = router.getClusterPartitioner();
         for (Cluster cluster : clusters) {
-            ClusterStats.Cluster c = stats.new Cluster(cluster.getName());
-            Set<Node> nodesForCluster = clusterPartitioner.getNodesFor(cluster);
+            ClusterStats.Cluster clusterStats = new ClusterStats.Cluster(cluster.getName());
+            Set<Node> nodesForCluster = router.clusterRoute(cluster);
             for (Node node : nodesForCluster) {
-                c.getNodes().add(stats.new Node(node.getName(), node.getHost(), node.getPort()));
+                ClusterStats.Node nodeStats = new ClusterStats.Node(node.getName(), node.getHost(), node.getPort());
+                clusterStats.getNodes().add(nodeStats);
             }
-            stats.getClusters().add(c);
+            stats.getClusters().add(clusterStats);
         }
         return stats;
     }
-
 }

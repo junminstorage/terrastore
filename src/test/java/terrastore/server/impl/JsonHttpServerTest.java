@@ -80,9 +80,9 @@ public class JsonHttpServerTest {
         StatsService statsService = createMock(StatsService.class);
 
         ClusterStats clusterStats = new ClusterStats();
-        ClusterStats.Cluster c = clusterStats.new Cluster("cluster-1");
+        ClusterStats.Cluster c = new ClusterStats.Cluster("cluster-1");
         clusterStats.getClusters().add(c);
-        c.getNodes().add(clusterStats.new Node("node-1", "localhost", 8080));
+        c.getNodes().add(new ClusterStats.Node("node-1", "localhost", 8080));
         
         statsService.getClusterStats();
         expectLastCall().andReturn(clusterStats).once();

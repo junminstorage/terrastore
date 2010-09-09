@@ -18,6 +18,7 @@ package terrastore.common;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 /**
  * @author Giuseppe Santoro
@@ -34,7 +35,9 @@ public class ClusterStats implements Serializable {
         return clusters;
     }
 
-    public class Cluster {
+    @JsonPropertyOrder({"name", "nodes"})
+    public static class Cluster {
+
         private String name;
         private List<Node> nodes = new ArrayList<Node>();
 
@@ -60,10 +63,11 @@ public class ClusterStats implements Serializable {
         public List<Node> getNodes() {
             return nodes;
         }
-
     }
 
-    public class Node {
+    @JsonPropertyOrder({"name", "host", "port"})
+    public static class Node {
+
         private String name;
         private String host;
         private int port;
@@ -100,7 +104,5 @@ public class ClusterStats implements Serializable {
         public int getPort() {
             return port;
         }
-
     }
-
 }

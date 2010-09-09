@@ -18,16 +18,16 @@ package terrastore.service;
 import terrastore.common.ClusterStats;
 
 /**
- * The StatsService get the Cluster statistics.
+ * The StatsService manages Terrastore statistics.
  * 
  * @author Giuseppe Santoro
  */
 public interface StatsService {
 
     /**
+     * Get the cluster statistics.
      * 
-     * @return The {@link terrastore.common.ClusterStats} instance.
+     * @return The {@link terrastore.common.ClusterStats} instance representing the current cluster statistics.
      */
     public ClusterStats getClusterStats();
-
 }
