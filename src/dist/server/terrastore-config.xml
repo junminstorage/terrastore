@@ -137,7 +137,7 @@
 
     <!-- Store -->
 
-    <bean id="store" class="terrastore.store.impl.TCStore" factory-method="getInstance">
+    <bean id="store" class="terrastore.store.impl.TCStore">
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="backupManager" ref="backupManager"/>
         <property name="eventBus" ref="${eventBus.impl}EventBus"/>
@@ -175,7 +175,7 @@
 
     <!-- Cluster -->
 
-    <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator" factory-method="getInstance">
+    <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator">
         <property name="maxFrameLength" value="10485760"/>
         <property name="store" ref="store"/>
         <property name="router" ref="router"/>

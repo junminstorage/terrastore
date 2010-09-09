@@ -22,8 +22,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.internal.tc.TCMaster;
 import terrastore.event.Event;
 import terrastore.event.EventBus;
 import terrastore.event.EventListener;
@@ -51,6 +53,7 @@ public class TCBucketTest {
 
     @Before
     public void setUp() {
+        TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
         bucket = new TCBucket("bucket");
         bucket.setSnapshotManager(new LocalSnapshotManager());
         bucket.setBackupManager(new DefaultBackupManager());

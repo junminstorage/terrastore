@@ -15,8 +15,6 @@
  */
 package terrastore.store.impl;
 
-import com.tc.cluster.DsoCluster;
-import com.tc.injection.annotations.InjectedDsoInstance;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
@@ -26,12 +24,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.annotations.HonorTransient;
-import org.terracotta.annotations.InstrumentedClass;
-import org.terracotta.collections.ConcurrentDistributedMap;
+import org.terracotta.cluster.ClusterInfo;
+import org.terracotta.collections.ClusteredMap;
 import org.terracotta.locking.ClusteredLock;
-import org.terracotta.locking.LockType;
-import org.terracotta.locking.strategy.HashcodeLockStrategy;
+import terrastore.internal.tc.TCMaster;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
 import terrastore.event.ValueChangedEvent;
@@ -51,30 +47,30 @@ import terrastore.store.Value;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
+import terrastore.util.collect.Sets;
+import terrastore.util.collect.Transformer;
 import terrastore.util.global.GlobalExecutor;
+import terrastore.util.io.MagicSerializer;
+import terrastore.util.io.Serializer;
 
 /**
  * @author Sergio Bossa
  */
-@InstrumentedClass
-@HonorTransient
 public class TCBucket implements Bucket {
 
     private static final Logger LOG = LoggerFactory.getLogger(TCBucket.class);
     //
-    private static final transient ThreadLocal<EventBus> eventBus = new ThreadLocal<EventBus>();
-    private static final transient ThreadLocal<SnapshotManager> snapshotManager = new ThreadLocal<SnapshotManager>();
-    private static final transient ThreadLocal<BackupManager> backupManager = new ThreadLocal<BackupManager>();
-    //
-    @InjectedDsoInstance
-    private DsoCluster dsoCluster;
-    //
     private final String name;
-    private final ConcurrentDistributedMap<Key, Value> bucket;
+    private final ClusteredMap<String, byte[]> bucket;
+    private final Serializer<Value> valueSerializer;
+    private EventBus eventBus;
+    private SnapshotManager snapshotManager;
+    private BackupManager backupManager;
 
     public TCBucket(String name) {
         this.name = name;
-        this.bucket = new ConcurrentDistributedMap<Key, Value>(LockType.WRITE, new HashcodeLockStrategy());
+        this.bucket = TCMaster.getInstance().getMap(TCBucket.class.getName() + ".bucket." + name);
+        this.valueSerializer = new MagicSerializer();
     }
 
     public String getName() {
@@ -85,8 +81,8 @@ public class TCBucket implements Bucket {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            bucket.unlockedPutNoReturn(key, value);
-            TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
+            bucket.unlockedPutNoReturn(key.toString(), serializeValue(value));
+            eventBus.publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
         } finally {
             unlock(key);
         }
@@ -96,10 +92,10 @@ public class TCBucket implements Bucket {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            Value old = bucket.get(key);
+            Value old = deserializeValue(bucket.get(key.toString()));
             if (old == null || old.dispatch(key, predicate, condition)) {
-                bucket.unlockedPutNoReturn(key, value);
-                TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
+                bucket.unlockedPutNoReturn(key.toString(), serializeValue(value));
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
                 return true;
             } else {
                 return false;
@@ -110,8 +106,8 @@ public class TCBucket implements Bucket {
     }
 
     public Value get(Key key) throws StoreOperationException {
-        Value value = bucket.unlockedGet(key);
-        value = value != null ? value : bucket.get(key);
+        Value value = deserializeValue(bucket.unlockedGet(key.toString()));
+        value = value != null ? value : deserializeValue(bucket.get(key.toString()));
         if (value != null) {
             return value;
         } else {
@@ -121,8 +117,8 @@ public class TCBucket implements Bucket {
 
     @Override
     public Value conditionalGet(Key key, Predicate predicate, Condition condition) throws StoreOperationException {
-        Value value = bucket.unlockedGet(key);
-        value = value != null ? value : bucket.get(key);
+        Value value = deserializeValue(bucket.unlockedGet(key.toString()));
+        value = value != null ? value : deserializeValue(bucket.get(key.toString()));
         if (value != null) {
             if (value.dispatch(key, predicate, condition)) {
                 return value;
@@ -138,9 +134,9 @@ public class TCBucket implements Bucket {
         // Use explicit locking to remove and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            Value removed = bucket.remove(key);
+            Value removed = deserializeValue(bucket.remove(key.toString()));
             if (removed != null) {
-                TCBucket.eventBus.get().publish(new ValueRemovedEvent(name, key.toString()));
+                eventBus.publish(new ValueRemovedEvent(name, key.toString()));
             }
         } finally {
             unlock(key);
@@ -155,7 +151,7 @@ public class TCBucket implements Bucket {
         // and also publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            final Value value = bucket.get(key);
+            final Value value = deserializeValue(bucket.get(key.toString()));
             if (value != null) {
                 task = GlobalExecutor.getExecutor().submit(new Callable<Value>() {
 
@@ -165,8 +161,8 @@ public class TCBucket implements Bucket {
                     }
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
-                bucket.unlockedPutNoReturn(key, result);
-                TCBucket.eventBus.get().publish(new ValueChangedEvent(name, key.toString(), result.getBytes()));
+                bucket.unlockedPutNoReturn(key.toString(), serializeValue(result));
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), result.getBytes()));
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -184,24 +180,25 @@ public class TCBucket implements Bucket {
     }
 
     public Set<Key> keys() {
-        return bucket.keySet();
+        return Sets.transformed(bucket.keySet(), new KeyDeserializer());
     }
 
     public Set<Key> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
-        SortedSnapshot snapshot = TCBucket.snapshotManager.get().getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
+        SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
     }
 
     @Override
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition) {
-        if (dsoCluster != null) {
-            Collection<Key> keys = dsoCluster.getKeysForLocalValues(bucket);
+        ClusterInfo cluster = TCMaster.getInstance().getClusterInfo();
+        if (cluster != null) {
+            Collection<Key> keys = Sets.transformed(cluster.<String>getKeysForLocalValues(bucket), new KeyDeserializer());
             LOG.info("Request to flush {} keys on bucket {}", keys.size(), name);
             flushStrategy.flush(this, keys, flushCondition, new FlushCallback() {
 
                 @Override
                 public void doFlush(Key key) {
-                    Value value = bucket.get(key);
+                    Value value = deserializeValue(bucket.get(key.toString()));
                     bucket.flush(key, value);
                 }
             });
@@ -212,36 +209,60 @@ public class TCBucket implements Bucket {
 
     @Override
     public void exportBackup(String destination) throws StoreOperationException {
-        TCBucket.backupManager.get().exportBackup(this, destination);
+        backupManager.exportBackup(this, destination);
     }
 
     @Override
     public void importBackup(String source) throws StoreOperationException {
-        TCBucket.backupManager.get().importBackup(this, source);
+        backupManager.importBackup(this, source);
     }
 
     @Override
     public void setEventBus(EventBus eventBus) {
-        TCBucket.eventBus.set(eventBus);
+        this.eventBus = eventBus;
     }
 
     @Override
     public void setSnapshotManager(SnapshotManager snapshotManager) {
-        TCBucket.snapshotManager.set(snapshotManager);
+        this.snapshotManager = snapshotManager;
     }
 
     @Override
     public void setBackupManager(BackupManager backupManager) {
-        TCBucket.backupManager.set(backupManager);
+        this.backupManager = backupManager;
     }
 
     private void lock(Key key) {
-        ClusteredLock lock = bucket.createFinegrainedLock(key);
+        ClusteredLock lock = bucket.createFinegrainedLock(key.toString());
         lock.lock();
     }
 
     private void unlock(Key key) {
-        ClusteredLock lock = bucket.createFinegrainedLock(key);
+        ClusteredLock lock = bucket.createFinegrainedLock(key.toString());
         lock.unlock();
+    }
+
+    private byte[] serializeValue(Value value) {
+        if (value != null) {
+            return valueSerializer.serialize(value);
+        } else {
+            return null;
+        }
+    }
+
+    private Value deserializeValue(byte[] bytes) {
+        if (bytes != null) {
+            return valueSerializer.deserialize(bytes);
+        } else {
+            return null;
+        }
+    }
+
+    private static class KeyDeserializer implements Transformer<String, Key> {
+
+        @Override
+        public Key transform(String input) {
+            return new Key(input);
+        }
     }
 }
