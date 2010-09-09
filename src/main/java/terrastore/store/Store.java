@@ -15,8 +15,7 @@
  */
 package terrastore.store;
 
-import java.util.Collection;
-import java.util.concurrent.ExecutorService;
+import java.util.Set;
 import terrastore.event.EventBus;
 
 /**
@@ -51,11 +50,11 @@ public interface Store {
     public Bucket get(String bucket);
 
     /**
-     *Get all {@link Bucket}s of this store.
+     * Get all {@link Bucket} names of this store.
      * 
-     * @return A collection of {@link Bucket}s.
+     * @return A collection of {@link Bucket} names belonging to this store.
      */
-    public Collection<Bucket> buckets();
+    public Set<String> buckets();
 
     /**
      * Flush all key/value entries of all buckets contained into this store.

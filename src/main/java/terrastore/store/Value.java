@@ -16,7 +16,6 @@
 package terrastore.store;
 
 import java.io.Serializable;
-import org.terracotta.annotations.InstrumentedClass;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;
@@ -27,7 +26,6 @@ import terrastore.store.operators.Function;
  *
  * @author Sergio Bossa
  */
-@InstrumentedClass
 public interface Value extends Serializable {
 
     public byte[] getBytes();

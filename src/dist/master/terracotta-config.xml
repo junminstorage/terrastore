@@ -23,9 +23,6 @@
         </server>
     </servers>
     <clients>
-        <modules>
-            <module name="terracotta-toolkit-1.0" version="1.0.0" group-id="org.terracotta.toolkit"/>
-        </modules>
         <logs>tc-data/client-logs/%i/%D</logs>
     </clients>
 </tc:tc-config>

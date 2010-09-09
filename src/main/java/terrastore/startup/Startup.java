@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap;
 import org.jboss.resteasy.plugins.spring.SpringContextLoaderListener;
@@ -43,6 +44,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import terrastore.cluster.coordinator.Coordinator;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfigurationUtils;
+import terrastore.internal.tc.TCMaster;
 
 /**
  * @author Sergio Bossa
@@ -104,6 +106,7 @@ public class Startup {
         }
     }
     //
+    private String master = null;
     private EnsembleConfiguration ensembleConfiguration = EnsembleConfigurationUtils.makeDefault(DEFAULT_CLUSTER_NAME);
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
@@ -119,9 +122,9 @@ public class Startup {
     private String eventBus = DEFAULT_EVENT_BUS;
     private String allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
 
-    @Option(name = "--master", required = false)
-    public void setMaster(String toIgnore) {
-        // Ignore this, here just to let the master to be passed by command line.
+    @Option(name = "--master", required = true)
+    public void setMaster(String master) {
+        this.master = master;
     }
 
     @Option(name = "--ensemble", required = false)
@@ -197,12 +200,16 @@ public class Startup {
 
     public void start() {
         try {
-            verifyNodeHost();
-            verifyWorkerThreads();
-            printInfo();
-            Context context = startServer();
-            startMonitor();
-            startCoordinator(context);
+            if (TCMaster.getInstance().connect(master, 60, TimeUnit.SECONDS) == true) {
+                verifyNodeHost();
+                verifyWorkerThreads();
+                printInfo();
+                Context context = startServer();
+                startMonitor();
+                startCoordinator(context);
+            } else {
+                throw new RuntimeException("Cannot connect to master: " + master);
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }

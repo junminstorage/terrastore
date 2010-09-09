@@ -33,19 +33,14 @@ do
   CLASSPATH=$CLASSPATH:$file
 done
 
-export TC_INSTALL_DIR=${TERRASTORE_HOME}/terrastore-master-libs
-export TC_CONFIG_PATH=$terrastore_master
-
 if [ "$cygwin" != "" ]
 then
   CLASSPATH=`cygpath --windows --path "$CLASSPATH"`
   TERRASTORE_HOME=`cygpath --windows --path "$TERRASTORE_HOME"`
-  TC_INSTALL_DIR=`cygpath --windows --path "$TC_INSTALL_DIR"`
 fi
 
 echo "Starting Terrastore Server ..."
 
-. ${TC_INSTALL_DIR}/platform/bin/dso-env.sh -q
-export JAVA_OPTS="$TC_JAVA_OPTS $JAVA_OPTS -XX:+UseParallelGC -Dcom.sun.management.jmxremote -Dlogback.configurationFile=${TERRASTORE_HOME}/terrastore-logback.xml"
+export JAVA_OPTS="$JAVA_OPTS -XX:+UseParallelGC -Dcom.sun.management.jmxremote -Dlogback.configurationFile=${TERRASTORE_HOME}/terrastore-logback.xml"
 
 ${JAVA_HOME}/bin/java ${JAVA_OPTS} -classpath "$CLASSPATH" terrastore.startup.Startup "$@"

@@ -17,7 +17,6 @@ package terrastore.store.types;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import org.terracotta.annotations.InstrumentedClass;
 import terrastore.store.Bucket;
 import terrastore.store.Key;
 import terrastore.store.Value;
@@ -28,11 +27,10 @@ import terrastore.store.operators.Function;
 import terrastore.util.json.JsonUtils;
 
 /**
- * Generic value object contained by {@link Bucket} instances.
+ * Json value object contained by {@link Bucket} instances.
  *
  * @author Sergio Bossa
  */
-@InstrumentedClass
 public class JsonValue implements Value {
 
     private static final long serialVersionUID = 12345678901L;
