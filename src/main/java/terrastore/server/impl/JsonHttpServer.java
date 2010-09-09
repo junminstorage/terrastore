@@ -80,7 +80,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (UpdateOperationException ex) {
+        } catch (UpdateOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -98,7 +98,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (UpdateOperationException ex) {
+        } catch (UpdateOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -115,7 +115,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (UpdateOperationException ex) {
+        } catch (UpdateOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -142,7 +142,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (UpdateOperationException ex) {
+        } catch (UpdateOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -160,7 +160,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (QueryOperationException ex) {
+        } catch (QueryOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -178,7 +178,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (QueryOperationException ex) {
+        } catch (QueryOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -196,7 +196,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (QueryOperationException ex) {
+        } catch (QueryOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -227,7 +227,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (QueryOperationException ex) {
+        } catch (QueryOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -250,18 +250,11 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (QueryOperationException ex) {
+        } catch (QueryOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
-    }
-    
-    @GET
-    @Path("/_stats/cluster")
-    @Produces("application/json")
-    public ClusterStats getClusterStats(){
-        return statsService.getClusterStats();
     }
 
     @POST
@@ -281,7 +274,7 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (BackupOperationException ex) {
+        } catch (BackupOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -305,13 +298,20 @@ public class JsonHttpServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-        }  catch (BackupOperationException ex) {
+        } catch (BackupOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
     }
-    
+
+    @GET
+    @Path("/_stats/cluster")
+    @Produces("application/json")
+    public ClusterStats getClusterStats() {
+        return statsService.getClusterStats();
+    }
+
     public UpdateService getUpdateService() {
         return updateService;
     }

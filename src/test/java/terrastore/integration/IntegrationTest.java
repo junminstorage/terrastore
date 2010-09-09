@@ -60,6 +60,16 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testClusterStats() throws Exception {
+        GetMethod getValue = makeGetMethod(NODE1_PORT, "_stats/cluster");
+        HTTP_CLIENT.executeMethod(getValue);
+        assertEquals(HttpStatus.SC_OK, getValue.getStatusCode());
+        assertTrue(getValue.getResponseBodyAsString().indexOf("terrastore-cluster") > -1);
+        System.err.println(getValue.getResponseBodyAsString());
+        getValue.releaseConnection();
+    }
+
+    @Test
     public void testPutValueAndGetOnOtherNode() throws Exception {
         String bucket = UUID.randomUUID().toString();
 

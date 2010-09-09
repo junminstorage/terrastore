@@ -159,6 +159,13 @@ public interface Server {
     public void exportBackup(String bucket, String destination, String secret) throws ServerOperationException;
 
     /**
+     * Get the current {@link terrastore.common.ClusterStats}.
+     *
+     * @return The {@link terrastore.common.ClusterStats} instance.
+     */
+    public ClusterStats getClusterStats();
+
+    /**
      * Get the {@link terrastore.service.UpdateService} which will actually execute all update operations.
      *
      * @return The {@link terrastore.service.UpdateService} instance.
@@ -178,11 +185,4 @@ public interface Server {
      * @return The {@link terrastore.service.BackupService} instance.
      */
     public BackupService getBackupService();
-    
-    /**
-     * Get the actual {@link terrastore.common.ClusterStats}.
-     * 
-     * @return The {@link terrastore.common.ClusterStats} instance.
-     */
-    public ClusterStats getClusterStats();
 }
