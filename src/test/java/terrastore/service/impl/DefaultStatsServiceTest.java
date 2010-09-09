@@ -37,9 +37,9 @@ public class DefaultStatsServiceTest {
         DefaultStatsService service = new DefaultStatsService(router);
         ClusterStats stats = service.getClusterStats();
         assertEquals(1, stats.getClusters().size());
-        assertEquals("cluster1", stats.getClusters().get(0).getName());
-        assertEquals(1, stats.getClusters().get(0).getNodes().size());
-        assertEquals("node1", stats.getClusters().get(0).getNodes().get(0).getName());
+        assertEquals("cluster1", stats.getClusters().iterator().next().getName());
+        assertEquals(1, stats.getClusters().iterator().next().getNodes().size());
+        assertEquals("node1", stats.getClusters().iterator().next().getNodes().iterator().next().getName());
 
         verify(cluster, node, router);
     }

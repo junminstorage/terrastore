@@ -55,6 +55,7 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.store.types.JsonValue;
+import terrastore.util.collect.Sets;
 import terrastore.util.json.JsonUtils;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
@@ -70,7 +71,7 @@ public class JsonHttpServerTest {
     private static final String JSON_VALUES_x2 = "{\"test1\":" + JSON_VALUE + ",\"test2\":" + JSON_VALUE + "}";
     private static final String UPDATE_PARAMS = "{\"p1\":\"v1\"}";
     private static final String BUCKETS = "[\"test1\",\"test2\"]";
-    private static final String CLUSTER_STATS ="{\"clusters\":[{\"name\":\"cluster-1\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
+    private static final String CLUSTER_STATS ="{\"clusters\":[{\"name\":\"cluster-1\",\"status\":\"AVAILABLE\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
     
     @Test
     public void testGetStats() throws Exception {
@@ -79,10 +80,8 @@ public class JsonHttpServerTest {
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
 
-        ClusterStats clusterStats = new ClusterStats();
-        ClusterStats.Cluster c = new ClusterStats.Cluster("cluster-1");
-        clusterStats.getClusters().add(c);
-        c.getNodes().add(new ClusterStats.Node("node-1", "localhost", 8080));
+        ClusterStats.Cluster cluster = new ClusterStats.Cluster("cluster-1", Sets.linked(new ClusterStats.Node("node-1", "localhost", 8080)));
+        ClusterStats clusterStats = new ClusterStats(Sets.linked(cluster));
         
         statsService.getClusterStats();
         expectLastCall().andReturn(clusterStats).once();

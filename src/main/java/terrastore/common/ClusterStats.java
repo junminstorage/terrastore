@@ -16,8 +16,12 @@
 package terrastore.common;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 /**
@@ -25,30 +29,41 @@ import org.codehaus.jackson.annotate.JsonPropertyOrder;
  */
 public class ClusterStats implements Serializable {
 
-    private List<ClusterStats.Cluster> clusters = new ArrayList<ClusterStats.Cluster>();
+    private Set<ClusterStats.Cluster> clusters = new HashSet<Cluster>();
 
-    public void setClusters(List<ClusterStats.Cluster> clusters) {
+    public ClusterStats(Set<ClusterStats.Cluster> clusters) {
         this.clusters = clusters;
     }
 
-    public List<ClusterStats.Cluster> getClusters() {
+    public void setClusters(Set<ClusterStats.Cluster> clusters) {
+        this.clusters = clusters;
+    }
+
+    public Set<ClusterStats.Cluster> getClusters() {
         return clusters;
     }
 
-    @JsonPropertyOrder({"name", "nodes"})
+    @JsonPropertyOrder({"name", "status", "nodes"})
     public static class Cluster {
 
         private String name;
-        private List<Node> nodes = new ArrayList<Node>();
+        private Set<Node> nodes = new HashSet<Node>();
+        private Status status;
 
-        public Cluster() {
+        protected Cluster() {
         }
 
-        public Cluster(String name) {
+        public Cluster(String name, Set<Node> nodes) {
             this.name = name;
+            this.nodes = nodes;
+            if (nodes.size() > 0) {
+                status = Status.AVAILABLE;
+            } else {
+                status = Status.UNAVAILABLE;
+            }
         }
 
-        public void setName(String name) {
+        protected void setName(String name) {
             this.name = name;
         }
 
@@ -56,12 +71,40 @@ public class ClusterStats implements Serializable {
             return name;
         }
 
-        public void setNodes(List<Node> nodes) {
+        protected void setNodes(Set<Node> nodes) {
             this.nodes = nodes;
         }
 
-        public List<Node> getNodes() {
-            return nodes;
+        public Set<Node> getNodes() {
+            return Collections.unmodifiableSet(nodes);
+        }
+
+        protected void setStatus(Status status) {
+            this.status = status;
+        }
+
+        public Status getStatus() {
+            return status;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj != null && obj instanceof Cluster) {
+                Cluster other = (Cluster) obj;
+                return new EqualsBuilder().append(this.name, other.name).append(this.nodes, other.nodes).append(this.status, other.status).isEquals();
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder().append(name).append(nodes).append(status).toHashCode();
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this).append(name).append(status).toString();
         }
     }
 
@@ -72,7 +115,7 @@ public class ClusterStats implements Serializable {
         private String host;
         private int port;
 
-        public Node() {
+        protected Node() {
         }
 
         public Node(String name, String host, int port) {
@@ -81,7 +124,7 @@ public class ClusterStats implements Serializable {
             this.port = port;
         }
 
-        public void setName(String name) {
+        protected void setName(String name) {
             this.name = name;
         }
 
@@ -89,7 +132,7 @@ public class ClusterStats implements Serializable {
             return name;
         }
 
-        public void setHost(String host) {
+        protected void setHost(String host) {
             this.host = host;
         }
 
@@ -97,12 +140,38 @@ public class ClusterStats implements Serializable {
             return host;
         }
 
-        public void setPort(int port) {
+        protected void setPort(int port) {
             this.port = port;
         }
 
         public int getPort() {
             return port;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj != null && obj instanceof Node) {
+                Node other = (Node) obj;
+                return new EqualsBuilder().append(this.name, other.name).append(this.host, other.host).append(this.port, other.port).isEquals();
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder().append(name).append(host).append(port).toHashCode();
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this).append(name).append(host).append(port).toString();
+        }
+    }
+
+    public enum Status {
+
+        AVAILABLE,
+        UNAVAILABLE;
     }
 }
