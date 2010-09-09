@@ -1,0 +1,14 @@
+.+\.bak
+.+\.orig
+.DS_Store
+nbproject
+nbactions.xml
+nb-configuration.xml
+terrastore-master
+target
+tc-data
+src/test/resources/config/tc-data
+src/dist/master/tc-data
+src/dist/server/tc-data
+src/dist/server/backups/.+\.bak
+src/dist/server/snapshots/.+\.hdb

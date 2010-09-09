@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+
+    <!--
+        Configure here your terrastore.store.operators.Function used to atomically update values.
+        As an alternative, you may want to annotate your function with terrastore.annotation.AutoDetect: Terrastore
+        will autodetect your annotated class, create an instance and autowire it here.
+
+        Each entry key, or terrastore.annotation.AutoDetect#name, is the function name that will be used in Terrastore query string for server-side updates, e.g.:
+        http://localhost:8080/bucket/key/update?function=name&...
+
+        Conditions manually declared here overwrite autodetected ones: this means that if a manually declared condition
+        has the same name (entry key) of an autodetcted one, the latter will not be wired.
+    -->
+
+    <util:map id="update-functions">
+
+        <entry key="replace">
+            <bean class="terrastore.service.functions.ReplaceFunction"/>
+        </entry>
+
+        <entry key="merge">
+        	<bean class="terrastore.service.functions.MergeFunction"/>
+        </entry>
+
+        <entry key="js">
+            <bean class="terrastore.service.functions.JSFunction"/>
+        </entry>
+        
+        <entry key="counter">
+        	<bean class="terrastore.service.functions.AtomicCounterFunction"/>
+        </entry>
+
+    </util:map>
+
+</beans>
