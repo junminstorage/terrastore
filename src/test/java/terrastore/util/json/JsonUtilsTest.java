@@ -31,6 +31,7 @@ import terrastore.server.Values;
 import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.types.JsonValue;
+import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 
 /**
@@ -46,7 +47,7 @@ public class JsonUtilsTest {
             + "\"key\" : {\"bad\":value}}";
     private static final String SIMPLE_JSON_VALUE = "{\"key\":\"value\"}";
     private static final String ERROR_MESSAGE = "{\"message\":\"test\",\"code\":0}";
-    private static final String CLUSTER_STATS = "{\"clusters\":[{\"name\":\"cluster-1\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
+    private static final String CLUSTER_STATS = "{\"clusters\":[{\"name\":\"cluster-1\",\"status\":\"AVAILABLE\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
     private static final String VALUES = "{\"value\":{\"key\":\"value\"}}";
     private static final String PARAMETERS = "{\"key\":\"value\"}";
     private static final String BUCKETS = "[\"1\",\"2\"]";
@@ -97,10 +98,8 @@ public class JsonUtilsTest {
 
     @Test
     public void testWriteClusterStats() throws Exception {
-        ClusterStats clusterStats = new ClusterStats();
-        ClusterStats.Cluster c = new ClusterStats.Cluster("cluster-1");
-        clusterStats.getClusters().add(c);
-        c.getNodes().add(new ClusterStats.Node("node-1", "localhost", 8080));
+        ClusterStats.Cluster cluster = new ClusterStats.Cluster("cluster-1", Sets.linked(new ClusterStats.Node("node-1", "localhost", 8080)));
+        ClusterStats clusterStats = new ClusterStats(Sets.linked(cluster));
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonUtils.write(clusterStats, stream);
         assertEquals(CLUSTER_STATS, new String(stream.toByteArray()));

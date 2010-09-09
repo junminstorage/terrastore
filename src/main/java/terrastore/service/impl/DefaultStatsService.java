@@ -15,6 +15,7 @@
  */
 package terrastore.service.impl;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -41,17 +42,16 @@ public class DefaultStatsService implements StatsService {
 
     @Override
     public ClusterStats getClusterStats() {
-        ClusterStats stats = new ClusterStats();
+        Set<ClusterStats.Cluster> clusterStats = new HashSet<ClusterStats.Cluster>();
         Set<Cluster> clusters = router.getClusters();
         for (Cluster cluster : clusters) {
-            ClusterStats.Cluster clusterStats = new ClusterStats.Cluster(cluster.getName());
+            Set<ClusterStats.Node> nodeStats = new HashSet<ClusterStats.Node>();
             Set<Node> nodesForCluster = router.clusterRoute(cluster);
             for (Node node : nodesForCluster) {
-                ClusterStats.Node nodeStats = new ClusterStats.Node(node.getName(), node.getHost(), node.getPort());
-                clusterStats.getNodes().add(nodeStats);
+                nodeStats.add(new ClusterStats.Node(node.getName(), node.getHost(), node.getPort()));
             }
-            stats.getClusters().add(clusterStats);
+            clusterStats.add(new ClusterStats.Cluster(cluster.getName(), nodeStats));
         }
-        return stats;
+        return new ClusterStats(clusterStats);
     }
 }
