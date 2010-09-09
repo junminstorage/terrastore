@@ -23,6 +23,7 @@ import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.interception.MessageBodyWriterContext;
 import org.jboss.resteasy.spi.interception.MessageBodyWriterInterceptor;
 import org.jboss.resteasy.spi.interception.PreProcessInterceptor;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
@@ -84,7 +85,7 @@ public class CorsInterceptor implements PreProcessInterceptor, MessageBodyWriter
     @Override
     public ServerResponse preProcess(HttpRequest request, ResourceMethod method) throws Failure, WebApplicationException {
         if (!allowedOrigins.isEmpty()) {
-            REQUEST_ORIGIN.set(request.getHttpHeaders().getRequestHeaders().getFirst(ORIGIN));
+            REQUEST_ORIGIN.set("" + request.getHttpHeaders().getRequestHeaders().getFirst(ORIGIN));
         }
         return null;
     }
@@ -92,7 +93,7 @@ public class CorsInterceptor implements PreProcessInterceptor, MessageBodyWriter
     @Override
     public void write(MessageBodyWriterContext context) throws IOException, WebApplicationException {
         if (!allowedOrigins.isEmpty() && (allowedOrigins.contains(REQUEST_ORIGIN.get()) || allowedOrigins.contains("*"))) {
-            context.getHeaders().add(ACCESS_CONTROL_ALLOW_ORIGIN, REQUEST_ORIGIN.get());
+            context.getHeaders().add(ACCESS_CONTROL_ALLOW_ORIGIN, allowedOrigins.contains("*") ? "*" : REQUEST_ORIGIN.get());
             context.getHeaders().add(ACCESS_CONTROL_ALLOW_METHODS, accessControlAllowMethods);
             context.getHeaders().add(ACCESS_CONTROL_ALLOW_HEADERS, accessControlAllowHeaders);
             context.getHeaders().add(ACCESS_CONTROL_MAX_AGE, accessControlMaxAge);
