@@ -234,8 +234,10 @@ public class Startup {
         LOG.info(POWEREDBY_MESSAGE);
         LOG.info("Listening for HTTP requests on {}:{}", httpHost, httpPort);
         LOG.info("Listening for node requests on {}:{}", nodeHost, nodePort);
-        LOG.info("Reconnection timeout (in milliseconds) set to {}", reconnectTimeout);
-        LOG.info("Node communication timeout (in milliseconds) set to {}", nodeTimeout);
+        LOG.info("Reconnection timeout (in milliseconds): {}", reconnectTimeout);
+        LOG.info("Node communication timeout (in milliseconds): {}", nodeTimeout);
+        LOG.info("Failover retries: {}", failoverRetries);
+        LOG.info("Failover retry interval (in milliseconds): {}", failoverInterval);
         LOG.info("Number of http threads: {}", httpThreads);
         LOG.info("Number of worker threads: {}", workerThreads);
     }
