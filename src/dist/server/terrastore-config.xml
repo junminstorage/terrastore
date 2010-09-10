@@ -65,8 +65,8 @@
             </bean>
         </constructor-arg>
         <constructor-arg index="1" value="terrastore.service.UpdateService"/>
-        <constructor-arg index="2" value="${backoff.retries}"/>
-        <constructor-arg index="3" value="${backoff.interval}"/>
+        <constructor-arg index="2" value="${failover.retries}"/>
+        <constructor-arg index="3" value="${failover.interval}"/>
     </bean>
 
     <bean id="queryService" class="terrastore.decorator.failure.BackoffFailureHandler" factory-method="newInstance">
@@ -91,8 +91,8 @@
             </bean>
         </constructor-arg>
         <constructor-arg index="1" value="terrastore.service.QueryService"/>
-        <constructor-arg index="2" value="${backoff.retries}"/>
-        <constructor-arg index="3" value="${backoff.interval}"/>
+        <constructor-arg index="2" value="${failover.retries}"/>
+        <constructor-arg index="3" value="${failover.interval}"/>
     </bean>
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
