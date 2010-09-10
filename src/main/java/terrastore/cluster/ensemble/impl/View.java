@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Set;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import terrastore.cluster.coordinator.ServerConfiguration;
 
 /**
  * @author Sergio Bossa
@@ -62,33 +63,21 @@ public class View implements Serializable {
 
         private static final long serialVersionUID = 12345678901L;
         //
-        private final String name;
-        private final String host;
-        private final int port;
+        private final ServerConfiguration configuration;
 
-        public Member(String name, String host, int port) {
-            this.name = name;
-            this.host = host;
-            this.port = port;
+        public Member(ServerConfiguration configuration) {
+            this.configuration = configuration;
         }
 
-        public String getName() {
-            return name;
-        }
-
-        public String getHost() {
-            return host;
-        }
-
-        public int getPort() {
-            return port;
+        public ServerConfiguration getConfiguration() {
+            return configuration;
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof Member) {
                 Member other = (Member) obj;
-                return new EqualsBuilder().append(this.name, other.name).append(this.host, other.host).append(this.port, other.port).isEquals();
+                return new EqualsBuilder().append(this.configuration.getName(), other.configuration.getName()).isEquals();
             } else {
                 return false;
             }
@@ -96,7 +85,7 @@ public class View implements Serializable {
 
         @Override
         public int hashCode() {
-            return new HashCodeBuilder().append(this.name).append(this.host).append(this.port).toHashCode();
+            return new HashCodeBuilder().append(this.configuration.getName()).toHashCode();
         }
     }
 }

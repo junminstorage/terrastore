@@ -38,7 +38,7 @@ public class MembershipCommand extends AbstractCommand<View> {
         Set<Node> nodes = router.clusterRoute(localCluster);
         Set<View.Member> viewMembers = new HashSet<View.Member>();
         for (Node node : nodes) {
-            viewMembers.add(new View.Member(node.getName(), node.getHost(), node.getPort()));
+            viewMembers.add(new View.Member(node.getConfiguration()));
         }
         return new View(localCluster.getName(), viewMembers);
     }

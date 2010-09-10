@@ -29,7 +29,7 @@ import terrastore.store.Store;
  */
 public interface Coordinator {
 
-    public void start(String host, int port, EnsembleConfiguration configuration);
+    public void start(ServerConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration);
 
     public void setReconnectTimeout(long reconnectTimeout);
 

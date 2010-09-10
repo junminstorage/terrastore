@@ -15,6 +15,7 @@
  */
 package terrastore.communication;
 
+import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.communication.protocol.Command;
 
 /**
@@ -67,4 +68,11 @@ public interface Node {
      * @return The node port.
      */
     public int getPort();
+
+    /**
+     * Get the complete server configuration.
+     *
+     * @return The server configuration.
+     */
+    public ServerConfiguration getConfiguration();
 }
