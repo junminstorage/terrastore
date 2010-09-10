@@ -17,6 +17,7 @@ package terrastore.cluster.ensemble.impl;
 
 import org.easymock.EasyMock;
 import org.junit.Test;
+import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.cluster.ensemble.EnsembleManager;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.cluster.ensemble.EnsembleScheduler;
@@ -51,7 +52,7 @@ public class DefaultEnsembleManagerTest {
         seed.connect();
         expectLastCall().once();
         seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered", "localhost", 6000))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member(new ServerConfiguration("discovered", "localhost", 6000, "localhost", 8080)))));
         seed.disconnect();
         expectLastCall().once();
         //
@@ -64,9 +65,9 @@ public class DefaultEnsembleManagerTest {
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("localhost:6000", "localhost", 6000, "", -1)));
         expectLastCall().andReturn(seed).once();
-        nodeFactory.makeRemoteNode("localhost", 6000, "discovered");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("discovered", "localhost", 6000, "localhost", 8080)));
         expectLastCall().andReturn(discoveredNode).once();
         //
         Router router = createMock(Router.class);
@@ -106,7 +107,7 @@ public class DefaultEnsembleManagerTest {
         seed.connect();
         expectLastCall().once();
         seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered1", "localhost", 6000))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member(new ServerConfiguration("discovered1", "localhost", 6000, "localhost", 8080)))));
         seed.disconnect();
         expectLastCall().once();
         //
@@ -117,7 +118,7 @@ public class DefaultEnsembleManagerTest {
         discoveredNode1.disconnect();
         expectLastCall().once();
         discoveredNode1.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member("discovered1", "localhost", 6000), new View.Member("discovered2", "localhost", 6001))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member(new ServerConfiguration("discovered1", "localhost", 6000, "localhost", 8080)), new View.Member(new ServerConfiguration("discovered2", "localhost", 6001, "localhost", 8080)))));
         //
         Node discoveredNode2 = createMock(Node.class);
         makeThreadSafe(discoveredNode2, true);
@@ -128,11 +129,11 @@ public class DefaultEnsembleManagerTest {
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("localhost:6000", "localhost", 6000, "", -1)));
         expectLastCall().andReturn(seed).once();
-        nodeFactory.makeRemoteNode("localhost", 6000, "discovered1");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("discovered1", "localhost", 6000, "localhost", 8080)));
         expectLastCall().andReturn(discoveredNode1).once();
-        nodeFactory.makeRemoteNode("localhost", 6001, "discovered2");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("discovered2", "localhost", 6001, "localhost", 8080)));
         expectLastCall().andReturn(discoveredNode2).once();
         //
         Router router = createMock(Router.class);
@@ -175,7 +176,7 @@ public class DefaultEnsembleManagerTest {
         seed.connect();
         expectLastCall().once();
         seed.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.linked(new View.Member("discovered1", "localhost", 6000), new View.Member("discovered2", "localhost", 6001))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member(new ServerConfiguration("discovered1", "localhost", 6000, "localhost", 8080)), new View.Member(new ServerConfiguration("discovered2", "localhost", 6001, "localhost", 8080)))));
         seed.disconnect();
         expectLastCall().once();
         //
@@ -188,7 +189,7 @@ public class DefaultEnsembleManagerTest {
         discoveredNode1.disconnect();
         expectLastCall().once();
         discoveredNode1.send(EasyMock.<MembershipCommand>anyObject());
-        expectLastCall().andReturn(new View("cluster", Sets.linked(new View.Member("discovered1", "localhost", 6000))));
+        expectLastCall().andReturn(new View("cluster", Sets.hash(new View.Member(new ServerConfiguration("discovered1", "localhost", 6000, "localhost", 8080)))));
         //
         Node discoveredNode2 = createMock(Node.class);
         makeThreadSafe(discoveredNode2, true);
@@ -201,11 +202,11 @@ public class DefaultEnsembleManagerTest {
         //
         RemoteNodeFactory nodeFactory = createMock(RemoteNodeFactory.class);
         makeThreadSafe(nodeFactory, true);
-        nodeFactory.makeRemoteNode("localhost", 6000, "localhost:6000");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("localhost:6000", "localhost", 6000, "", -1)));
         expectLastCall().andReturn(seed).once();
-        nodeFactory.makeRemoteNode("localhost", 6000, "discovered1");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("discovered1", "localhost", 6000, "localhost", 8080)));
         expectLastCall().andReturn(discoveredNode1).once();
-        nodeFactory.makeRemoteNode("localhost", 6001, "discovered2");
+        nodeFactory.makeRemoteNode(eq(new ServerConfiguration("discovered2", "localhost", 6001, "localhost", 8080)));
         expectLastCall().andReturn(discoveredNode2).once();
         //
         Router router = createMock(Router.class);

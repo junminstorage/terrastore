@@ -17,6 +17,7 @@ package terrastore.communication.local;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.LocalNodeFactory;
 import terrastore.communication.Node;
@@ -34,15 +35,11 @@ import terrastore.communication.protocol.Command;
 public class LocalNode implements Node {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalNode.class);
-    private final String host;
-    private final int port;
-    private final String name;
+    private final ServerConfiguration configuration;
     private final LocalProcessor processor;
 
-    protected LocalNode(String host, int port, String name, LocalProcessor processor) {
-        this.host = host;
-        this.port = port;
-        this.name = name;
+    protected LocalNode(ServerConfiguration configuration, LocalProcessor processor) {
+        this.configuration = configuration;
         this.processor = processor;
     }
 
@@ -62,24 +59,29 @@ public class LocalNode implements Node {
 
     @Override
     public String getName() {
-        return name;
+        return configuration.getName();
     }
 
     @Override
     public String getHost() {
-        return host;
+        return configuration.getNodeHost();
     }
 
     @Override
     public int getPort() {
-        return port;
+        return configuration.getNodePort();
+    }
+
+    @Override
+    public ServerConfiguration getConfiguration() {
+        return configuration;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof LocalNode) {
             LocalNode other = (LocalNode) obj;
-            return this.name.equals(other.name);
+            return this.configuration.getName().equals(other.configuration.getName());
         } else {
             return false;
         }
@@ -87,19 +89,19 @@ public class LocalNode implements Node {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return configuration.getName().hashCode();
     }
 
     @Override
     public String toString() {
-        return name;
+        return configuration.getName();
     }
 
     public static class Factory implements LocalNodeFactory {
 
         @Override
-        public Node makeLocalNode(String host, int port, String name, LocalProcessor processor) {
-            return new LocalNode(host, port, name, processor);
+        public Node makeLocalNode(ServerConfiguration configuration, LocalProcessor processor) {
+            return new LocalNode(configuration, processor);
         }
     }
 }

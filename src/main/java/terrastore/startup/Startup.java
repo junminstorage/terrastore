@@ -41,7 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+import terrastore.cluster.ClusterUtils;
 import terrastore.cluster.coordinator.Coordinator;
+import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfigurationUtils;
 import terrastore.internal.tc.TCMaster;
@@ -269,7 +271,10 @@ public class Startup {
         coordinator.setReconnectTimeout(reconnectTimeout);
         coordinator.setNodeTimeout(nodeTimeout);
         coordinator.setWokerThreads(workerThreads);
-        coordinator.start(nodeHost, nodePort, ensembleConfiguration);
+        coordinator.start(new ServerConfiguration(
+                ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()),
+                nodeHost, nodePort, httpHost, httpPort),
+                ensembleConfiguration);
     }
 
     private Coordinator getCoordinatorFromServletContext(Context context) throws BeansException {
