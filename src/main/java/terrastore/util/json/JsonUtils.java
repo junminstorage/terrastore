@@ -28,6 +28,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
@@ -108,8 +109,12 @@ public class JsonUtils {
         jsonGenerator.close();
     }
 
-    public static Parameters read(InputStream stream) throws IOException {
+    public static Parameters readParameters(InputStream stream) throws IOException {
         return JSON_MAPPER.readValue(stream, Parameters.class);
+    }
+
+    public static EnsembleConfiguration readEnsembleConfiguration(InputStream stream) throws IOException {
+        return JSON_MAPPER.readValue(stream, EnsembleConfiguration.class);
     }
 
     private static void validateObject(JsonParser parser) throws IOException {
