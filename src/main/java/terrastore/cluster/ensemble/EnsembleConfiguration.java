@@ -15,6 +15,7 @@
  */
 package terrastore.cluster.ensemble;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,6 +30,14 @@ public class EnsembleConfiguration {
     private long discoveryInterval;
     private List<String> clusters = new LinkedList<String>();
     private Map<String, String> seeds = new HashMap<String, String>();
+
+    public static EnsembleConfiguration makeDefault(String clusterName) {
+        EnsembleConfiguration configuration = new EnsembleConfiguration();
+        configuration.setLocalCluster(clusterName);
+        configuration.setClusters(Arrays.asList(clusterName));
+        configuration.setDiscoveryInterval(1);
+        return configuration;
+    }
 
     public String getLocalCluster() {
         return localCluster;

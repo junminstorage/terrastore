@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
@@ -71,7 +72,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
     public final synchronized void join(Cluster cluster, String seed, EnsembleConfiguration ensembleConfiguration) throws MissingRouteException, ProcessingException {
         if (!cluster.isLocal()) {
             String[] hostPortPair = seed.split(":");
-            bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(hostPortPair[0], Integer.parseInt(hostPortPair[1]), seed));
+            bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(new ServerConfiguration(seed, hostPortPair[0], Integer.parseInt(hostPortPair[1]), "", 0)));
             ensembleScheduler.schedule(cluster, this, ensembleConfiguration);
         } else {
             throw new IllegalArgumentException("No need to join local cluster: " + cluster);
@@ -179,7 +180,11 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 }
             }
             for (View.Member member : joiningMembers) {
-                Node node = remoteNodeFactory.makeRemoteNode(member.getHost(), member.getPort(), member.getName());
+                Node node = remoteNodeFactory.makeRemoteNode(
+                        new ServerConfiguration(
+                        member.getConfiguration().getName(),
+                        member.getConfiguration().getNodeHost(), member.getConfiguration().getNodePort(),
+                        member.getConfiguration().getHttpHost(), member.getConfiguration().getHttpPort()));
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
@@ -189,7 +194,10 @@ public class DefaultEnsembleManager implements EnsembleManager {
             LOG.debug("No current view for cluster {}", cluster);
             LOG.debug("Updated view for cluster {} :  {}", cluster, updatedView);
             for (View.Member member : updatedView.getMembers()) {
-                Node node = remoteNodeFactory.makeRemoteNode(member.getHost(), member.getPort(), member.getName());
+                Node node = remoteNodeFactory.makeRemoteNode(new ServerConfiguration(
+                        member.getConfiguration().getName(),
+                        member.getConfiguration().getNodeHost(), member.getConfiguration().getNodePort(),
+                        member.getConfiguration().getHttpHost(), member.getConfiguration().getHttpPort()));
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
@@ -201,7 +209,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
 
     private Node findNode(List<Node> nodes, Member member) {
         try {
-            return Iterables.find(nodes, new NodeFinder(member.getName()));
+            return Iterables.find(nodes, new NodeFinder(member.getConfiguration().getName()));
         } catch (NoSuchElementException ex) {
             return null;
         }

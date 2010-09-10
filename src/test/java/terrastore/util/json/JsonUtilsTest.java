@@ -138,7 +138,7 @@ public class JsonUtilsTest {
     @Test
     public void testReadParameters() throws Exception {
         ByteArrayInputStream stream = new ByteArrayInputStream(PARAMETERS.getBytes("UTF-8"));
-        Parameters params = JsonUtils.read(stream);
+        Parameters params = JsonUtils.readParameters(stream);
         assertEquals(1, params.size());
         assertEquals("key", params.keySet().toArray()[0]);
         assertEquals("value", params.values().toArray()[0]);
