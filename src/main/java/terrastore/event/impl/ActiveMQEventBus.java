@@ -71,7 +71,7 @@ public class ActiveMQEventBus implements EventBus {
     private volatile boolean shutdown;
 
     public ActiveMQEventBus(List<EventListener> eventListeners, String broker) throws Exception {
-        LOG.info("Configuring event bus: {}", this.getClass());
+        LOG.info("Configuring event bus: {}", this.getClass().getName());
         this.eventListeners = eventListeners;
         this.jmsConnectionFactory = new PooledConnectionFactory(broker);
         this.producer = new JmsTemplate(jmsConnectionFactory);
@@ -115,7 +115,7 @@ public class ActiveMQEventBus implements EventBus {
 
     private void initListeners(List<EventListener> eventListeners) {
         for (EventListener listener : eventListeners) {
-            LOG.info("Configuring listener: {}", listener.getClass());
+            LOG.info("Configuring listener: {}", listener.getClass().getName());
             listener.init();
         }
     }
