@@ -17,6 +17,7 @@ package terrastore.cluster.ensemble;
 
 import java.io.ByteArrayInputStream;
 import org.junit.Test;
+import terrastore.util.json.JsonUtils;
 
 /**
  * @author Sergio Bossa
@@ -46,31 +47,31 @@ public class EnsembleConfigurationTest {
 
     @Test
     public void testDefaultConfiguration() throws Exception {
-        EnsembleConfiguration configuration = EnsembleConfigurationUtils.makeDefault("cluster");
+        EnsembleConfiguration configuration = EnsembleConfiguration.makeDefault("cluster");
         configuration.validate();
     }
 
     @Test
     public void testCorrectConfiguration() throws Exception {
-        EnsembleConfiguration configuration = EnsembleConfigurationUtils.readFrom(new ByteArrayInputStream(CONFIGURATION.getBytes()));
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(CONFIGURATION.getBytes()));
         configuration.validate();
     }
 
     @Test(expected = EnsembleConfigurationException.class)
     public void testConfigurationWithMissingCluster() throws Exception {
-        EnsembleConfiguration configuration = EnsembleConfigurationUtils.readFrom(new ByteArrayInputStream(MISSING_CLUSTER_CONFIGURATION.getBytes()));
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(MISSING_CLUSTER_CONFIGURATION.getBytes()));
         configuration.validate();
     }
 
     @Test(expected = EnsembleConfigurationException.class)
     public void testConfigurationWithMissingSeed() throws Exception {
-        EnsembleConfiguration configuration = EnsembleConfigurationUtils.readFrom(new ByteArrayInputStream(MISSING_SEED_CONFIGURATION.getBytes()));
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(MISSING_SEED_CONFIGURATION.getBytes()));
         configuration.validate();
     }
 
     @Test(expected = EnsembleConfigurationException.class)
     public void testConfigurationWithBadSeed() throws Exception {
-        EnsembleConfiguration configuration = EnsembleConfigurationUtils.readFrom(new ByteArrayInputStream(BAD_SEED_CONFIGURATION.getBytes()));
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(BAD_SEED_CONFIGURATION.getBytes()));
         configuration.validate();
     }
 }

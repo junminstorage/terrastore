@@ -45,8 +45,8 @@ import terrastore.cluster.ClusterUtils;
 import terrastore.cluster.coordinator.Coordinator;
 import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
-import terrastore.cluster.ensemble.EnsembleConfigurationUtils;
 import terrastore.internal.tc.TCMaster;
+import terrastore.util.json.JsonUtils;
 
 /**
  * @author Sergio Bossa
@@ -109,7 +109,7 @@ public class Startup {
     }
     //
     private String master = null;
-    private EnsembleConfiguration ensembleConfiguration = EnsembleConfigurationUtils.makeDefault(DEFAULT_CLUSTER_NAME);
+    private EnsembleConfiguration ensembleConfiguration = EnsembleConfiguration.makeDefault(DEFAULT_CLUSTER_NAME);
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private String nodeHost = DEFAULT_NODE_HOST;
@@ -131,7 +131,7 @@ public class Startup {
 
     @Option(name = "--ensemble", required = false)
     public void setEnsemble(String ensembleConfigurationFile) throws IOException {
-        this.ensembleConfiguration = EnsembleConfigurationUtils.readFrom(new FileInputStream(ensembleConfigurationFile));
+        this.ensembleConfiguration = JsonUtils.readEnsembleConfiguration(new FileInputStream(ensembleConfigurationFile));
         this.ensembleConfiguration.validate();
     }
 
