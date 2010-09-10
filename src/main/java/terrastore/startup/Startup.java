@@ -69,8 +69,8 @@ public class Startup {
     private static final int MIN_WORKER_THREADS = 10;
     private static final int DEFAULT_WORKER_THREADS = Runtime.getRuntime().availableProcessors() * 10;
     private static final String DEFAULT_CONFIG_FILE = "terrastore-config.xml";
-    private static final int DEFAULT_BACKOFF_RETRIES = 0;
-    private static final long DEFAULT_BACKOFF_INTERVAL = 0;
+    private static final int DEFAULT_FAILOVER_RETRIES = 0;
+    private static final long DEFAULT_FAILOVER_INTERVAL = 0;
     private static final String WELCOME_MESSAGE = "Welcome to Terrastore.";
     private static final String POWEREDBY_MESSAGE = "Powered by Terracotta (http://www.terracotta.org).";
 
@@ -119,8 +119,8 @@ public class Startup {
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
     private int httpThreads = DEFAULT_HTTP_THREADS;
     private int workerThreads = DEFAULT_WORKER_THREADS;
-    private int backoffRetries = DEFAULT_BACKOFF_RETRIES;
-    private long backoffInterval = DEFAULT_BACKOFF_INTERVAL;
+    private int failoverRetries = DEFAULT_FAILOVER_RETRIES;
+    private long failoverInterval = DEFAULT_FAILOVER_INTERVAL;
     private String eventBus = DEFAULT_EVENT_BUS;
     private String allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
 
@@ -190,14 +190,14 @@ public class Startup {
         this.allowedOrigins = allowedOrigins;
     }
 
-    @Option(name = "--backoffRetries", required = false)
-    public void setBackoffRetries(int backoffRetries) {
-        this.backoffRetries = backoffRetries;
+    @Option(name = "--failoverRetries", required = false)
+    public void setFailoverRetries(int retries) {
+        this.failoverRetries = retries;
     }
 
-    @Option(name = "--backoffInterval", required = false)
-    public void setBackoffInterval(int backoffInterval) {
-        this.backoffInterval = backoffInterval;
+    @Option(name = "--failoverInterval", required = false)
+    public void setFailoverInterval(int interval) {
+        this.failoverInterval = interval;
     }
 
     public void start() {
@@ -302,8 +302,8 @@ public class Startup {
         // Allowed hosts for CORS:
         contextParams.put("cors.allowed.origins", allowedOrigins);
         // Backoff configuration:
-        contextParams.put("backoff.retries", Integer.toString(backoffRetries));
-        contextParams.put("backoff.interval", Long.toString(backoffInterval));
+        contextParams.put("failover.retries", Integer.toString(failoverRetries));
+        contextParams.put("failover.interval", Long.toString(failoverInterval));
         return contextParams;
     }
 
