@@ -92,8 +92,9 @@ public class CorsInterceptor implements PreProcessInterceptor, MessageBodyWriter
 
     @Override
     public void write(MessageBodyWriterContext context) throws IOException, WebApplicationException {
-        if (!allowedOrigins.isEmpty() && (allowedOrigins.contains(REQUEST_ORIGIN.get()) || allowedOrigins.contains("*"))) {
-            context.getHeaders().add(ACCESS_CONTROL_ALLOW_ORIGIN, allowedOrigins.contains("*") ? "*" : REQUEST_ORIGIN.get());
+        boolean allowsAll = allowedOrigins.contains("*");
+        if (!allowedOrigins.isEmpty() && (allowsAll || allowedOrigins.contains(REQUEST_ORIGIN.get()))) {
+            context.getHeaders().add(ACCESS_CONTROL_ALLOW_ORIGIN, allowsAll ? "*" : REQUEST_ORIGIN.get());
             context.getHeaders().add(ACCESS_CONTROL_ALLOW_METHODS, accessControlAllowMethods);
             context.getHeaders().add(ACCESS_CONTROL_ALLOW_HEADERS, accessControlAllowHeaders);
             context.getHeaders().add(ACCESS_CONTROL_MAX_AGE, accessControlMaxAge);

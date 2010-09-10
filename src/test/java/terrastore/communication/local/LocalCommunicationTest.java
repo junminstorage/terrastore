@@ -18,6 +18,7 @@ package terrastore.communication.local;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
+import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.communication.protocol.Command;
 import terrastore.router.Router;
 import terrastore.store.Store;
@@ -43,7 +44,7 @@ public class LocalCommunicationTest {
         replay(router, store, command);
 
         LocalProcessor processor = new LocalProcessor(10, router, store);
-        LocalNode node = new LocalNode("localhost", 6000, "node", processor);
+        LocalNode node = new LocalNode(new ServerConfiguration("node", "localhost", 6000, "localhost", 8000), processor);
         assertEquals(result, node.send(command));
 
         verify(router, store, command);
@@ -63,7 +64,7 @@ public class LocalCommunicationTest {
         replay(router, store, command);
 
         final LocalProcessor processor = new LocalProcessor(10, router, store);
-        final LocalNode node = new LocalNode("localhost", 6000, "node", processor);
+        final LocalNode node = new LocalNode(new ServerConfiguration("node", "localhost", 6000, "localhost", 8000), processor);
         final CountDownLatch success = new CountDownLatch(1);
 
         processor.pause();

@@ -40,6 +40,6 @@ public class JsonParametersProvider implements MessageBodyReader<Parameters> {
     }
 
     public Parameters readFrom(Class<Parameters> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return JsonUtils.read(entityStream);
+        return JsonUtils.readParameters(entityStream);
     }
 }

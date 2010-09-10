@@ -40,6 +40,7 @@ import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
@@ -61,19 +62,15 @@ public class RemoteNode implements Node {
     private final Lock stateLock = new ReentrantLock();
     private final ConcurrentMap<String, CountDownLatch> responseConditions = new ConcurrentHashMap<String, CountDownLatch>();
     private final ConcurrentMap<String, RemoteResponse> responses = new ConcurrentHashMap<String, RemoteResponse>();
-    private final String host;
-    private final int port;
-    private final String name;
+    private final ServerConfiguration configuration;
     private final int maxFrameLength;
     private final long timeoutInMillis;
     private volatile ClientBootstrap client;
     private volatile Channel clientChannel;
     private volatile boolean connected;
 
-    protected RemoteNode(String host, int port, String name, int maxFrameLength, long timeoutInMillis) {
-        this.host = host;
-        this.port = port;
-        this.name = name;
+    protected RemoteNode(ServerConfiguration configuration, int maxFrameLength, long timeoutInMillis) {
+        this.configuration = configuration;
         this.maxFrameLength = maxFrameLength;
         this.timeoutInMillis = timeoutInMillis;
     }
@@ -85,14 +82,14 @@ public class RemoteNode implements Node {
             if (!connected) {
                 client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
                 client.setPipelineFactory(new ClientChannelPipelineFactory(maxFrameLength, new ClientHandler()));
-                ChannelFuture future = client.connect(new InetSocketAddress(host, port));
+                ChannelFuture future = client.connect(new InetSocketAddress(configuration.getNodeHost(), configuration.getNodePort()));
                 future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
                 if (future.isSuccess()) {
-                    LOG.info("Connected to {}:{}", host, port);
+                    LOG.info("Connected to {}:{}", configuration.getNodeHost(), configuration.getNodePort());
                     clientChannel = future.getChannel();
                     connected = true;
                 } else {
-                    throw new RuntimeException("Error connecting to " + host + ":" + port, future.getCause());
+                    throw new RuntimeException("Error connecting to " + configuration.getNodeHost() + ":" + configuration.getNodePort(), future.getCause());
                 }
             }
         } finally {
@@ -108,7 +105,7 @@ public class RemoteNode implements Node {
                 clientChannel.close().awaitUninterruptibly();
                 client.releaseExternalResources();
                 connected = false;
-                LOG.info("Disconnected from : {}:{}", host, port);
+                LOG.info("Disconnected from : {}:{}", configuration.getNodeHost(), configuration.getNodePort());
             }
         } finally {
             stateLock.unlock();
@@ -159,23 +156,28 @@ public class RemoteNode implements Node {
 
     @Override
     public String getName() {
-        return name;
+        return configuration.getName();
     }
 
     @Override
     public String getHost() {
-        return host;
+        return configuration.getNodeHost();
     }
 
     @Override
     public int getPort() {
-        return port;
+        return configuration.getNodePort();
+    }
+
+    @Override
+    public ServerConfiguration getConfiguration() {
+        return configuration;
     }
 
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof RemoteNode) {
             RemoteNode other = (RemoteNode) obj;
-            return this.name.equals(other.name);
+            return this.configuration.getName().equals(other.configuration.getName());
         } else {
             return false;
         }
@@ -183,12 +185,12 @@ public class RemoteNode implements Node {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return configuration.getName().hashCode();
     }
 
     @Override
     public String toString() {
-        return name;
+        return configuration.getName();
     }
 
     private String configureId(Command command) {
@@ -259,13 +261,13 @@ public class RemoteNode implements Node {
         private int defaultNodeTimeout;
 
         @Override
-        public Node makeRemoteNode(String host, int port, String name) {
-            return new RemoteNode(host, port, name, defaultMaxFrameLength, defaultNodeTimeout);
+        public Node makeRemoteNode(ServerConfiguration configuration) {
+            return new RemoteNode(configuration, defaultMaxFrameLength, defaultNodeTimeout);
         }
 
         @Override
-        public RemoteNode makeRemoteNode(String host, int port, String name, int maxFrameLength, long nodeTimeout) {
-            return new RemoteNode(host, port, name, maxFrameLength, nodeTimeout);
+        public RemoteNode makeRemoteNode(ServerConfiguration configuration, int maxFrameLength, long nodeTimeout) {
+            return new RemoteNode(configuration, maxFrameLength, nodeTimeout);
         }
 
         public void setDefaultMaxFrameLength(int defaultMaxFrameLength) {
