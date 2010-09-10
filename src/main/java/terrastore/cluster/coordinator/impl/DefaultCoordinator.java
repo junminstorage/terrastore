@@ -86,9 +86,9 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     //
     private volatile int maxFrameLength;
     private volatile long nodeTimeout;
-    private volatile int localProcessorThreads;
     private volatile int remoteProcessorThreads;
     private volatile int globalExecutorThreads;
+    private volatile int fjThreads;
     private volatile ExecutorService globalExecutor;
     private volatile ForkJoinPool globalFJPool;
     //
@@ -116,9 +116,9 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     @Override
     public void setWokerThreads(int workerThreads) {
         int threads = workerThreads / 3;
-        this.localProcessorThreads = threads;
         this.remoteProcessorThreads = threads;
         this.globalExecutorThreads = threads;
+        this.fjThreads = threads;
     }
 
     @Override
@@ -173,7 +173,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             nodes = new ConcurrentHashMap<String, Node>();
             // Configure global task executor and fj pool:
             globalExecutor = Executors.newFixedThreadPool(globalExecutorThreads);
-            globalFJPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() * 2);
+            globalFJPool = new ForkJoinPool(fjThreads);
             GlobalExecutor.setExecutor(globalExecutor);
             GlobalExecutor.setForkJoinPool(globalFJPool);
             // Setup ensemble:
@@ -312,7 +312,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void setupThisNode() {
-        localProcessor = new LocalProcessor(localProcessorThreads, router, store);
+        localProcessor = new LocalProcessor(router, store);
         Node thisNode = localNodeFactory.makeLocalNode(thisConfiguration, localProcessor);
         localProcessor.start();
         thisNode.connect();

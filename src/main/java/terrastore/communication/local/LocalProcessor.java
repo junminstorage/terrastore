@@ -32,7 +32,7 @@ public class LocalProcessor extends AbstractProcessor {
     private final Router router;
     private final Store store;
 
-    public LocalProcessor(int threads, Router router, Store store) {
+    public LocalProcessor(Router router, Store store) {
         super(new SynchronousExecutor());
         this.router = router;
         this.store = store;

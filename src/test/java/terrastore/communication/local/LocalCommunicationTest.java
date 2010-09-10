@@ -43,7 +43,7 @@ public class LocalCommunicationTest {
 
         replay(router, store, command);
 
-        LocalProcessor processor = new LocalProcessor(10, router, store);
+        LocalProcessor processor = new LocalProcessor(router, store);
         LocalNode node = new LocalNode(new ServerConfiguration("node", "localhost", 6000, "localhost", 8000), processor);
         assertEquals(result, node.send(command));
 
@@ -63,7 +63,7 @@ public class LocalCommunicationTest {
 
         replay(router, store, command);
 
-        final LocalProcessor processor = new LocalProcessor(10, router, store);
+        final LocalProcessor processor = new LocalProcessor(router, store);
         final LocalNode node = new LocalNode(new ServerConfiguration("node", "localhost", 6000, "localhost", 8000), processor);
         final CountDownLatch success = new CountDownLatch(1);
 
