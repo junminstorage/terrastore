@@ -13,7 +13,13 @@
             <data>tc-data/server-data</data>
             <logs>tc-data/server-logs</logs>
             <statistics>tc-data/server-statistics</statistics>
+            <dso>
+                <client-reconnect-window>30</client-reconnect-window>
+            </dso>
         </server>
+        <update-check>
+            <enabled>false</enabled>
+        </update-check>
     </servers>
     <clients>
         <logs>tc-data/client-logs/%i/%D</logs>
