@@ -56,7 +56,7 @@
         <forget>
             <exec executable="${quickstart.dir}/server1/bin/start.sh">
                 <arg value="--httpPort"/>
-                <arg value="8080"/>
+                <arg value="8000"/>
                 <arg value="--nodePort"/>
                 <arg value="6000"/>
                 <arg value="--shutdownPort"/>
@@ -67,13 +67,13 @@
         </forget>
 
         <waitfor maxwait="3" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
-            <http url="http://localhost:8080/" />
+            <http url="http://localhost:8000/" />
         </waitfor>
 
         <forget>
             <exec executable="${quickstart.dir}/server2/bin/start.sh">
                 <arg value="--httpPort"/>
-                <arg value="8081"/>
+                <arg value="8001"/>
                 <arg value="--nodePort"/>
                 <arg value="6001"/>
                 <arg value="--shutdownPort"/>
@@ -84,13 +84,13 @@
         </forget>
 
         <waitfor maxwait="3" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
-            <http url="http://localhost:8081/"/>
+            <http url="http://localhost:8001/"/>
         </waitfor>
 
         <sleep seconds="5"/>
         <echo message="Started master node."/>
-        <echo message="Started first server node at 127.0.0.1:8080"/>
-        <echo message="Started second server node at 127.0.0.1:8081"/>
+        <echo message="Started first server node at 127.0.0.1:8000"/>
+        <echo message="Started second server node at 127.0.0.1:8001"/>
 
         <input message="Type enter to quit without stopping the cluster, or press Ctrl-C to quit and stop all processes..."/>
 
