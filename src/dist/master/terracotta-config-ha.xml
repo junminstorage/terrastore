@@ -17,6 +17,7 @@
             <logs>tc-data/server-logs</logs>
             <statistics>tc-data/server-statistics</statistics>
             <dso>
+                <client-reconnect-window>30</client-reconnect-window>
                 <persistence>
                     <mode>permanent-store</mode>
                 </persistence>
@@ -30,6 +31,7 @@
             <logs>tc-data/server-logs</logs>
             <statistics>tc-data/server-statistics</statistics>
             <dso>
+                <client-reconnect-window>30</client-reconnect-window>
                 <persistence>
                     <mode>permanent-store</mode>
                 </persistence>
@@ -41,6 +43,9 @@
                 <election-time>5</election-time>
             </networked-active-passive>
         </ha>
+        <update-check>
+            <enabled>false</enabled>
+        </update-check>
     </servers>
     <clients>
         <logs>tc-data/client-logs/%i/%D</logs>
