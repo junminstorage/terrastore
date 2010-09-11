@@ -105,6 +105,18 @@ public interface Bucket {
     public Value update(Key key, Update update, Function function) throws StoreOperationException;
 
     /**
+     * Clear all entries.
+     */
+    public void clear();
+
+    /**
+     * Get the bucket size.
+     *
+     * @return The bucket size.
+     */
+    public long size();
+
+    /**
      * Get all keys contained into this bucket.
      *
      * @return The set of keys.

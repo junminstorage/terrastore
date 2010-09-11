@@ -70,6 +70,49 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testCorrectlyCreateBucketOnPutThenRemoveAndCreateBucketAgain() throws Exception {
+        // Do not change the bucket name: it is required to ensure operations will be executed on the expected node!
+        String bucket = "bucket1";
+        //
+
+        TestValue value = new TestValue("value", 1);
+
+        // This will be executed on node 1:
+        PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value");
+        putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+        HTTP_CLIENT.executeMethod(putValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        putValue.releaseConnection();
+
+        // This will be executed on node 2:
+        DeleteMethod deleteBucket = makeDeleteMethod(NODE2_PORT, bucket);
+        HTTP_CLIENT.executeMethod(deleteBucket);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        deleteBucket.releaseConnection();
+
+        // This will be executed on node 1:
+        GetMethod getBuckets = makeGetMethod(NODE1_PORT, "");
+        HTTP_CLIENT.executeMethod(getBuckets);
+        assertEquals(HttpStatus.SC_OK, getBuckets.getStatusCode());
+        assertTrue(getBuckets.getResponseBodyAsString().indexOf(bucket) == -1);
+        getBuckets.releaseConnection();
+
+        // This will be executed on node 1:
+        putValue = makePutMethod(NODE1_PORT, bucket + "/value");
+        putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+        HTTP_CLIENT.executeMethod(putValue);
+        assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+        putValue.releaseConnection();
+
+        // This will be executed on node 1:
+        getBuckets = makeGetMethod(NODE1_PORT, "");
+        HTTP_CLIENT.executeMethod(getBuckets);
+        assertEquals(HttpStatus.SC_OK, getBuckets.getStatusCode());
+        assertTrue(getBuckets.getResponseBodyAsString().indexOf(bucket) > -1);
+        getBuckets.releaseConnection();
+    }
+
+    @Test
     public void testPutValueAndGetOnOtherNode() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
