@@ -179,6 +179,16 @@ public class TCBucket implements Bucket {
         }
     }
 
+    @Override
+    public void clear() {
+        bucket.clear();
+    }
+
+    @Override
+    public long size() {
+        return bucket.size();
+    }
+
     public Set<Key> keys() {
         return Sets.transformed(bucket.keySet(), new KeyDeserializer());
     }

@@ -15,6 +15,8 @@
  */
 package terrastore.store.impl;
 
+import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,6 +35,9 @@ import terrastore.store.Store;
  */
 public class TCStore implements Store {
 
+    // TODO: buckets marked with tombstones aren't currently removed, only cleared.
+    private final static String TOMBSTONE = TCStore.class.getName() + ".TOMBSTONE";
+    //
     private final ClusteredMap<String, String> buckets;
     private final ConcurrentMap<String, Bucket> instances;
     private SnapshotManager snapshotManager;
@@ -54,7 +59,7 @@ public class TCStore implements Store {
                     Bucket created = new TCBucket(bucket);
                     hydrateBucket(created);
                     instances.put(bucket, created);
-                    if (!buckets.containsKey(bucket)) {
+                    if (!buckets.containsKey(bucket) || buckets.get(bucket).equals(TOMBSTONE)) {
                         buckets.putNoReturn(bucket, bucket);
                     }
                     requested = created;
@@ -95,8 +100,11 @@ public class TCStore implements Store {
     public void remove(String bucket) {
         buckets.lockEntry(bucket);
         try {
-            buckets.remove(bucket);
-            instances.remove(bucket);
+            Bucket removed = instances.remove(bucket);
+            if (removed != null) {
+                removed.clear();
+            }
+            buckets.putNoReturn(bucket, TOMBSTONE);
         } finally {
             buckets.unlockEntry(bucket);
         }
@@ -104,7 +112,31 @@ public class TCStore implements Store {
 
     @Override
     public Set<String> buckets() {
-        return buckets.keySet();
+        Set<String> result = new HashSet<String>();
+        Set<Entry<String, String>> entries = buckets.entrySet();
+        for (Entry<String, String> keyValue : entries) {
+            String bucket = keyValue.getKey();
+            buckets.lockEntry(bucket);
+            try {
+                if (!keyValue.getValue().equals(TOMBSTONE)) {
+                    result.add(bucket);
+                } else {
+                    Bucket instance = instances.get(bucket);
+                    if (instance == null) {
+                        instance = new TCBucket(bucket);
+                        hydrateBucket(instance);
+                        instances.put(bucket, instance);
+                    }
+                    if (instance.size() > 0) {
+                        buckets.put(bucket, bucket);
+                        result.add(bucket);
+                    }
+                }
+            } finally {
+                buckets.unlockEntry(bucket);
+            }
+        }
+        return result;
     }
 
     @Override

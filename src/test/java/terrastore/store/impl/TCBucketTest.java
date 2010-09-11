@@ -60,6 +60,16 @@ public class TCBucketTest {
         bucket.setEventBus(new DisabledEventBus());
     }
 
+    @Test()
+    public void testPutAndClearAndSize() throws StoreOperationException {
+        Key key = new Key("key");
+        Value value = new JsonValue(JSON_VALUE.getBytes());
+        bucket.put(key, value);
+        assertEquals(1, bucket.size());
+        bucket.clear();
+        assertEquals(0, bucket.size());
+    }
+
     @Test
     public void testPutAndGetValue() throws StoreOperationException {
         Key key = new Key("key");
