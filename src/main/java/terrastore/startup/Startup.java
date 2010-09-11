@@ -45,6 +45,7 @@ import terrastore.cluster.ClusterUtils;
 import terrastore.cluster.coordinator.Coordinator;
 import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
+import terrastore.internal.tc.MasterConnectionException;
 import terrastore.internal.tc.TCMaster;
 import terrastore.util.json.JsonUtils;
 
@@ -202,6 +203,7 @@ public class Startup {
 
     public void start() {
         try {
+            // TODO: make connection timeout configurable.
             if (TCMaster.getInstance().connect(master, 60, TimeUnit.SECONDS) == true) {
                 verifyNodeHost();
                 verifyWorkerThreads();
@@ -210,7 +212,7 @@ public class Startup {
                 startMonitor();
                 startCoordinator(context);
             } else {
-                throw new RuntimeException("Cannot connect to master: " + master);
+                throw new MasterConnectionException("Unable to connect to master: " + master);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
