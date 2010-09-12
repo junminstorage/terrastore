@@ -103,6 +103,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
         } catch (Exception ex) {
             LOG.info("Error updating membership information for cluster {}", cluster);
             LOG.debug(ex.getMessage(), ex);
+            clearView(cluster);
         }
     }
 
@@ -126,7 +127,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
     public RemoteNodeFactory getRemoteNodeFactory() {
         return remoteNodeFactory;
     }
-    
+
     private void cancelScheduler() {
         ensembleScheduler.shutdown();
     }
@@ -205,6 +206,10 @@ public class DefaultEnsembleManager implements EnsembleManager {
             }
         }
         perClusterViews.put(cluster, updatedView);
+    }
+
+    private void clearView(Cluster cluster) {
+        perClusterViews.remove(cluster);
     }
 
     private Node findNode(List<Node> nodes, Member member) {
