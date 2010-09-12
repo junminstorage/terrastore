@@ -103,6 +103,10 @@ public class TCStore implements Store {
             Bucket removed = instances.remove(bucket);
             if (removed != null) {
                 removed.clear();
+            } else {
+                Bucket instance = new TCBucket(bucket);
+                hydrateBucket(instance);
+                instance.clear();
             }
             buckets.putNoReturn(bucket, TOMBSTONE);
         } finally {
