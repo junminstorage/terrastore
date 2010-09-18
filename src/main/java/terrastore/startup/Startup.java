@@ -63,7 +63,7 @@ public class Startup {
     private static final int DEFAULT_NODE_PORT = 8226;
     private static final int DEFAULT_SHUTDOWN_PORT = 8180;
     private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
-    private static final String DEFAULT_ALLOWED_ORIGINS = "";
+    private static final String DEFAULT_ALLOWED_ORIGINS = "*";
     private static final long DEFAULT_RECONNECT_TIMEOUT = 10000;
     private static final long DEFAULT_NODE_TIMEOUT = 10000;
     private static final int DEFAULT_HTTP_THREADS = 100;
