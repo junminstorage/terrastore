@@ -27,14 +27,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.StaticChannelPipeline;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
@@ -202,11 +202,7 @@ public class RemoteNode implements Node {
         return commandId;
     }
 
-    private long millisToNanos(long time) {
-        return TimeUnit.MILLISECONDS.toNanos(time);
-    }
-
-    @ChannelPipelineCoverage("all")
+    @Sharable
     private class ClientHandler extends SimpleChannelUpstreamHandler {
 
         @Override
@@ -245,12 +241,12 @@ public class RemoteNode implements Node {
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
-            ChannelPipeline pipeline = Channels.pipeline();
-            pipeline.addLast("LENGTH_HEADER_PREPENDER", new LengthFieldPrepender(4));
-            pipeline.addLast("LENGTH_HEADER_DECODER", new LengthFieldBasedFrameDecoder(maxFrameLength, 0, 4, 0, 4));
-            pipeline.addLast("COMMAND_ENCODER", new SerializerEncoder(new JavaSerializer<Command>()));
-            pipeline.addLast("RESPONSE_DECODER", new SerializerDecoder(new JavaSerializer<RemoteResponse>()));
-            pipeline.addLast("HANDLER", clientHandler);
+            ChannelPipeline pipeline = new StaticChannelPipeline(
+                    new LengthFieldPrepender(4),
+                    new LengthFieldBasedFrameDecoder(maxFrameLength, 0, 4, 0, 4),
+                    new SerializerEncoder(new JavaSerializer<Command>()),
+                    new SerializerDecoder(new JavaSerializer<RemoteResponse>()),
+                    clientHandler);
             return pipeline;
         }
     }
