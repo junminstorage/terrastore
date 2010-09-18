@@ -36,7 +36,6 @@ import terrastore.store.Bucket;
 import terrastore.store.Key;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
-import terrastore.store.types.JsonValue;
 import static terrastore.startup.Constants.*;
 
 /**
@@ -133,12 +132,12 @@ public class DefaultBackupManager implements BackupManager {
     }
 
     private void configureJsonValue() {
-        types.put(new Byte((byte) 1), JsonValue.class);
-        factories.put(JsonValue.class, new ValueFactory() {
+        types.put(new Byte((byte) 1), Value.class);
+        factories.put(Value.class, new ValueFactory() {
 
             @Override
             public Value create(byte[] bytes) {
-                return new JsonValue(bytes);
+                return new Value(bytes);
             }
         });
     }

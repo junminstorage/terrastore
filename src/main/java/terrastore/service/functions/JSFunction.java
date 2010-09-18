@@ -16,7 +16,7 @@
 package terrastore.service.functions;
 
 import terrastore.store.operators.Function;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 import terrastore.util.json.JsonUtils;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -83,7 +83,7 @@ public class JSFunction implements Function {
                         key,
                         ENGINE.eval("(" + JsonUtils.fromMap(value).toString() + ")"),
                         ENGINE.eval("(" + JsonUtils.fromMap(parameters).toString() + ")"));
-                return JsonUtils.toUnmodifiableMap(new JsonValue(result.toString().getBytes()));
+                return JsonUtils.toUnmodifiableMap(new Value(result.toString().getBytes()));
             } catch (Exception ex) {
                 LOG.error("Error in script execution.", ex);
                 throw new IllegalStateException("Error in script execution.", ex);

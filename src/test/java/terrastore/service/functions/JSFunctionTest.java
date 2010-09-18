@@ -16,7 +16,7 @@
 package terrastore.service.functions;
 
 import org.junit.Test;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 import terrastore.util.json.JsonUtils;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +42,7 @@ public class JSFunctionTest {
         params.put("newValue", "test2");
 
         JSFunction function = new JSFunction();
-        JsonValue value = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> newMap = function.apply("key", JsonUtils.toModifiableMap(value), params);
 
         assertEquals("test2", newMap.get("test"));
@@ -65,7 +65,7 @@ public class JSFunctionTest {
         params.put(JSFunction.FUNCTION_NAME, f1);
 
         JSFunction function = new JSFunction();
-        JsonValue value = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> newMap = function.apply("key", JsonUtils.toModifiableMap(value), params);
 
         assertEquals("test2", newMap.get("test"));

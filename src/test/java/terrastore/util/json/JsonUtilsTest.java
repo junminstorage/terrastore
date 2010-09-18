@@ -30,7 +30,6 @@ import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Key;
 import terrastore.store.Value;
-import terrastore.store.types.JsonValue;
 import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 
@@ -54,19 +53,19 @@ public class JsonUtilsTest {
 
     @Test
     public void testValidate() throws Exception {
-        JsonValue json = new JsonValue(JSON_VALUE.getBytes("UTF-8"));
+        Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
         JsonUtils.validate(json);
     }
 
     @Test(expected = IOException.class)
     public void testValidateWithBadJson() throws Exception {
-        JsonValue json = new JsonValue(BAD_JSON_VALUE.getBytes("UTF-8"));
+        Value json = new Value(BAD_JSON_VALUE.getBytes("UTF-8"));
         JsonUtils.validate(json);
     }
 
     @Test
     public void testToModifiableMap() throws Exception {
-        JsonValue json = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
+        Value json = new Value(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> map = JsonUtils.toModifiableMap(json);
         assertNotNull(map);
         assertEquals(1, map.size());
@@ -78,7 +77,7 @@ public class JsonUtilsTest {
 
     @Test
     public void testToUnmodifiableMap() throws Exception {
-        JsonValue json = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
+        Value json = new Value(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> map = JsonUtils.toUnmodifiableMap(json);
         assertNotNull(map);
         assertEquals(1, map.size());
@@ -92,7 +91,7 @@ public class JsonUtilsTest {
     public void testFromMap() throws Exception {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("key", "value");
-        JsonValue value = JsonUtils.fromMap(map);
+        Value value = JsonUtils.fromMap(map);
         assertArrayEquals(SIMPLE_JSON_VALUE.getBytes("UTF-8"), value.getBytes());
     }
 
@@ -115,7 +114,7 @@ public class JsonUtilsTest {
 
     @Test
     public void testWriteValues() throws Exception {
-        JsonValue value = new JsonValue(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
+        Value value = new Value(SIMPLE_JSON_VALUE.getBytes("UTF-8"));
         Map<Key, Value> map = new HashMap<Key, Value>();
         map.put(new Key("value"), value);
         Values values = new Values(map);

@@ -26,10 +26,9 @@ import terrastore.event.ValueChangedEvent;
 import terrastore.event.ValueRemovedEvent;
 import terrastore.store.Key;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Function;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 import static org.junit.Assert.*;
 import static org.easymock.EasyMock.*;
 
@@ -50,7 +49,7 @@ public class TCBucketEventingTest {
     @Test
     public void testPutFiresEventBus() throws StoreOperationException {
         Key key = new Key("key");
-        Value value = new JsonValue(JSON_VALUE.getBytes());
+        Value value = new Value(JSON_VALUE.getBytes());
 
         Capture<Event> capturedEvent = new Capture<Event>();
         EventBus eventBus = createMock(EventBus.class);
@@ -74,7 +73,7 @@ public class TCBucketEventingTest {
     @Test
     public void testPutAndRemoveFireEventBus() throws StoreOperationException {
         Key key = new Key("key");
-        Value value = new JsonValue(JSON_VALUE.getBytes());
+        Value value = new Value(JSON_VALUE.getBytes());
 
         Capture<Event> capturedEvent1 = new Capture<Event>();
         Capture<Event> capturedEvent2 = new Capture<Event>();
@@ -114,8 +113,8 @@ public class TCBucketEventingTest {
     @Test
     public void testPutAndUpdateFireEventBus() throws StoreOperationException {
         Key key = new Key("key");
-        Value value = new JsonValue(JSON_VALUE.getBytes());
-        Value updated = new JsonValue(JSON_UPDATED.getBytes());
+        Value value = new Value(JSON_VALUE.getBytes());
+        Value updated = new Value(JSON_UPDATED.getBytes());
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("p1", "value1");
         Update update = new Update("function", 3000, params);

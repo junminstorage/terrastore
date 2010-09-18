@@ -36,7 +36,6 @@ import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Key;
 import terrastore.store.Value;
-import terrastore.store.types.JsonValue;
 
 /**
  * @author Sergio Bossa
@@ -45,7 +44,7 @@ public class JsonUtils {
 
     private static ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    public static Map<String, Object> toModifiableMap(JsonValue value) {
+    public static Map<String, Object> toModifiableMap(Value value) {
         try {
             return JSON_MAPPER.readValue(new ByteArrayInputStream(value.getBytes()), Map.class);
         } catch (Exception ex) {
@@ -53,7 +52,7 @@ public class JsonUtils {
         }
     }
 
-    public static Map<String, Object> toUnmodifiableMap(JsonValue value) {
+    public static Map<String, Object> toUnmodifiableMap(Value value) {
         try {
             return new JsonStreamingMap(value);
         } catch (Exception ex) {
@@ -61,17 +60,17 @@ public class JsonUtils {
         }
     }
 
-    public static JsonValue fromMap(Map<String, Object> value) {
+    public static Value fromMap(Map<String, Object> value) {
         try {
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             JSON_MAPPER.writeValue(output, value);
-            return new JsonValue(output.toByteArray());
+            return new Value(output.toByteArray());
         } catch (Exception ex) {
             throw new IllegalStateException("Value should have been already validated!");
         }
     }
 
-    public static void validate(JsonValue value) throws IOException {
+    public static void validate(Value value) throws IOException {
         JsonParser parser = new JsonFactory().createJsonParser(value.getBytes());
         JsonToken currentToken = parser.nextToken();
         if (currentToken.equals(JsonToken.START_ARRAY)) {

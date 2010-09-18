@@ -16,7 +16,7 @@
 package terrastore.service.conditions;
 
 import org.junit.Test;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 import terrastore.util.io.InputReader;
 import terrastore.util.json.JsonUtils;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class JSConditionTest {
     @Test
     public void testSatisfiedWithJsonValue() throws Exception {
         String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
-        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
+        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new Value(input.getBytes("UTF-8")));
         String function = "value['favorited']";
         JSCondition condition = new JSCondition();
         assertFalse(condition.isSatisfied("key", json, function));
@@ -40,7 +40,7 @@ public class JSConditionTest {
     @Test
     public void testNotSatisfiedWithJsonValue() throws Exception {
         String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
-        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new JsonValue(input.getBytes("UTF-8")));
+        Map<String, Object> json = JsonUtils.toUnmodifiableMap(new Value(input.getBytes("UTF-8")));
         String function = "value.id == 6626190681";
         JSCondition condition = new JSCondition();
         assertTrue(condition.isSatisfied("key", json, function));

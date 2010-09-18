@@ -31,12 +31,11 @@ import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
-import terrastore.service.UpdateOperationException;
 import terrastore.store.Key;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import static org.easymock.classextension.EasyMock.*;
@@ -149,7 +148,7 @@ public class DefaultUpdateServiceTest {
         replay(node, router);
 
         DefaultUpdateService service = new DefaultUpdateService(router);
-        service.putValue("bucket", new Key("test1"), new JsonValue(JSON_VALUE.getBytes()), new Predicate(null));
+        service.putValue("bucket", new Key("test1"), new Value(JSON_VALUE.getBytes()), new Predicate(null));
 
         verify(node, router);
     }
@@ -188,7 +187,7 @@ public class DefaultUpdateServiceTest {
         router.routeToNodeFor("bucket", new Key("test1"));
         expectLastCall().andReturn(node).once();
         node.send(EasyMock.<UpdateCommand>anyObject());
-        expectLastCall().andReturn(new JsonValue(JSON_VALUE.getBytes())).once();
+        expectLastCall().andReturn(new Value(JSON_VALUE.getBytes())).once();
 
         replay(node, router);
 
@@ -197,7 +196,7 @@ public class DefaultUpdateServiceTest {
 
         DefaultUpdateService service = new DefaultUpdateService(router);
         service.setFunctions(functions);
-        assertEquals(new JsonValue(JSON_VALUE.getBytes()), service.updateValue("bucket", new Key("test1"), new Update("update", 1000, new HashMap<String, Object>())));
+        assertEquals(new Value(JSON_VALUE.getBytes()), service.updateValue("bucket", new Key("test1"), new Update("update", 1000, new HashMap<String, Object>())));
 
         verify(node, router);
     }
