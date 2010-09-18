@@ -28,6 +28,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -70,13 +71,14 @@ public class CorsInterceptor implements PreProcessInterceptor, MessageBodyWriter
     //
     private static final ThreadLocal<String> REQUEST_ORIGIN = new ThreadLocal<String>();
     //
+    private volatile boolean enabled;
     private final Set<String> allowedOrigins;
     private final String accessControlAllowMethods;
     private final String accessControlAllowHeaders;
     private final String accessControlMaxAge;
 
-    public CorsInterceptor(String accessControlAllowOrigin, String accessControlAllowMethods, String accessControlAllowHeaders, String accessControlMaxAge) {
-        this.allowedOrigins = new HashSet<String>(Arrays.asList(accessControlAllowOrigin.split(",")));
+    public CorsInterceptor(String accessControlAllowOrigins, String accessControlAllowMethods, String accessControlAllowHeaders, String accessControlMaxAge) {
+        this.allowedOrigins = extractAllowedOrigins(accessControlAllowOrigins);
         this.accessControlAllowMethods = accessControlAllowMethods;
         this.accessControlAllowHeaders = accessControlAllowHeaders;
         this.accessControlMaxAge = accessControlMaxAge;
@@ -84,7 +86,7 @@ public class CorsInterceptor implements PreProcessInterceptor, MessageBodyWriter
 
     @Override
     public ServerResponse preProcess(HttpRequest request, ResourceMethod method) throws Failure, WebApplicationException {
-        if (!allowedOrigins.isEmpty()) {
+        if (enabled) {
             REQUEST_ORIGIN.set("" + request.getHttpHeaders().getRequestHeaders().getFirst(ORIGIN));
         }
         return null;
@@ -92,13 +94,30 @@ public class CorsInterceptor implements PreProcessInterceptor, MessageBodyWriter
 
     @Override
     public void write(MessageBodyWriterContext context) throws IOException, WebApplicationException {
-        boolean allowsAll = allowedOrigins.contains("*");
-        if (!allowedOrigins.isEmpty() && (allowsAll || allowedOrigins.contains(REQUEST_ORIGIN.get()))) {
-            context.getHeaders().add(ACCESS_CONTROL_ALLOW_ORIGIN, allowsAll ? "*" : REQUEST_ORIGIN.get());
-            context.getHeaders().add(ACCESS_CONTROL_ALLOW_METHODS, accessControlAllowMethods);
-            context.getHeaders().add(ACCESS_CONTROL_ALLOW_HEADERS, accessControlAllowHeaders);
-            context.getHeaders().add(ACCESS_CONTROL_MAX_AGE, accessControlMaxAge);
+        if (enabled) {
+            boolean allowsAll = allowedOrigins.isEmpty();
+            if (allowsAll || allowedOrigins.contains(REQUEST_ORIGIN.get())) {
+                context.getHeaders().add(ACCESS_CONTROL_ALLOW_ORIGIN, allowsAll ? "*" : REQUEST_ORIGIN.get());
+                context.getHeaders().add(ACCESS_CONTROL_ALLOW_METHODS, accessControlAllowMethods);
+                context.getHeaders().add(ACCESS_CONTROL_ALLOW_HEADERS, accessControlAllowHeaders);
+                context.getHeaders().add(ACCESS_CONTROL_MAX_AGE, accessControlMaxAge);
+            }
         }
         context.proceed();
+    }
+
+    private Set<String> extractAllowedOrigins(String accessControlAllowOrigins) {
+        HashSet<String> result = new HashSet<String>(Arrays.asList(accessControlAllowOrigins.split(",")));
+        if (result.isEmpty() || result.contains("!")) {
+            enabled = false;
+            return Collections.EMPTY_SET;
+        } else {
+            enabled = true;
+            if (result.contains("*")) {
+                return Collections.EMPTY_SET;
+            } else {
+                return result;
+            }
+        }
     }
 }
