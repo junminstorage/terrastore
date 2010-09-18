@@ -23,7 +23,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.util.Map;
 
 /**
@@ -63,7 +63,7 @@ public class JSFunction implements Function {
         ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
         try {
             if (ENGINE != null && ENGINE.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
-                ENGINE.eval(new FileReader(this.getClass().getClassLoader().getResource("json.js").getFile()));
+                ENGINE.eval(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("json.js")));
                 ENGINE.eval(WRAPPER);
             } else if (ENGINE == null) {
                 EXCEPTION = new IllegalStateException("No JavaScript engine found.");
@@ -71,7 +71,7 @@ public class JSFunction implements Function {
                 EXCEPTION = new IllegalStateException("The JavaScript engine is not thread-safe.");
             }
         } catch (Exception ex) {
-            EXCEPTION = new IllegalStateException("Error in script execution.", ex);
+            EXCEPTION = new IllegalStateException(ex.getMessage(), ex);
         }
     }
 
