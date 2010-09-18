@@ -28,16 +28,16 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 
 /**
  * @author Sergio Bossa
  */
 public class JsonStreamingMap extends AbstractMap<String, Object> {
 
-    private final JsonValue json;
+    private final Value json;
 
-    public JsonStreamingMap(JsonValue json) {
+    public JsonStreamingMap(Value json) {
         this.json = json;
     }
 
@@ -131,7 +131,7 @@ public class JsonStreamingMap extends AbstractMap<String, Object> {
                 JsonGenerator generator = factory.createJsonGenerator(out, JsonEncoding.UTF8);
                 generator.copyCurrentStructure(parser);
                 generator.close();
-                return new JsonStreamingList(new JsonValue(out.toByteArray()));
+                return new JsonStreamingList(new Value(out.toByteArray()));
             }
 
             private Object extractObject() throws IOException {
@@ -139,7 +139,7 @@ public class JsonStreamingMap extends AbstractMap<String, Object> {
                 JsonGenerator generator = factory.createJsonGenerator(out, JsonEncoding.UTF8);
                 generator.copyCurrentStructure(parser);
                 generator.close();
-                return new JsonStreamingMap(new JsonValue(out.toByteArray()));
+                return new JsonStreamingMap(new Value(out.toByteArray()));
             }
 
             private class JsonEntry implements Map.Entry<String, Object> {

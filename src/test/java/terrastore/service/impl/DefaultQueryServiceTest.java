@@ -35,12 +35,11 @@ import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.router.Router;
 import terrastore.store.Key;
-import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
@@ -158,7 +157,7 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testGetValue() throws Exception {
-        Value value = new JsonValue(JSON_VALUE.getBytes());
+        Value value = new Value(JSON_VALUE.getBytes());
 
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
@@ -189,9 +188,9 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<Key>(Arrays.asList(new Key("test1"))));
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test2"))));
         Map<Key, Value> values1 = new HashMap<Key, Value>();
-        values1.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values1.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
         Map<Key, Value> values2 = new HashMap<Key, Value>();
-        values2.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values2.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
@@ -231,8 +230,8 @@ public class DefaultQueryServiceTest {
         Map<Node, Set<Key>> nodeToKeys = new HashMap<Node, Set<Key>>();
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test1"), new Key("test2"))));
         Map<Key, Value> values = new HashMap<Key, Value>();
-        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
-        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
@@ -300,9 +299,9 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<Key>(Arrays.asList(new Key("test1"))));
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test2"))));
         Map<Key, Value> values1 = new HashMap<Key, Value>();
-        values1.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values1.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
         Map<Key, Value> values2 = new HashMap<Key, Value>();
-        values2.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values2.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Collections.emptySet(), Sets.linked(node1, node2)})).once();
@@ -350,9 +349,9 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<Key>(Arrays.asList(new Key("test1"))));
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test2"))));
         Map<Key, Value> values1 = new HashMap<Key, Value>();
-        values1.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values1.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
         Map<Key, Value> values2 = new HashMap<Key, Value>();
-        values2.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values2.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
@@ -415,9 +414,9 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
         nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
         Map<String, Value> values1 = new HashMap<String, Value>();
-        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values1.put("test1", new Value(JSON_VALUE.getBytes()));
         Map<String, Value> values2 = new HashMap<String, Value>();
-        values2.put("test2", new JsonValue(JSON_VALUE.getBytes()));
+        values2.put("test2", new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
@@ -483,7 +482,7 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<String>(Arrays.asList("test1")));
         nodeToKeys.put(node2, new HashSet<String>(Arrays.asList("test2")));
         Map<String, Value> values1 = new HashMap<String, Value>();
-        values1.put("test1", new JsonValue(JSON_VALUE.getBytes()));
+        values1.put("test1", new Value(JSON_VALUE.getBytes()));
         Map<String, Value> values2 = new HashMap<String, Value>();
 
         router.broadcastRoute();
@@ -578,8 +577,8 @@ public class DefaultQueryServiceTest {
         Map<Node, Set<Key>> nodeToKeys = new HashMap<Node, Set<Key>>();
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test1"), new Key("test2"))));
         Map<Key, Value> values = new HashMap<Key, Value>();
-        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
-        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
@@ -669,9 +668,9 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<Key>(Arrays.asList(new Key("test1"))));
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test2"))));
         Map<Key, Value> values1 = new HashMap<Key, Value>();
-        values1.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values1.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
         Map<Key, Value> values2 = new HashMap<Key, Value>();
-        values2.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values2.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Collections.emptySet(), Sets.linked(node1, node2)})).once();
@@ -724,9 +723,9 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<Key>(Arrays.asList(new Key("test1"))));
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test2"))));
         Map<Key, Value> values1 = new HashMap<Key, Value>();
-        values1.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values1.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
         Map<Key, Value> values2 = new HashMap<Key, Value>();
-        values2.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values2.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
@@ -806,8 +805,8 @@ public class DefaultQueryServiceTest {
         Map<Node, Set<Key>> nodeToKeys = new HashMap<Node, Set<Key>>();
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test1"), new Key("test2"))));
         Map<Key, Value> values = new HashMap<Key, Value>();
-        values.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
-        values.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
+        values.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
@@ -900,9 +899,9 @@ public class DefaultQueryServiceTest {
         nodeToKeys.put(node1, new HashSet<Key>(Arrays.asList(new Key("test1"))));
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test2"))));
         Map<Key, Value> values1 = new HashMap<Key, Value>();
-        values1.put(new Key("test1"), new JsonValue(JSON_VALUE.getBytes()));
+        values1.put(new Key("test1"), new Value(JSON_VALUE.getBytes()));
         Map<Key, Value> values2 = new HashMap<Key, Value>();
-        values2.put(new Key("test2"), new JsonValue(JSON_VALUE.getBytes()));
+        values2.put(new Key("test2"), new Value(JSON_VALUE.getBytes()));
 
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Collections.emptySet(), Sets.linked(node1, node2)})).once();

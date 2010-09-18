@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
 import terrastore.util.io.InputReader;
 import terrastore.store.Value;
-import terrastore.store.types.JsonValue;
 
 /**
  * @author Sergio Bossa
@@ -52,11 +51,11 @@ public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyW
         return type.equals(Value.class);
     }
 
-    public JsonValue readFrom(Class<Value> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+    public Value readFrom(Class<Value> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         byte[] bytes = null;
         try {
             bytes = reader.read(entityStream);
-            JsonValue result = new JsonValue(bytes);
+            Value result = new Value(bytes);
             JsonUtils.validate(result);
             return result;
         } catch (Exception ex) {

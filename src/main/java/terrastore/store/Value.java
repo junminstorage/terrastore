@@ -16,21 +16,59 @@
 package terrastore.store;
 
 import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
+import terrastore.util.json.JsonUtils;
 
 /**
- * Generic value object contained by {@link Bucket} instances.
+ * Json value object contained by {@link Bucket} instances.
  *
  * @author Sergio Bossa
  */
-public interface Value extends Serializable {
+public class Value implements Serializable {
 
-    public byte[] getBytes();
+    private static final long serialVersionUID = 12345678901L;
+    private static final Charset CHARSET = Charset.forName("UTF-8");
+    //
+    private final byte[] bytes;
 
-    public Value dispatch(Key key, Update update, Function function);
+    public Value(byte[] bytes) {
+        this.bytes = bytes;
+    }
 
-    public boolean dispatch(Key key, Predicate predicate, Condition condition);
+    public byte[] getBytes() {
+        return bytes;
+    }
+
+    public Value dispatch(Key key, Update update, Function function) {
+        return JsonUtils.fromMap(function.apply(key.toString(), JsonUtils.toModifiableMap(this), update.getParameters()));
+    }
+
+    public boolean dispatch(Key key, Predicate predicate, Condition condition) {
+        return condition.isSatisfied(key.toString(), JsonUtils.toUnmodifiableMap(this), predicate.getConditionExpression());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Value) {
+            Value other = (Value) obj;
+            return Arrays.equals(other.bytes, this.bytes);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return bytes.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new String(bytes, CHARSET);
+    }
 }

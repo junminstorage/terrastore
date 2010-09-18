@@ -23,7 +23,7 @@ import terrastore.startup.Constants;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.Key;
-import terrastore.store.types.JsonValue;
+import terrastore.store.Value;
 import terrastore.util.collect.Sets;
 import static org.easymock.EasyMock.*;
 
@@ -34,8 +34,8 @@ public class DefaultBackupManagerTest {
 
     private static final Key KEY_1 = new Key("KEY1");
     private static final Key KEY_2 = new Key("KEY2");
-    private static final JsonValue JSON_VALUE_1 = new JsonValue("{\"test1\":\"test1\"}".getBytes(Charset.forName("UTF-8")));
-    private static final JsonValue JSON_VALUE_2 = new JsonValue("{\"test2\":\"test2\"}".getBytes(Charset.forName("UTF-8")));
+    private static final Value JSON_VALUE_1 = new Value("{\"test1\":\"test1\"}".getBytes(Charset.forName("UTF-8")));
+    private static final Value JSON_VALUE_2 = new Value("{\"test2\":\"test2\"}".getBytes(Charset.forName("UTF-8")));
 
     @Before
     public void setUp() {

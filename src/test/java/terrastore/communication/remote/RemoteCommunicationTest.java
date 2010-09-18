@@ -29,10 +29,6 @@ import terrastore.communication.protocol.GetValueCommand;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Value;
-import terrastore.store.features.Predicate;
-import terrastore.store.features.Update;
-import terrastore.store.operators.Condition;
-import terrastore.store.operators.Function;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -48,7 +44,7 @@ public class RemoteCommunicationTest {
         String nodeName = "node";
         String bucketName = "bucket";
         Key valueKey = new Key("key");
-        Value value = new TestValue(VALUE);
+        Value value = new Value(VALUE.getBytes());
 
         Router router = createMock(Router.class);
         Node node = createMock(Node.class);
@@ -86,7 +82,7 @@ public class RemoteCommunicationTest {
         final String nodeName = "node";
         final String bucketName = "bucket";
         final Key valueKey = new Key("key");
-        final Value value = new TestValue(VALUE);
+        final Value value = new Value(VALUE.getBytes());
 
         final Router router = createMock(Router.class);
         final Node node = createMock(Node.class);
@@ -153,7 +149,7 @@ public class RemoteCommunicationTest {
         String nodeName = "node";
         String bucketName = "bucket";
         Key valueKey = new Key("key");
-        final Value value = new TestValue(VALUE);
+        Value value = new Value(VALUE.getBytes());
 
         Router router = createMock(Router.class);
         Node node = createMock(Node.class);
@@ -186,7 +182,7 @@ public class RemoteCommunicationTest {
         String nodeName = "node";
         String bucketName = "bucket";
         Key valueKey = new Key("key");
-        final Value value = new TestValue(VALUE);
+        Value value = new Value(VALUE.getBytes());
 
         Router router = createMock(Router.class);
         Node node = createMock(Node.class);
@@ -224,7 +220,7 @@ public class RemoteCommunicationTest {
         String nodeName = "node";
         String bucketName = "bucket";
         Key valueKey = new Key("key");
-        final Value value = new TestValue(VALUE);
+        Value value = new Value(VALUE.getBytes());
 
         Router router = createMock(Router.class);
         Node node = createMock(Node.class);
@@ -284,34 +280,6 @@ public class RemoteCommunicationTest {
             sender.<Value>send(command);
         } finally {
             verify(router, node);
-        }
-    }
-
-    private static class TestValue implements Value {
-
-        private final String content;
-
-        public TestValue(String content) {
-            this.content = content;
-        }
-
-        @Override
-        public byte[] getBytes() {
-            try {
-                return content.getBytes("UTF-8");
-            } catch (Exception ex) {
-                return null;
-            }
-        }
-
-        @Override
-        public Value dispatch(Key key, Update update, Function function) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public boolean dispatch(Key key, Predicate predicate, Condition condition) {
-            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }
