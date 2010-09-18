@@ -15,7 +15,6 @@
  */
 package terrastore.router.impl;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.junit.Test;
 
 /**
@@ -33,24 +32,31 @@ public class HashFunctionsTest {
     }
 
     @Test
-    public void defaultHashFunctionTest() throws InterruptedException {
-        HashFunction fn = new DefaultHashFunction();
+    public void djbHashFunctionTest() throws InterruptedException {
+        HashFunction fn = new DJBHashFunction();
+        doTest(fn);
+    }
+
+    @Test
+    public void murmurHashFunctionTest() throws InterruptedException {
+        HashFunction fn = new MurmurHashFunction();
         doTest(fn);
     }
 
     public void doTest(HashFunction fn) {
-        int partitions = 100;
-        int iterations = 100000;
+        int partitions = 1024;
+        int iterations = 1000000;
         int[] occurrences = new int[partitions];
+        long start = System.nanoTime();
         for (int i = 0; i < iterations; i++) {
+            // Using System.nanoTime() to simulate similar keys:
             int hash = fn.hash("" + Math.abs(System.nanoTime()), partitions);
             occurrences[hash]++;
         }
 
-        System.err.println("Testing: " + fn);
-        System.err.println(new ToStringBuilder(occurrences).append(occurrences).toString());
-        System.err.println(mean(occurrences));
-        System.err.println(standardDeviation(occurrences));
+        System.err.println("Tested: " + fn);
+        System.err.println("Elapsed time in nanos: " + (System.nanoTime() - start));
+        System.err.println("Standard deviation of hash occurrences (lower is better): " + standardDeviation(occurrences));
     }
 
     private double standardDeviation(int... values) {

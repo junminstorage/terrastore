@@ -132,7 +132,7 @@
         <constructor-arg ref="hashFunction"/>
     </bean>
 
-    <bean id="hashFunction" class="terrastore.router.impl.DefaultHashFunction"/>
+    <bean id="hashFunction" class="terrastore.router.impl.MurmurHashFunction"/>
 
     <!-- Store -->
 
