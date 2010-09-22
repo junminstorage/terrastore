@@ -80,7 +80,7 @@ public class RemoteProcessor extends AbstractProcessor {
             if (serverChannel == null) {
                 serverChannel = server.bind(new InetSocketAddress(host, port));
                 acceptedChannels.add(serverChannel);
-                LOG.info("Bound channel to: {}:{}", host, port);
+                LOG.debug("Bound channel to: {}:{}", host, port);
             } else {
                 throw new IllegalStateException("Request to bind an already active channel!");
             }
@@ -96,7 +96,7 @@ public class RemoteProcessor extends AbstractProcessor {
                 acceptedChannels.close().awaitUninterruptibly();
                 server.releaseExternalResources();
                 serverChannel = null;
-                LOG.info("Unbound channel from: {}:{}", host, port);
+                LOG.debug("Unbound channel from: {}:{}", host, port);
             } else {
                 throw new IllegalStateException("Request to unbind an inactive channel!");
             }

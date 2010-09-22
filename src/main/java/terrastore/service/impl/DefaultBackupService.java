@@ -45,7 +45,7 @@ public class DefaultBackupService implements BackupService {
     public void importBackup(String bucket, String source, String secret) throws CommunicationException, BackupOperationException {
         try {
             if (secret.equals(this.secret)) {
-                LOG.info("Importing backup for bucket {} from {}", bucket, source);
+                LOG.debug("Importing backup for bucket {} from {}", bucket, source);
                 Node node = router.routeToLocalNode();
                 ImportBackupCommand command = new ImportBackupCommand(bucket, source);
                 node.send(command);
@@ -63,7 +63,7 @@ public class DefaultBackupService implements BackupService {
     public void exportBackup(String bucket, String destination, String secret) throws CommunicationException, BackupOperationException {
         try {
             if (secret.equals(this.secret)) {
-                LOG.info("Exporting backup for bucket {} to {}", bucket, destination);
+                LOG.debug("Exporting backup for bucket {} to {}", bucket, destination);
                 Node node = router.routeToLocalNode();
                 ExportBackupCommand command = new ExportBackupCommand(bucket, destination);
                 node.send(command);

@@ -119,7 +119,7 @@ public class DefaultRouter implements Router {
             if (cluster != null) {
                 Node route = clusterPartitioner.getNodeFor(cluster, bucket);
                 if (route != null) {
-                    LOG.info("Routing to cluster {} with node {}", cluster, route);
+                    LOG.debug("Routing to cluster {} and node {}", cluster, route);
                     return route;
                 } else {
                     throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
@@ -141,7 +141,7 @@ public class DefaultRouter implements Router {
             if (cluster != null) {
                 Node route = clusterPartitioner.getNodeFor(cluster, bucket, key);
                 if (route != null) {
-                    LOG.info("Routing to cluster {} with node {}", cluster, route);
+                    LOG.debug("Routing to cluster {} and node {}", cluster, route);
                     return route;
                 } else {
                     throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "Data is currently unavailable. Some clusters of your ensemble may be down or unreachable."));
