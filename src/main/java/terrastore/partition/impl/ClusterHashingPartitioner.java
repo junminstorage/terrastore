@@ -232,7 +232,7 @@ public class ClusterHashingPartitioner implements ClusterPartitioner {
         private Node selectNodeAtPartition(int partition) {
             if (partition >= 0 && partition < ring.length) {
                 Node selected = ring[partition];
-                LOG.info("Getting node {} at partition {}", selected, partition);
+                LOG.debug("Getting node {} at partition {}", selected, partition);
                 return selected;
             } else {
                 // TODO : use proper exception here?

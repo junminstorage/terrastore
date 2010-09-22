@@ -85,7 +85,7 @@ public class RemoteNode implements Node {
                 ChannelFuture future = client.connect(new InetSocketAddress(configuration.getNodeHost(), configuration.getNodePort()));
                 future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
                 if (future.isSuccess()) {
-                    LOG.info("Connected to {}:{}", configuration.getNodeHost(), configuration.getNodePort());
+                    LOG.debug("Connected to {}:{}", configuration.getNodeHost(), configuration.getNodePort());
                     clientChannel = future.getChannel();
                     connected = true;
                 } else {
@@ -105,7 +105,7 @@ public class RemoteNode implements Node {
                 clientChannel.close().awaitUninterruptibly();
                 client.releaseExternalResources();
                 connected = false;
-                LOG.info("Disconnected from : {}:{}", configuration.getNodeHost(), configuration.getNodePort());
+                LOG.debug("Disconnected from : {}:{}", configuration.getNodeHost(), configuration.getNodePort());
             }
         } finally {
             stateLock.unlock();

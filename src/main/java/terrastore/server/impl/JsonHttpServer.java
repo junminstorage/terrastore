@@ -74,7 +74,7 @@ public class JsonHttpServer implements Server {
     @Path("/{bucket}")
     public void removeBucket(@PathParam("bucket") String bucket) throws ServerOperationException {
         try {
-            LOG.debug("Removing bucket {}", bucket);
+            LOG.info("Removing bucket {}", bucket);
             updateService.removeBucket(bucket);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -92,7 +92,7 @@ public class JsonHttpServer implements Server {
     @Consumes("application/json")
     public void putValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, Value value, @QueryParam("predicate") String predicate) throws ServerOperationException {
         try {
-            LOG.debug("Putting value with key {} to bucket {}", key, bucket);
+            LOG.info("Putting value with key {} to bucket {}", key, bucket);
             updateService.putValue(bucket, key, value, new Predicate(predicate));
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -109,7 +109,7 @@ public class JsonHttpServer implements Server {
     @Path("/{bucket}/{key}")
     public void removeValue(@PathParam("bucket") String bucket, @PathParam("key") Key key) throws ServerOperationException {
         try {
-            LOG.debug("Removing value with key {} from bucket {}", key, bucket);
+            LOG.info("Removing value with key {} from bucket {}", key, bucket);
             updateService.removeValue(bucket, key);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -135,7 +135,7 @@ public class JsonHttpServer implements Server {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No update timeout provided!");
                 throw new ServerOperationException(error);
             }
-            LOG.debug("Updating value with key {} from bucket {}", key, bucket);
+            LOG.info("Updating value with key {} and function {} from bucket {}", new Object[]{key, function, bucket});
             Update update = new Update(function, timeout, parameters);
             return updateService.updateValue(bucket, key, update);
         } catch (CommunicationException ex) {
@@ -154,7 +154,7 @@ public class JsonHttpServer implements Server {
     @Produces("application/json")
     public Buckets getBuckets() throws ServerOperationException {
         try {
-            LOG.debug("Getting buckets.");
+            LOG.info("Getting buckets.");
             return new Buckets(queryService.getBuckets());
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -172,7 +172,7 @@ public class JsonHttpServer implements Server {
     @Produces("application/json")
     public Value getValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("predicate") String predicate) throws ServerOperationException {
         try {
-            LOG.debug("Getting value with key {} from bucket {}", key, bucket);
+            LOG.info("Getting value with key {} from bucket {}", key, bucket);
             return queryService.getValue(bucket, key, new Predicate(predicate));
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -190,7 +190,7 @@ public class JsonHttpServer implements Server {
     @Produces("application/json")
     public Values getAllValues(@PathParam("bucket") String bucket, @QueryParam("limit") int limit) throws ServerOperationException {
         try {
-            LOG.debug("Getting all values from bucket {}", bucket);
+            LOG.info("Getting all values from bucket {}", bucket);
             return new Values(queryService.getAllValues(bucket, limit));
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -215,7 +215,7 @@ public class JsonHttpServer implements Server {
             if (comparator == null) {
                 comparator = "";
             }
-            LOG.debug("Executing range query on bucket {}", bucket);
+            LOG.info("Executing range query from {} to {} ordered by {} on bucket {}", new Object[]{startKey, endKey, comparator, bucket});
             Range range = new Range(startKey, endKey, limit, comparator);
             Predicate predicate = new Predicate(predicateExpression);
             return new Values(
@@ -243,7 +243,7 @@ public class JsonHttpServer implements Server {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No predicate provided!");
                 throw new ServerOperationException(error);
             }
-            LOG.debug("Executing predicate-based query on bucket {}", bucket);
+            LOG.info("Executing predicate query {} on bucket {}", predicateExpression, bucket);
             Predicate predicate = new Predicate(predicateExpression);
             return new Values(queryService.queryByPredicate(bucket, predicate));
         } catch (CommunicationException ex) {
@@ -268,7 +268,7 @@ public class JsonHttpServer implements Server {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No secret provided!");
                 throw new ServerOperationException(error);
             }
-            LOG.debug("Importing backup for bucket {} from {}", bucket, source);
+            LOG.info("Importing backup for bucket {} from {}", bucket, source);
             backupService.importBackup(bucket, source, secret);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -292,7 +292,7 @@ public class JsonHttpServer implements Server {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No secret provided!");
                 throw new ServerOperationException(error);
             }
-            LOG.debug("Exporting backup for bucket {} to {}", bucket, destination);
+            LOG.info("Exporting backup for bucket {} to {}", bucket, destination);
             backupService.exportBackup(bucket, destination, secret);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -309,6 +309,7 @@ public class JsonHttpServer implements Server {
     @Path("/_stats/cluster")
     @Produces("application/json")
     public ClusterStats getClusterStats() {
+        LOG.info("Getting cluster statistics.");
         return statsService.getClusterStats();
     }
 

@@ -61,7 +61,7 @@ public class DefaultBackupManager implements BackupManager {
         DataOutputStream dataStream = null;
         try {
             File resource = getResource(destination);
-            LOG.info("Exporting bucket {} to {}", bucket.getName(), resource.getAbsolutePath());
+            LOG.debug("Exporting bucket {} to {}", bucket.getName(), resource.getAbsolutePath());
             dataStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(resource)));
             for (Key key : bucket.keys()) {
                 Value value = bucket.get(key);
@@ -96,7 +96,7 @@ public class DefaultBackupManager implements BackupManager {
         DataInputStream dataStream = null;
         try {
             File resource = getResource(source);
-            LOG.info("Importing bucket {} from {}", bucket.getName(), resource.getAbsolutePath());
+            LOG.debug("Importing bucket {} from {}", bucket.getName(), resource.getAbsolutePath());
             dataStream = new DataInputStream(new BufferedInputStream(new FileInputStream(resource)));
             while (true) {
                 // Read key:
