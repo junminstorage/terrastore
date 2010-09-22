@@ -92,6 +92,7 @@ public class SortedSnapshot {
 
     private File getFile(String fileName) {
         String homeDir = System.getenv(TERRASTORE_HOME) != null ? System.getenv(TERRASTORE_HOME) : System.getProperty(TERRASTORE_HOME);
+        homeDir = homeDir != null ? homeDir : System.getProperty("java.io.tmpdir");
         if (homeDir != null) {
             String separator = System.getProperty("file.separator");
             File file = new File(homeDir + separator + SNAPSHOTS_DIR + separator + fileName + ".hdb");
