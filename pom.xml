@@ -546,8 +546,8 @@
     </build>
     <repositories>
         <repository>
-            <id>local-repository</id>
-            <url>${project.baseUri}/maven2/repo</url>
+            <id>terrastore-repository</id>
+            <url>http://m2.terrastore.googlecode.com/hg/repo</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
