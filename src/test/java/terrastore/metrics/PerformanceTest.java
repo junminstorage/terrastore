@@ -28,10 +28,8 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import terrastore.startup.Startup;
 import static org.junit.Assert.*;
 
 /**
@@ -41,9 +39,6 @@ public class PerformanceTest {
 
     private static final String HOST = "127.0.0.1";
     private static final int NODE1_PORT = 8080;
-    private static final int NODE2_PORT = 8081;
-    private static final int NODE1_SHUTDOWN_PORT = 8280;
-    private static final int NODE2_SHUTDOWN_PORT = 8281;
     private static final int SETUP_TIME = 60000;
     private static final int CONCURRENCY = 8;
     private static final HttpClient HTTP_CLIENT = new HttpClient();
@@ -53,12 +48,6 @@ public class PerformanceTest {
         HTTP_CLIENT.setHttpConnectionManager(new MultiThreadedHttpConnectionManager());
         System.err.println("Waiting " + SETUP_TIME + " millis for system to set up ...");
         Thread.sleep(SETUP_TIME);
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        Startup.shutdown(HOST, NODE1_SHUTDOWN_PORT);
-        Startup.shutdown(HOST, NODE2_SHUTDOWN_PORT);
     }
 
     @Test

@@ -20,14 +20,6 @@
         <constructor-arg ref="statsService"/>
     </bean>
 
-    <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
-    <bean class="terrastore.server.impl.support.JsonValueProvider"/>
-    <bean class="terrastore.server.impl.support.JsonValuesProvider"/>
-    <bean class="terrastore.server.impl.support.JsonBucketsProvider"/>
-    <bean class="terrastore.server.impl.support.JsonParametersProvider"/>
-    <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
-    <bean class="terrastore.server.impl.support.JsonClusterStatsProvider"/>
-
     <!-- Service -->
 
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">

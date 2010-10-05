@@ -15,6 +15,9 @@
  */
 package terrastore.server.impl;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -24,9 +27,16 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import org.jboss.resteasy.plugins.providers.StringTextStar;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.jboss.resteasy.spi.ResteasyDeployment;
+import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
@@ -36,6 +46,15 @@ import terrastore.server.Parameters;
 import terrastore.server.Server;
 import terrastore.server.ServerOperationException;
 import terrastore.server.Values;
+import terrastore.server.impl.cors.CorsController;
+import terrastore.server.impl.cors.CorsInterceptor;
+import terrastore.server.impl.support.JsonBucketsProvider;
+import terrastore.server.impl.support.JsonClusterStatsProvider;
+import terrastore.server.impl.support.JsonErrorMessageProvider;
+import terrastore.server.impl.support.JsonParametersProvider;
+import terrastore.server.impl.support.JsonServerOperationExceptionMapper;
+import terrastore.server.impl.support.JsonValueProvider;
+import terrastore.server.impl.support.JsonValuesProvider;
 import terrastore.service.BackupOperationException;
 import terrastore.service.BackupService;
 import terrastore.service.QueryOperationException;
@@ -57,17 +76,36 @@ import terrastore.store.features.Range;
 @Path("/")
 public class JsonHttpServer implements Server {
 
+    public final static String HTTP_THREADS_CONFIGURATION_PARAMETER = "configuration.httpThreads";
+    public final static String CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER = "configuration.corsAllowedOrigins";
+    //
     private static final Logger LOG = LoggerFactory.getLogger(JsonHttpServer.class);
+    //
     private final UpdateService updateService;
     private final QueryService queryService;
     private final BackupService backupService;
     private final StatsService statsService;
+    //
+    private org.mortbay.jetty.Server jetty;
 
     public JsonHttpServer(UpdateService updateService, QueryService queryService, BackupService backupService, StatsService statsService) {
         this.updateService = updateService;
         this.queryService = queryService;
         this.backupService = backupService;
         this.statsService = statsService;
+    }
+
+    @Override
+    public synchronized void start(String host, int port, Map<String, String> configuration) throws Exception {
+        ResteasyDeployment deployment = new ResteasyDeployment();
+        registerProviders(deployment, configuration);
+        registerResources(deployment, configuration);
+        startServer(host, port, deployment, configuration);
+    }
+
+    @Override
+    public synchronized void stop() throws Exception {
+        jetty.stop();
     }
 
     @DELETE
@@ -324,5 +362,45 @@ public class JsonHttpServer implements Server {
     @Override
     public BackupService getBackupService() {
         return backupService;
+    }
+
+    private void registerProviders(ResteasyDeployment deployment, Map<String, String> configuration) {
+        List providers = Arrays.asList(
+                new JsonBucketsProvider(),
+                new JsonValuesProvider(),
+                new JsonValueProvider(),
+                new JsonClusterStatsProvider(),
+                new JsonErrorMessageProvider(),
+                new JsonParametersProvider(),
+                new JsonServerOperationExceptionMapper(),
+                new StringTextStar(),
+                new CorsInterceptor(
+                configuration.get(CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER),
+                "POST, GET, PUT, DELETE, OPTIONS",
+                "CONTENT-TYPE",
+                "86400"));
+        deployment.setProviders(providers);
+    }
+
+    private void registerResources(ResteasyDeployment deployment, Map<String, String> configuration) {
+        List resources = Arrays.asList(this, new CorsController());
+        deployment.setResources(resources);
+    }
+
+    private void startServer(String host, int port, ResteasyDeployment deployment, Map<String, String> configuration) throws Exception {
+        jetty = new org.mortbay.jetty.Server();
+        SelectChannelConnector connector = new SelectChannelConnector();
+        QueuedThreadPool threadPool = new QueuedThreadPool();
+        Context context = new Context(jetty, "/", Context.NO_SESSIONS);
+        context.setAttribute(ResteasyDeployment.class.getName(), deployment);
+        context.addServlet(new ServletHolder(new HttpServletDispatcher()), "/*");
+        connector.setHost(host);
+        connector.setPort(port);
+        threadPool.setMaxThreads(Integer.parseInt(configuration.get(HTTP_THREADS_CONFIGURATION_PARAMETER)));
+        jetty.setConnectors(new Connector[]{connector});
+        jetty.setThreadPool(threadPool);
+        jetty.setGracefulShutdown(500);
+        jetty.setStopAtShutdown(true);
+        jetty.start();
     }
 }
