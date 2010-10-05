@@ -16,7 +16,6 @@
 package terrastore.server.impl;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -32,17 +31,9 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.easymock.classextension.EasyMock;
-import org.jboss.resteasy.plugins.server.embedded.EmbeddedJaxrsServer;
 import org.junit.Test;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
-import terrastore.server.impl.support.JsonBucketsProvider;
-import terrastore.server.impl.support.JsonClusterStatsProvider;
-import terrastore.server.impl.support.JsonErrorMessageProvider;
-import terrastore.server.impl.support.JsonValuesProvider;
-import terrastore.server.impl.support.JsonParametersProvider;
-import terrastore.server.impl.support.JsonServerOperationExceptionMapper;
-import terrastore.server.impl.support.JsonValueProvider;
 import terrastore.service.BackupService;
 import terrastore.service.QueryService;
 import terrastore.service.StatsService;
@@ -53,7 +44,7 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.store.Value;
-import terrastore.test.support.JettyJaxrsServer;
+import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import terrastore.util.json.JsonUtils;
 import static org.easymock.classextension.EasyMock.*;
@@ -87,8 +78,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/_stats/cluster");
         method.setRequestHeader("Content-Type", "application/json");
@@ -117,8 +108,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/import?source=source&secret=secret");
         method.setRequestEntity(new StringRequestEntity("", "application/json", null));
@@ -145,8 +136,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/export?destination=destination&secret=secret");
         method.setRequestEntity(new StringRequestEntity("", "application/json", null));
@@ -173,8 +164,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket");
         client.executeMethod(method);
@@ -200,8 +191,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/test1");
         method.setRequestHeader("Content-Type", "application/json");
@@ -229,8 +220,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/test1?predicate=test:condition");
         method.setRequestHeader("Content-Type", "application/json");
@@ -258,8 +249,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/test1");
         client.executeMethod(method);
@@ -285,8 +276,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/test1");
         method.setRequestHeader("Content-Type", "application/json");
@@ -315,8 +306,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/test1?predicate=test:condition");
         method.setRequestHeader("Content-Type", "application/json");
@@ -348,8 +339,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket");
         method.setRequestHeader("Content-Type", "application/json");
@@ -382,8 +373,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/");
         method.setRequestHeader("Content-Type", "application/json");
@@ -416,8 +407,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -450,8 +441,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&limit=2&comparator=order&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -484,8 +475,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -518,8 +509,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order&predicate=test:condition&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -552,8 +543,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/predicate?predicate=test:condition");
         method.setRequestHeader("Content-Type", "application/json");
@@ -585,8 +576,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/key/update?timeout=1000&function=update");
         method.setRequestHeader("Content-Type", "application/json");
@@ -615,8 +606,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket");
         method.setRequestHeader("Content-Type", "application/json");
@@ -641,8 +632,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer serverResource = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        EmbeddedJaxrsServer server = startServerWith(serverResource);
+        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
+        startServerWith(server);
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/key");
         method.setRequestHeader("Content-Type", "application/json");
@@ -658,26 +649,13 @@ public class JsonHttpServerTest {
         verify(updateService, queryService, backupService, statsService);
     }
 
-    private EmbeddedJaxrsServer startServerWith(JsonHttpServer resource) throws Exception {
-        JettyJaxrsServer server = new JettyJaxrsServer("127.0.0.1", 8080);
-        server.getDeployment().setRegisterBuiltin(true);
-        server.getDeployment().setProviderClasses(Arrays.asList(
-                JsonErrorMessageProvider.class.getName(),
-                JsonValuesProvider.class.getName(),
-                JsonBucketsProvider.class.getName(),
-                JsonParametersProvider.class.getName(),
-                JsonValueProvider.class.getName(),
-                JsonServerOperationExceptionMapper.class.getName(),
-                JsonClusterStatsProvider.class.getName()));
-        server.getDeployment().setResources(Arrays.<Object>asList(resource));
-        server.start();
+    private void startServerWith(JsonHttpServer server) throws Exception {
+        server.start("127.0.0.1", 8080, Maps.hash(new String[]{JsonHttpServer.CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER, JsonHttpServer.HTTP_THREADS_CONFIGURATION_PARAMETER}, new String[]{"*", "10"}));
 
         Thread.sleep(1000);
-
-        return server;
     }
 
-    private void stopServer(EmbeddedJaxrsServer server) throws Exception {
+    private void stopServer(JsonHttpServer server) throws Exception {
         server.stop();
 
         Thread.sleep(1000);

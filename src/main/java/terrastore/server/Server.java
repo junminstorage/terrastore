@@ -15,6 +15,7 @@
  */
 package terrastore.server;
 
+import java.util.Map;
 import terrastore.common.ClusterStats;
 import terrastore.service.BackupService;
 import terrastore.service.QueryService;
@@ -29,6 +30,23 @@ import terrastore.store.Value;
  * @author Sergio Bossa
  */
 public interface Server {
+
+    /**
+     * Start the server.
+     *
+     * @param host The host address to bind to.
+     * @param port The port to bind to.
+     * @param configuration An implementation-specific parameters map.
+     * @throws Exception
+     */
+    public void start(String host, int port, Map<String, String> configuration) throws Exception;
+
+    /**
+     * Stop the server.
+     *
+     * @throws Exception
+     */
+    public void stop() throws Exception;
 
     /**
      * Remove the given bucket.
