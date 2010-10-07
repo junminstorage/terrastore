@@ -13,19 +13,22 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.event;
+package terrastore.event.impl;
+
+import terrastore.event.ActionExecutor;
+import terrastore.event.EventListener;
 
 /**
  * @author Sergio Bossa
  */
 public class ValueRemovedEvent extends AbstractEvent {
 
-    public ValueRemovedEvent(String bucket, String key) {
-        super(bucket, key, null);
+    public ValueRemovedEvent(String bucket, String key, byte[] oldValue) {
+        super(bucket, key, oldValue, null);
     }
 
     @Override
-    public void dispatch(EventListener listener) {
-        listener.onValueRemoved(bucket, key);
+    public void dispatch(EventListener listener, ActionExecutor actionExecutor) {
+        listener.onValueRemoved(this, actionExecutor);
     }
 }

@@ -15,15 +15,16 @@
  */
 package terrastore.event.impl;
 
-import terrastore.event.ValueChangedEvent;
-import terrastore.event.ValueRemovedEvent;
+import terrastore.event.Event;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Test;
+import terrastore.event.ActionExecutor;
 import terrastore.event.EventListener;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
@@ -39,12 +40,15 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
+        Event event = new ValueChangedEvent(bucket, key, null, value);
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener = createMock(EventListener.class);
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true);
-        listener.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener.onValueChanged(eq(event), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -60,9 +64,9 @@ public class MemoryEventBusTest {
 
         replay(listener);
 
-        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), actionExecutor);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        eventBus.publish(event);
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
@@ -76,12 +80,16 @@ public class MemoryEventBusTest {
         final CountDownLatch listenerLatch = new CountDownLatch(1);
         String bucket = "bucket";
         String key = "key";
+        byte[] value = "value".getBytes("UTF-8");
+        Event event = new ValueRemovedEvent(bucket, key, value);
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener = createMock(EventListener.class);
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true);
-        listener.onValueRemoved(eq(bucket), eq(key));
+        listener.onValueRemoved(eq(event), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -97,9 +105,9 @@ public class MemoryEventBusTest {
 
         replay(listener);
 
-        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), actionExecutor);
 
-        eventBus.publish(new ValueRemovedEvent(bucket, key));
+        eventBus.publish(event);
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
@@ -114,7 +122,10 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
+        Event event = new ValueChangedEvent(bucket, key, null, value);
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener1 = createMock(EventListener.class);
         EventListener listener2 = createMock(EventListener.class);
         makeThreadSafe(listener1, true);
@@ -123,7 +134,7 @@ public class MemoryEventBusTest {
         expectLastCall().andReturn(true);
         listener2.observes(bucket);
         expectLastCall().andReturn(true);
-        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener1.onValueChanged(eq(event), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -132,7 +143,7 @@ public class MemoryEventBusTest {
                 return null;
             }
         }).once();
-        listener2.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener2.onValueChanged(eq(event), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -152,9 +163,9 @@ public class MemoryEventBusTest {
 
         replay(listener1, listener2);
 
-        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2), actionExecutor);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        eventBus.publish(event);
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
@@ -169,7 +180,10 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
+        Event event = new ValueChangedEvent(bucket, key, null, value);
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener1 = createMock(EventListener.class);
         EventListener listener2 = createMock(EventListener.class);
         makeThreadSafe(listener1, true);
@@ -178,7 +192,7 @@ public class MemoryEventBusTest {
         expectLastCall().andReturn(true);
         listener2.observes(bucket);
         expectLastCall().andReturn(false);
-        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener1.onValueChanged(eq(event), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -198,9 +212,9 @@ public class MemoryEventBusTest {
 
         replay(listener1, listener2);
 
-        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2), actionExecutor);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        eventBus.publish(event);
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
@@ -215,7 +229,11 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
+        Event event1 = new ValueChangedEvent(bucket, key, null, value);
+        Event event2 = new ValueChangedEvent(bucket, key, null, value);
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener1 = createMock(EventListener.class);
         EventListener listener2 = createMock(EventListener.class);
         makeThreadSafe(listener1, true);
@@ -224,7 +242,7 @@ public class MemoryEventBusTest {
         expectLastCall().andReturn(true).times(2);
         listener2.observes(bucket);
         expectLastCall().andReturn(true).times(2);
-        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener1.onValueChanged(eq(event1), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -232,8 +250,8 @@ public class MemoryEventBusTest {
                 listenerLatch.countDown();
                 return null;
             }
-        }).times(2);
-        listener2.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        });
+        listener1.onValueChanged(eq(event2), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -241,7 +259,25 @@ public class MemoryEventBusTest {
                 listenerLatch.countDown();
                 return null;
             }
-        }).times(2);
+        });
+        listener2.onValueChanged(eq(event1), same(actionExecutor));
+        expectLastCall().andAnswer(new IAnswer<Object>() {
+
+            @Override
+            public Object answer() throws Throwable {
+                listenerLatch.countDown();
+                return null;
+            }
+        });
+        listener2.onValueChanged(eq(event2), same(actionExecutor));
+        expectLastCall().andAnswer(new IAnswer<Object>() {
+
+            @Override
+            public Object answer() throws Throwable {
+                listenerLatch.countDown();
+                return null;
+            }
+        });
         listener1.init();
         expectLastCall().once();
         listener2.init();
@@ -253,10 +289,10 @@ public class MemoryEventBusTest {
 
         replay(listener1, listener2);
 
-        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2), actionExecutor);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        eventBus.publish(event1);
+        eventBus.publish(event2);
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
@@ -274,11 +310,13 @@ public class MemoryEventBusTest {
         final String key = "key";
         final byte[] value = "value".getBytes("UTF-8");
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener = createMock(EventListener.class);
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true).times(threads);
-        listener.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener.onValueChanged(EasyMock.<Event>anyObject(), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -294,14 +332,14 @@ public class MemoryEventBusTest {
 
         replay(listener);
 
-        final MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
+        final MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), actionExecutor);
         final ExecutorService publisher = Executors.newCachedThreadPool();
         for (int i = 0; i < threads; i++) {
             publisher.submit(new Runnable() {
 
                 @Override
                 public void run() {
-                    eventBus.publish(new ValueChangedEvent(bucket, key, value));
+                    eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
                 }
             });
         }
@@ -320,11 +358,13 @@ public class MemoryEventBusTest {
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener = createMock(EventListener.class);
         makeThreadSafe(listener, true);
         listener.observes(bucket);
         expectLastCall().andReturn(true).times(2);
-        listener.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener.onValueChanged(EasyMock.<Event>anyObject(), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -340,11 +380,11 @@ public class MemoryEventBusTest {
 
         replay(listener);
 
-        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), 1);
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), actionExecutor, 1);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
         Thread.sleep(3000);
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
@@ -359,6 +399,8 @@ public class MemoryEventBusTest {
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener = createMock(EventListener.class);
         makeThreadSafe(listener, true);
         listener.init();
@@ -368,21 +410,23 @@ public class MemoryEventBusTest {
 
         replay(listener);
         try {
-            MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener));
+            MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), actionExecutor);
             eventBus.shutdown();
-            eventBus.publish(new ValueChangedEvent(bucket, key, value));
+            eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
         } finally {
             verify(listener);
         }
     }
 
     @Test
-    public void testLenientBehavior() throws Exception {
+    public void testLenientBehaviorOnException() throws Exception {
         final CountDownLatch listenerLatch = new CountDownLatch(2);
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
 
+        ActionExecutor actionExecutor = createMock(ActionExecutor.class);
+        makeThreadSafe(actionExecutor, true);
         EventListener listener1 = createMock(EventListener.class);
         EventListener listener2 = createMock(EventListener.class);
         makeThreadSafe(listener1, true);
@@ -391,9 +435,9 @@ public class MemoryEventBusTest {
         expectLastCall().andReturn(true);
         listener2.observes(bucket);
         expectLastCall().andReturn(true);
-        listener1.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener1.onValueChanged(EasyMock.<Event>anyObject(), same(actionExecutor));
         expectLastCall().andThrow(new RuntimeException()).once();
-        listener2.onValueChanged(eq(bucket), eq(key), aryEq(value));
+        listener2.onValueChanged(EasyMock.<Event>anyObject(), same(actionExecutor));
         expectLastCall().andAnswer(new IAnswer<Object>() {
 
             @Override
@@ -413,9 +457,9 @@ public class MemoryEventBusTest {
 
         replay(listener1, listener2);
 
-        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2));
+        MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2), actionExecutor);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, value));
+        eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
 
         assertFalse(listenerLatch.await(3, TimeUnit.SECONDS));
 

@@ -52,7 +52,23 @@ public class JsonUtils {
         }
     }
 
+    public static Map<String, Object> toModifiableMap(byte[] value) {
+        try {
+            return JSON_MAPPER.readValue(new ByteArrayInputStream(value), Map.class);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Value should have been already validated!");
+        }
+    }
+
     public static Map<String, Object> toUnmodifiableMap(Value value) {
+        try {
+            return new JsonStreamingMap(value);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Value should have been already validated!");
+        }
+    }
+
+    public static Map<String, Object> toUnmodifiableMap(byte[] value) {
         try {
             return new JsonStreamingMap(value);
         } catch (Exception ex) {

@@ -25,6 +25,13 @@ import java.util.List;
 public interface EventBus {
 
     /**
+     * Get the {@link ActionExecutor} used to execute actions on listeners.
+     *
+     * @return The action executor.
+     */
+    public ActionExecutor getActionExecutor();
+
+    /**
      * Get the list or registered {@link EventListener}s.
      *
      * @return The list of listeners.

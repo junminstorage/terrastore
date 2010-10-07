@@ -35,19 +35,18 @@ public interface EventListener extends Serializable {
     /**
      * React when a given value changes.
      *
-     * @param bucket Name of the bucket containing the changed value.
-     * @param key The key of the changing value.
-     * @param value The changed value.
+     * @param event The {@link Event} object carrying information about the current event.
+     * @param executor The {@link ActionExecutor} for eventually creating and executing {@link Action}s.
      */
-    public void onValueChanged(String bucket, String key, byte[] value);
+    public void onValueChanged(Event event, ActionExecutor executor);
 
     /**
      * React when a given value is removed.
      *
-     * @param bucket Name of the bucket containing the removed value.
-     * @param key The key of the removed value.
+     * @param event The {@link Event} object carrying information about the current event.
+     * @param executor The {@link ActionExecutor} for eventually creating and executing {@link Action}s.
      */
-    public void onValueRemoved(String bucket, String key);
+    public void onValueRemoved(Event event, ActionExecutor executor);
 
     /**
      * Callback to initialize things on listener registration.
