@@ -35,9 +35,13 @@ import terrastore.store.Value;
  */
 public class JsonStreamingMap extends AbstractMap<String, Object> {
 
-    private final Value json;
+    private final byte[] json;
 
     public JsonStreamingMap(Value json) {
+        this.json = json.getBytes();
+    }
+
+    public JsonStreamingMap(byte[] json) {
         this.json = json;
     }
 
@@ -85,7 +89,7 @@ public class JsonStreamingMap extends AbstractMap<String, Object> {
 
             public JsonStreamingIterator() throws IOException {
                 this.factory = new JsonFactory();
-                this.parser = factory.createJsonParser(json.getBytes());
+                this.parser = factory.createJsonParser(json);
                 this.parser.nextToken();
             }
 

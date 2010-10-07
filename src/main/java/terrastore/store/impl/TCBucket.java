@@ -30,8 +30,8 @@ import org.terracotta.locking.ClusteredLock;
 import terrastore.internal.tc.TCMaster;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
-import terrastore.event.ValueChangedEvent;
-import terrastore.event.ValueRemovedEvent;
+import terrastore.event.impl.ValueChangedEvent;
+import terrastore.event.impl.ValueRemovedEvent;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
@@ -77,8 +77,8 @@ public class TCBucket implements Bucket {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            bucket.unlockedPutNoReturn(key.toString(), valueToBytes(value));
-            eventBus.publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
+            byte[] old = bucket.put(key.toString(), valueToBytes(value));
+            eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value.getBytes()));
         } finally {
             unlock(key);
         }
@@ -88,10 +88,10 @@ public class TCBucket implements Bucket {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            Value old = bytesToValue(bucket.get(key.toString()));
-            if (old == null || old.dispatch(key, predicate, condition)) {
-                bucket.unlockedPutNoReturn(key.toString(), valueToBytes(value));
-                eventBus.publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
+            byte[] old = bucket.get(key.toString());
+            if (old == null || bytesToValue(old).dispatch(key, predicate, condition)) {
+                bucket.put(key.toString(), valueToBytes(value));
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value.getBytes()));
                 return true;
             } else {
                 return false;
@@ -132,7 +132,7 @@ public class TCBucket implements Bucket {
         try {
             Value removed = bytesToValue(bucket.remove(key.toString()));
             if (removed != null) {
-                eventBus.publish(new ValueRemovedEvent(name, key.toString()));
+                eventBus.publish(new ValueRemovedEvent(name, key.toString(), removed.getBytes()));
             }
         } finally {
             unlock(key);
@@ -147,18 +147,18 @@ public class TCBucket implements Bucket {
         // and also publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            final Value value = bytesToValue(bucket.get(key.toString()));
+            final byte[] value = bucket.get(key.toString());
             if (value != null) {
                 task = GlobalExecutor.getExecutor().submit(new Callable<Value>() {
 
                     @Override
                     public Value call() {
-                        return value.dispatch(key, update, function);
+                        return bytesToValue(value).dispatch(key, update, function);
                     }
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.unlockedPutNoReturn(key.toString(), valueToBytes(result));
-                eventBus.publish(new ValueChangedEvent(name, key.toString(), result.getBytes()));
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result.getBytes()));
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));

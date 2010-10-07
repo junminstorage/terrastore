@@ -134,6 +134,10 @@
 
     <!-- Events -->
 
+    <bean id="actionExecutor" class="terrastore.event.impl.DefaultActionExecutor">
+        <constructor-arg ref="updateService"/>
+    </bean>
+
     <bean id="memoryEventBus" class="terrastore.event.impl.MemoryEventBus" destroy-method="shutdown" lazy-init="true">
         <constructor-arg>
             <bean class="terrastore.util.annotation.AutowiringList">
@@ -142,6 +146,7 @@
                 <constructor-arg value="terrastore.event.EventListener"/>
             </bean>
         </constructor-arg>
+        <constructor-arg ref="actionExecutor"/>
         <constructor-arg value="3600"/>
     </bean>
 
@@ -153,6 +158,7 @@
                 <constructor-arg value="terrastore.event.EventListener"/>
             </bean>
         </constructor-arg>
+        <constructor-arg ref="actionExecutor"/>
         <constructor-arg value="${eventBus.amq.broker}"/>
     </bean>
 

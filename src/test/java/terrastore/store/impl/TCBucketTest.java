@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.event.ActionExecutor;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.Event;
 import terrastore.event.EventBus;
@@ -406,6 +407,11 @@ public class TCBucketTest {
     }
 
     private static class DisabledEventBus implements EventBus {
+
+        @Override
+        public ActionExecutor getActionExecutor() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
 
         @Override
         public List<EventListener> getEventListeners() {

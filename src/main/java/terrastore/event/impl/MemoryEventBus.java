@@ -28,6 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.event.ActionExecutor;
 import terrastore.event.Event;
 import terrastore.event.EventBus;
 import terrastore.event.EventListener;
@@ -51,20 +52,27 @@ public class MemoryEventBus implements EventBus {
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final Lock stateLock = new ReentrantLock();
     private final List<EventListener> eventListeners;
+    private final ActionExecutor actionExecutor;
     private final int maxIdleTimeInSeconds;
     private final boolean enabled;
     private volatile boolean shutdown;
 
-    public MemoryEventBus(List<EventListener> eventListeners) {
-        this(eventListeners, DEFAULT_MAX_IDLE_TIME);
+    public MemoryEventBus(List<EventListener> eventListeners, ActionExecutor actionExecutor) {
+        this(eventListeners, actionExecutor, DEFAULT_MAX_IDLE_TIME);
     }
 
-    public MemoryEventBus(List<EventListener> eventListeners, int maxIdleTimeInSeconds) {
+    public MemoryEventBus(List<EventListener> eventListeners, ActionExecutor actionExecutor, int maxIdleTimeInSeconds) {
         LOG.info("Configuring event bus: {}", this.getClass().getName());
         this.eventListeners = eventListeners;
+        this.actionExecutor = actionExecutor;
         this.maxIdleTimeInSeconds = maxIdleTimeInSeconds;
         this.enabled = this.eventListeners.size() > 0;
         initListeners(this.eventListeners);
+    }
+
+    @Override
+    public ActionExecutor getActionExecutor() {
+        return actionExecutor;
     }
 
     @Override
@@ -116,7 +124,7 @@ public class MemoryEventBus implements EventBus {
             try {
                 if (!queues.containsKey(bucket)) {
                     queue = new LinkedBlockingQueue<Event>();
-                    processor = new EventProcessor(eventListeners, queue, new IdleCallback(bucket), maxIdleTimeInSeconds);
+                    processor = new EventProcessor(eventListeners, actionExecutor, queue, new IdleCallback(bucket), maxIdleTimeInSeconds);
                     queues.put(bucket, queue);
                     processors.put(bucket, processor);
                     threadPool.submit(processor);
@@ -162,14 +170,16 @@ public class MemoryEventBus implements EventBus {
     private static class EventProcessor implements Runnable {
 
         private final List<EventListener> eventListeners;
+        private final ActionExecutor actionExecutor;
         private final BlockingQueue<Event> queue;
         private final IdleCallback idleCallback;
         private final int maxIdleTimeInSeconds;
         private volatile Thread currentThread;
         private volatile boolean running;
 
-        public EventProcessor(List<EventListener> eventListeners, BlockingQueue<Event> queue, IdleCallback idleCallback, int maxIdleTimeInSeconds) {
+        public EventProcessor(List<EventListener> eventListeners, ActionExecutor actionExecutor, BlockingQueue<Event> queue, IdleCallback idleCallback, int maxIdleTimeInSeconds) {
             this.eventListeners = eventListeners;
+            this.actionExecutor = actionExecutor;
             this.queue = queue;
             this.idleCallback = idleCallback;
             this.maxIdleTimeInSeconds = maxIdleTimeInSeconds;
@@ -211,7 +221,7 @@ public class MemoryEventBus implements EventBus {
             for (EventListener listener : eventListeners) {
                 if (listener.observes(event.getBucket())) {
                     try {
-                        event.dispatch(listener);
+                        event.dispatch(listener, actionExecutor);
                     } catch (Exception ex) {
                         LOG.warn("Failed listener: " + listener.toString());
                         LOG.warn(ex.getMessage(), ex);

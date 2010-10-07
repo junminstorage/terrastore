@@ -13,19 +13,22 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.event;
+package terrastore.event.impl;
+
+import terrastore.event.ActionExecutor;
+import terrastore.event.EventListener;
 
 /**
  * @author Sergio Bossa
  */
 public class ValueChangedEvent extends AbstractEvent {
 
-    public ValueChangedEvent(String bucket, String key, byte[] value) {
-        super(bucket, key, value);
+    public ValueChangedEvent(String bucket, String key, byte[] oldValue, byte[] newValue) {
+        super(bucket, key, oldValue, newValue);
     }
 
     @Override
-    public void dispatch(EventListener listener) {
-        listener.onValueChanged(bucket, key, value);
+    public void dispatch(EventListener listener, ActionExecutor actionExecutor) {
+        listener.onValueChanged(this, actionExecutor);
     }
 }
