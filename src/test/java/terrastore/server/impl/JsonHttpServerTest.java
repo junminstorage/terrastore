@@ -78,8 +78,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/_stats/cluster");
         method.setRequestHeader("Content-Type", "application/json");
@@ -108,8 +108,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/import?source=source&secret=secret");
         method.setRequestEntity(new StringRequestEntity("", "application/json", null));
@@ -136,8 +136,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/export?destination=destination&secret=secret");
         method.setRequestEntity(new StringRequestEntity("", "application/json", null));
@@ -164,8 +164,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket");
         client.executeMethod(method);
@@ -191,8 +191,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/test1");
         method.setRequestHeader("Content-Type", "application/json");
@@ -220,8 +220,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/test1?predicate=test:condition");
         method.setRequestHeader("Content-Type", "application/json");
@@ -249,8 +249,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/test1");
         client.executeMethod(method);
@@ -276,8 +276,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/test1");
         method.setRequestHeader("Content-Type", "application/json");
@@ -306,8 +306,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/test1?predicate=test:condition");
         method.setRequestHeader("Content-Type", "application/json");
@@ -339,8 +339,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket");
         method.setRequestHeader("Content-Type", "application/json");
@@ -373,8 +373,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/");
         method.setRequestHeader("Content-Type", "application/json");
@@ -407,8 +407,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -441,8 +441,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&limit=2&comparator=order&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -475,8 +475,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -509,8 +509,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/range?startKey=test1&endKey=test2&comparator=order&predicate=test:condition&timeToLive=0");
         method.setRequestHeader("Content-Type", "application/json");
@@ -543,8 +543,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         GetMethod method = new GetMethod("http://localhost:8080/bucket/predicate?predicate=test:condition");
         method.setRequestHeader("Content-Type", "application/json");
@@ -576,15 +576,15 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8080/bucket/key/update?timeout=1000&function=update");
         method.setRequestHeader("Content-Type", "application/json");
         method.setRequestEntity(new StringRequestEntity(UPDATE_PARAMS, "application/json", null));
         client.executeMethod(method);
 
-        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        assertEquals(HttpStatus.SC_SEE_OTHER, method.getStatusCode());
         assertEquals(JSON_VALUE, method.getResponseBodyAsString());
 
         method.releaseConnection();
@@ -606,8 +606,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket");
         method.setRequestHeader("Content-Type", "application/json");
@@ -632,8 +632,8 @@ public class JsonHttpServerTest {
 
         replay(updateService, queryService, backupService, statsService);
 
-        JsonHttpServer server = new JsonHttpServer(updateService, queryService, backupService, statsService);
-        startServerWith(server);
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
         HttpClient client = new HttpClient();
         PutMethod method = new PutMethod("http://localhost:8080/bucket/key");
         method.setRequestHeader("Content-Type", "application/json");
@@ -649,10 +649,13 @@ public class JsonHttpServerTest {
         verify(updateService, queryService, backupService, statsService);
     }
 
-    private void startServerWith(JsonHttpServer server) throws Exception {
+    private JsonHttpServer startServerWith(UpdateService updateService, QueryService queryService, BackupService backupService, StatsService statsService) throws Exception {
+        JsonHttpServer server = new JsonHttpServer(new CoreServer(updateService, queryService, backupService, statsService));
         server.start("127.0.0.1", 8080, Maps.hash(new String[]{JsonHttpServer.CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER, JsonHttpServer.HTTP_THREADS_CONFIGURATION_PARAMETER}, new String[]{"*", "10"}));
 
         Thread.sleep(1000);
+
+        return server;
     }
 
     private void stopServer(JsonHttpServer server) throws Exception {

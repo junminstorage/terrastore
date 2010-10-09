@@ -19,11 +19,15 @@
 
     <!-- Server -->
 
-    <bean id="server" class="terrastore.server.impl.JsonHttpServer">
+    <bean id="server" class="terrastore.server.impl.CoreServer">
         <constructor-arg ref="updateService"/>
         <constructor-arg ref="queryService"/>
         <constructor-arg ref="backupService"/>
         <constructor-arg ref="statsService"/>
+    </bean>
+
+    <bean id="jsonHttpServer" class="terrastore.server.impl.JsonHttpServer">
+        <constructor-arg ref="server"/>
     </bean>
 
     <!-- Service -->
