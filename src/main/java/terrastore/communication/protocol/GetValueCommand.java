@@ -27,7 +27,6 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
-import terrastore.store.operators.Condition;
 
 /**
  * @author Sergio Bossa
@@ -38,22 +37,19 @@ public class GetValueCommand extends AbstractCommand<Value> {
     private final Key key;
     private final boolean conditional;
     private final Predicate predicate;
-    private final Condition condition;
 
     public GetValueCommand(String bucketName, Key key) {
         this.bucketName = bucketName;
         this.key = key;
         this.conditional = false;
         this.predicate = null;
-        this.condition = null;
     }
 
-    public GetValueCommand(String bucketName, Key key, Predicate predicate, Condition condition) {
+    public GetValueCommand(String bucketName, Key key, Predicate predicate) {
         this.bucketName = bucketName;
         this.key = key;
         this.conditional = true;
         this.predicate = predicate;
-        this.condition = condition;
     }
 
     @Override
@@ -66,7 +62,7 @@ public class GetValueCommand extends AbstractCommand<Value> {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             if (conditional) {
-                Value value = bucket.conditionalGet(key, predicate, condition);
+                Value value = bucket.conditionalGet(key, predicate);
                 if (value != null) {
                     return value;
                 } else {

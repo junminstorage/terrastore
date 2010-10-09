@@ -15,7 +15,6 @@
  */
 package terrastore.service.impl;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,13 +36,10 @@ import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
-import terrastore.service.comparators.LexicographicalComparator;
 import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
-import terrastore.store.operators.Comparator;
-import terrastore.store.operators.Condition;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.parallel.ParallelUtils;
 import terrastore.util.collect.Sets;
@@ -58,9 +54,6 @@ public class DefaultQueryService implements QueryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultQueryService.class);
     private final Router router;
-    private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
-    private Comparator defaultComparator = new LexicographicalComparator(true);
 
     public DefaultQueryService(Router router) {
         this.router = router;
@@ -94,8 +87,7 @@ public class DefaultQueryService implements QueryService {
             if (predicate == null || predicate.isEmpty()) {
                 command = new GetValueCommand(bucket, key);
             } else {
-                Condition condition = getCondition(predicate.getConditionType());
-                command = new GetValueCommand(bucket, key, predicate, condition);
+                command = new GetValueCommand(bucket, key, predicate);
             }
             Value result = node.<Value>send(command);
             return result;
@@ -159,9 +151,7 @@ public class DefaultQueryService implements QueryService {
     public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate, final long timeToLive) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Range query on bucket {}", bucket);
-            final Comparator keyComparator = getComparator(range.getKeyComparatorName());
-            final Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
-            Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range, keyComparator, timeToLive), range.getLimit());
+            Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range, timeToLive), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
             List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
                     nodeToKeys.entrySet(),
@@ -173,10 +163,10 @@ public class DefaultQueryService implements QueryService {
                                 Node node = nodeToKeys.getKey();
                                 Set<Key> keys = nodeToKeys.getValue();
                                 GetValuesCommand command = null;
-                                if (valueCondition == null) {
+                                if (predicate.isEmpty()) {
                                     command = new GetValuesCommand(bucket, keys);
                                 } else {
-                                    command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
+                                    command = new GetValuesCommand(bucket, keys, predicate);
                                 }
                                 return node.<Map<Key, Value>>send(command);
                             } catch (Exception ex) {
@@ -211,8 +201,6 @@ public class DefaultQueryService implements QueryService {
     public Map<Key, Value> queryByPredicate(final String bucket, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Predicate-based query on bucket {}", bucket);
-            final Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
-            if (valueCondition != null) {
                 Set<Key> allKeys = getAllKeysForBucket(bucket);
                 Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
                 List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
@@ -224,7 +212,7 @@ public class DefaultQueryService implements QueryService {
                                 try {
                                     Node node = nodeToKeys.getKey();
                                     Set<Key> keys = nodeToKeys.getValue();
-                                    GetValuesCommand command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
+                                    GetValuesCommand command = new GetValuesCommand(bucket, keys, predicate);
                                     return node.<Map<Key, Value>>send(command);
                                 } catch (Exception ex) {
                                     throw new RuntimeException(ex);
@@ -239,9 +227,6 @@ public class DefaultQueryService implements QueryService {
                             }
                         });
                 return Maps.union(allKeyValues);
-            } else {
-                throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong predicate!"));
-            }
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -258,37 +243,8 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Comparator getDefaultComparator() {
-        return defaultComparator;
-    }
-
-    @Override
-    public Map<String, Comparator> getComparators() {
-        return comparators;
-    }
-
-    @Override
-    public Map<String, Condition> getConditions() {
-        return conditions;
-    }
-
-    @Override
     public Router getRouter() {
         return router;
-    }
-
-    public void setDefaultComparator(Comparator defaultComparator) {
-        this.defaultComparator = defaultComparator;
-    }
-
-    public void setComparators(Map<String, Comparator> comparators) {
-        this.comparators.clear();
-        this.comparators.putAll(comparators);
-    }
-
-    public void setConditions(Map<String, Condition> conditions) {
-        this.conditions.clear();
-        this.conditions.putAll(conditions);
     }
 
     private Set<Key> getAllKeysForBucket(String bucket) throws ParallelExecutionException {
@@ -298,8 +254,8 @@ public class DefaultQueryService implements QueryService {
         return keys;
     }
 
-    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws ParallelExecutionException {
-        RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
+    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange, long timeToLive) throws ParallelExecutionException {
+        RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, timeToLive);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<Key> keys = multicastRangeQueryCommand(perClusterNodes, command);
         return keys;
@@ -404,20 +360,5 @@ public class DefaultQueryService implements QueryService {
                     }
                 });
         return keys;
-    }
-
-    private Comparator getComparator(String comparatorName) {
-        if (comparators.containsKey(comparatorName)) {
-            return comparators.get(comparatorName);
-        }
-        return defaultComparator;
-    }
-
-    private Condition getCondition(String conditionType) throws QueryOperationException {
-        if (conditions.containsKey(conditionType)) {
-            return conditions.get(conditionType);
-        } else {
-            throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong condition type: " + conditionType));
-        }
     }
 }

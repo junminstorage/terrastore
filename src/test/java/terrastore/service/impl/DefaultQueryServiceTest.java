@@ -37,8 +37,6 @@ import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
-import terrastore.store.operators.Comparator;
-import terrastore.store.operators.Condition;
 import terrastore.store.Value;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
@@ -330,14 +328,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByRange() throws Exception {
-        Comparator stringComparator = new Comparator() {
-
-            @Override
-            public int compare(String o1, String o2) {
-                return o1.compareTo(o2);
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
@@ -371,11 +361,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-        comparators.put("order", stringComparator);
-
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setComparators(comparators);
 
         Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0);
         assertEquals(2, result.size());
@@ -560,14 +546,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByRangeSucceedsBySkippingFailingNodes() throws Exception {
-        Comparator stringComparator = new Comparator() {
-
-            @Override
-            public int compare(String o1, String o2) {
-                return o1.compareTo(o2);
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
         makeThreadSafe(node1, true);
@@ -596,10 +574,8 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-        comparators.put("order", stringComparator);
+
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setComparators(comparators);
         Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0);
         assertEquals(2, result.size());
         assertEquals(JSON_VALUE, new String(result.get(new Key("test1")).getBytes()));
@@ -610,14 +586,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByRangeIgnoresAllNodesFailing() throws Exception {
-        Comparator stringComparator = new Comparator() {
-
-            @Override
-            public int compare(String o1, String o2) {
-                return o1.compareTo(o2);
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
         makeThreadSafe(node1, true);
@@ -638,10 +606,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-        comparators.put("order", stringComparator);
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setComparators(comparators);
         assertTrue(service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0).isEmpty());
 
         verify(cluster1, node1, node2, router);
@@ -649,14 +614,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByRangeIgnoresClusterWithNoNodes() throws Exception {
-        Comparator stringComparator = new Comparator() {
-
-            @Override
-            public int compare(String o1, String o2) {
-                return o1.compareTo(o2);
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
@@ -688,11 +645,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-        comparators.put("order", stringComparator);
-
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setComparators(comparators);
 
         Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0);
         assertEquals(2, result.size());
@@ -704,14 +657,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByPredicate() throws Exception {
-        Condition trueCondition = new Condition() {
-
-            @Override
-            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
-                return true;
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
@@ -745,11 +690,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        Map<String, Condition> conditions = new HashMap<String, Condition>();
-        conditions.put("test", trueCondition);
-
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setConditions(conditions);
 
         Map<Key, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());
@@ -788,14 +729,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByPredicateSucceedsBySkippingFailingNodes() throws Exception {
-        Condition trueCondition = new Condition() {
-
-            @Override
-            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
-                return true;
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
         makeThreadSafe(node1, true);
@@ -824,11 +757,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        Map<String, Condition> conditions = new HashMap<String, Condition>();
-        conditions.put("test", trueCondition);
-
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setConditions(conditions);
 
         Map<Key, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());
@@ -840,14 +769,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByPredicateIgnoresAllNodesFailing() throws Exception {
-        Condition trueCondition = new Condition() {
-
-            @Override
-            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
-                return true;
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
         makeThreadSafe(node1, true);
@@ -868,11 +789,8 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        Map<String, Condition> conditions = new HashMap<String, Condition>();
-        conditions.put("test", trueCondition);
-
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setConditions(conditions);
+
         assertTrue(service.queryByPredicate("bucket", new Predicate("test:true")).isEmpty());
 
         verify(cluster1, node1, node2, router);
@@ -880,14 +798,6 @@ public class DefaultQueryServiceTest {
 
     @Test
     public void testQueryByPredicateIgnoresClusterWithNoNodes() throws Exception {
-        Condition trueCondition = new Condition() {
-
-            @Override
-            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
-                return true;
-            }
-        };
-
         Cluster cluster1 = createMock(Cluster.class);
         Cluster cluster2 = createMock(Cluster.class);
         Node node1 = createMock(Node.class);
@@ -919,11 +829,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        Map<String, Condition> conditions = new HashMap<String, Condition>();
-        conditions.put("test", trueCondition);
-
         DefaultQueryService service = new DefaultQueryService(router);
-        service.setConditions(conditions);
 
         Map<Key, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());

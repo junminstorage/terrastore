@@ -24,8 +24,6 @@ import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
-import terrastore.store.operators.Comparator;
-import terrastore.store.operators.Condition;
 
 /**
  * The QueryService manages the operations for finding values in buckets, by interacting with a {@link terrastore.router.Router}
@@ -124,25 +122,4 @@ public interface QueryService {
      * @return The router instance.
      */
     public Router getRouter();
-
-    /**
-     * Get the default {@link terrastore.store.operators.Comparator} used to compare keys when no other comparator is found.
-     *
-     * @return The default comparator.
-     */
-    public Comparator getDefaultComparator();
-
-    /**
-     * Get all supported {@link terrastore.store.operators.Comparator} by name.
-     *
-     * @return A map of supported comparators.
-     */
-    public Map<String, Comparator> getComparators();
-
-    /**
-     * Get all supported {@link terrastore.store.operators.Condition} by name.
-     *
-     * @return A map of supported conditions.
-     */
-    public Map<String, Condition> getConditions();
 }

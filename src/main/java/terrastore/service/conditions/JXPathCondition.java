@@ -29,8 +29,6 @@ import terrastore.store.operators.Condition;
  */
 public class JXPathCondition implements Condition {
 
-    private static final long serialVersionUID = 12345678901L;
-
     @Override
     public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
         JXPathContext context = JXPathContext.newContext(value);

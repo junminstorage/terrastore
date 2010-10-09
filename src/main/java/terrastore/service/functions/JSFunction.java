@@ -50,7 +50,6 @@ public class JSFunction implements Function {
 
     public static final String FUNCTION_NAME = "update";
     //
-    private static final long serialVersionUID = 12345678901L;
     private static final Logger LOG = LoggerFactory.getLogger(JSFunction.class);
     private static final String WRAPPER = ""
             + "function wrapper(update, key, value, params) { "

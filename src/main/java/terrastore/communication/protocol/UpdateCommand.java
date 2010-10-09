@@ -26,7 +26,6 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Update;
-import terrastore.store.operators.Function;
 
 /**
  * @author Sergio Bossa
@@ -36,13 +35,11 @@ public class UpdateCommand extends AbstractCommand<Value> {
     private final String bucketName;
     private final Key key;
     private final Update update;
-    private final Function function;
 
-    public UpdateCommand(String bucketName, Key key, Update update, Function function) {
+    public UpdateCommand(String bucketName, Key key, Update update) {
         this.bucketName = bucketName;
         this.key = key;
         this.update = update;
-        this.function = function;
     }
 
     @Override
@@ -54,7 +51,7 @@ public class UpdateCommand extends AbstractCommand<Value> {
     public Value executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.getOrCreate(bucketName);
         if (bucket != null) {
-            return bucket.update(key, update, function);
+            return bucket.update(key, update);
         } else {
             return null;
         }

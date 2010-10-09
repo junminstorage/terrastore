@@ -17,7 +17,6 @@ package terrastore.store.impl;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,8 @@ import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Condition;
 import terrastore.store.Value;
+import terrastore.store.operators.Comparator;
+import terrastore.util.collect.Maps;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -95,7 +96,8 @@ public class TCBucketTest {
             }
         };
 
-        assertTrue(bucket.conditionalPut(key, value, predicate, condition));
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
+        assertTrue(bucket.conditionalPut(key, value, predicate));
         assertEquals(value, bucket.get(key));
     }
 
@@ -119,7 +121,9 @@ public class TCBucketTest {
                 }
             }
         };
-        assertTrue(bucket.conditionalPut(key, updated, predicate, condition));
+
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
+        assertTrue(bucket.conditionalPut(key, updated, predicate));
         assertEquals(updated, bucket.get(key));
     }
 
@@ -143,7 +147,9 @@ public class TCBucketTest {
                 }
             }
         };
-        assertFalse(bucket.conditionalPut(key, updated, predicate, condition));
+
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
+        assertFalse(bucket.conditionalPut(key, updated, predicate));
     }
 
     @Test
@@ -159,8 +165,9 @@ public class TCBucketTest {
             }
         };
 
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         bucket.put(key, value);
-        assertEquals(value, bucket.conditionalGet(key, predicate, condition));
+        assertEquals(value, bucket.conditionalGet(key, predicate));
     }
 
     @Test
@@ -180,8 +187,10 @@ public class TCBucketTest {
             }
         };
 
+
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         bucket.put(key, value);
-        assertEquals(value, bucket.conditionalGet(key, predicate, condition));
+        assertEquals(value, bucket.conditionalGet(key, predicate));
     }
 
     @Test
@@ -197,8 +206,10 @@ public class TCBucketTest {
             }
         };
 
+
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         bucket.put(key, value);
-        assertNull(bucket.conditionalGet(key, predicate, condition));
+        assertNull(bucket.conditionalGet(key, predicate));
     }
 
     @Test(expected = StoreOperationException.class)
@@ -244,7 +255,7 @@ public class TCBucketTest {
 
     @Test
     public void testKeysInRange() throws StoreOperationException {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -258,10 +269,12 @@ public class TCBucketTest {
         Value value2 = new Value(JSON_VALUE.getBytes());
         Key key3 = new Key("key3");
         Value value3 = new Value(JSON_VALUE.getBytes());
+
+        bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
-        Set<Key> range = bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order"), stringComparator, 0);
+        Set<Key> range = bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order"), 0);
         assertEquals(2, range.size());
         assertEquals(key2, range.toArray()[0]);
         assertEquals(key3, range.toArray()[1]);
@@ -269,13 +282,15 @@ public class TCBucketTest {
 
     @Test
     public void testKeysInRangeWithLimit() throws StoreOperationException {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
         };
+
+        bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
 
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
@@ -286,7 +301,7 @@ public class TCBucketTest {
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
-        Set<Key> range = bucket.keysInRange(new Range(new Key("key1"), new Key("key3"), 2, "order"), stringComparator, 0);
+        Set<Key> range = bucket.keysInRange(new Range(new Key("key1"), new Key("key3"), 2, "order"), 0);
         assertEquals(2, range.size());
         assertEquals(key1, range.toArray()[0]);
         assertEquals(key2, range.toArray()[1]);
@@ -294,7 +309,7 @@ public class TCBucketTest {
 
     @Test
     public void testKeysOutOfRange() throws StoreOperationException {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -302,15 +317,17 @@ public class TCBucketTest {
             }
         };
 
+        bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
+
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(0, bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order"), stringComparator, 0).size());
+        assertEquals(0, bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order"), 0).size());
     }
 
     @Test
     public void testKeysOutOfRightRange() throws StoreOperationException {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -318,15 +335,17 @@ public class TCBucketTest {
             }
         };
 
+        bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
+
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key2"), 0, "order"), stringComparator, 0).size());
+        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key2"), 0, "order"), 0).size());
     }
 
     @Test
     public void testKeysOutOfLeftRange() throws StoreOperationException {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -334,15 +353,17 @@ public class TCBucketTest {
             }
         };
 
+        bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
+
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range(new Key("key0"), new Key("key1"), 0, "order"), stringComparator, 0).size());
+        assertEquals(1, bucket.keysInRange(new Range(new Key("key0"), new Key("key1"), 0, "order"), 0).size());
     }
 
     @Test
     public void testKeysInExactRange() throws StoreOperationException {
-        Comparator<String> stringComparator = new Comparator<String>() {
+        Comparator stringComparator = new Comparator() {
 
             @Override
             public int compare(String o1, String o2) {
@@ -350,10 +371,12 @@ public class TCBucketTest {
             }
         };
 
+        bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
+
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key1"), 0, "order"), stringComparator, 0).size());
+        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key1"), 0, "order"), 0).size());
     }
 
     @Test
@@ -371,10 +394,12 @@ public class TCBucketTest {
             }
         };
 
+        bucket.setFunctions(Maps.hash(new String[]{"function"}, new Function[]{function}));
+
         Key key = new Key("key");
         Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
         bucket.put(key, value);
-        Value updated = bucket.update(key, update, function);
+        Value updated = bucket.update(key, update);
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), updated.getBytes());
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), bucket.get(key).getBytes());
     }
