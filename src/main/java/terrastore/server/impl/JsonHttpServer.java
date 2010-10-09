@@ -15,6 +15,7 @@
  */
 package terrastore.server.impl;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Variant;
 import org.jboss.resteasy.plugins.providers.StringTextStar;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
@@ -38,9 +41,7 @@ import org.mortbay.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ClusterStats;
-import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
-import terrastore.communication.CommunicationException;
 import terrastore.server.Buckets;
 import terrastore.server.Parameters;
 import terrastore.server.Server;
@@ -55,47 +56,29 @@ import terrastore.server.impl.support.JsonParametersProvider;
 import terrastore.server.impl.support.JsonServerOperationExceptionMapper;
 import terrastore.server.impl.support.JsonValueProvider;
 import terrastore.server.impl.support.JsonValuesProvider;
-import terrastore.service.BackupOperationException;
-import terrastore.service.BackupService;
-import terrastore.service.QueryOperationException;
-import terrastore.service.QueryService;
-import terrastore.service.StatsService;
-import terrastore.service.UpdateOperationException;
-import terrastore.service.UpdateService;
 import terrastore.store.Key;
 import terrastore.store.Value;
-import terrastore.store.features.Predicate;
-import terrastore.store.features.Update;
-import terrastore.store.features.Range;
 
 /**
- * {@link terrastore.server.Server} implementation running a json-over-http server.
+ * Jetty-based JAX-RS json-over-http server.
  *
  * @author Sergio Bossa
  */
 @Path("/")
-public class JsonHttpServer implements Server {
+public class JsonHttpServer {
 
     public final static String HTTP_THREADS_CONFIGURATION_PARAMETER = "configuration.httpThreads";
     public final static String CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER = "configuration.corsAllowedOrigins";
     //
     private static final Logger LOG = LoggerFactory.getLogger(JsonHttpServer.class);
     //
-    private final UpdateService updateService;
-    private final QueryService queryService;
-    private final BackupService backupService;
-    private final StatsService statsService;
-    //
+    private final Server core;
     private org.mortbay.jetty.Server jetty;
 
-    public JsonHttpServer(UpdateService updateService, QueryService queryService, BackupService backupService, StatsService statsService) {
-        this.updateService = updateService;
-        this.queryService = queryService;
-        this.backupService = backupService;
-        this.statsService = statsService;
+    public JsonHttpServer(Server coreServer) {
+        this.core = coreServer;
     }
 
-    @Override
     public synchronized void start(String host, int port, Map<String, String> configuration) throws Exception {
         ResteasyDeployment deployment = new ResteasyDeployment();
         registerProviders(deployment, configuration);
@@ -103,265 +86,105 @@ public class JsonHttpServer implements Server {
         startServer(host, port, deployment, configuration);
     }
 
-    @Override
     public synchronized void stop() throws Exception {
         jetty.stop();
     }
 
     @DELETE
     @Path("/{bucket}")
-    public void removeBucket(@PathParam("bucket") String bucket) throws ServerOperationException {
-        try {
-            LOG.info("Removing bucket {}", bucket);
-            updateService.removeBucket(bucket);
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (UpdateOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response removeBucket(@PathParam("bucket") String bucket) throws ServerOperationException {
+        core.removeBucket(bucket);
+        return Response.noContent().build();
     }
 
     @PUT
     @Path("/{bucket}/{key}")
     @Consumes("application/json")
-    public void putValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, Value value, @QueryParam("predicate") String predicate) throws ServerOperationException {
-        try {
-            LOG.info("Putting value with key {} to bucket {}", key, bucket);
-            updateService.putValue(bucket, key, value, new Predicate(predicate));
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (UpdateOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response putValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, Value value, @QueryParam("predicate") String predicate) throws ServerOperationException {
+        core.putValue(bucket, key, value, predicate);
+        return Response.noContent().build();
     }
 
     @DELETE
     @Path("/{bucket}/{key}")
-    public void removeValue(@PathParam("bucket") String bucket, @PathParam("key") Key key) throws ServerOperationException {
-        try {
-            LOG.info("Removing value with key {} from bucket {}", key, bucket);
-            updateService.removeValue(bucket, key);
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (UpdateOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response removeValue(@PathParam("bucket") String bucket, @PathParam("key") Key key) throws ServerOperationException {
+        core.removeValue(bucket, key);
+        return Response.noContent().build();
     }
 
     @POST
     @Path("/{bucket}/{key}/update")
     @Consumes("application/json")
     @Produces("application/json")
-    public Value updateValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
+    public Response updateValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
         try {
-            if (function == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No update function provided!");
-                throw new ServerOperationException(error);
-            } else if (timeout == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No update timeout provided!");
-                throw new ServerOperationException(error);
-            }
-            LOG.info("Updating value with key {} and function {} from bucket {}", new Object[]{key, function, bucket});
-            Update update = new Update(function, timeout, parameters);
-            return updateService.updateValue(bucket, key, update);
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (UpdateOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
+            Value result = core.updateValue(bucket, key, function, timeout, parameters);
+            return Response.seeOther(new URI(bucket + "/" + key)).entity(result).variant(new Variant(null, null, "UTF-8")).build();
+        } catch (Exception ex) {
+            throw new ServerOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
     }
 
     @GET
     @Path("/")
     @Produces("application/json")
-    public Buckets getBuckets() throws ServerOperationException {
-        try {
-            LOG.info("Getting buckets.");
-            return new Buckets(queryService.getBuckets());
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (QueryOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response getBuckets() throws ServerOperationException {
+        Buckets result = core.getBuckets();
+        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
     }
 
     @GET
     @Path("/{bucket}/{key}")
     @Produces("application/json")
-    public Value getValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("predicate") String predicate) throws ServerOperationException {
-        try {
-            LOG.info("Getting value with key {} from bucket {}", key, bucket);
-            return queryService.getValue(bucket, key, new Predicate(predicate));
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (QueryOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response getValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("predicate") String predicate) throws ServerOperationException {
+        Value result = core.getValue(bucket, key, predicate);
+        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
     }
 
     @GET
     @Path("/{bucket}")
     @Produces("application/json")
-    public Values getAllValues(@PathParam("bucket") String bucket, @QueryParam("limit") int limit) throws ServerOperationException {
-        try {
-            LOG.info("Getting all values from bucket {}", bucket);
-            return new Values(queryService.getAllValues(bucket, limit));
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (QueryOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response getAllValues(@PathParam("bucket") String bucket, @QueryParam("limit") int limit) throws ServerOperationException {
+        Values result = core.getAllValues(bucket, limit);
+        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
     }
 
     @GET
     @Path("/{bucket}/range")
     @Produces("application/json")
-    public Values queryByRange(@PathParam("bucket") String bucket, @QueryParam("startKey") Key startKey, @QueryParam("endKey") Key endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
-        try {
-            if (startKey == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");
-                throw new ServerOperationException(error);
-            }
-            if (comparator == null) {
-                comparator = "";
-            }
-            LOG.info("Executing range query from {} to {} ordered by {} on bucket {}", new Object[]{startKey, endKey, comparator, bucket});
-            Range range = new Range(startKey, endKey, limit, comparator);
-            Predicate predicate = new Predicate(predicateExpression);
-            return new Values(
-                    queryService.queryByRange(bucket,
-                    range,
-                    predicate,
-                    timeToLive));
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (QueryOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response queryByRange(@PathParam("bucket") String bucket, @QueryParam("startKey") Key startKey, @QueryParam("endKey") Key endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
+        Values result = core.queryByRange(bucket, startKey, endKey, limit, comparator, predicateExpression, timeToLive);
+        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
     }
 
     @GET
     @Path("/{bucket}/predicate")
     @Produces("application/json")
-    public Values queryByPredicate(@PathParam("bucket") String bucket, @QueryParam("predicate") String predicateExpression) throws ServerOperationException {
-        try {
-            if (predicateExpression == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No predicate provided!");
-                throw new ServerOperationException(error);
-            }
-            LOG.info("Executing predicate query {} on bucket {}", predicateExpression, bucket);
-            Predicate predicate = new Predicate(predicateExpression);
-            return new Values(queryService.queryByPredicate(bucket, predicate));
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (QueryOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response queryByPredicate(@PathParam("bucket") String bucket, @QueryParam("predicate") String predicateExpression) throws ServerOperationException {
+        Values result = core.queryByPredicate(bucket, predicateExpression);
+        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
     }
 
     @POST
     @Path("/{bucket}/import")
-    public void importBackup(@PathParam("bucket") String bucket, @QueryParam("source") String source, @QueryParam("secret") String secret) throws ServerOperationException {
-        try {
-            if (source == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No source provided!");
-                throw new ServerOperationException(error);
-            } else if (secret == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No secret provided!");
-                throw new ServerOperationException(error);
-            }
-            LOG.info("Importing backup for bucket {} from {}", bucket, source);
-            backupService.importBackup(bucket, source, secret);
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (BackupOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response importBackup(@PathParam("bucket") String bucket, @QueryParam("source") String source, @QueryParam("secret") String secret) throws ServerOperationException {
+        core.importBackup(bucket, source, secret);
+        return Response.noContent().build();
     }
 
     @POST
     @Path("/{bucket}/export")
-    public void exportBackup(@PathParam("bucket") String bucket, @QueryParam("destination") String destination, @QueryParam("secret") String secret) throws ServerOperationException {
-        try {
-            if (destination == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No destination provided!");
-                throw new ServerOperationException(error);
-            } else if (secret == null) {
-                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No secret provided!");
-                throw new ServerOperationException(error);
-            }
-            LOG.info("Exporting backup for bucket {} to {}", bucket, destination);
-            backupService.exportBackup(bucket, destination, secret);
-        } catch (CommunicationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        } catch (BackupOperationException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new ServerOperationException(error);
-        }
+    public Response exportBackup(@PathParam("bucket") String bucket, @QueryParam("destination") String destination, @QueryParam("secret") String secret) throws ServerOperationException {
+        core.exportBackup(bucket, destination, secret);
+        return Response.noContent().build();
     }
 
     @GET
     @Path("/_stats/cluster")
     @Produces("application/json")
-    public ClusterStats getClusterStats() {
-        LOG.info("Getting cluster statistics.");
-        return statsService.getClusterStats();
-    }
-
-    public UpdateService getUpdateService() {
-        return updateService;
-    }
-
-    public QueryService getQueryService() {
-        return queryService;
-    }
-
-    @Override
-    public BackupService getBackupService() {
-        return backupService;
+    public Response getClusterStats() {
+        ClusterStats result = core.getClusterStats();
+        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
     }
 
     private void registerProviders(ResteasyDeployment deployment, Map<String, String> configuration) {
@@ -403,4 +226,5 @@ public class JsonHttpServer implements Server {
         jetty.setStopAtShutdown(true);
         jetty.start();
     }
+
 }
