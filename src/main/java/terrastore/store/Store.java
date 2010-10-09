@@ -15,8 +15,12 @@
  */
 package terrastore.store;
 
+import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
+import terrastore.store.operators.Comparator;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
 
 /**
  * Store interface for managing {@link Bucket} instances.
@@ -65,6 +69,34 @@ public interface Store {
      * @param flushCondition The condition to evaluate for flushing keys.
      */
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition);
+
+    /**
+     * Set the default {@link terrastore.store.operators.Comparator} used to compare keys when no other comparator is found.
+     *
+     * @param defaultComparator The default comparator.
+     */
+    public void setDefaultComparator(Comparator defaultComparator);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Comparator} by name.
+     *
+     * @param comparators A map of supported comparators.
+     */
+    public void setComparators(Map<String, Comparator> comparators);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Condition} by name.
+     *
+     * @param conditions  A map of supported conditions.
+     */
+    public void setConditions(Map<String, Condition> conditions);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Function}s by name.
+     *
+     * @param functions  A map of supported functions.
+     */
+    public void setFunctions(Map<String, Function> functions);
 
     /**
      * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.

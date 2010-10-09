@@ -15,6 +15,7 @@
  */
 package terrastore.store.impl;
 
+import terrastore.util.collect.Maps;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -180,6 +181,8 @@ public class TCBucketEventingTest {
 
         };
 
+        bucket.setFunctions(Maps.hash(new String[]{"function"}, new Function[]{function}));
+
         Capture<Event> capturedEvent1 = new Capture<Event>();
         Capture<Event> capturedEvent2 = new Capture<Event>();
         EventBus eventBus = createMock(EventBus.class);
@@ -202,7 +205,7 @@ public class TCBucketEventingTest {
 
         replay(eventBus);
 
-        bucket.update(key, update, function);
+        bucket.update(key, update);
         assertEquals(updated, bucket.get(key));
 
         assertEquals(ValueChangedEvent.class, capturedEvent2.getValue().getClass());

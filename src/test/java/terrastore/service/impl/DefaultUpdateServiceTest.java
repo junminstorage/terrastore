@@ -17,7 +17,6 @@ package terrastore.service.impl;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
@@ -33,7 +32,6 @@ import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.features.Predicate;
-import terrastore.store.operators.Function;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.util.collect.Maps;
@@ -173,14 +171,6 @@ public class DefaultUpdateServiceTest {
 
     @Test
     public void testUpdateValue() throws Exception {
-        Function function = new Function() {
-
-            @Override
-            public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
-                return value;
-            }
-        };
-
         Node node = createMock(Node.class);
         Router router = createMock(Router.class);
 
@@ -191,11 +181,7 @@ public class DefaultUpdateServiceTest {
 
         replay(node, router);
 
-        Map<String, Function> functions = new HashMap<String, Function>();
-        functions.put("update", function);
-
         DefaultUpdateService service = new DefaultUpdateService(router);
-        service.setFunctions(functions);
         assertEquals(new Value(JSON_VALUE.getBytes()), service.updateValue("bucket", new Key("test1"), new Update("update", 1000, new HashMap<String, Object>())));
 
         verify(node, router);

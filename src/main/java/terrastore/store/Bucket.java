@@ -16,12 +16,13 @@
 package terrastore.store;
 
 import terrastore.store.features.Update;
-import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 
 /**
@@ -49,16 +50,16 @@ public interface Bucket {
 
     /**
      * Put the given {@link Value} into this bucket under the given key only if no value existed before,
-     * or the existent value satisfies the given {@link terrastore.store.operators.Condition}.<br>
+     * or the existent value satisfies the given {@link terrastore.store.features.Predicate}.<br>
      * This publishes a {@link terrastore.event.ValueChangedEvent} to the {@link terrastore.event.EventBus} if the value is actually put.
      *
      * @param key The key of the value to put.
      * @param value The value to put.
      * @param predicate The predicate object containing data about the condition to evaluate on the old value.
-     * @param condition The condition to evaluate on the old value.
      * @return True if the value has been actually put, false otherwise.
+     * @throws StoreOperationException If unable to execute the conditional put.
      */
-    public boolean conditionalPut(Key key, Value value, Predicate predicate, Condition condition);
+    public boolean conditionalPut(Key key, Value value, Predicate predicate) throws StoreOperationException;
 
     /**
      * Get the {@link Value} under the given key.
@@ -70,16 +71,15 @@ public interface Bucket {
     public Value get(Key key) throws StoreOperationException;
 
     /**
-     * Get the {@link Value} under the given key if satisfying the given {@link terrastore.store.operators.Condition}.
+     * Get the {@link Value} under the given key if satisfying the given {@link terrastore.store.features.Predicate}.
      *
      * @param key The key of the value to get.
      * @param predicate The predicate object containing data about the condition to evaluate.
-     * @param condition The condition to evaluate on the value.
-     * @return The value corresponding to the given key and satisfying the given condition, or null if the value
-     * doesn't satisfy the condition.
+     * @return The value corresponding to the given key and satisfying the given predicate, or null if the value
+     * doesn't satisfy it.
      * @throws StoreOperationException If no value is found for the given key.
      */
-    public Value conditionalGet(Key key, Predicate predicate, Condition condition) throws StoreOperationException;
+    public Value conditionalGet(Key key, Predicate predicate) throws StoreOperationException;
 
     /**
      * Remove the {@link Value} under the given key.<br>
@@ -98,11 +98,10 @@ public interface Bucket {
      *
      * @param key The key of the value to update.
      * @param update The update object containing data about the function to apply.
-     * @param function The function to apply for the update.
      * @return The updated value.
      * @throws StoreOperationException If errors occur during updating.
      */
-    public Value update(Key key, Update update, Function function) throws StoreOperationException;
+    public Value update(Key key, Update update) throws StoreOperationException;
 
     /**
      * Clear all entries.
@@ -130,11 +129,10 @@ public interface Bucket {
      * The snapshot is computed (and managed) by using the configured {@link SnapshotManager} (see {@link #setSnapshotManager(SnapshotManager )}).
      *
      * @param range The range which keys must be fall into.
-     * @param keyComparator The comparator determining if a key falls into range.
      * @param timeToLive Number of milliseconds determining the snapshot max age.
      * @return The sorted set of keys in range.
      */
-    public Set<Key> keysInRange(Range range, Comparator<String> keyComparator, long timeToLive);
+    public Set<Key> keysInRange(Range range, long timeToLive);
 
     /**
      * Flush all key/value entries contained into this bucket.
@@ -165,6 +163,34 @@ public interface Bucket {
     public void importBackup(String source) throws StoreOperationException;
 
     /**
+     * Set the default {@link terrastore.store.operators.Comparator} used to compare keys when no other comparator is found.
+     *
+     * @param defaultComparator The default comparator.
+     */
+    public void setDefaultComparator(Comparator defaultComparator);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Comparator} by name.
+     *
+     * @param comparators A map of supported comparators.
+     */
+    public void setComparators(Map<String, Comparator> comparators);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Condition} by name.
+     *
+     * @param conditions  A map of supported conditions.
+     */
+    public void setConditions(Map<String, Condition> conditions);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Function}s by name.
+     *
+     * @param functions  A map of supported functions.
+     */
+    public void setFunctions(Map<String, Function> functions);
+
+    /**
      * Set the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.
      *
      * @param snapshotManager The {@link SnapshotManager} instance.
@@ -184,4 +210,5 @@ public interface Bucket {
      * @param eventBus The event bus instance.
      */
     public void setEventBus(EventBus eventBus);
+
 }

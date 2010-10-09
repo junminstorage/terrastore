@@ -16,7 +16,8 @@
 package terrastore.store.impl;
 
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -32,6 +33,7 @@ import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
 import terrastore.event.impl.ValueChangedEvent;
 import terrastore.event.impl.ValueRemovedEvent;
+import terrastore.service.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
@@ -47,6 +49,7 @@ import terrastore.store.Value;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Comparator;
 import terrastore.util.collect.Sets;
 import terrastore.util.collect.Transformer;
 import terrastore.util.global.GlobalExecutor;
@@ -63,6 +66,10 @@ public class TCBucket implements Bucket {
     private EventBus eventBus;
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
+    private Comparator defaultComparator = new LexicographicalComparator(true);
+    private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
+    private final Map<String, Function> functions = new HashMap<String, Function>();
+    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
 
     public TCBucket(String name) {
         this.name = name;
@@ -84,10 +91,11 @@ public class TCBucket implements Bucket {
         }
     }
 
-    public boolean conditionalPut(Key key, Value value, Predicate predicate, Condition condition) {
+    public boolean conditionalPut(Key key, Value value, Predicate predicate) throws StoreOperationException {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
+            Condition condition = getCondition(predicate.getConditionType());
             byte[] old = bucket.get(key.toString());
             if (old == null || bytesToValue(old).dispatch(key, predicate, condition)) {
                 bucket.put(key.toString(), valueToBytes(value));
@@ -112,10 +120,11 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Value conditionalGet(Key key, Predicate predicate, Condition condition) throws StoreOperationException {
+    public Value conditionalGet(Key key, Predicate predicate) throws StoreOperationException {
         Value value = bytesToValue(bucket.unlockedGet(key.toString()));
         value = value != null ? value : bytesToValue(bucket.get(key.toString()));
         if (value != null) {
+            Condition condition = getCondition(predicate.getConditionType());
             if (value.dispatch(key, predicate, condition)) {
                 return value;
             } else {
@@ -140,7 +149,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Value update(final Key key, final Update update, final Function function) throws StoreOperationException {
+    public Value update(final Key key, final Update update) throws StoreOperationException {
         long timeout = update.getTimeoutInMillis();
         Future<Value> task = null;
         // Use explicit locking to update and block concurrent operations on the same key,
@@ -149,6 +158,7 @@ public class TCBucket implements Bucket {
         try {
             final byte[] value = bucket.get(key.toString());
             if (value != null) {
+                final Function function = getFunction(update.getFunctionName());
                 task = GlobalExecutor.getExecutor().submit(new Callable<Value>() {
 
                     @Override
@@ -185,11 +195,14 @@ public class TCBucket implements Bucket {
         return bucket.size();
     }
 
+    @Override
     public Set<Key> keys() {
         return Sets.transformed(bucket.keySet(), new KeyDeserializer());
     }
 
-    public Set<Key> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
+    @Override
+    public Set<Key> keysInRange(Range keyRange, long timeToLive) {
+        Comparator keyComparator = getComparator(keyRange.getKeyComparatorName());
         SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
     }
@@ -236,6 +249,52 @@ public class TCBucket implements Bucket {
     @Override
     public void setBackupManager(BackupManager backupManager) {
         this.backupManager = backupManager;
+    }
+
+    @Override
+    public void setDefaultComparator(Comparator defaultComparator) {
+        this.defaultComparator = defaultComparator;
+    }
+
+    @Override
+    public void setComparators(Map<String, Comparator> comparators) {
+        this.comparators.clear();
+        this.comparators.putAll(comparators);
+    }
+
+    @Override
+    public void setFunctions(Map<String, Function> functions) {
+        this.functions.clear();
+        this.functions.putAll(functions);
+    }
+
+    @Override
+    public void setConditions(Map<String, Condition> conditions) {
+        this.conditions.clear();
+        this.conditions.putAll(conditions);
+    }
+
+    private Comparator getComparator(String comparatorName) {
+        if (comparators.containsKey(comparatorName)) {
+            return comparators.get(comparatorName);
+        }
+        return defaultComparator;
+    }
+    
+    private Function getFunction(String functionName) throws StoreOperationException {
+        if (functions.containsKey(functionName)) {
+            return functions.get(functionName);
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong function name: " + functionName));
+        }
+    }
+
+    private Condition getCondition(String conditionType) throws StoreOperationException {
+        if (conditions.containsKey(conditionType)) {
+            return conditions.get(conditionType);
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong condition type: " + conditionType));
+        }
     }
 
     private void lock(Key key) {

@@ -22,8 +22,6 @@ import terrastore.store.operators.Comparator;
  */
 public class LexicographicalComparator implements Comparator {
 
-    private static final long serialVersionUID = 12345678901L;
-
     private int direction = 1;
 
     public LexicographicalComparator(boolean isAscending) {

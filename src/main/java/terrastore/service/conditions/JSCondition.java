@@ -45,7 +45,6 @@ import terrastore.util.json.JsonUtils;
  */
 public class JSCondition implements Condition {
 
-    private static final long serialVersionUID = 12345678901L;
     private static final Logger LOG = LoggerFactory.getLogger(JSCondition.class);
     private static final String WRAPPER = ""
             + "   function wrapper(key, value) { "

@@ -15,7 +15,9 @@
  */
 package terrastore.store.impl;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,12 +25,16 @@ import java.util.concurrent.ConcurrentMap;
 import org.terracotta.collections.ClusteredMap;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.EventBus;
+import terrastore.service.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.store.SnapshotManager;
 import terrastore.store.Store;
+import terrastore.store.operators.Comparator;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
 
 /**
  * @author Sergio Bossa
@@ -40,6 +46,10 @@ public class TCStore implements Store {
     //
     private final ClusteredMap<String, String> buckets;
     private final ConcurrentMap<String, Bucket> instances;
+    private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
+    private final Map<String, Function> functions = new HashMap<String, Function>();
+    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
+    private Comparator defaultComparator = new LexicographicalComparator(true);
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
     private EventBus eventBus;
@@ -151,6 +161,29 @@ public class TCStore implements Store {
     }
 
     @Override
+    public void setDefaultComparator(Comparator defaultComparator) {
+        this.defaultComparator = defaultComparator;
+    }
+
+    @Override
+    public void setComparators(Map<String, Comparator> comparators) {
+        this.comparators.clear();
+        this.comparators.putAll(comparators);
+    }
+
+    @Override
+    public void setFunctions(Map<String, Function> functions) {
+        this.functions.clear();
+        this.functions.putAll(functions);
+    }
+
+    @Override
+    public void setConditions(Map<String, Condition> conditions) {
+        this.conditions.clear();
+        this.conditions.putAll(conditions);
+    }
+
+    @Override
     public void setSnapshotManager(SnapshotManager snapshotManager) {
         this.snapshotManager = snapshotManager;
     }
@@ -165,11 +198,15 @@ public class TCStore implements Store {
         this.eventBus = eventBus;
     }
 
-    private void hydrateBucket(Bucket requested) {
-        // We need to manually set the event bus because of TC not supporting injection ...
-        requested.setSnapshotManager(snapshotManager);
-        requested.setBackupManager(backupManager);
-        requested.setEventBus(eventBus);
+    private void hydrateBucket(Bucket bucket) {
+        // We need to manually set all of this because of TC not supporting injection ...
+        bucket.setDefaultComparator(defaultComparator);
+        bucket.setComparators(comparators);
+        bucket.setConditions(conditions);
+        bucket.setFunctions(functions);
+        bucket.setSnapshotManager(snapshotManager);
+        bucket.setBackupManager(backupManager);
+        bucket.setEventBus(eventBus);
         // TODO: verify this is not a perf problem.
     }
 }

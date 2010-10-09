@@ -26,8 +26,6 @@ import terrastore.store.operators.Function;
  */
 public class AtomicCounterFunction implements Function {
 
-    private static final long serialVersionUID = 12345678901L;
-
     @Override
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
         return applyCounters(value, parameters);

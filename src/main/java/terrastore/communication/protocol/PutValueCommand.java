@@ -27,7 +27,6 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
-import terrastore.store.operators.Condition;
 
 /**
  * @author Sergio Bossa
@@ -39,7 +38,6 @@ public class PutValueCommand extends AbstractCommand {
     private final Value value;
     private final boolean conditional;
     private final Predicate predicate;
-    private final Condition valueCondition;
 
     public PutValueCommand(String bucketName, Key key, Value value) {
         this.bucketName = bucketName;
@@ -47,16 +45,14 @@ public class PutValueCommand extends AbstractCommand {
         this.value = value;
         this.conditional = false;
         this.predicate = null;
-        this.valueCondition = null;
     }
 
-    public PutValueCommand(String bucketName, Key key, Value value, Predicate predicate, Condition valueCondition) {
+    public PutValueCommand(String bucketName, Key key, Value value, Predicate predicate) {
         this.bucketName = bucketName;
         this.key = key;
         this.value = value;
         this.conditional = true;
         this.predicate = predicate;
-        this.valueCondition = valueCondition;
     }
 
     @Override
@@ -69,7 +65,7 @@ public class PutValueCommand extends AbstractCommand {
         Bucket bucket = store.getOrCreate(bucketName);
         if (bucket != null) {
             if (conditional) {
-                boolean put = bucket.conditionalPut(key, value, predicate, valueCondition);
+                boolean put = bucket.conditionalPut(key, value, predicate);
                 if (!put) {
                     throw new StoreOperationException(new ErrorMessage(ErrorMessage.CONFLICT_ERROR_CODE,
                             "Unsatisfied condition: " + predicate.getConditionType() + ":" + predicate.getConditionExpression() + " for key: " + key));

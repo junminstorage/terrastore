@@ -28,39 +28,10 @@
 
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
-        <property name="functions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="update-functions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Function"/>
-            </bean>
-        </property>
-        <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="conditions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Condition"/>
-            </bean>
-        </property>
     </bean>
 
     <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
         <constructor-arg ref="router"/>
-        <property name="comparators">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="comparators"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Comparator"/>
-            </bean>
-        </property>
-        <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="conditions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Condition"/>
-            </bean>
-        </property>
-        <property name="defaultComparator" ref="defaultComparator"/>
     </bean>
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
@@ -95,6 +66,28 @@
     <!-- Store -->
 
     <bean id="store" class="terrastore.store.impl.TCStore">
+        <property name="comparators">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="comparators"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Comparator"/>
+            </bean>
+        </property>
+        <property name="conditions">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="conditions"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Condition"/>
+            </bean>
+        </property>
+        <property name="functions">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="update-functions"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Function"/>
+            </bean>
+        </property>
+        <property name="defaultComparator" ref="defaultComparator"/>
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="backupManager" ref="backupManager"/>
         <property name="eventBus" ref="memoryEventBus"/>
