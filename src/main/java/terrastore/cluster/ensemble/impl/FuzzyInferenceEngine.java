@@ -37,34 +37,36 @@ public class FuzzyInferenceEngine {
 		
 	}
 	
-	public int estimateNextPeriodLength(int nrViewChanges, int previousPeriodLength) {
+	public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength) {
 		
-		if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(previousPeriodLength))
-			return 5;
-		else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(previousPeriodLength))
-			return 10;
-		else if (veryHighViewChanges(nrViewChanges) && lessFrequentPeriod(previousPeriodLength))
-			return 15;
-		else if (highViewChanges(nrViewChanges) && veryFrequentPeriod(previousPeriodLength))
-			return 20;
-		else if (highViewChanges(nrViewChanges) && frequentPeriod(previousPeriodLength))
-			return 25;
-		else if (highViewChanges(nrViewChanges) && lessFrequentPeriod(previousPeriodLength))
-			return 30;
-		else if (lowViewChanges(nrViewChanges) && veryFrequentPeriod(previousPeriodLength))
-			return 35;
-		else if (lowViewChanges(nrViewChanges) && frequentPeriod(previousPeriodLength))
-			return 40;
-		else if (lowViewChanges(nrViewChanges) && lessFrequentPeriod(previousPeriodLength))
-			return 45;
-		else if (veryLowViewChanges(nrViewChanges) && veryFrequentPeriod(previousPeriodLength))
-			return 50;
-		else if (veryLowViewChanges(nrViewChanges) && frequentPeriod(previousPeriodLength))
-			return 55;
-		else if (veryLowViewChanges(nrViewChanges) && lessFrequentPeriod(previousPeriodLength))
-			return 60;
+		int p = (int) (previousPeriodLength/1000);
+		
+		if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p))
+			return 5*1000;
+		else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(p))
+			return 10*1000;
+		else if (veryHighViewChanges(nrViewChanges) && lessFrequentPeriod(p))
+			return 15*1000;
+		else if (highViewChanges(nrViewChanges) && veryFrequentPeriod(p))
+			return 20*1000;
+		else if (highViewChanges(nrViewChanges) && frequentPeriod(p))
+			return 25*1000;
+		else if (highViewChanges(nrViewChanges) && lessFrequentPeriod(p))
+			return 30*1000;
+		else if (lowViewChanges(nrViewChanges) && veryFrequentPeriod(p))
+			return 35*1000;
+		else if (lowViewChanges(nrViewChanges) && frequentPeriod(p))
+			return 40*1000;
+		else if (lowViewChanges(nrViewChanges) && lessFrequentPeriod(p))
+			return 45*1000;
+		else if (veryLowViewChanges(nrViewChanges) && veryFrequentPeriod(p))
+			return 50*1000;
+		else if (veryLowViewChanges(nrViewChanges) && frequentPeriod(p))
+			return 55*1000;
+		else if (veryLowViewChanges(nrViewChanges) && lessFrequentPeriod(p))
+			return 60*1000;
 		else
-			return 65;
+			return 65*1000;
 		
 	}
 	
