@@ -33,6 +33,7 @@ import terrastore.communication.Cluster;
 public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
 
     private static final Logger LOG = LoggerFactory.getLogger(FixedEnsembleScheduler.class);
+    private FuzzyInferenceEngine fuzzy = FuzzyInferenceEngine.getInstance();
 
     private final ScheduledExecutorService scheduler;
     private volatile boolean shutdown;
@@ -56,21 +57,20 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
                             View view = ensemble.update(cluster);
                             if (prevView != null && !view.equals(prevView)) {
                             	scheduler.shutdownNow();
-                            	reschedule(cluster, ensemble, ensembleConfiguration, view.difference(prevView));                            	
+                            	long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(view.difference(prevView), discoveryInterval);
+                            	reschedule(cluster, ensemble, ensembleConfiguration, newEstimatedPeriodLength);                            	
                             } 
                             prevView = view;
                         } catch (Exception ex) {
                             LOG.warn(ex.getMessage(), ex);
                         }
                     }
-
-
                 }, 0, discoveryInterval, TimeUnit.MILLISECONDS);
             }
     }
 
-    private void reschedule(Cluster cluster, EnsembleManager ensemble, EnsembleConfiguration ensembleConfiguration, int estimatedPeriodLength) {
-    	ensembleConfiguration.setDiscoveryInterval(estimatedPeriodLength*1000);
+    private void reschedule(Cluster cluster, EnsembleManager ensemble, EnsembleConfiguration ensembleConfiguration, long estimatedPeriodLength) {
+    	ensembleConfiguration.setDiscoveryInterval(estimatedPeriodLength);
     	schedule(cluster, ensemble, ensembleConfiguration);    	
     }
 
