@@ -80,7 +80,8 @@ public class DefaultEnsembleManager implements EnsembleManager {
     }
 
     @Override
-    public synchronized final void update(Cluster cluster) throws MissingRouteException, ProcessingException {
+    public synchronized final View update(Cluster cluster) throws MissingRouteException, ProcessingException {
+    	View view = null;
         try {
             List<Node> nodes = perClusterNodes.get(cluster);
             if (nodes == null || nodes.isEmpty()) {
@@ -89,7 +90,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 if (bootstrap != null) {
                     try {
                         bootstrap.connect();
-                        View view = requestMembership(cluster, Arrays.asList(bootstrap));
+                        view = requestMembership(cluster, Arrays.asList(bootstrap));
                         calculateView(cluster, view);
                     } finally {
                         bootstrap.disconnect();
@@ -97,7 +98,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 }
             } else {
                 LOG.debug("Updating cluster view for {}", cluster);
-                View view = requestMembership(cluster, nodes);
+                view = requestMembership(cluster, nodes);
                 calculateView(cluster, view);
             }
         } catch (Exception ex) {
@@ -105,6 +106,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
             LOG.debug(ex.getMessage(), ex);
             clearView(cluster);
         }
+        return view;
     }
 
     @Override
