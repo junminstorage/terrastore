@@ -15,6 +15,7 @@
  */
 package terrastore.cluster.ensemble;
 
+import terrastore.cluster.ensemble.impl.View;
 import terrastore.communication.Cluster;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.RemoteNodeFactory;
@@ -47,7 +48,7 @@ public interface EnsembleManager {
      * @throws MissingRouteException If unable to establish a route to the given cluster.
      * @throws ProcessingException If unable to process membership messages from the given host.
      */
-    public void update(Cluster cluster) throws MissingRouteException, ProcessingException;
+    public View update(Cluster cluster) throws MissingRouteException, ProcessingException;
 
     /**
      * Shutdown by cancelling scheduled updates and disconnecting discovered nodes.
