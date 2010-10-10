@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="terrastore-install" basedir=".">
+
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="ant/ant-contrib.jar"/>
+        </classpath>
+    </taskdef>
+
+    <target name="quickstart" if="quickstart.dir" description="Terrastore quickstart.">
+
+        <antcall target="version"/>
+
+        <if>
+            <not><available file="${quickstart.dir}/master"/></not>
+            <then>
+                <echo message="Install master on: ${quickstart.dir}/master"/>
+                <antcall target="common-master">
+                    <param name="install.dir" value="${quickstart.dir}/master"/>
+                    <param name="config" value="terracotta-config.xml"/>
+                    <param name="master" value="terrastore-single-master"/>
+                    <param name="master.host.token" value="@master.server.host@"/>
+                    <param name="master.host" value="%i"/>
+                </antcall>
+            </then>
+        </if>
+
+        <if>
+            <not><available file="${quickstart.dir}/server1"/></not>
+            <then>
+                <echo message="Install server on: ${quickstart.dir}/server1"/>
+                <antcall target="common-server">
+                    <param name="install.dir" value="${quickstart.dir}/server1"/>
+                </antcall>
+            </then>
+        </if>
+
+        <if>
+            <not><available file="${quickstart.dir}/server2"/></not>
+            <then>
+                <echo message="Install server on: ${quickstart.dir}/server2"/>
+                <antcall target="common-server">
+                    <param name="install.dir" value="${quickstart.dir}/server2"/>
+                </antcall>
+            </then>
+        </if>
+
+        <forget>
+            <exec executable="${quickstart.dir}/master/bin/start.sh"/>
+        </forget>
+
+        <waitfor maxwait="1" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
+            <http url="http://localhost:9510/groupinfo" />
+        </waitfor>
+
+        <forget>
+            <exec executable="${quickstart.dir}/server1/bin/start.sh">
+                <arg value="--httpPort"/>
+                <arg value="8000"/>
+                <arg value="--nodePort"/>
+                <arg value="6000"/>
+                <arg value="--shutdownPort"/>
+                <arg value="0"/>
+                <arg value="--master"/>
+                <arg value="localhost:9510"/>
+            </exec>
+        </forget>
+
+        <waitfor maxwait="3" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
+            <http url="http://localhost:8000/" />
+        </waitfor>
+
+        <forget>
+            <exec executable="${quickstart.dir}/server2/bin/start.sh">
+                <arg value="--httpPort"/>
+                <arg value="8001"/>
+                <arg value="--nodePort"/>
+                <arg value="6001"/>
+                <arg value="--shutdownPort"/>
+                <arg value="0"/>
+                <arg value="--master"/>
+                <arg value="localhost:9510"/>
+            </exec>
+        </forget>
+
+        <waitfor maxwait="3" maxwaitunit="minute" checkevery="1000" checkeveryunit="millisecond">
+            <http url="http://localhost:8001/"/>
+        </waitfor>
+
+        <sleep seconds="5"/>
+        <echo message="Started master node."/>
+        <echo message="Started first server node at 127.0.0.1:8000"/>
+        <echo message="Started second server node at 127.0.0.1:8001"/>
+
+        <input message="Type enter to quit without stopping the cluster, or press Ctrl-C to quit and stop all processes..."/>
+
+    </target>
+
+    <target name="server" if="install.dir" description="Install Terrastore server.">
+
+        <antcall target="version"/>
+
+        <antcall target="common-server"/>
+
+    </target>
+
+    <target name="single-master" if="install.dir" description="Install single Terrastore master.">
+
+        <antcall target="version"/>
+
+        <antcall target="common-master">
+            <param name="config" value="terracotta-config.xml"/>
+            <param name="master" value="terrastore-single-master"/>
+            <param name="master.host.token" value="@master.server.host@"/>
+            <param name="master.host" value="%i"/>
+        </antcall>
+
+    </target>
+
+    <target name="ha-master-1" if="install.dir" description="Install Terrastore ha master 1.">
+
+        <antcall target="version"/>
+
+        <antcall target="common-master">
+            <param name="config" value="terracotta-config-ha.xml"/>
+            <param name="master" value="terrastore-ha-master-1"/>
+        </antcall>
+
+    </target>
+
+    <target name="ha-master-2" if="install.dir" description="Install Terrastore ha master 2.">
+
+        <antcall target="version"/>
+
+        <antcall target="common-master">
+            <param name="config" value="terracotta-config-ha.xml"/>
+            <param name="master" value="terrastore-ha-master-2"/>
+        </antcall>
+
+    </target>
+
+    <target name="version">
+        <echo message="Terrastore Install Tool - Version 0.7.1"/>
+    </target>
+
+    <target name="common-server">
+
+        <copy todir="${install.dir}">
+            <fileset dir="terrastore-server/"/>
+        </copy>
+
+        <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
+
+    </target>
+
+    <target name="common-master">
+
+        <property name="master.server.port" value="9510"/>
+        <property name="master.jmx.port" value="9520"/>
+        <property name="master.ha.port" value="9530"/>
+        <property name="server.reconnection.timeout" value="1"/>
+        <property name="server.healthcheck.timeout" value="3"/>
+
+        <condition property="master.host" value="%i">
+            <not>
+                <isset property="master.host.1"/>
+            </not>
+        </condition>
+
+        <condition property="master.host.1" value="%i">
+            <not>
+                <isset property="master.host.1"/>
+            </not>
+        </condition>
+
+        <condition property="master.host.2" value="%i">
+            <not>
+                <isset property="master.host.2"/>
+            </not>
+        </condition>
+
+        <delete dir="${java.io.tmpdir}/terrastore-install"/>
+
+        <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
+
+        <copy file="terrastore-master/${config}" todir="${java.io.tmpdir}/terrastore-install/terrastore-master"/>
+        <copy file="terrastore-master/terracotta-master.log4j.properties" tofile="${java.io.tmpdir}/terrastore-install/terrastore-master/.tc.custom.log4j.properties"/>
+
+        <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/${config}">
+            <replacefilter
+                token="@master.host@"
+                value="${master.host}"/>
+            <replacefilter
+                token="@master.host.1@"
+                value="${master.host.1}"/>
+            <replacefilter
+                token="@master.host.2@"
+                value="${master.host.2}"/>
+            <replacefilter
+                token="@master.server.port@"
+                value="${master.server.port}"/>
+            <replacefilter
+                token="@master.jmx.port@"
+                value="${master.jmx.port}"/>
+            <replacefilter
+                token="@master.ha.port@"
+                value="${master.ha.port}"/>
+            <replacefilter
+                token="@server.reconnection.timeout@"
+                value="${server.reconnection.timeout}"/>
+            <replacefilter
+                token="@server.healthcheck.timeout@"
+                value="${server.healthcheck.timeout}"/>
+        </replace>
+
+        <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/bin/start.sh">
+            <replacefilter
+                token="@master.config@"
+                value="${config}"/>
+            <replacefilter
+                token="@master.name@"
+                value="${master}"/>
+        </replace>
+
+        <copy todir="${install.dir}">
+            <fileset dir="${java.io.tmpdir}/terrastore-install/terrastore-master/"/>
+        </copy>
+
+        <chmod dir="${install.dir}/bin" perm="ugo+x" includes="**/*.sh"/>
+
+    </target>
+
+</project>
