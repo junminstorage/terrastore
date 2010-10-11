@@ -19,6 +19,7 @@ import java.util.Map;
 import terrastore.event.Action;
 import terrastore.service.UpdateService;
 import terrastore.store.Key;
+import terrastore.store.features.Predicate;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -30,17 +31,25 @@ public class PutAction implements Action {
     private final String bucket;
     private final String key;
     private final Map value;
+    private final String predicateExpression;
 
-    protected PutAction(UpdateService updateService, String bucket, String key, Map value) {
+    public PutAction(UpdateService updateService, String bucket, String key, Map value) {
+        this(updateService, bucket, key, value, null);
+    }
+
+    public PutAction(UpdateService updateService, String bucket, String key, Map value, String predicateExpression) {
         this.updateService = updateService;
         this.bucket = bucket;
         this.key = key;
         this.value = value;
+        this.predicateExpression = predicateExpression;
     }
 
+    
     @Override
     public void execute() throws Exception {
-        updateService.putValue(bucket, new Key(key), JsonUtils.fromMap(value), null);
+        Predicate predicate = predicateExpression != null ? new Predicate(predicateExpression) : null;
+        updateService.putValue(bucket, new Key(key), JsonUtils.fromMap(value), predicate);
     }
 
     @Override

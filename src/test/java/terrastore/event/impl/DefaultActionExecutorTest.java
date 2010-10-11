@@ -53,6 +53,26 @@ public class DefaultActionExecutorTest {
     }
 
     @Test
+    public void testSubmitPutActionWithPredicate() throws Exception {
+        String bucket = "bucket";
+        String key = "key";
+        String value = "{\"key\":\"value\"}";
+        String predicate = "test:test";
+
+        UpdateService service = createMock(UpdateService.class);
+        service.putValue(eq(bucket), eq(new Key(key)), eq(new Value(value.getBytes())), EasyMock.<Predicate>notNull());
+        expectLastCall().once();
+
+        replay(service);
+
+        DefaultActionExecutor executor = new DefaultActionExecutor(service);
+        Action action = executor.makePutAction(bucket, key, Maps.<String, Object>hash(new String[]{"key"}, new String[]{"value"}), predicate);
+        executor.submit(action).get(60, TimeUnit.SECONDS);
+
+        verify(service);
+    }
+
+    @Test
     public void testSubmitRemoveAction() throws Exception {
         String bucket = "bucket";
         String key = "key";

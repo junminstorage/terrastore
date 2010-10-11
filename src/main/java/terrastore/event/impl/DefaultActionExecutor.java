@@ -39,6 +39,11 @@ public class DefaultActionExecutor implements ActionExecutor {
     }
 
     @Override
+    public Action makePutAction(String bucket, String key, Map value, String predicateExpression) {
+        return new PutAction(updateService, bucket, key, value, predicateExpression);
+    }
+
+    @Override
     public Action makeRemoveAction(String bucket, String key) {
         return new RemoveAction(updateService, bucket, key);
     }
