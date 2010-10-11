@@ -36,6 +36,17 @@ public interface ActionExecutor {
     public Action makePutAction(String bucket, String key, Map value);
 
     /**
+     * Create an action to put a key/value pair in the given bucket.
+     *
+     * @param bucket
+     * @param key
+     * @param value
+     * @param predicateExpression 
+     * @return
+     */
+    public Action makePutAction(String bucket, String key, Map value, String predicateExpression);
+
+    /**
      * Create an action to remove the document at the given key in the given bucket.
      *
      * @param bucket
