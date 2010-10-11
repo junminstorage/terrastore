@@ -20,13 +20,15 @@ package terrastore.cluster.ensemble.impl;
 
 public class FuzzyInferenceEngine {
 
-	private final int veryLow = 2;
-	private final int low = 4;
-	private final int high = 5;
+	private final int f1 = 2;
+	private final int f2 = 4;
+	private final int f3 = 6;
 
-	private final int veryFrequent = 20;
-	private final int frequent = 40;
+	private final int p1 = 20;
+	private final int p2 = 40;
 
+	private final int movingBoundary = 20;
+	
 	private static FuzzyInferenceEngine instance = new FuzzyInferenceEngine();
 	
 	public static FuzzyInferenceEngine getInstance() {
@@ -40,8 +42,9 @@ public class FuzzyInferenceEngine {
 	public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength) {
 		
 		int p = (int) (previousPeriodLength/1000);
-		
-		if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p))
+		if (nrViewChanges == 0 ) 
+			return (p + movingBoundary)*1000;
+		else if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p))
 			return 5*1000;
 		else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(p))
 			return 10*1000;
@@ -71,32 +74,34 @@ public class FuzzyInferenceEngine {
 	}
 	
 	private boolean veryFrequentPeriod(int p) {
-		return p < veryFrequent ? true : false;
+		return p < p1 ? true : false;
 	}
 
 	private boolean frequentPeriod(int p) {
-		return veryFrequent <= p && p < frequent ? true : false;
+		return p1 <= p && p < p2 ? true : false;
 	}
 
 	private boolean lessFrequentPeriod(int p) {
-		return frequent <= p ? true : false;
+		return p2 <= p ? true : false;
 	}
 
 	private boolean veryLowViewChanges(int v) {
-		return v < veryLow ? true : false;
+		return v < f1 ? true : false;
 	}
 
 	private boolean lowViewChanges(int v) {
-		return veryLow <= v && v < low ? true : false;
+		return f1 <= v && v < f2 ? true : false;
 	}
 
 	private boolean highViewChanges(int v) {
-		return low <= v && v < high ? true : false;
+		return f2 <= v && v < f3 ? true : false;
 	}
 
 	private boolean veryHighViewChanges(int v) {
-		return high <= v ? true : false;
+		return f3 <= v ? true : false;
 	}
 	
-	
+	public int getMovingBoundary() {
+		return movingBoundary;
+	}
 }

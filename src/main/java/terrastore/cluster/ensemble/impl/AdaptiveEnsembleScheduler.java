@@ -69,7 +69,7 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
             }
     }
 
-    private void reschedule(Cluster cluster, EnsembleManager ensemble, EnsembleConfiguration ensembleConfiguration, long estimatedPeriodLength) {
+    public final synchronized void reschedule(Cluster cluster, EnsembleManager ensemble, EnsembleConfiguration ensembleConfiguration, long estimatedPeriodLength) {
     	ensembleConfiguration.setDiscoveryInterval(estimatedPeriodLength);
     	schedule(cluster, ensemble, ensembleConfiguration);    	
     }
