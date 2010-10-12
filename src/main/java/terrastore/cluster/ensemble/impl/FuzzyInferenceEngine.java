@@ -17,6 +17,8 @@
 
 package terrastore.cluster.ensemble.impl;
 
+import terrastore.cluster.ensemble.SchedulerConfiguration;
+
 
 public class FuzzyInferenceEngine {
 
@@ -24,10 +26,11 @@ public class FuzzyInferenceEngine {
 	private final int f2 = 4;
 	private final int f3 = 6;
 
-	private final int p1 = 20;
-	private final int p2 = 40;
+	private int p1 = 20;
+	private int p2 = 40;
 
-	private final int movingBoundary = 20;
+	private int movingBoundary = 20;
+    private int interval;
 	
 	private static FuzzyInferenceEngine instance = new FuzzyInferenceEngine();
 	
@@ -39,41 +42,50 @@ public class FuzzyInferenceEngine {
 		
 	}
 	
-	public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength) {
+	public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength, SchedulerConfiguration conf) {
 		
+	    calculateParametersFrom(conf);
+	    
 		int p = (int) (previousPeriodLength/1000);
 		if (nrViewChanges == 0 ) 
 			return (p + movingBoundary)*1000;
 		else if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p))
-			return 5*1000;
+			return interval*1000;
 		else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(p))
-			return 10*1000;
+			return 2*interval*1000;
 		else if (veryHighViewChanges(nrViewChanges) && lessFrequentPeriod(p))
-			return 15*1000;
+			return 3*interval*1000;
 		else if (highViewChanges(nrViewChanges) && veryFrequentPeriod(p))
-			return 20*1000;
+			return 4*interval*1000;
 		else if (highViewChanges(nrViewChanges) && frequentPeriod(p))
-			return 25*1000;
+			return 5*interval*1000;
 		else if (highViewChanges(nrViewChanges) && lessFrequentPeriod(p))
-			return 30*1000;
+			return 6*interval*1000;
 		else if (lowViewChanges(nrViewChanges) && veryFrequentPeriod(p))
-			return 35*1000;
+			return 7*interval*1000;
 		else if (lowViewChanges(nrViewChanges) && frequentPeriod(p))
-			return 40*1000;
+			return 8*interval*1000;
 		else if (lowViewChanges(nrViewChanges) && lessFrequentPeriod(p))
-			return 45*1000;
+			return 9*interval*1000;
 		else if (veryLowViewChanges(nrViewChanges) && veryFrequentPeriod(p))
-			return 50*1000;
+			return 10*interval*1000;
 		else if (veryLowViewChanges(nrViewChanges) && frequentPeriod(p))
-			return 55*1000;
+			return 11*interval*1000;
 		else if (veryLowViewChanges(nrViewChanges) && lessFrequentPeriod(p))
-			return 60*1000;
+			return 12*interval*1000;
 		else
-			return 65*1000;
+			return 13*interval*1000;
 		
 	}
 	
-	private boolean veryFrequentPeriod(int p) {
+	private void calculateParametersFrom(SchedulerConfiguration conf) {
+        p1 = conf.getBaseline()/2;
+        p2 = conf.getBaseline() + p1;        
+        movingBoundary = conf.getMovingBoundry();
+        interval = (p1 + p2) / 12;
+    }
+
+    private boolean veryFrequentPeriod(int p) {
 		return p < p1 ? true : false;
 	}
 

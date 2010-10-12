@@ -4,6 +4,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import terrastore.cluster.ensemble.SchedulerConfiguration;
+
 /**
  * 
  * @author Amir Moulavi
@@ -16,10 +18,12 @@ public class FuzzyInferenceEngineTest {
 	private long previousPeriodLength;
 	private int viewChanges;
 	private long result;
+    private SchedulerConfiguration schedulerConf;
 
 	@Before
 	public void set_up() {
 		fuzzy = FuzzyInferenceEngine.getInstance();
+		schedulerConf = SchedulerConfiguration.makeDefault();
 	}
 	
 	@Test
@@ -145,7 +149,7 @@ public class FuzzyInferenceEngineTest {
 	}
 
 	private void when_the_fuzzy_inference_engine_estimates() {
-		result = fuzzy.estimateNextPeriodLength(viewChanges, previousPeriodLength);		
+		result = fuzzy.estimateNextPeriodLength(viewChanges, previousPeriodLength, schedulerConf);		
 	}
 	
 	private void then_the_estimated_next_preiod_length_is(int estimatedPeriodLength) {
