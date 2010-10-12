@@ -28,6 +28,7 @@ public class EnsembleConfiguration {
 
     private String localCluster;
     private long discoveryInterval;
+    private SchedulerConfiguration schedulerConfiguration;
     private List<String> clusters = new LinkedList<String>();
     private Map<String, String> seeds = new HashMap<String, String>();
 
@@ -36,6 +37,7 @@ public class EnsembleConfiguration {
         configuration.setLocalCluster(clusterName);
         configuration.setClusters(Arrays.asList(clusterName));
         configuration.setDiscoveryInterval(1);
+        configuration.setSchedulerConfiguration(SchedulerConfiguration.makeDefault());
         return configuration;
     }
 
@@ -76,6 +78,16 @@ public class EnsembleConfiguration {
         validateDiscoveryInterval();
         validateClustersContainLocalCluster();
         validatePerClusterSeeds();
+        schedulerConfiguration.validate();
+    }
+
+    public SchedulerConfiguration getSchedulerConfiguration() {
+        return schedulerConfiguration;
+    }
+
+    public void setSchedulerConfiguration(
+            SchedulerConfiguration schedulerConfiguration) {
+        this.schedulerConfiguration = schedulerConfiguration;
     }
 
     private void validateDiscoveryInterval() {

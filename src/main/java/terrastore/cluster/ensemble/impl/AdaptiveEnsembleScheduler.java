@@ -57,7 +57,7 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
                             View view = ensemble.update(cluster);
                             if (prevView != null && !view.equals(prevView)) {
                             	scheduler.shutdownNow();
-                            	long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(view.difference(prevView), discoveryInterval);
+                            	long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(view.difference(prevView), discoveryInterval, ensembleConfiguration.getSchedulerConfiguration());
                             	reschedule(cluster, ensemble, ensembleConfiguration, newEstimatedPeriodLength);                            	
                             } 
                             prevView = view;
