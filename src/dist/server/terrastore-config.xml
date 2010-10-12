@@ -191,7 +191,11 @@
         <constructor-arg index="2" ref="remoteNodeFactory"/>
     </bean>
 
-    <bean id="ensembleScheduler" class="terrastore.cluster.ensemble.impl.FixedEnsembleScheduler"/>
+    <bean id="ensembleScheduler" class="terrastore.cluster.ensemble.impl.AdaptiveEnsembleScheduler">
+    	<property name="fuzzy" ref="fuzzyInferenceEngine" />
+    </bean>
+
+	<bean id="fuzzyInferenceEngine" class="terrastore.cluster.ensemble.impl.FuzzyInferenceEngine" factory-method="getInstance" />
 
     <bean id="localNodeFactory" class="terrastore.communication.local.LocalNode$Factory"/>
 

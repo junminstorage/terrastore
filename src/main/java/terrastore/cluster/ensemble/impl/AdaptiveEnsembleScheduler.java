@@ -33,9 +33,9 @@ import terrastore.communication.Cluster;
 public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
 
     private static final Logger LOG = LoggerFactory.getLogger(FixedEnsembleScheduler.class);
-    private FuzzyInferenceEngine fuzzy = FuzzyInferenceEngine.getInstance();
+    private FuzzyInferenceEngine fuzzy;
 
-    private final ScheduledExecutorService scheduler;
+	private final ScheduledExecutorService scheduler;
     private volatile boolean shutdown;
 	private long discoveryInterval;
 	private View prevView;
@@ -79,4 +79,10 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
         shutdown = true;
         scheduler.shutdown();
     }
+    
+    
+    /* INJETION METHOD */
+    public void setFuzzy(FuzzyInferenceEngine fuzzy) {
+		this.fuzzy = fuzzy;
+	}
 }
