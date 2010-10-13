@@ -18,13 +18,10 @@ package terrastore.cluster.ensemble.impl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import terrastore.cluster.ensemble.SchedulerConfiguration;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
 
 /**
- * 
  * @author Amir Moulavi
- *
  */
 public class FuzzyInferenceEngineTest {
 
@@ -32,12 +29,15 @@ public class FuzzyInferenceEngineTest {
     private long previousPeriodLength;
     private int viewChanges;
     private long result;
-    private SchedulerConfiguration schedulerConf;
+    private EnsembleConfiguration.DiscoveryConfiguration conf;
 
     @Before
     public void set_up() {
         fuzzy = FuzzyInferenceEngine.getInstance();
-        schedulerConf = SchedulerConfiguration.makeDefault();
+        conf = new EnsembleConfiguration.DiscoveryConfiguration();
+        conf.setType("adaptive");
+        conf.setBaseline(30000L);
+        conf.setBoundaryIncrement(10000L);
     }
 
     @Test
@@ -46,7 +46,7 @@ public class FuzzyInferenceEngineTest {
 
         when_the_fuzzy_inference_engine_estimates();
 
-        then_the_estimated_next_preiod_length_is(50 + fuzzy.getMovingBoundary());
+        then_the_estimated_next_preiod_length_is((int) (50 + fuzzy.getBoundaryIncrement()));
     }
 
     @Test
@@ -163,7 +163,7 @@ public class FuzzyInferenceEngineTest {
     }
 
     private void when_the_fuzzy_inference_engine_estimates() {
-        result = fuzzy.estimateNextPeriodLength(viewChanges, previousPeriodLength, schedulerConf);
+        result = fuzzy.estimateNextPeriodLength(viewChanges, previousPeriodLength, conf);
     }
 
     private void then_the_estimated_next_preiod_length_is(int estimatedPeriodLength) {

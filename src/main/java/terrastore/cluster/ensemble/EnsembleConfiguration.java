@@ -26,19 +26,28 @@ import java.util.Map;
  */
 public class EnsembleConfiguration {
 
+    private DiscoveryConfiguration discovery;
     private String localCluster;
-    private long discoveryInterval;
-    private SchedulerConfiguration schedulerConfiguration;
     private List<String> clusters = new LinkedList<String>();
     private Map<String, String> seeds = new HashMap<String, String>();
 
     public static EnsembleConfiguration makeDefault(String clusterName) {
-        EnsembleConfiguration configuration = new EnsembleConfiguration();
-        configuration.setLocalCluster(clusterName);
-        configuration.setClusters(Arrays.asList(clusterName));
-        configuration.setDiscoveryInterval(1);
-        configuration.setSchedulerConfiguration(SchedulerConfiguration.makeDefault());
-        return configuration;
+        DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration();
+        discoveryConfiguration.setType("fixed");
+        discoveryConfiguration.setInterval(10000L);
+        EnsembleConfiguration ensembleConfiguration = new EnsembleConfiguration();
+        ensembleConfiguration.setLocalCluster(clusterName);
+        ensembleConfiguration.setClusters(Arrays.asList(clusterName));
+        ensembleConfiguration.setDiscovery(discoveryConfiguration);
+        return ensembleConfiguration;
+    }
+
+    public DiscoveryConfiguration getDiscovery() {
+        return discovery;
+    }
+
+    public void setDiscovery(DiscoveryConfiguration discovery) {
+        this.discovery = discovery;
     }
 
     public String getLocalCluster() {
@@ -47,14 +56,6 @@ public class EnsembleConfiguration {
 
     public void setLocalCluster(String localCluster) {
         this.localCluster = localCluster;
-    }
-
-    public long getDiscoveryInterval() {
-        return discoveryInterval;
-    }
-
-    public void setDiscoveryInterval(long discoveryInterval) {
-        this.discoveryInterval = discoveryInterval;
     }
 
     public List<String> getClusters() {
@@ -74,25 +75,17 @@ public class EnsembleConfiguration {
     }
 
     public void validate() {
+        validateDiscoveryConfiguration();
         validateLocalCluster();
-        validateDiscoveryInterval();
         validateClustersContainLocalCluster();
         validatePerClusterSeeds();
-        schedulerConfiguration.validate();
     }
 
-    public SchedulerConfiguration getSchedulerConfiguration() {
-        return schedulerConfiguration;
-    }
-
-    public void setSchedulerConfiguration(
-            SchedulerConfiguration schedulerConfiguration) {
-        this.schedulerConfiguration = schedulerConfiguration;
-    }
-
-    private void validateDiscoveryInterval() {
-        if (discoveryInterval <= 0) {
-            throw new EnsembleConfigurationException("Discovery interval must be a positive time value (in milliseconds)!");
+    private void validateDiscoveryConfiguration() {
+        if (discovery == null) {
+            throw new EnsembleConfigurationException("No discovery configuration provided!");
+        } else {
+            discovery.validate();
         }
     }
 
@@ -124,4 +117,69 @@ public class EnsembleConfiguration {
         }
     }
 
+    public static class DiscoveryConfiguration {
+
+        private String type = "fixed";
+        private Long interval;
+        private Long baseline;
+        private Long boundaryIncrement;
+
+        public void validate() {
+            validateForFixedScheduler();
+            validateForAdaptiveScheduler();
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public Long getInterval() {
+            return interval;
+        }
+
+        public void setInterval(Long interval) {
+            this.interval = interval;
+        }
+
+        public Long getBaseline() {
+            return baseline;
+        }
+
+        public void setBaseline(Long baseline) {
+            this.baseline = baseline;
+        }
+
+        public Long getBoundaryIncrement() {
+            return boundaryIncrement;
+        }
+
+        public void setBoundaryIncrement(Long boundaryIncrement) {
+            this.boundaryIncrement = boundaryIncrement;
+        }
+
+        private void validateForFixedScheduler() {
+            if (type.equals("fixed") && (interval == null || interval <= 0)) {
+                throw new EnsembleConfigurationException("Interval must be a positive time value (in milliseconds)!");
+            }
+        }
+
+        private void validateForAdaptiveScheduler() {
+            if (type.equals("adaptive")) {
+                if (interval == null || interval <= 0) {
+                    throw new EnsembleConfigurationException("Interval must be a positive time value (in milliseconds)!");
+                }
+                if (baseline == null || baseline <= 0) {
+                    throw new EnsembleConfigurationException("Baseline must be a positive time value (in milliseconds)!");
+                }
+                if (boundaryIncrement == null || boundaryIncrement <= 0) {
+                    throw new EnsembleConfigurationException("Boundary increment must be a positive time value (in milliseconds)!");
+                }
+            }
+        }
+
+    }
 }

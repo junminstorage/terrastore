@@ -35,29 +35,35 @@ import terrastore.communication.Cluster;
 public class AdaptiveEnsembleSchedulerTest {
 
     @Test
-    public void first_time_schedule() throws Exception {
+    public void testSchedule() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
-        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
-        makeThreadSafe(configuration, true);
-        configuration.getDiscoveryInterval();
-        expectLastCall().andReturn(10000).once();
+        View view = createMock(View.class);
+        makeThreadSafe(view, true);
+        EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
+        makeThreadSafe(discoveryConfiguration, true);
+        discoveryConfiguration.getInterval();
+        expectLastCall().andReturn(10000L).once();
+        EnsembleConfiguration ensembleConfiguration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(ensembleConfiguration, true);
+        ensembleConfiguration.getDiscovery();
+        expectLastCall().andReturn(discoveryConfiguration).once();
         EnsembleManager ensemble = createMock(EnsembleManager.class);
         makeThreadSafe(ensemble, true);
         ensemble.update(cluster);
-        expectLastCall().andReturn(null).once();
+        expectLastCall().andReturn(view).once();
 
-        replay(configuration, ensemble);
+        replay(discoveryConfiguration, ensembleConfiguration, ensemble);
 
         AdaptiveEnsembleScheduler scheduler = new AdaptiveEnsembleScheduler();
         try {
-            scheduler.schedule(cluster, ensemble, configuration);
+            scheduler.schedule(cluster, ensemble, ensembleConfiguration);
             Thread.sleep(1000);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
             scheduler.shutdown();
-            verify(configuration, ensemble);
+            verify(discoveryConfiguration, ensembleConfiguration, ensemble);
         }
     }
 
