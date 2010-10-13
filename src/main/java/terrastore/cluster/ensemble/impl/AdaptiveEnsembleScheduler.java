@@ -28,9 +28,7 @@ import terrastore.cluster.ensemble.EnsembleScheduler;
 import terrastore.communication.Cluster;
 
 /**
- *
  * @author Amir Moulavi
- *
  */
 public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
 
@@ -48,7 +46,7 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
     @Override
     public final synchronized void schedule(final Cluster cluster, final EnsembleManager ensemble, final EnsembleConfiguration ensembleConfiguration) {
         if (!shutdown) {
-            discoveryInterval = ensembleConfiguration.getDiscoveryInterval();
+            discoveryInterval = ensembleConfiguration.getDiscovery().getInterval();
             LOG.info("Scheduling discovery for cluster {}", cluster);
             scheduler.scheduleWithFixedDelay(new Runnable() {
 
@@ -58,8 +56,10 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
                         View view = ensemble.update(cluster);
                         if (prevView != null && !view.equals(prevView)) {
                             scheduler.shutdownNow();
-                            long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(view.difference(prevView), discoveryInterval, ensembleConfiguration.
-                                    getSchedulerConfiguration());
+                            long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(
+                                    view.difference(prevView),
+                                    discoveryInterval,
+                                    ensembleConfiguration.getDiscovery());
                             reschedule(cluster, ensemble, ensembleConfiguration, newEstimatedPeriodLength);
                         }
                         prevView = view;
@@ -73,7 +73,7 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
     }
 
     public final synchronized void reschedule(Cluster cluster, EnsembleManager ensemble, EnsembleConfiguration ensembleConfiguration, long estimatedPeriodLength) {
-        ensembleConfiguration.setDiscoveryInterval(estimatedPeriodLength);
+        ensembleConfiguration.getDiscovery().setInterval(estimatedPeriodLength);
         schedule(cluster, ensemble, ensembleConfiguration);
     }
 

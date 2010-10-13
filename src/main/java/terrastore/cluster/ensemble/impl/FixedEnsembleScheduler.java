@@ -58,7 +58,7 @@ public class FixedEnsembleScheduler implements EnsembleScheduler {
                     }
                 }
 
-            }, 0, ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
+            }, 0, ensembleConfiguration.getDiscovery().getInterval(), TimeUnit.MILLISECONDS);
         }
     }
 

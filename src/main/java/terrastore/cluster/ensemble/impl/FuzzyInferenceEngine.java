@@ -15,22 +15,20 @@
  */
 package terrastore.cluster.ensemble.impl;
 
-import terrastore.cluster.ensemble.SchedulerConfiguration;
+import terrastore.cluster.ensemble.EnsembleConfiguration;
 
 /**
- *
  * @author Amir Moulavi
- *
  */
 public class FuzzyInferenceEngine {
 
     private final int f1 = 2;
     private final int f2 = 4;
     private final int f3 = 6;
-    private int p1 = 20;
-    private int p2 = 40;
-    private int movingBoundary = 20;
-    private int interval;
+    private long p1 = 20;
+    private long p2 = 40;
+    private long boundaryIncrement = 20;
+    private long interval;
     private static FuzzyInferenceEngine instance = new FuzzyInferenceEngine();
 
     public static FuzzyInferenceEngine getInstance() {
@@ -40,13 +38,17 @@ public class FuzzyInferenceEngine {
     private FuzzyInferenceEngine() {
     }
 
-    public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength, SchedulerConfiguration conf) {
+    public long getBoundaryIncrement() {
+        return boundaryIncrement;
+    }
+
+    public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength, EnsembleConfiguration.DiscoveryConfiguration conf) {
 
         calculateParametersFrom(conf);
 
         int p = (int) (previousPeriodLength / 1000);
         if (nrViewChanges == 0) {
-            return (p + movingBoundary) * 1000;
+            return (p + boundaryIncrement) * 1000;
         } else if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
             return interval * 1000;
         } else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(p)) {
@@ -77,10 +79,10 @@ public class FuzzyInferenceEngine {
 
     }
 
-    private void calculateParametersFrom(SchedulerConfiguration conf) {
-        p1 = conf.getBaseline() / 2;
-        p2 = conf.getBaseline() + p1;
-        movingBoundary = conf.getMovingBoundry();
+    private void calculateParametersFrom(EnsembleConfiguration.DiscoveryConfiguration conf) {
+        p1 = (conf.getBaseline() / 1000) / 2;
+        p2 = (conf.getBaseline() / 1000) + p1;
+        boundaryIncrement = conf.getBoundaryIncrement() / 1000;
         interval = (p1 + p2) / 12;
     }
 
@@ -111,9 +113,4 @@ public class FuzzyInferenceEngine {
     private boolean veryHighViewChanges(int v) {
         return f3 <= v ? true : false;
     }
-
-    public int getMovingBoundary() {
-        return movingBoundary;
-    }
-
 }

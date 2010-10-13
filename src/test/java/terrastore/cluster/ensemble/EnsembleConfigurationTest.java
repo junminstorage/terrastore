@@ -24,24 +24,49 @@ import terrastore.util.json.JsonUtils;
  */
 public class EnsembleConfigurationTest {
 
-    private final String CONFIGURATION = "{"
+    private final String FIXED_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"fixed\", \"interval\":\"1000\"},"
             + "\"localCluster\":\"cluster1\","
-            + "\"discoveryInterval\":1000,"
+            + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
+            + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
+    private final String ADAPTIVE_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\", \"boundaryIncrement\":\"5000\"},"
+            + "\"localCluster\":\"cluster1\","
+            + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
+            + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
+    private final String WRONG_FIXED_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"fixed\"},"
+            + "\"localCluster\":\"cluster1\","
+            + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
+            + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
+    private final String MISSING_INTERVAL_ADAPTIVE_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"adaptive\", \"baseline\":\"25000\", \"boundaryIncrement\":\"5000\"},"
+            + "\"localCluster\":\"cluster1\","
+            + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
+            + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
+    private final String MISSING_BASELINE_ADAPTIVE_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"boundaryIncrement\":\"5000\"},"
+            + "\"localCluster\":\"cluster1\","
+            + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
+            + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
+    private final String MISSING_INCREMENT_ADAPTIVE_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\"},"
+            + "\"localCluster\":\"cluster1\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_CLUSTER_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"fixed\", \"interval\":\"1000\"},"
             + "\"localCluster\":\"cluster1\","
-            + "\"discoveryInterval\":1000,"
             + "\"clusters\":[\"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_SEED_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"fixed\", \"interval\":\"1000\"},"
             + "\"localCluster\":\"cluster1\","
-            + "\"discoveryInterval\":1000,"
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster3\":\"www.acme3.org:6000\"}}";
     private final String BAD_SEED_CONFIGURATION = "{"
+            + "\"discovery\":{\"type\":\"fixed\", \"interval\":\"1000\"},"
             + "\"localCluster\":\"cluster1\","
-            + "\"discoveryInterval\":1000,"
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org\", \"cluster3\":\"www.acme3.org:6000\"}}";
 
@@ -52,8 +77,38 @@ public class EnsembleConfigurationTest {
     }
 
     @Test
-    public void testCorrectConfiguration() throws Exception {
-        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(CONFIGURATION.getBytes()));
+    public void testFixedSchedulerConfiguration() throws Exception {
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(FIXED_CONFIGURATION.getBytes()));
+        configuration.validate();
+    }
+
+    @Test
+    public void testAdaptiveSchedulerConfiguration() throws Exception {
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(ADAPTIVE_CONFIGURATION.getBytes()));
+        configuration.validate();
+    }
+
+    @Test(expected = EnsembleConfigurationException.class)
+    public void testFixedConfigurationWithMissingInterval() throws Exception {
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(WRONG_FIXED_CONFIGURATION.getBytes()));
+        configuration.validate();
+    }
+
+    @Test(expected = EnsembleConfigurationException.class)
+    public void testAdaptiveConfigurationWithMissingInterval() throws Exception {
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(MISSING_INTERVAL_ADAPTIVE_CONFIGURATION.getBytes()));
+        configuration.validate();
+    }
+
+    @Test(expected = EnsembleConfigurationException.class)
+    public void testAdaptiveConfigurationWithMissingBaseline() throws Exception {
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(MISSING_BASELINE_ADAPTIVE_CONFIGURATION.getBytes()));
+        configuration.validate();
+    }
+
+    @Test(expected = EnsembleConfigurationException.class)
+    public void testAdaptiveConfigurationWithMissingIncrement() throws Exception {
+        EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(MISSING_INCREMENT_ADAPTIVE_CONFIGURATION.getBytes()));
         configuration.validate();
     }
 
