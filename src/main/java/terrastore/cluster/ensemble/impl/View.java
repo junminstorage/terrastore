@@ -47,27 +47,27 @@ public class View implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-    	if (obj instanceof View) {
-    		View other = (View) obj;
-    		return new EqualsBuilder().append(this.cluster, other.cluster).append(this.members, other.members).isEquals();
-    	} else {
-    		return false;
+        if (obj instanceof View) {
+            View other = (View) obj;
+            return new EqualsBuilder().append(this.cluster, other.cluster).append(this.members, other.members).isEquals();
+        } else {
+            return false;
         }
     }
 
     @Override
     public int hashCode() {
-    	return new HashCodeBuilder().append(this.cluster).append(this.members).toHashCode();
+        return new HashCodeBuilder().append(this.cluster).append(this.members).toHashCode();
     }
-    
+
     public int difference(View anotherView) {
-    	Set<Member> A = new HashSet<Member>(members);
-    	Set<Member> B = new HashSet<Member>(anotherView.getMembers());
-    	A.removeAll(B);
-    	int sizeOfA = A.size(); 
-    	A = new HashSet<Member>(members);
-    	B.removeAll(A);
-    	return sizeOfA + B.size();
+        Set<Member> A = new HashSet<Member>(members);
+        Set<Member> B = new HashSet<Member>(anotherView.getMembers());
+        A.removeAll(B);
+        int sizeOfA = A.size();
+        A = new HashSet<Member>(members);
+        B.removeAll(A);
+        return sizeOfA + B.size();
     }
 
     public static class Member implements Serializable {
@@ -98,5 +98,6 @@ public class View implements Serializable {
         public int hashCode() {
             return new HashCodeBuilder().append(this.configuration.getName()).toHashCode();
         }
+
     }
 }

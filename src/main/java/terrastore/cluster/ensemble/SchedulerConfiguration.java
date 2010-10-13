@@ -1,5 +1,5 @@
 /**
- * Copyright 2009 - 2010 Amir Moulavi <amir.moulavi@gmail.com>
+ * Copyright 2009 - 2010 Sergio Bossa (sergio.bossa@gmail.com)
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package terrastore.cluster.ensemble;
 
 /**
@@ -21,19 +20,18 @@ package terrastore.cluster.ensemble;
  * @author Amir Moulavi
  *
  */
-
 public class SchedulerConfiguration {
-    
+
     private int baseline;
     private int movingBoundry;
-    
+
     public static SchedulerConfiguration makeDefault() {
         SchedulerConfiguration schedulerConf = new SchedulerConfiguration();
         schedulerConf.setBaseline(30);
         schedulerConf.setMovingBoundry(20);
         return schedulerConf;
     }
-    
+
     public void validate() {
         validateBaseLine();
         validateMovingBoundary();
@@ -46,9 +44,9 @@ public class SchedulerConfiguration {
     }
 
     private void validateBaseLine() {
-       if (baseline < 0) {
-           throw new EnsembleConfigurationException("Baseline in SchedulerConfiguration is not valid: " + baseline);
-       }
+        if (baseline < 0) {
+            throw new EnsembleConfigurationException("Baseline in SchedulerConfiguration is not valid: " + baseline);
+        }
     }
 
     public int getBaseline() {
