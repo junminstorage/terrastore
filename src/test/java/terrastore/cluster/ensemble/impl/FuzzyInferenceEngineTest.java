@@ -33,7 +33,7 @@ public class FuzzyInferenceEngineTest {
 
     @Before
     public void set_up() {
-        fuzzy = FuzzyInferenceEngine.getInstance();
+        fuzzy = new FuzzyInferenceEngine();
         conf = new EnsembleConfiguration.DiscoveryConfiguration();
         conf.setType("adaptive");
         conf.setBaseline(30000L);
