@@ -122,7 +122,8 @@ public class EnsembleConfiguration {
         private String type = "fixed";
         private Long interval;
         private Long baseline;
-        private Long boundaryIncrement;
+        private Long upboundIncrement;
+        private Long upboundLimit;
 
         public void validate() {
             validateForFixedScheduler();
@@ -153,12 +154,20 @@ public class EnsembleConfiguration {
             this.baseline = baseline;
         }
 
-        public Long getBoundaryIncrement() {
-            return boundaryIncrement;
+        public Long getUpboundIncrement() {
+            return upboundIncrement;
         }
 
-        public void setBoundaryIncrement(Long boundaryIncrement) {
-            this.boundaryIncrement = boundaryIncrement;
+        public void setUpboundIncrement(Long upboundIncrement) {
+            this.upboundIncrement = upboundIncrement;
+        }
+
+        public Long getUpboundLimit() {
+            return upboundLimit;
+        }
+
+        public void setUpboundLimit(Long upboundLimit) {
+            this.upboundLimit = upboundLimit;
         }
 
         private void validateForFixedScheduler() {
@@ -175,8 +184,11 @@ public class EnsembleConfiguration {
                 if (baseline == null || baseline <= 0) {
                     throw new EnsembleConfigurationException("Baseline must be a positive time value (in milliseconds)!");
                 }
-                if (boundaryIncrement == null || boundaryIncrement <= 0) {
-                    throw new EnsembleConfigurationException("Boundary increment must be a positive time value (in milliseconds)!");
+                if (upboundIncrement == null || upboundIncrement <= 0) {
+                    throw new EnsembleConfigurationException("Upbouns increment must be a positive time value (in milliseconds)!");
+                }
+                if (upboundLimit == null || upboundLimit <= 0) {
+                    throw new EnsembleConfigurationException("Upbound limit must be a positive time value (in milliseconds)!");
                 }
             }
         }

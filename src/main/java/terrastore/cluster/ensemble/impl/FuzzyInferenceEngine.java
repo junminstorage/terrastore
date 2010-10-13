@@ -27,66 +27,63 @@ public class FuzzyInferenceEngine {
     private final int f3 = 6;
     private long p1 = 20;
     private long p2 = 40;
-    private long boundaryIncrement = 20;
+    private long upboundIncrement = 20;
+    private long upboundLimit = 60;
     private long interval;
-
-    public long getBoundaryIncrement() {
-        return boundaryIncrement;
-    }
 
     public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength, EnsembleConfiguration.DiscoveryConfiguration conf) {
 
         calculateParametersFrom(conf);
 
-        int p = (int) (previousPeriodLength / 1000);
+        long p = previousPeriodLength / 1000;
         if (nrViewChanges == 0) {
-            return (p + boundaryIncrement) * 1000;
+            return Math.min((upboundLimit * 1000), ((p + upboundIncrement) * 1000));
         } else if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return interval * 1000;
+            return Math.min((upboundLimit * 1000), (interval * 1000));
         } else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return 2 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (2 * interval * 1000));
         } else if (veryHighViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return 3 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (3 * interval * 1000));
         } else if (highViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return 4 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (4 * interval * 1000));
         } else if (highViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return 5 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (5 * interval * 1000));
         } else if (highViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return 6 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (6 * interval * 1000));
         } else if (lowViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return 7 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (7 * interval * 1000));
         } else if (lowViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return 8 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (8 * interval * 1000));
         } else if (lowViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return 9 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (9 * interval * 1000));
         } else if (veryLowViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return 10 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (10 * interval * 1000));
         } else if (veryLowViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return 11 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (11 * interval * 1000));
         } else if (veryLowViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return 12 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (12 * interval * 1000));
         } else {
-            return 13 * interval * 1000;
+            return Math.min((upboundLimit * 1000), (13 * interval * 1000));
         }
-
     }
 
     private void calculateParametersFrom(EnsembleConfiguration.DiscoveryConfiguration conf) {
         p1 = (conf.getBaseline() / 1000) / 2;
         p2 = (conf.getBaseline() / 1000) + p1;
-        boundaryIncrement = conf.getBoundaryIncrement() / 1000;
+        upboundIncrement = conf.getUpboundIncrement() / 1000;
+        upboundLimit = conf.getUpboundLimit() / 1000;
         interval = (p1 + p2) / 12;
     }
 
-    private boolean veryFrequentPeriod(int p) {
+    private boolean veryFrequentPeriod(long p) {
         return p < p1 ? true : false;
     }
 
-    private boolean frequentPeriod(int p) {
+    private boolean frequentPeriod(long p) {
         return p1 <= p && p < p2 ? true : false;
     }
 
-    private boolean lessFrequentPeriod(int p) {
+    private boolean lessFrequentPeriod(long p) {
         return p2 <= p ? true : false;
     }
 
