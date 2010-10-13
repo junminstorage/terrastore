@@ -33,13 +33,14 @@ import terrastore.communication.Cluster;
 public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
 
     private static final Logger LOG = LoggerFactory.getLogger(FixedEnsembleScheduler.class);
-    private FuzzyInferenceEngine fuzzy;
+    private final FuzzyInferenceEngine fuzzy;
     private final ScheduledExecutorService scheduler;
-    private volatile boolean shutdown;
+    private boolean shutdown;
     private long discoveryInterval;
     private View prevView;
 
-    public AdaptiveEnsembleScheduler() {
+    public AdaptiveEnsembleScheduler(FuzzyInferenceEngine engine) {
+        this.fuzzy = engine;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
@@ -81,11 +82,6 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
     public synchronized void shutdown() {
         shutdown = true;
         scheduler.shutdown();
-    }
-
-    /* INJETION METHOD */
-    public void setFuzzy(FuzzyInferenceEngine fuzzy) {
-        this.fuzzy = fuzzy;
     }
 
 }

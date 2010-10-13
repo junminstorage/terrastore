@@ -29,14 +29,6 @@ public class FuzzyInferenceEngine {
     private long p2 = 40;
     private long boundaryIncrement = 20;
     private long interval;
-    private static FuzzyInferenceEngine instance = new FuzzyInferenceEngine();
-
-    public static FuzzyInferenceEngine getInstance() {
-        return instance;
-    }
-
-    private FuzzyInferenceEngine() {
-    }
 
     public long getBoundaryIncrement() {
         return boundaryIncrement;
@@ -113,4 +105,5 @@ public class FuzzyInferenceEngine {
     private boolean veryHighViewChanges(int v) {
         return f3 <= v ? true : false;
     }
+
 }

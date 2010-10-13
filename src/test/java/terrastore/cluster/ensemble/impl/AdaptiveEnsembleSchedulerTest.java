@@ -38,6 +38,8 @@ public class AdaptiveEnsembleSchedulerTest {
     public void testSchedule() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
+        FuzzyInferenceEngine fuzzy = createMock(FuzzyInferenceEngine.class);
+        makeThreadSafe(fuzzy, true);
         View view = createMock(View.class);
         makeThreadSafe(view, true);
         EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
@@ -53,9 +55,9 @@ public class AdaptiveEnsembleSchedulerTest {
         ensemble.update(cluster);
         expectLastCall().andReturn(view).once();
 
-        replay(discoveryConfiguration, ensembleConfiguration, ensemble);
+        replay(fuzzy, discoveryConfiguration, ensembleConfiguration, ensemble);
 
-        AdaptiveEnsembleScheduler scheduler = new AdaptiveEnsembleScheduler();
+        AdaptiveEnsembleScheduler scheduler = new AdaptiveEnsembleScheduler(fuzzy);
         try {
             scheduler.schedule(cluster, ensemble, ensembleConfiguration);
             Thread.sleep(1000);
@@ -63,7 +65,7 @@ public class AdaptiveEnsembleSchedulerTest {
             ex.printStackTrace();
         } finally {
             scheduler.shutdown();
-            verify(discoveryConfiguration, ensembleConfiguration, ensemble);
+            verify(fuzzy, discoveryConfiguration, ensembleConfiguration, ensemble);
         }
     }
 
