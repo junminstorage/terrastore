@@ -37,16 +37,26 @@ public class FuzzyInferenceEngineTest {
         conf = new EnsembleConfiguration.DiscoveryConfiguration();
         conf.setType("adaptive");
         conf.setBaseline(30000L);
-        conf.setBoundaryIncrement(10000L);
+        conf.setUpboundIncrement(10000L);
+        conf.setUpboundLimit(60000L);
     }
 
     @Test
     public void no_view_change() {
-        given(view_changes(0), previous_period_length(50));
+        given(view_changes(0), previous_period_length(40));
 
         when_the_fuzzy_inference_engine_estimates();
 
-        then_the_estimated_next_preiod_length_is((int) (50 + fuzzy.getBoundaryIncrement()));
+        then_the_estimated_next_preiod_length_is(40 + 10);
+    }
+
+    @Test
+    public void no_view_change_with_upbound_limit() {
+        given(view_changes(0), previous_period_length(60));
+
+        when_the_fuzzy_inference_engine_estimates();
+
+        then_the_estimated_next_preiod_length_is(60);
     }
 
     @Test
