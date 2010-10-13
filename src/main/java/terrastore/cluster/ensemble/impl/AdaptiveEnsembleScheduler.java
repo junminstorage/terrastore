@@ -1,8 +1,7 @@
 /**
- * 
- * @author Amir Moulavi <amir.moulavi@gmail.com>
- * 
- * 	  Licensed under the Apache License, Version 2.0 (the "License");
+ * Copyright 2009 - 2010 Sergio Bossa (sergio.bossa@gmail.com)
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
@@ -14,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package terrastore.cluster.ensemble.impl;
 
 import java.util.concurrent.Executors;
@@ -29,16 +27,19 @@ import terrastore.cluster.ensemble.EnsembleManager;
 import terrastore.cluster.ensemble.EnsembleScheduler;
 import terrastore.communication.Cluster;
 
-
+/**
+ *
+ * @author Amir Moulavi
+ *
+ */
 public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
 
     private static final Logger LOG = LoggerFactory.getLogger(FixedEnsembleScheduler.class);
     private FuzzyInferenceEngine fuzzy;
-
-	private final ScheduledExecutorService scheduler;
+    private final ScheduledExecutorService scheduler;
     private volatile boolean shutdown;
-	private long discoveryInterval;
-	private View prevView;
+    private long discoveryInterval;
+    private View prevView;
 
     public AdaptiveEnsembleScheduler() {
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
@@ -47,31 +48,33 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
     @Override
     public final synchronized void schedule(final Cluster cluster, final EnsembleManager ensemble, final EnsembleConfiguration ensembleConfiguration) {
         if (!shutdown) {
-        	discoveryInterval = ensembleConfiguration.getDiscoveryInterval();
+            discoveryInterval = ensembleConfiguration.getDiscoveryInterval();
             LOG.info("Scheduling discovery for cluster {}", cluster);
-				scheduler.scheduleWithFixedDelay(new Runnable() {
+            scheduler.scheduleWithFixedDelay(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        try {
-                            View view = ensemble.update(cluster);
-                            if (prevView != null && !view.equals(prevView)) {
-                            	scheduler.shutdownNow();
-                            	long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(view.difference(prevView), discoveryInterval, ensembleConfiguration.getSchedulerConfiguration());
-                            	reschedule(cluster, ensemble, ensembleConfiguration, newEstimatedPeriodLength);                            	
-                            } 
-                            prevView = view;
-                        } catch (Exception ex) {
-                            LOG.warn(ex.getMessage(), ex);
+                @Override
+                public void run() {
+                    try {
+                        View view = ensemble.update(cluster);
+                        if (prevView != null && !view.equals(prevView)) {
+                            scheduler.shutdownNow();
+                            long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(view.difference(prevView), discoveryInterval, ensembleConfiguration.
+                                    getSchedulerConfiguration());
+                            reschedule(cluster, ensemble, ensembleConfiguration, newEstimatedPeriodLength);
                         }
+                        prevView = view;
+                    } catch (Exception ex) {
+                        LOG.warn(ex.getMessage(), ex);
                     }
-                }, 0, discoveryInterval, TimeUnit.MILLISECONDS);
-            }
+                }
+
+            }, 0, discoveryInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
     public final synchronized void reschedule(Cluster cluster, EnsembleManager ensemble, EnsembleConfiguration ensembleConfiguration, long estimatedPeriodLength) {
-    	ensembleConfiguration.setDiscoveryInterval(estimatedPeriodLength);
-    	schedule(cluster, ensemble, ensembleConfiguration);    	
+        ensembleConfiguration.setDiscoveryInterval(estimatedPeriodLength);
+        schedule(cluster, ensemble, ensembleConfiguration);
     }
 
     @Override
@@ -79,10 +82,10 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
         shutdown = true;
         scheduler.shutdown();
     }
-    
-    
+
     /* INJETION METHOD */
     public void setFuzzy(FuzzyInferenceEngine fuzzy) {
-		this.fuzzy = fuzzy;
-	}
+        this.fuzzy = fuzzy;
+    }
+
 }

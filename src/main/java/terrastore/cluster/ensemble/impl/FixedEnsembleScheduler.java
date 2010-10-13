@@ -47,18 +47,19 @@ public class FixedEnsembleScheduler implements EnsembleScheduler {
     public final synchronized void schedule(final Cluster cluster, final EnsembleManager ensemble, final EnsembleConfiguration ensembleConfiguration) {
         if (!shutdown) {
             LOG.info("Scheduling discovery for cluster {}", cluster);
-                scheduler.scheduleWithFixedDelay(new Runnable() {
+            scheduler.scheduleWithFixedDelay(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        try {
-                            ensemble.update(cluster);
-                        } catch (Exception ex) {
-                            LOG.warn(ex.getMessage(), ex);
-                        }
+                @Override
+                public void run() {
+                    try {
+                        ensemble.update(cluster);
+                    } catch (Exception ex) {
+                        LOG.warn(ex.getMessage(), ex);
                     }
-                }, 0, ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
-            }
+                }
+
+            }, 0, ensembleConfiguration.getDiscoveryInterval(), TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
@@ -66,4 +67,5 @@ public class FixedEnsembleScheduler implements EnsembleScheduler {
         shutdown = true;
         scheduler.shutdown();
     }
+
 }
