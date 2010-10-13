@@ -63,7 +63,7 @@ public class FuzzyInferenceEngine {
         } else if (veryLowViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
             return Math.min((upboundLimit * 1000), (12 * interval * 1000));
         } else {
-            return Math.min((upboundLimit * 1000), (13 * interval * 1000));
+            throw new IllegalStateException("Unexpected view changes and frequency values!");
         }
     }
 
