@@ -30,6 +30,10 @@
             <bean class="terrastore.service.conditions.JSCondition"/>
         </entry>
 
+        <entry key="if">
+            <bean class="terrastore.service.conditions.IfCondition"/>
+        </entry>
+
     </util:map>
 
 </beans>
