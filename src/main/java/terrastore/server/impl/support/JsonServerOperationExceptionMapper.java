@@ -16,7 +16,6 @@
 package terrastore.server.impl.support;
 
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Variant;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import terrastore.common.ErrorMessage;
@@ -31,7 +30,7 @@ public class JsonServerOperationExceptionMapper implements ExceptionMapper<Serve
     public Response toResponse(ServerOperationException ex) {
         ErrorMessage message = ex.getErrorMessage();
         if (message != null) {
-            return Response.status(message.getCode()).entity(message).variant(new Variant(null, null, "UTF-8")).build();
+            return Response.status(message.getCode()).entity(message).build();
         } else {
             return Response.status(500).build();
         }
