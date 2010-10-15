@@ -29,7 +29,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Variant;
 import org.jboss.resteasy.plugins.providers.StringTextStar;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
@@ -119,7 +118,7 @@ public class JsonHttpServer {
     public Response updateValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
         try {
             Value result = core.updateValue(bucket, key, function, timeout, parameters);
-            return Response.seeOther(new URI(bucket + "/" + key)).entity(result).variant(new Variant(null, null, "UTF-8")).build();
+            return Response.seeOther(new URI(bucket + "/" + key)).entity(result).build();
         } catch (Exception ex) {
             throw new ServerOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
@@ -130,7 +129,7 @@ public class JsonHttpServer {
     @Produces("application/json")
     public Response getBuckets() throws ServerOperationException {
         Buckets result = core.getBuckets();
-        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
+        return Response.ok(result).build();
     }
 
     @GET
@@ -138,7 +137,7 @@ public class JsonHttpServer {
     @Produces("application/json")
     public Response getValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("predicate") String predicate) throws ServerOperationException {
         Value result = core.getValue(bucket, key, predicate);
-        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
+        return Response.ok(result).build();
     }
 
     @GET
@@ -146,7 +145,7 @@ public class JsonHttpServer {
     @Produces("application/json")
     public Response getAllValues(@PathParam("bucket") String bucket, @QueryParam("limit") int limit) throws ServerOperationException {
         Values result = core.getAllValues(bucket, limit);
-        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
+        return Response.ok(result).build();
     }
 
     @GET
@@ -154,7 +153,7 @@ public class JsonHttpServer {
     @Produces("application/json")
     public Response queryByRange(@PathParam("bucket") String bucket, @QueryParam("startKey") Key startKey, @QueryParam("endKey") Key endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
         Values result = core.queryByRange(bucket, startKey, endKey, limit, comparator, predicateExpression, timeToLive);
-        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
+        return Response.ok(result).build();
     }
 
     @GET
@@ -162,7 +161,7 @@ public class JsonHttpServer {
     @Produces("application/json")
     public Response queryByPredicate(@PathParam("bucket") String bucket, @QueryParam("predicate") String predicateExpression) throws ServerOperationException {
         Values result = core.queryByPredicate(bucket, predicateExpression);
-        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
+        return Response.ok(result).build();
     }
 
     @POST
@@ -184,7 +183,7 @@ public class JsonHttpServer {
     @Produces("application/json")
     public Response getClusterStats() {
         ClusterStats result = core.getClusterStats();
-        return Response.ok(result).variant(new Variant(null, null, "UTF-8")).build();
+        return Response.ok(result).build();
     }
 
     private void registerProviders(ResteasyDeployment deployment, Map<String, String> configuration) {
