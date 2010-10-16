@@ -67,12 +67,12 @@ public interface Store {
     /**
      *
      */
-    public Map<String, Object> map(Mapper mapper) throws StoreOperationException;
+    public Map<String, Object> map(String bucketName, Set<Key> keys, Mapper mapper) throws StoreOperationException;
 
     /**
      *
      */
-    public Value reduce(Reducer reducer) throws StoreOperationException;
+    public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException;
 
     /**
      * Flush all key/value entries of all buckets contained into this store.

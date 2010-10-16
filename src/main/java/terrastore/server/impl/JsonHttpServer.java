@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
+import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;
 import terrastore.server.Server;
 import terrastore.server.ServerOperationException;
@@ -161,6 +162,15 @@ public class JsonHttpServer {
     @Produces("application/json")
     public Response queryByPredicate(@PathParam("bucket") String bucket, @QueryParam("predicate") String predicateExpression) throws ServerOperationException {
         Values result = core.queryByPredicate(bucket, predicateExpression);
+        return Response.ok(result).build();
+    }
+
+    @POST
+    @Path("/{bucket}/mapReduce")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response queryByMapReduce(@PathParam("bucket") String bucket, MapReduceDescriptor descriptor) throws ServerOperationException {
+        Value result = core.queryByMapReduce(bucket, descriptor);
         return Response.ok(result).build();
     }
 

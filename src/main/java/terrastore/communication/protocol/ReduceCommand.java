@@ -15,6 +15,8 @@
  */
 package terrastore.communication.protocol;
 
+import java.util.List;
+import java.util.Map;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -29,9 +31,11 @@ import terrastore.store.features.Reducer;
  */
 public class ReduceCommand extends AbstractCommand<Value> {
 
+    private final List<Map<String, Object>> values;
     private final Reducer reducer;
 
-    public ReduceCommand(Reducer reducer) {
+    public ReduceCommand(List<Map<String, Object>> values, Reducer reducer) {
+        this.values = values;
         this.reducer = reducer;
     }
 
@@ -41,7 +45,7 @@ public class ReduceCommand extends AbstractCommand<Value> {
     }
 
     public Value executeOn(final Store store) throws StoreOperationException {
-        return store.reduce(reducer);
+        return store.reduce(values, reducer);
     }
 
 }

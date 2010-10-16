@@ -22,8 +22,10 @@ import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
+import terrastore.store.features.Reducer;
 
 /**
  * The QueryService manages the operations for finding values in buckets, by interacting with a {@link terrastore.router.Router}
@@ -82,21 +84,19 @@ public interface QueryService {
      * Conditions are provided by the {@link #getConditions()} method; if the predicate doesn't specify any condition,
      * no condition will be used hence all values in range will be returned; if the specified condition is not found, an exception is thrown.
      * <br><br>
-     * The query is executed over a snapshot view of the bucket keys, so the timeToLive parameter determines,
+     * The query is executed over a snapshot view of the bucket keys, so the timeToLive carried into the range object determines,
      * in milliseconds, the max snapshot age: if the snapshot is older than the given time, it's recomputed,
      * otherwise it will be actually used for the query.
      *
      * @param bucket The bucket to query.
      * @param range The range which keys must be fall into.
      * @param predicate The predicate to evaluate on values.
-     * @param timeToLive Number of milliseconds specifying the snapshot age; if set to 0, a new snapshot will be immediately computed
-     * and the query executed on the fresh snasphot.
      * @return An ordered map containing key/value pairs.
      * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws CommunicationException, QueryOperationException;
+    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
@@ -115,6 +115,12 @@ public interface QueryService {
      */
     @HandleFailure(exception = CommunicationException.class)
     public Map<Key, Value> queryByPredicate(String bucket, Predicate predicate) throws CommunicationException, QueryOperationException;
+
+    /**
+     *
+     */
+    @HandleFailure(exception = CommunicationException.class)
+    public Value queryByMapReduce(String bucket, Range range, Mapper mapper, Reducer reducer) throws CommunicationException, QueryOperationException;
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.

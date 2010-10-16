@@ -230,9 +230,9 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Set<Key> keysInRange(Range keyRange, long timeToLive) {
+    public Set<Key> keysInRange(Range keyRange) {
         Comparator keyComparator = getComparator(keyRange.getKeyComparatorName());
-        SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
+        SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), keyRange.getTimeToLive());
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
     }
 

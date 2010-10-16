@@ -176,16 +176,16 @@ public class TCStore implements Store {
     }
 
     @Override
-    public Map<String, Object> map(final Mapper mapper) throws StoreOperationException {
+    public Map<String, Object> map(final String bucketName, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
         try {
             List<Map<String, Object>> mapResults = ParallelUtils.parallelMap(
-                    mapper.getKeys(),
+                    keys,
                     new MapTask<Key, Map<String, Object>>() {
 
                         @Override
                         public Map<String, Object> map(Key key) {
                             try {
-                                Bucket bucket = get(mapper.getBucketName());
+                                Bucket bucket = get(bucketName);
                                 return bucket.map(key, mapper);
                             } catch (Exception ex) {
                                 throw new RuntimeException(ex);
@@ -211,9 +211,9 @@ public class TCStore implements Store {
     }
 
     @Override
-    public Value reduce(Reducer reducer) throws StoreOperationException {
+    public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException {
         Aggregator aggregator = getAggregator(reducer.getReducerName());
-        Map<String, Object> aggregation = aggregate(reducer.getValues(), aggregator, reducer.getTimeoutInMillis());
+        Map<String, Object> aggregation = aggregate(values, aggregator, reducer.getTimeoutInMillis());
         return JsonUtils.fromMap(aggregation);
     }
 

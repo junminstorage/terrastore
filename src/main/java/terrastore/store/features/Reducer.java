@@ -16,8 +16,6 @@
 package terrastore.store.features;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
@@ -30,21 +28,15 @@ public class Reducer implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
     private final String reducerName;
-    private final List<Map<String, Object>> values;
     private final long timeoutInMillis;
 
-    public Reducer(String reducerName, List<Map<String, Object>> values, long timeoutInMillis) {
+    public Reducer(String reducerName, long timeoutInMillis) {
         this.reducerName = reducerName;
-        this.values = values;
         this.timeoutInMillis = timeoutInMillis;
     }
 
     public String getReducerName() {
         return reducerName;
-    }
-
-    public List<Map<String, Object>> getValues() {
-        return values;
     }
 
     public long getTimeoutInMillis() {
@@ -56,7 +48,6 @@ public class Reducer implements Serializable {
         if (obj instanceof Reducer) {
             Reducer other = (Reducer) obj;
             return new EqualsBuilder().append(this.reducerName, other.reducerName).
-                    append(this.values, other.values).
                     append(this.timeoutInMillis, other.timeoutInMillis).
                     isEquals();
         } else {
@@ -67,7 +58,6 @@ public class Reducer implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(reducerName).
-                append(values).
                 append(timeoutInMillis).
                 toHashCode();
     }
