@@ -15,9 +15,13 @@
  */
 package terrastore.store;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
+import terrastore.store.features.Mapper;
+import terrastore.store.features.Reducer;
+import terrastore.store.operators.Aggregator;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
@@ -61,6 +65,16 @@ public interface Store {
     public Set<String> buckets();
 
     /**
+     *
+     */
+    public Map<String, Object> map(Mapper mapper) throws StoreOperationException;
+
+    /**
+     *
+     */
+    public Value reduce(Reducer reducer) throws StoreOperationException;
+
+    /**
      * Flush all key/value entries of all buckets contained into this store.
      * <br>
      * The actual decision whether the key must be flushed or not, is left to the given {@link FlushCondition}.
@@ -97,6 +111,13 @@ public interface Store {
      * @param functions  A map of supported functions.
      */
     public void setFunctions(Map<String, Function> functions);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Aggregator}s by name.
+     *
+     * @param aggregators A map of supported aggregators.
+     */
+    public void setAggregators(Map<String, Aggregator> aggregators);
 
     /**
      * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
