@@ -22,6 +22,7 @@ import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
 import terrastore.server.Buckets;
+import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;
 import terrastore.server.Server;
 import terrastore.server.ServerOperationException;
@@ -35,9 +36,11 @@ import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.Key;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
+import terrastore.store.features.Reducer;
 
 /**
  * Core {@link terrastore.server.Server} implementation.
@@ -183,13 +186,12 @@ public class CoreServer implements Server {
                 comparator = "";
             }
             LOG.info("Executing range query from {} to {} ordered by {} on bucket {}", new Object[]{startKey, endKey, comparator, bucket});
-            Range range = new Range(startKey, endKey, limit, comparator);
+            Range range = new Range(startKey, endKey, limit, comparator, timeToLive);
             Predicate predicate = new Predicate(predicateExpression);
             return new Values(
                     queryService.queryByRange(bucket,
                     range,
-                    predicate,
-                    timeToLive));
+                    predicate));
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -210,6 +212,26 @@ public class CoreServer implements Server {
             LOG.info("Executing predicate query {} on bucket {}", predicateExpression, bucket);
             Predicate predicate = new Predicate(predicateExpression);
             return new Values(queryService.queryByPredicate(bucket, predicate));
+        } catch (CommunicationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        } catch (QueryOperationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        }
+    }
+
+    @Override
+    public Value queryByMapReduce(String bucket, MapReduceDescriptor descriptor) throws ServerOperationException {
+        try {
+            descriptor.sanitize();
+            LOG.info("Executing map reduce query on bucket {}", bucket);
+            Range range = new Range(descriptor.range.startKey, descriptor.range.endKey, 0, descriptor.range.comparator, descriptor.range.timeToLive);
+            Mapper mapper = new Mapper(descriptor.task.mapper, descriptor.task.combiner, descriptor.task.timeout, descriptor.task.parameters);
+            Reducer reducer = new Reducer(descriptor.task.reducer, descriptor.task.timeout);
+            return queryService.queryByMapReduce(bucket, range, mapper, reducer);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);

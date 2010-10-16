@@ -36,25 +36,23 @@ public class RangeQueryCommand extends AbstractCommand<Set<Key>> {
 
     private final String bucketName;
     private final Range range;
-    private final long timeToLive;
 
-    public RangeQueryCommand(String bucketName, Range range, long timeToLive) {
+    public RangeQueryCommand(String bucketName, Range range) {
         this.bucketName = bucketName;
         this.range = range;
-        this.timeToLive = timeToLive;
     }
 
     @Override
     public Set<Key> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
-        Command command = new RangeQueryCommand(bucketName, range, timeToLive);
+        Command command = new RangeQueryCommand(bucketName, range);
         return Sets.serializing(node.<Set<Key>>send(command));
     }
 
     public Set<Key> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            return Sets.serializing(bucket.keysInRange(range, timeToLive));
+            return Sets.serializing(bucket.keysInRange(range));
         } else {
             return Collections.<Key>emptySet();
         }

@@ -274,7 +274,7 @@ public class TCBucketTest {
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
-        Set<Key> range = bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order"), 0);
+        Set<Key> range = bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order", 0));
         assertEquals(2, range.size());
         assertEquals(key2, range.toArray()[0]);
         assertEquals(key3, range.toArray()[1]);
@@ -301,7 +301,7 @@ public class TCBucketTest {
         bucket.put(key1, value1);
         bucket.put(key2, value2);
         bucket.put(key3, value3);
-        Set<Key> range = bucket.keysInRange(new Range(new Key("key1"), new Key("key3"), 2, "order"), 0);
+        Set<Key> range = bucket.keysInRange(new Range(new Key("key1"), new Key("key3"), 2, "order", 0));
         assertEquals(2, range.size());
         assertEquals(key1, range.toArray()[0]);
         assertEquals(key2, range.toArray()[1]);
@@ -322,7 +322,7 @@ public class TCBucketTest {
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(0, bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order"), 0).size());
+        assertEquals(0, bucket.keysInRange(new Range(new Key("key2"), new Key("key3"), 0, "order", 0)).size());
     }
 
     @Test
@@ -340,7 +340,7 @@ public class TCBucketTest {
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key2"), 0, "order"), 0).size());
+        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key2"), 0, "order", 0)).size());
     }
 
     @Test
@@ -358,7 +358,7 @@ public class TCBucketTest {
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range(new Key("key0"), new Key("key1"), 0, "order"), 0).size());
+        assertEquals(1, bucket.keysInRange(new Range(new Key("key0"), new Key("key1"), 0, "order", 0)).size());
     }
 
     @Test
@@ -376,7 +376,7 @@ public class TCBucketTest {
         Key key1 = new Key("key1");
         Value value1 = new Value(JSON_VALUE.getBytes());
         bucket.put(key1, value1);
-        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key1"), 0, "order"), 0).size());
+        assertEquals(1, bucket.keysInRange(new Range(new Key("key1"), new Key("key1"), 0, "order", 0)).size());
     }
 
     @Test

@@ -363,7 +363,7 @@ public class DefaultQueryServiceTest {
 
         DefaultQueryService service = new DefaultQueryService(router);
 
-        Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0);
+        Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, result.size());
         assertEquals(new Key("test1"), result.keySet().toArray()[0]);
         assertEquals(new Key("test2"), result.keySet().toArray()[1]);
@@ -576,7 +576,7 @@ public class DefaultQueryServiceTest {
 
 
         DefaultQueryService service = new DefaultQueryService(router);
-        Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0);
+        Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, result.size());
         assertEquals(JSON_VALUE, new String(result.get(new Key("test1")).getBytes()));
         assertEquals(JSON_VALUE, new String(result.get(new Key("test2")).getBytes()));
@@ -607,7 +607,7 @@ public class DefaultQueryServiceTest {
         replay(cluster1, node1, node2, router);
 
         DefaultQueryService service = new DefaultQueryService(router);
-        assertTrue(service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0).isEmpty());
+        assertTrue(service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null)).isEmpty());
 
         verify(cluster1, node1, node2, router);
     }
@@ -647,7 +647,7 @@ public class DefaultQueryServiceTest {
 
         DefaultQueryService service = new DefaultQueryService(router);
 
-        Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order"), new Predicate(null), 0);
+        Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, result.size());
         assertEquals(new Key("test1"), result.keySet().toArray()[0]);
         assertEquals(new Key("test2"), result.keySet().toArray()[1]);

@@ -17,10 +17,8 @@ package terrastore.store.features;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Set;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import terrastore.store.Key;
 
 /**
  * Mapper object carrying data about the mapper and combiner functions, their timeout and parameters.
@@ -30,28 +28,16 @@ import terrastore.store.Key;
 public class Mapper implements Serializable {
 
     private static final long serialVersionUID = 12345678901L;
-    private final String bucketName;
-    private final Set<Key> keys;
     private final String mapperName;
     private final String combinerName;
     private final long timeoutInMillis;
     private final Map<String, Object> parameters;
 
-    public Mapper(String bucketName, Set<Key> keys, String mapperName, String combinerName, long timeoutInMillis, Map<String, Object> parameters) {
-        this.bucketName = bucketName;
-        this.keys = keys;
+    public Mapper(String mapperName, String combinerName, long timeoutInMillis, Map<String, Object> parameters) {
         this.mapperName = mapperName;
         this.combinerName = combinerName;
         this.timeoutInMillis = timeoutInMillis;
         this.parameters = parameters;
-    }
-
-    public String getBucketName() {
-        return bucketName;
-    }
-
-    public Set<Key> getKeys() {
-        return keys;
     }
 
     public String getMapperName() {
@@ -74,9 +60,7 @@ public class Mapper implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof Mapper) {
             Mapper other = (Mapper) obj;
-            return new EqualsBuilder().append(this.bucketName, other.bucketName).
-                    append(this.keys, other.keys).
-                    append(this.mapperName, other.mapperName).
+            return new EqualsBuilder().append(this.mapperName, other.mapperName).
                     append(this.combinerName, other.combinerName).
                     append(this.timeoutInMillis, other.timeoutInMillis).
                     append(this.parameters, other.parameters).
@@ -88,9 +72,7 @@ public class Mapper implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(bucketName).
-                append(keys).
-                append(mapperName).
+        return new HashCodeBuilder().append(mapperName).
                 append(combinerName).
                 append(timeoutInMillis).
                 append(parameters).

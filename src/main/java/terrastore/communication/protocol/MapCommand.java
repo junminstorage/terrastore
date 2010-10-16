@@ -65,6 +65,6 @@ public class MapCommand extends AbstractCommand<Map<String, Object>> {
     }
 
     public Map<String, Object> executeOn(final Store store) throws StoreOperationException {
-        return Maps.serializing(store.map(mapper));
+        return Maps.serializing(store.map(bucketName, keys, mapper));
     }
 }

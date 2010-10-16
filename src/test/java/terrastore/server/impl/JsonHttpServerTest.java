@@ -402,7 +402,7 @@ public class JsonHttpServerTest {
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "")), eq(new Predicate(null)), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "", 0)), eq(new Predicate(null)));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService, statsService);
@@ -436,7 +436,7 @@ public class JsonHttpServerTest {
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 2, "order")), eq(new Predicate(null)), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 2, "order", 0)), eq(new Predicate(null)));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService, statsService);
@@ -470,7 +470,7 @@ public class JsonHttpServerTest {
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order")), eq(new Predicate(null)), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order", 0)), eq(new Predicate(null)));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService, statsService);
@@ -504,7 +504,7 @@ public class JsonHttpServerTest {
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
 
-        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order")), eq(new Predicate("test:condition")), eq(0L));
+        queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order", 0)), eq(new Predicate("test:condition")));
         expectLastCall().andReturn(values).once();
 
         replay(updateService, queryService, backupService, statsService);

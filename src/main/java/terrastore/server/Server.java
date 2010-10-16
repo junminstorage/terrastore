@@ -137,6 +137,11 @@ public interface Server {
     public Values queryByPredicate(String bucket, String predicate) throws ServerOperationException;
 
     /**
+     *
+     */
+    public Value queryByMapReduce(String bucket, MapReduceDescriptor descriptor) throws ServerOperationException;
+
+    /**
      * Execute the import of all bucket key/value entries, without interrupting other operations and preserving
      * existent entries not contained into the given backup.
      *
