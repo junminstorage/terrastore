@@ -16,6 +16,7 @@
 package terrastore.store.impl;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +47,7 @@ import terrastore.store.StoreOperationException;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
@@ -165,6 +167,7 @@ public class TCBucket implements Bucket {
                     public Value call() {
                         return bytesToValue(value).dispatch(key, update, function);
                     }
+
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.unlockedPutNoReturn(key.toString(), valueToBytes(result));
@@ -182,6 +185,32 @@ public class TCBucket implements Bucket {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         } finally {
             unlock(key);
+        }
+    }
+
+    public Map<String, Object> map(final Key key, final Mapper mapper) throws StoreOperationException {
+        Future<Map<String, Object>> task = null;
+        try {
+            final byte[] value = bucket.get(key.toString());
+            if (value != null) {
+                final Function function = getFunction(mapper.getMapperName());
+                task = GlobalExecutor.getExecutor().submit(new Callable<Map<String, Object>>() {
+
+                    @Override
+                    public Map<String, Object> call() {
+                        return bytesToValue(value).dispatch(key, mapper, function);
+                    }
+
+                });
+                return task.get(mapper.getTimeoutInMillis(), TimeUnit.MILLISECONDS);
+            } else {
+                return Collections.EMPTY_MAP;
+            }
+        } catch (TimeoutException ex) {
+            task.cancel(true);
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Aggregation cancelled due to long execution time."));
+        } catch (Exception ex) {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
     }
 
@@ -220,6 +249,7 @@ public class TCBucket implements Bucket {
                     Value value = bytesToValue(bucket.get(key.toString()));
                     bucket.flush(key, value);
                 }
+
             });
         } else {
             LOG.warn("Running outside of cluster, no keys to flush!");
@@ -280,7 +310,7 @@ public class TCBucket implements Bucket {
         }
         return defaultComparator;
     }
-    
+
     private Function getFunction(String functionName) throws StoreOperationException {
         if (functions.containsKey(functionName)) {
             return functions.get(functionName);
@@ -329,5 +359,6 @@ public class TCBucket implements Bucket {
         public Key transform(String input) {
             return new Key(input);
         }
+
     }
 }

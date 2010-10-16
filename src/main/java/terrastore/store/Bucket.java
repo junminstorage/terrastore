@@ -19,6 +19,7 @@ import terrastore.store.features.Update;
 import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
+import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
@@ -102,6 +103,11 @@ public interface Bucket {
      * @throws StoreOperationException If errors occur during updating.
      */
     public Value update(Key key, Update update) throws StoreOperationException;
+
+     /**
+     * 
+     */
+    public Map<String, Object> map(Key key, Mapper mapper) throws StoreOperationException;
 
     /**
      * Clear all entries.
