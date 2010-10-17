@@ -27,8 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.easymock.classextension.internal.MockBuilder;
-import org.easymock.internal.matchers.Captures;
 import org.junit.Before;
 import org.junit.Test;
 import terrastore.internal.tc.TCMaster;
