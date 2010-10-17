@@ -11,12 +11,7 @@
         As an alternative, you may want to annotate your condition with terrastore.annotation.AutoDetect: Terrastore
         will autodetect your annotated class, create an instance and autowire it here.
 
-        Each entry key, or terrastore.annotation.AutoDetect#name, is the predicate type that will be used in Terrastore query string for range queries, e.g.:
-        http://localhost:8080/bucket/range?predicate=type:expression&...
-        And for put operations, e.g.:
-        http://localhost:8080/bucket/value?predicate=type:expression
-
-        Functions manually declared here overwrite autodetected ones: this means that if a manually declared function
+        Conditions manually declared here overwrite autodetected ones: this means that if a manually declared condition
         has the same name (entry key) of an autodetcted one, the latter will not be wired.
     -->
 

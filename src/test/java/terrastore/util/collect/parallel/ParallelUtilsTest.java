@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import jsr166y.ForkJoinPool;
 import org.junit.Test;
 import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
@@ -29,6 +32,9 @@ import static org.junit.Assert.*;
  */
 public class ParallelUtilsTest {
 
+    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final ForkJoinPool fjPool = new ForkJoinPool();
+
     @Test
     public void testParallelMerge() throws ParallelExecutionException {
         Set<String> merged = ParallelUtils.parallelMerge(Lists.newArrayList(
@@ -36,7 +42,7 @@ public class ParallelUtilsTest {
                 Sets.linked("11", "12"),
                 Sets.linked("1", "2", "3"),
                 Sets.linked("9", "10"),
-                Sets.linked("4", "5")));
+                Sets.linked("4", "5")), fjPool);
         assertEquals(Sets.linked("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"), merged);
     }
 
@@ -51,6 +57,7 @@ public class ParallelUtilsTest {
                         String[] tokens = input.split(" ");
                         return Arrays.asList(tokens);
                     }
+
                 },
                 new MapCollector<List<String>, List<String>>() {
 
@@ -62,7 +69,8 @@ public class ParallelUtilsTest {
                         }
                         return result;
                     }
-                });
+
+                }, executor);
         assertEquals(6, result.size());
         assertTrue(result.contains("David"));
         assertTrue(result.contains("Gilmour"));
@@ -87,6 +95,7 @@ public class ParallelUtilsTest {
                             return Arrays.asList(tokens);
                         }
                     }
+
                 },
                 new MapCollector<List<String>, List<String>>() {
 
@@ -98,6 +107,8 @@ public class ParallelUtilsTest {
                         }
                         return result;
                     }
-                });
+
+                }, executor);
     }
+
 }

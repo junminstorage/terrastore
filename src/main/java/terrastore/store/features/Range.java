@@ -42,6 +42,13 @@ public class Range implements Serializable {
         this.timeToLive = timeToLive;
     }
 
+    public Range() {
+    }
+
+    public boolean isEmpty() {
+        return startKey == null || startKey.toString().isEmpty();
+    }
+
     public Key getStartKey() {
         return startKey;
     }
@@ -84,4 +91,5 @@ public class Range implements Serializable {
                 append(timeToLive).
                 toHashCode();
     }
+
 }

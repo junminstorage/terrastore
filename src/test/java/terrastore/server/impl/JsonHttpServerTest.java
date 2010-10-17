@@ -16,6 +16,7 @@
 package terrastore.server.impl;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -44,6 +45,8 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
+import terrastore.store.features.Reducer;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import terrastore.util.json.JsonUtils;
@@ -59,6 +62,8 @@ public class JsonHttpServerTest {
     private static final String BAD_JSON_VALUE = "{\"test\":\"test}";
     private static final String JSON_VALUES = "{\"test\":" + JSON_VALUE + "}";
     private static final String JSON_VALUES_x2 = "{\"test1\":" + JSON_VALUE + ",\"test2\":" + JSON_VALUE + "}";
+    private static final String MAPREDUCE_WITH_RANGE = "{\"range\":{\"startKey\":\"k1\",\"timeToLive\":10000},\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
+    private static final String MAPREDUCE_WITHOUT_RANGE = "{\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
     private static final String UPDATE_PARAMS = "{\"p1\":\"v1\"}";
     private static final String BUCKETS = "[\"test1\",\"test2\"]";
     private static final String CLUSTER_STATS = "{\"clusters\":[{\"name\":\"cluster-1\",\"status\":\"AVAILABLE\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
@@ -553,6 +558,77 @@ public class JsonHttpServerTest {
         assertEquals(HttpStatus.SC_OK, method.getStatusCode());
         System.err.println(method.getResponseBodyAsString());
         assertEquals(JSON_VALUES_x2, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService, statsService);
+    }
+
+    @Test
+    public void testQueryByMapReduceWithRange() throws Exception {
+        String bucket = "bucket";
+        Range range = new Range(new Key("k1"), null, 0, "", 10000);
+        Mapper mapper = new Mapper("mapper", "reducer", 10000, Collections.EMPTY_MAP);
+        Reducer reducer = new Reducer("reducer", 10000);
+        Value result = new Value(JSON_VALUE.getBytes());
+
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+        StatsService statsService = createMock(StatsService.class);
+
+        queryService.queryByMapReduce(eq(bucket), eq(range), eq(mapper), eq(reducer));
+        expectLastCall().andReturn(result).once();
+
+        replay(updateService, queryService, backupService, statsService);
+
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
+        HttpClient client = new HttpClient();
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/mapReduce");
+        method.setRequestEntity(new StringRequestEntity(MAPREDUCE_WITH_RANGE, "application/json", "UTF-8"));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals(JSON_VALUE, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService, statsService);
+    }
+
+    @Test
+    public void testQueryByMapReduceWithoutRange() throws Exception {
+        String bucket = "bucket";
+        Mapper mapper = new Mapper("mapper", "reducer", 10000, Collections.EMPTY_MAP);
+        Reducer reducer = new Reducer("reducer", 10000);
+        Value result = new Value(JSON_VALUE.getBytes());
+
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+        StatsService statsService = createMock(StatsService.class);
+
+        queryService.queryByMapReduce(eq(bucket), eq(new Range()), eq(mapper), eq(reducer));
+        expectLastCall().andReturn(result).once();
+
+        replay(updateService, queryService, backupService, statsService);
+
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
+        HttpClient client = new HttpClient();
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/mapReduce");
+        method.setRequestEntity(new StringRequestEntity(MAPREDUCE_WITHOUT_RANGE, "application/json", "UTF-8"));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals(JSON_VALUE, method.getResponseBodyAsString());
 
         method.releaseConnection();
 

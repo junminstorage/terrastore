@@ -17,6 +17,7 @@ package terrastore.store.impl;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ import terrastore.store.features.Update;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Condition;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
+import terrastore.store.operators.Aggregator;
 import terrastore.store.operators.Comparator;
 import terrastore.util.collect.Maps;
 import static org.junit.Assert.*;
@@ -402,6 +405,27 @@ public class TCBucketTest {
         Value updated = bucket.update(key, update);
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), updated.getBytes());
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), bucket.get(key).getBytes());
+    }
+
+    @Test
+    public void testMap() throws Exception {
+        Mapper mapper = new Mapper("mapper", "combiner", 60000, Collections.EMPTY_MAP);
+        Map<String, Object> mapResult = Maps.hash(new String[]{"m"}, new Object[]{"r"});
+
+        Function mapFunction = createMock(Function.class);
+        makeThreadSafe(mapFunction, true);
+        mapFunction.apply(eq("key"), eq(Maps.hash(new String[]{"test"}, new Object[]{"test"})), eq(Collections.EMPTY_MAP));
+        expectLastCall().andReturn(mapResult).once();
+
+        replay(mapFunction);
+
+        Key key = new Key("key");
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        bucket.setFunctions(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
+        bucket.put(key, value);
+        assertEquals(mapResult, bucket.map(key, mapper));
+
+        verify(mapFunction);
     }
 
     @Test

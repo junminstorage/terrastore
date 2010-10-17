@@ -522,6 +522,34 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testMapReduceQueryWithRange() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
+        PostMethod doMapReduceQuery = makePostMethodForMapReduce(NODE2_PORT, bucket + "/mapReduce", "{\"range\":{\"startKey\":\"valueb\",\"endKey\":\"valuef\",\"timeToLive\":10000},\"task\":{\"mapper\":\"size\",\"reducer\":\"size\",\"timeout\":10000}}");
+        HTTP_CLIENT.executeMethod(doMapReduceQuery);
+        assertEquals(HttpStatus.SC_OK, doMapReduceQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doMapReduceQuery.getResponseBodyAsString());
+        System.err.println(doMapReduceQuery.getResponseBodyAsString());
+        doMapReduceQuery.releaseConnection();
+        assertEquals(1, values.size());
+        assertEquals(5, values.get("size"));
+    }
+
+    @Test
     public void testUpdateValue() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
@@ -683,6 +711,16 @@ public class IntegrationTest {
         try {
             GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?predicate=" + URLEncoder.encode(predicate, "UTF-8"));
             method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private PostMethod makePostMethodForMapReduce(int nodePort, String path, String descriptor) {
+        try {
+            PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + path);
+            method.setRequestEntity(new StringRequestEntity(descriptor, "application/json", "UTF-8"));
             return method;
         } catch (UnsupportedEncodingException ex) {
             throw new RuntimeException("Unsupported UTF-8 encoding.");

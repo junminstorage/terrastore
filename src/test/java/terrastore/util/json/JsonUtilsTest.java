@@ -26,6 +26,7 @@ import org.junit.Test;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
+import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Key;
@@ -50,6 +51,7 @@ public class JsonUtilsTest {
     private static final String VALUES = "{\"value\":{\"key\":\"value\"}}";
     private static final String PARAMETERS = "{\"key\":\"value\"}";
     private static final String BUCKETS = "[\"1\",\"2\"]";
+        private static final String MAPREDUCE_DESCRIPTOR = "{\"range\":{\"startKey\":\"k1\",\"timeToLive\":10000},\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
 
     @Test
     public void testValidate() throws Exception {
@@ -141,5 +143,16 @@ public class JsonUtilsTest {
         assertEquals(1, params.size());
         assertEquals("key", params.keySet().toArray()[0]);
         assertEquals("value", params.values().toArray()[0]);
+    }
+
+    @Test
+    public void testReadMapReduceDescriptor() throws Exception {
+        ByteArrayInputStream stream = new ByteArrayInputStream(MAPREDUCE_DESCRIPTOR.getBytes("UTF-8"));
+        MapReduceDescriptor descriptor = JsonUtils.readMapReduceDescriptor(stream);
+        assertEquals(new Key("k1"), descriptor.range.startKey);
+        assertEquals(10000, descriptor.range.timeToLive);
+        assertEquals("mapper", descriptor.task.mapper);
+        assertEquals("reducer", descriptor.task.reducer);
+        assertEquals(10000, descriptor.task.timeout);
     }
 }

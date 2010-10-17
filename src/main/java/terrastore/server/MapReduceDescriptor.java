@@ -88,6 +88,9 @@ public class MapReduceDescriptor {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No reducer provided!");
                 throw new ServerOperationException(error);
             }
+            if (combiner == null) {
+                combiner = reducer;
+            }
             if (timeout == 0) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Timeout value must be greater than zero!");
                 throw new ServerOperationException(error);

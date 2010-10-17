@@ -178,6 +178,7 @@ public class TCStore implements Store {
     @Override
     public Map<String, Object> map(final String bucketName, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
         try {
+            final Bucket bucket = get(bucketName);
             List<Map<String, Object>> mapResults = ParallelUtils.parallelMap(
                     keys,
                     new MapTask<Key, Map<String, Object>>() {
@@ -185,7 +186,7 @@ public class TCStore implements Store {
                         @Override
                         public Map<String, Object> map(Key key) {
                             try {
-                                Bucket bucket = get(bucketName);
+                                LOG.warn("Mapping bucket {} and key {} ...", bucket, key);
                                 return bucket.map(key, mapper);
                             } catch (Exception ex) {
                                 throw new RuntimeException(ex);
@@ -200,9 +201,13 @@ public class TCStore implements Store {
                             return mapResults;
                         }
 
-                    });
+                    }, GlobalExecutor.getStoreExecutor());
             Aggregator aggregator = getAggregator(mapper.getCombinerName());
-            return aggregate(mapResults, aggregator, mapper.getTimeoutInMillis());
+            if (aggregator != null) {
+                return aggregate(mapResults, aggregator, mapper.getTimeoutInMillis());
+            } else {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Wrong combiner name: " + mapper.getCombinerName()));
+            }
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
@@ -291,7 +296,7 @@ public class TCStore implements Store {
     private Map<String, Object> aggregate(final List<Map<String, Object>> values, final Aggregator aggregator, long timeout) throws StoreOperationException {
         Future<Map<String, Object>> task = null;
         try {
-            task = GlobalExecutor.getExecutor().submit(new Callable<Map<String, Object>>() {
+            task = GlobalExecutor.getStoreExecutor().submit(new Callable<Map<String, Object>>() {
 
                 @Override
                 public Map<String, Object> call() {

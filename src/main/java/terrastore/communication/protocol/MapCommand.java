@@ -26,7 +26,6 @@ import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.store.Value;
 import terrastore.store.features.Mapper;
 import terrastore.util.collect.Maps;
 
@@ -52,14 +51,14 @@ public class MapCommand extends AbstractCommand<Map<String, Object>> {
     }
 
     @Override
-    public Map<Key, Value> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Map<String, Object> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
-        Map<Key, Value> result = new HashMap<Key, Value>();
+        Map<String, Object> result = new HashMap<String, Object>();
         for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
             Node node = nodeToKeysEntry.getKey();
             Set<Key> nodeKeys = nodeToKeysEntry.getValue();
             MapCommand command = new MapCommand(this, nodeKeys);
-            result.putAll(node.<Map<Key, Value>>send(command));
+            result.putAll(node.<Map<String, Object>>send(command));
         }
         return Maps.serializing(result);
     }
