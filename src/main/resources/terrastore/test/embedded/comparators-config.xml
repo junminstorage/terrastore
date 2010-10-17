@@ -11,9 +11,6 @@
         As an alternative, you may want to annotate your comparator with terrastore.annotation.AutoDetect: Terrastore
         will autodetect your annotated class, create an instance and autowire it here.
 
-        Each entry key, or terrastore.annotation.AutoDetect#name, is the comparator name that will be used in Terrastore query string for range queries, e.g.:
-        http://localhost:8080/bucket/range?comparator=name&...
-
         Comparators manually declared here overwrite autodetected ones: this means that if a manually declared comparator
         has the same name (entry key) of an autodetcted one, the latter will not be wired.
     -->
