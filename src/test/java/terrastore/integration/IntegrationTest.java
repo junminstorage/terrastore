@@ -550,6 +550,34 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testMapReduceQueryWithNoRange() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
+        PostMethod doMapReduceQuery = makePostMethodForMapReduce(NODE2_PORT, bucket + "/mapReduce", "{\"task\":{\"mapper\":\"size\",\"reducer\":\"size\",\"timeout\":10000}}");
+        HTTP_CLIENT.executeMethod(doMapReduceQuery);
+        assertEquals(HttpStatus.SC_OK, doMapReduceQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doMapReduceQuery.getResponseBodyAsString());
+        System.err.println(doMapReduceQuery.getResponseBodyAsString());
+        doMapReduceQuery.releaseConnection();
+        assertEquals(1, values.size());
+        assertEquals(10, values.get("size"));
+    }
+
+    @Test
     public void testUpdateValue() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
