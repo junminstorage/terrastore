@@ -15,6 +15,7 @@
  */
 package terrastore.store.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,9 +50,6 @@ import terrastore.store.operators.Aggregator;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
-import terrastore.util.collect.parallel.MapCollector;
-import terrastore.util.collect.parallel.MapTask;
-import terrastore.util.collect.parallel.ParallelUtils;
 import terrastore.util.global.GlobalExecutor;
 import terrastore.util.json.JsonUtils;
 
@@ -178,30 +176,11 @@ public class TCStore implements Store {
     @Override
     public Map<String, Object> map(final String bucketName, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
         try {
-            final Bucket bucket = get(bucketName);
-            List<Map<String, Object>> mapResults = ParallelUtils.parallelMap(
-                    keys,
-                    new MapTask<Key, Map<String, Object>>() {
-
-                        @Override
-                        public Map<String, Object> map(Key key) {
-                            try {
-                                LOG.warn("Mapping bucket {} and key {} ...", bucket, key);
-                                return bucket.map(key, mapper);
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }
-
-                    },
-                    new MapCollector<Map<String, Object>, List<Map<String, Object>>>() {
-
-                        @Override
-                        public List<Map<String, Object>> collect(List<Map<String, Object>> mapResults) {
-                            return mapResults;
-                        }
-
-                    }, GlobalExecutor.getStoreExecutor());
+            Bucket bucket = get(bucketName);
+            List<Map<String, Object>> mapResults = new ArrayList<Map<String, Object>>(keys.size());
+            for (Key key : keys) {
+                mapResults.add(bucket.map(key, mapper));
+            }
             Aggregator aggregator = getAggregator(mapper.getCombinerName());
             if (aggregator != null) {
                 return aggregate(mapResults, aggregator, mapper.getTimeoutInMillis());

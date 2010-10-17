@@ -40,7 +40,6 @@ import terrastore.store.features.Range;
 import terrastore.store.operators.Condition;
 import terrastore.store.Value;
 import terrastore.store.features.Mapper;
-import terrastore.store.operators.Aggregator;
 import terrastore.store.operators.Comparator;
 import terrastore.util.collect.Maps;
 import static org.junit.Assert.*;
