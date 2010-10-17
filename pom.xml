@@ -210,13 +210,13 @@
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
-            <version>2.4</version>
+            <version>2.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymockclassextension</artifactId>
-            <version>2.4</version>
+            <version>2.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -310,8 +310,8 @@
                             <startServer>false</startServer>
                             <activeNodes>node-1,node-2</activeNodes>
                             <processes>
-                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--master localhost:9510 --nodeTimeout 60000 --httpPort 8080 --nodePort 8180" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
-                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--master localhost:9510 --nodeTimeout 60000 --httpPort 8081 --nodePort 8181" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
+                                <process nodeName="node-1" count="1" className="terrastore.startup.Startup" arguments="--master localhost:9510 --nodeTimeout 60000 --httpPort 8080 --nodePort 8180 --workerThreads 50" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
+                                <process nodeName="node-2" count="1" className="terrastore.startup.Startup" arguments="--master localhost:9510 --nodeTimeout 60000 --httpPort 8081 --nodePort 8181 --workerThreads 50" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server" />
                             </processes>
                         </configuration>
                         <executions>

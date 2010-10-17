@@ -32,6 +32,7 @@ import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
+import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Key;
@@ -130,6 +131,10 @@ public class JsonUtils {
 
     public static EnsembleConfiguration readEnsembleConfiguration(InputStream stream) throws IOException {
         return JSON_MAPPER.readValue(stream, EnsembleConfiguration.class);
+    }
+
+    public static MapReduceDescriptor readMapReduceDescriptor(InputStream stream) throws IOException {
+        return JSON_MAPPER.readValue(stream, MapReduceDescriptor.class);
     }
 
     private static void validateObject(JsonParser parser) throws IOException {

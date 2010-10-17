@@ -161,7 +161,7 @@ public class TCBucket implements Bucket {
             final byte[] value = bucket.get(key.toString());
             if (value != null) {
                 final Function function = getFunction(update.getFunctionName());
-                task = GlobalExecutor.getExecutor().submit(new Callable<Value>() {
+                task = GlobalExecutor.getStoreExecutor().submit(new Callable<Value>() {
 
                     @Override
                     public Value call() {
@@ -194,7 +194,7 @@ public class TCBucket implements Bucket {
             final byte[] value = bucket.get(key.toString());
             if (value != null) {
                 final Function function = getFunction(mapper.getMapperName());
-                task = GlobalExecutor.getExecutor().submit(new Callable<Map<String, Object>>() {
+                task = GlobalExecutor.getStoreExecutor().submit(new Callable<Map<String, Object>>() {
 
                     @Override
                     public Map<String, Object> call() {

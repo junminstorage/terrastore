@@ -50,6 +50,7 @@ import terrastore.util.collect.Sets;
 import terrastore.util.collect.parallel.MapCollector;
 import terrastore.util.collect.parallel.MapTask;
 import terrastore.util.collect.parallel.ParallelExecutionException;
+import terrastore.util.global.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
@@ -136,7 +137,7 @@ public class DefaultQueryService implements QueryService {
                             return allKeyValues;
                         }
 
-                    });
+                    }, GlobalExecutor.getServiceExecutor());
             return Maps.union(allKeyValues);
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -188,7 +189,7 @@ public class DefaultQueryService implements QueryService {
                             return allKeyValues;
                         }
 
-                    });
+                    }, GlobalExecutor.getServiceExecutor());
             return Maps.composite(keysInRange, allKeyValues);
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -235,7 +236,7 @@ public class DefaultQueryService implements QueryService {
                             return allKeyValues;
                         }
 
-                    });
+                    }, GlobalExecutor.getServiceExecutor());
             return Maps.union(allKeyValues);
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -257,7 +258,7 @@ public class DefaultQueryService implements QueryService {
         try {
             LOG.debug("MapReduce query on bucket {}", bucket);
             Set<Key> keys = null;
-            if (range != null) {
+            if (range != null && !range.isEmpty()) {
                 keys = getKeyRangeForBucket(bucket, range);
             } else {
                 keys = getAllKeysForBucket(bucket);
@@ -289,7 +290,7 @@ public class DefaultQueryService implements QueryService {
                             return values;
                         }
 
-                    });
+                    }, GlobalExecutor.getServiceExecutor());
             //
             // Reduce:
             Node reducerNode = router.routeToLocalNode();
@@ -363,7 +364,7 @@ public class DefaultQueryService implements QueryService {
                         return Sets.union(keys);
                     }
 
-                });
+                }, GlobalExecutor.getServiceExecutor());
         return result;
     }
 
@@ -397,7 +398,7 @@ public class DefaultQueryService implements QueryService {
                         return Sets.union(keys);
                     }
 
-                });
+                }, GlobalExecutor.getServiceExecutor());
         return result;
     }
 
@@ -430,13 +431,13 @@ public class DefaultQueryService implements QueryService {
                     public Set<Key> collect(List<Set<Key>> keys) {
                         try {
                             // Parallel merge of all sorted sets:
-                            return ParallelUtils.parallelMerge(keys);
+                            return ParallelUtils.parallelMerge(keys, GlobalExecutor.getForkJoinPool());
                         } catch (ParallelExecutionException ex) {
                             throw new IllegalStateException(ex.getCause());
                         }
                     }
 
-                });
+                }, GlobalExecutor.getServiceExecutor());
         return keys;
     }
 

@@ -55,6 +55,6 @@ public class DefaultActionExecutor implements ActionExecutor {
 
     @Override
     public Future submit(Action action) {
-        return GlobalExecutor.getExecutor().submit(action);
+        return GlobalExecutor.getActionExecutor().submit(action);
     }
 }

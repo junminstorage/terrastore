@@ -52,6 +52,7 @@ import terrastore.server.impl.cors.CorsInterceptor;
 import terrastore.server.impl.support.JsonBucketsProvider;
 import terrastore.server.impl.support.JsonClusterStatsProvider;
 import terrastore.server.impl.support.JsonErrorMessageProvider;
+import terrastore.server.impl.support.JsonMapReduceDescriptorProvider;
 import terrastore.server.impl.support.JsonParametersProvider;
 import terrastore.server.impl.support.JsonServerOperationExceptionMapper;
 import terrastore.server.impl.support.JsonValueProvider;
@@ -204,6 +205,7 @@ public class JsonHttpServer {
                 new JsonClusterStatsProvider(),
                 new JsonErrorMessageProvider(),
                 new JsonParametersProvider(),
+                new JsonMapReduceDescriptorProvider(),
                 new JsonServerOperationExceptionMapper(),
                 new StringTextStar(),
                 new CorsInterceptor(

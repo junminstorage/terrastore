@@ -9,6 +9,7 @@
     <import resource="comparators-config.xml"/>
     <import resource="conditions-config.xml"/>
     <import resource="functions-config.xml"/>
+    <import resource="aggregators-config.xml"/>
     <import resource="events-config.xml"/>
     <import resource="classpath:*-extension.xml"/>
 
@@ -112,9 +113,16 @@
         </property>
         <property name="functions">
             <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="update-functions"/>
+                <constructor-arg ref="functions"/>
                 <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.store.operators.Function"/>
+            </bean>
+        </property>
+        <property name="aggregators">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="aggregators"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Aggregator"/>
             </bean>
         </property>
         <property name="defaultComparator" ref="defaultComparator"/>

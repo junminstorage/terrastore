@@ -226,9 +226,13 @@ public class CoreServer implements Server {
     @Override
     public Value queryByMapReduce(String bucket, MapReduceDescriptor descriptor) throws ServerOperationException {
         try {
-            descriptor.sanitize();
             LOG.info("Executing map reduce query on bucket {}", bucket);
-            Range range = new Range(descriptor.range.startKey, descriptor.range.endKey, 0, descriptor.range.comparator, descriptor.range.timeToLive);
+            Range range = null;
+            if (descriptor.range != null) {
+                range = new Range(descriptor.range.startKey, descriptor.range.endKey, 0, descriptor.range.comparator, descriptor.range.timeToLive);
+            } else {
+                range = new Range();
+            }
             Mapper mapper = new Mapper(descriptor.task.mapper, descriptor.task.combiner, descriptor.task.timeout, descriptor.task.parameters);
             Reducer reducer = new Reducer(descriptor.task.reducer, descriptor.task.timeout);
             return queryService.queryByMapReduce(bucket, range, mapper, reducer);

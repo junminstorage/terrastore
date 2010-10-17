@@ -22,24 +22,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import jsr166y.ForkJoinPool;
 import jsr166y.RecursiveAction;
 import terrastore.util.collect.MergeSet;
-import terrastore.util.global.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
  */
 public class ParallelUtils {
 
-    public static <E extends Comparable> Set<E> parallelMerge(List<Set<E>> sets) throws ParallelExecutionException {
+    public static <E extends Comparable> Set<E> parallelMerge(List<Set<E>> sets, ForkJoinPool fjPool) throws ParallelExecutionException {
         ParallelMergeTask task = new ParallelMergeTask<E>(sets);
-        GlobalExecutor.getForkJoinPool().execute(task);
+        fjPool.execute(task);
         task.join();
         return task.getMerged();
     }
 
-    public static <I, O, C extends Collection> C parallelMap(final Collection<I> input, final MapTask<I, O> mapper, final MapCollector<O, C> collector) throws ParallelExecutionException {
+    public static <I, O, C extends Collection> C parallelMap(final Collection<I> input, final MapTask<I, O> mapper, final MapCollector<O, C> collector, ExecutorService executor) throws ParallelExecutionException {
         try {
             List<Callable<O>> tasks = new ArrayList<Callable<O>>(input.size());
             for (final I current : input) {
@@ -51,7 +52,7 @@ public class ParallelUtils {
                     }
                 });
             }
-            List<Future<O>> results = GlobalExecutor.getExecutor().invokeAll(tasks);
+            List<Future<O>> results = executor.invokeAll(tasks);
             List<O> outputs = new ArrayList<O>(results.size());
             for (Future<O> result : results) {
                 outputs.add(result.get());
