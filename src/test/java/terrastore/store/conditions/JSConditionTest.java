@@ -13,37 +13,36 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.conditions;
+package terrastore.store.conditions;
 
-import java.util.Map;
 import org.junit.Test;
 import terrastore.store.Value;
 import terrastore.util.io.InputReader;
 import terrastore.util.json.JsonUtils;
+import java.util.Map;
 import static org.junit.Assert.*;
 
 /**
+ * @author Giuseppe Santoro
  * @author Sergio Bossa
  */
-public class JXPathConditionTest {
+public class JSConditionTest {
 
     @Test
     public void testSatisfiedWithJsonValue() throws Exception {
         String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
         Map<String, Object> json = JsonUtils.toUnmodifiableMap(new Value(input.getBytes("UTF-8")));
-        String jxpath1 = "/id[.='6626190681']";
-        String jxpath2 = "//time_zone";
-        JXPathCondition condition = new JXPathCondition();
-        assertTrue(condition.isSatisfied("ignored", json, jxpath1));
-        assertTrue(condition.isSatisfied("ignored", json, jxpath2));
+        String function = "value['favorited']";
+        JSCondition condition = new JSCondition();
+        assertFalse(condition.isSatisfied("key", json, function));
     }
 
     @Test
     public void testNotSatisfiedWithJsonValue() throws Exception {
         String input = new String(new InputReader().read(this.getClass().getClassLoader().getResourceAsStream("example.json")));
         Map<String, Object> json = JsonUtils.toUnmodifiableMap(new Value(input.getBytes("UTF-8")));
-        String jxpath = "/key[.='wrong']";
-        JXPathCondition condition = new JXPathCondition();
-        assertFalse(condition.isSatisfied("ignored", json, jxpath));
+        String function = "value.id == 6626190681";
+        JSCondition condition = new JSCondition();
+        assertTrue(condition.isSatisfied("key", json, function));
     }
 }

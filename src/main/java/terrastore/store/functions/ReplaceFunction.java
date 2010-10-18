@@ -13,27 +13,18 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.conditions;
+package terrastore.store.functions;
 
-import java.util.List;
+import terrastore.store.operators.*;
 import java.util.Map;
-import org.apache.commons.jxpath.JXPathContext;
-import terrastore.store.operators.Condition;
 
 /**
- * {@link terrastore.store.operators.Condition} implementation evaluating JXPath expressions
- * (see http://commons.apache.org/jxpath) over bucket values.<br/>
- * Keys are ignored.
- *
  * @author Sergio Bossa
  */
-public class JXPathCondition implements Condition {
+public class ReplaceFunction implements Function {
 
     @Override
-    public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
-        JXPathContext context = JXPathContext.newContext(value);
-        context.setLenient(true);
-        List selection = context.selectNodes(expression);
-        return selection != null & selection.size() > 0;
+    public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
+        return parameters;
     }
 }

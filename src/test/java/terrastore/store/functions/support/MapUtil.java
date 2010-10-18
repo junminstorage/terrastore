@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package terrastore.service.functions.support;
+package terrastore.store.functions.support;
 
 import java.util.HashMap;
 import java.util.Map;

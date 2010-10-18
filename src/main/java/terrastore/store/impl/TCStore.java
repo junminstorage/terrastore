@@ -34,7 +34,7 @@ import org.terracotta.collections.ClusteredMap;
 import terrastore.common.ErrorMessage;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.EventBus;
-import terrastore.service.comparators.LexicographicalComparator;
+import terrastore.store.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCondition;

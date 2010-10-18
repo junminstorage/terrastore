@@ -13,22 +13,22 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.comparators;
+package terrastore.store.comparators;
 
 import terrastore.store.operators.Comparator;
 
 /**
  * @author Fabio Marinelli
  */
-public class LexicographicalComparator implements Comparator {
+public class NumberComparator implements Comparator {
 
     private int direction = 1;
 
-    public LexicographicalComparator(boolean isAscending) {
+    public NumberComparator(boolean isAscending) {
         direction = isAscending ? 1 : -1;
     }
 
     public int compare(String key1, String key2) {
-        return direction * key1.compareTo(key2);
+        return direction * new Long(key1).compareTo(new Long(key2));
     }
 }

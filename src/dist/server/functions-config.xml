@@ -19,23 +19,23 @@
     <util:map id="functions">
 
         <entry key="replace">
-            <bean class="terrastore.service.functions.ReplaceFunction"/>
+            <bean class="terrastore.store.functions.ReplaceFunction"/>
         </entry>
 
         <entry key="merge">
-        	<bean class="terrastore.service.functions.MergeFunction"/>
+        	<bean class="terrastore.store.functions.MergeFunction"/>
         </entry>
 
         <entry key="js">
-            <bean class="terrastore.service.functions.JSFunction"/>
+            <bean class="terrastore.store.functions.JSFunction"/>
         </entry>
         
         <entry key="counter">
-        	<bean class="terrastore.service.functions.AtomicCounterFunction"/>
+        	<bean class="terrastore.store.functions.AtomicCounterFunction"/>
         </entry>
 
         <entry key="size">
-        	<bean class="terrastore.service.functions.SizeMapper"/>
+        	<bean class="terrastore.store.functions.SizeMapper"/>
         </entry>
 
     </util:map>

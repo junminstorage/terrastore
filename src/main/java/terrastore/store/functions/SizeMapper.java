@@ -13,18 +13,21 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.functions;
+package terrastore.store.functions;
 
-import terrastore.store.operators.*;
+import java.util.HashMap;
 import java.util.Map;
+import terrastore.store.operators.Function;
 
 /**
  * @author Sergio Bossa
  */
-public class ReplaceFunction implements Function {
+public class SizeMapper implements Function {
 
     @Override
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
-        return parameters;
+        Map<String, Object> count = new HashMap<String, Object>();
+        count.put("size", 1);
+        return count;
     }
 }

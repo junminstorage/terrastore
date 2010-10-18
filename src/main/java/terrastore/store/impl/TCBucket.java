@@ -33,7 +33,7 @@ import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
 import terrastore.event.impl.ValueChangedEvent;
 import terrastore.event.impl.ValueRemovedEvent;
-import terrastore.service.comparators.LexicographicalComparator;
+import terrastore.store.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
