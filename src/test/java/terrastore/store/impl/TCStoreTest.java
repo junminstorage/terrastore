@@ -172,6 +172,39 @@ public class TCStoreTest {
     }
 
     @Test
+    public void testMapToNonExistentKey() throws Exception {
+        String bucketName = "bucket";
+        Set<Key> keys = Sets.hash(new Key("k1"), new Key("k2"));
+        Mapper mapper = new Mapper("mapper", "combiner", 60000, Collections.EMPTY_MAP);
+        Map<String, Object> mapResult1 = Maps.hash(new String[]{"k1"}, new Object[]{"v1"});
+        Map<String, Object> mapResult2 = null;
+        Map<String, Object> combinerResult = Maps.hash(new String[]{"c1"}, new Object[]{"c2"});
+
+        Bucket bucket = createMock(Bucket.class);
+        makeThreadSafe(bucket, true);
+        bucket.map(eq(new Key("k1")), same(mapper));
+        expectLastCall().andReturn(mapResult1).once();
+        bucket.map(eq(new Key("k2")), same(mapper));
+        expectLastCall().andReturn(mapResult2).once();
+        TCStore mockedStore = createMockBuilder(TCStore.class).addMockedMethod(TCStore.class.getDeclaredMethod("get", String.class)).withConstructor().createMock();
+        mockedStore.get(bucketName);
+        expectLastCall().andReturn(bucket).once();
+        Aggregator aggregator = createMock(Aggregator.class);
+        Capture<List<Map<String, Object>>> combinerCapture = new Capture<List<Map<String, Object>>>();
+        makeThreadSafe(aggregator, true);
+        aggregator.apply(EasyMock.capture(combinerCapture));
+        expectLastCall().andReturn(combinerResult).once();
+
+        replay(mockedStore, bucket, aggregator);
+
+        mockedStore.setAggregators(Maps.hash(new String[]{"combiner"}, new Aggregator[]{aggregator}));
+        assertEquals(combinerResult, mockedStore.map(bucketName, keys, mapper));
+        assertEquals(Arrays.asList(mapResult1), combinerCapture.getValue());
+
+        verify(mockedStore, bucket, aggregator);
+    }
+
+    @Test
     public void testReduce() throws Exception {
         Map<String, Object> mapResult1 = Maps.hash(new String[]{"k1"}, new Object[]{"v1"});
         Map<String, Object> mapResult2 = Maps.hash(new String[]{"k2"}, new Object[]{"v2"});

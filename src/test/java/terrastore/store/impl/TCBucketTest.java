@@ -428,6 +428,21 @@ public class TCBucketTest {
     }
 
     @Test
+    public void testMapToNotExistentKey() throws Exception {
+        Mapper mapper = new Mapper("mapper", "combiner", 60000, Collections.EMPTY_MAP);
+
+        Function mapFunction = createMock(Function.class);
+
+        replay(mapFunction);
+
+        Key key = new Key("key");
+        bucket.setFunctions(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
+        assertNull(bucket.map(key, mapper));
+
+        verify(mapFunction);
+    }
+
+    @Test
     public void testBackupImportDoesNotDeleteExistentData() throws StoreOperationException {
         System.setProperty(Constants.TERRASTORE_HOME, System.getProperty("java.io.tmpdir"));
         new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + Constants.BACKUPS_DIR).mkdir();
