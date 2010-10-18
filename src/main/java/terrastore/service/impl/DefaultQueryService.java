@@ -28,7 +28,7 @@ import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetKeysCommand;
-import terrastore.communication.protocol.RangeQueryCommand;
+import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
@@ -328,7 +328,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException {
-        RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange);
+        KeysInRangeCommand command = new KeysInRangeCommand(bucket, keyRange);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<Key> keys = multicastRangeQueryCommand(perClusterNodes, command);
         return keys;
@@ -402,7 +402,7 @@ public class DefaultQueryService implements QueryService {
         return result;
     }
 
-    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final RangeQueryCommand command) throws ParallelExecutionException {
+    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final KeysInRangeCommand command) throws ParallelExecutionException {
         // Parallel collection of all sets of sorted keys in a list:
         Set<Key> keys = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
