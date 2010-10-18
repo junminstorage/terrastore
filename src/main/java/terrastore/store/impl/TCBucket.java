@@ -204,7 +204,7 @@ public class TCBucket implements Bucket {
                 });
                 return task.get(mapper.getTimeoutInMillis(), TimeUnit.MILLISECONDS);
             } else {
-                return Collections.EMPTY_MAP;
+                return null;
             }
         } catch (TimeoutException ex) {
             task.cancel(true);

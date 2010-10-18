@@ -179,7 +179,10 @@ public class TCStore implements Store {
             Bucket bucket = get(bucketName);
             List<Map<String, Object>> mapResults = new ArrayList<Map<String, Object>>(keys.size());
             for (Key key : keys) {
-                mapResults.add(bucket.map(key, mapper));
+                Map<String, Object> mapResult = bucket.map(key, mapper);
+                if (mapResult != null) {
+                    mapResults.add(mapResult);
+                }
             }
             Aggregator aggregator = getAggregator(mapper.getCombinerName());
             if (aggregator != null) {
