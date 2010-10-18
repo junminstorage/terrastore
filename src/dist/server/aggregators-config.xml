@@ -19,7 +19,7 @@
     <util:map id="aggregators">
 
         <entry key="size">
-            <bean class="terrastore.service.aggregators.SizeAggregator"/>
+            <bean class="terrastore.store.aggregators.SizeAggregator"/>
         </entry>
 
     </util:map>

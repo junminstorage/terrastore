@@ -14,10 +14,10 @@
  *    limitations under the License.
  */
 
-package terrastore.service.functions;
+package terrastore.store.functions;
 
-import terrastore.service.functions.support.FunctionTestFixture;
-import static terrastore.service.functions.support.MapUtil.*;
+import terrastore.store.functions.support.FunctionTestFixture;
+import static terrastore.store.functions.support.MapUtil.*;
 
 import org.junit.Before;
 import org.junit.Test;

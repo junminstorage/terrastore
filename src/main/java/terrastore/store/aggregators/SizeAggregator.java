@@ -13,22 +13,26 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.comparators;
+package terrastore.store.aggregators;
 
-import terrastore.store.operators.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import terrastore.store.operators.Aggregator;
 
 /**
- * @author Fabio Marinelli
+ * @author Sergio Bossa
  */
-public class NumberComparator implements Comparator {
+public class SizeAggregator implements Aggregator {
 
-    private int direction = 1;
-
-    public NumberComparator(boolean isAscending) {
-        direction = isAscending ? 1 : -1;
-    }
-
-    public int compare(String key1, String key2) {
-        return direction * new Long(key1).compareTo(new Long(key2));
+    @Override
+    public Map<String, Object> apply(List<Map<String, Object>> counts) {
+        int counter = 0;
+        for (Map<String, Object> count : counts) {
+            counter += (Integer) count.get("size");
+        }
+        Map<String, Object> size = new HashMap<String, Object>();
+        size.put("size", counter);
+        return size;
     }
 }

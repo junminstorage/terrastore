@@ -13,21 +13,27 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.service.functions;
+package terrastore.store.conditions;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import terrastore.store.operators.Function;
+import org.apache.commons.jxpath.JXPathContext;
+import terrastore.store.operators.Condition;
 
 /**
+ * {@link terrastore.store.operators.Condition} implementation evaluating JXPath expressions
+ * (see http://commons.apache.org/jxpath) over bucket values.<br/>
+ * Keys are ignored.
+ *
  * @author Sergio Bossa
  */
-public class SizeMapper implements Function {
+public class JXPathCondition implements Condition {
 
     @Override
-    public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
-        Map<String, Object> count = new HashMap<String, Object>();
-        count.put("size", 1);
-        return count;
+    public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+        JXPathContext context = JXPathContext.newContext(value);
+        context.setLenient(true);
+        List selection = context.selectNodes(expression);
+        return selection != null & selection.size() > 0;
     }
 }

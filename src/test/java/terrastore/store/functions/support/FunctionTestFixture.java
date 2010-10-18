@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package terrastore.service.functions.support;
+package terrastore.store.functions.support;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
