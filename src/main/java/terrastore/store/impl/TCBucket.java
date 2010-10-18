@@ -16,7 +16,6 @@
 package terrastore.store.impl;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -112,8 +111,7 @@ public class TCBucket implements Bucket {
     }
 
     public Value get(Key key) throws StoreOperationException {
-        Value value = bytesToValue(bucket.unlockedGet(key.toString()));
-        value = value != null ? value : bytesToValue(bucket.get(key.toString()));
+        Value value = innerGet(key);
         if (value != null) {
             return value;
         } else {
@@ -122,9 +120,20 @@ public class TCBucket implements Bucket {
     }
 
     @Override
+    public Map<Key, Value> get(Set<Key> keys) throws StoreOperationException {
+        Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
+        for (Key key : keys) {
+            Value value = innerGet(key);
+            if (value != null) {
+                result.put(key, value);
+            }
+        }
+        return result;
+    }
+
+    @Override
     public Value conditionalGet(Key key, Predicate predicate) throws StoreOperationException {
-        Value value = bytesToValue(bucket.unlockedGet(key.toString()));
-        value = value != null ? value : bytesToValue(bucket.get(key.toString()));
+        Value value = innerGet(key);
         if (value != null) {
             Condition condition = getCondition(predicate.getConditionType());
             if (value.dispatch(key, predicate, condition)) {
@@ -135,6 +144,19 @@ public class TCBucket implements Bucket {
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
         }
+    }
+
+    @Override
+    public Map<Key, Value> conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException {
+        Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
+        for (Key key : keys) {
+            Value value = innerGet(key);
+            Condition condition = getCondition(predicate.getConditionType());
+            if (value.dispatch(key, predicate, condition)) {
+                result.put(key, value);
+            }
+        }
+        return result;
     }
 
     public void remove(Key key) throws StoreOperationException {
@@ -351,6 +373,12 @@ public class TCBucket implements Bucket {
         } else {
             return null;
         }
+    }
+
+    private Value innerGet(Key key) {
+        Value value = bytesToValue(bucket.unlockedGet(key.toString()));
+        value = value != null ? value : bytesToValue(bucket.get(key.toString()));
+        return value;
     }
 
     private static class KeyDeserializer implements Transformer<String, Key> {

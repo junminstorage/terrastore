@@ -42,6 +42,7 @@ import terrastore.store.Value;
 import terrastore.store.features.Mapper;
 import terrastore.store.operators.Comparator;
 import terrastore.util.collect.Maps;
+import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -51,6 +52,7 @@ import static org.easymock.classextension.EasyMock.*;
 public class TCBucketTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
+    private static final String JSON_VALUE_2 = "{\"test2\":\"test2\"}";
     private static final String JSON_UPDATED = "{\"test\":\"value1\"}";
     private TCBucket bucket;
 
@@ -82,6 +84,20 @@ public class TCBucketTest {
     }
 
     @Test
+    public void testPutAndGetValues() throws StoreOperationException {
+        Key key1 = new Key("key1");
+        Key key2 = new Key("key2");
+        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value2 = new Value(JSON_VALUE_2.getBytes());
+        bucket.put(key1, value1);
+        bucket.put(key2, value2);
+        Map<Key, Value> result = bucket.get(Sets.hash(key1, key2));
+        assertEquals(2, result.size());
+        assertTrue(result.containsKey(key1));
+        assertTrue(result.containsKey(key2));
+    }
+
+    @Test
     public void testConditionalPutAlwaysWorkWithNoOldValue() throws StoreOperationException {
         final Key key = new Key("key");
         Value value = new Value(JSON_VALUE.getBytes());
@@ -96,6 +112,7 @@ public class TCBucketTest {
                     return false;
                 }
             }
+
         };
 
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
@@ -122,6 +139,7 @@ public class TCBucketTest {
                     return false;
                 }
             }
+
         };
 
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
@@ -148,6 +166,7 @@ public class TCBucketTest {
                     return false;
                 }
             }
+
         };
 
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
@@ -165,11 +184,36 @@ public class TCBucketTest {
             public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return value.get(expression) != null;
             }
+
         };
 
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         bucket.put(key, value);
         assertEquals(value, bucket.conditionalGet(key, predicate));
+    }
+
+    @Test
+    public void testPutAndConditionallyGetValues() throws StoreOperationException {
+        Key key1 = new Key("key1");
+        Key key2 = new Key("key2");
+        Value value1 = new Value(JSON_VALUE.getBytes());
+        Value value2 = new Value(JSON_VALUE_2.getBytes());
+        Predicate predicate = new Predicate("test:test");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
+                return value.get(expression) != null;
+            }
+
+        };
+
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
+        bucket.put(key1, value1);
+        bucket.put(key2, value2);
+        Map<Key, Value> result = bucket.conditionalGet(Sets.hash(key1, key2), predicate);
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey(key1));
     }
 
     @Test
@@ -187,6 +231,7 @@ public class TCBucketTest {
                     return false;
                 }
             }
+
         };
 
 
@@ -206,6 +251,7 @@ public class TCBucketTest {
             public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return value.get(expression) != null;
             }
+
         };
 
 
@@ -263,6 +309,7 @@ public class TCBucketTest {
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
+
         };
 
         Key key1 = new Key("key1");
@@ -290,6 +337,7 @@ public class TCBucketTest {
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
+
         };
 
         bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
@@ -317,6 +365,7 @@ public class TCBucketTest {
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
+
         };
 
         bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
@@ -335,6 +384,7 @@ public class TCBucketTest {
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
+
         };
 
         bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
@@ -353,6 +403,7 @@ public class TCBucketTest {
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
+
         };
 
         bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
@@ -371,6 +422,7 @@ public class TCBucketTest {
             public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
+
         };
 
         bucket.setComparators(Maps.hash(new String[]{"order"}, new Comparator[]{stringComparator}));
@@ -394,6 +446,7 @@ public class TCBucketTest {
                 value.put("test", parameters.get("p1"));
                 return value;
             }
+
         };
 
         bucket.setFunctions(Maps.hash(new String[]{"function"}, new Function[]{function}));
@@ -489,5 +542,6 @@ public class TCBucketTest {
         public void shutdown() {
             throw new UnsupportedOperationException("Not supported yet.");
         }
+
     }
 }
