@@ -29,7 +29,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetKeysCommand;
-import terrastore.communication.protocol.RangeQueryCommand;
+import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
@@ -354,9 +354,9 @@ public class DefaultQueryServiceTest {
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"))).once();
-        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test2"))).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
@@ -396,9 +396,9 @@ public class DefaultQueryServiceTest {
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
-        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
@@ -431,9 +431,9 @@ public class DefaultQueryServiceTest {
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
-        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
 
         router.routeToNodesFor("bucket", Sets.<Key>hash());
@@ -467,7 +467,7 @@ public class DefaultQueryServiceTest {
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Collections.emptySet(), Sets.linked(node1, node2)})).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.linked(new Key("test1"), new Key("test2"))).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
@@ -670,9 +670,9 @@ public class DefaultQueryServiceTest {
         router.routeToLocalNode();
         expectLastCall().andReturn(node1).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"))).once();
-        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test2"))).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
@@ -767,9 +767,9 @@ public class DefaultQueryServiceTest {
         router.routeToLocalNode();
         expectLastCall().andReturn(node1).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
-        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
@@ -808,9 +808,9 @@ public class DefaultQueryServiceTest {
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.linked(node1), Sets.hash(node2)})).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
-        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Collections.EMPTY_SET).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
@@ -851,9 +851,9 @@ public class DefaultQueryServiceTest {
         router.routeToLocalNode();
         expectLastCall().andReturn(node1).once();
 
-        node1.send(EasyMock.<RangeQueryCommand>anyObject());
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
-        node2.send(EasyMock.<RangeQueryCommand>anyObject());
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Collections.EMPTY_SET).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));

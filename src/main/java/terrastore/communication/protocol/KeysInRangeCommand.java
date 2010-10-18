@@ -32,12 +32,12 @@ import terrastore.util.collect.Sets;
 /**
  * @author Sergio Bossa
  */
-public class RangeQueryCommand extends AbstractCommand<Set<Key>> {
+public class KeysInRangeCommand extends AbstractCommand<Set<Key>> {
 
     private final String bucketName;
     private final Range range;
 
-    public RangeQueryCommand(String bucketName, Range range) {
+    public KeysInRangeCommand(String bucketName, Range range) {
         this.bucketName = bucketName;
         this.range = range;
     }
@@ -45,7 +45,7 @@ public class RangeQueryCommand extends AbstractCommand<Set<Key>> {
     @Override
     public Set<Key> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
-        Command command = new RangeQueryCommand(bucketName, range);
+        Command command = new KeysInRangeCommand(bucketName, range);
         return Sets.serializing(node.<Set<Key>>send(command));
     }
 
