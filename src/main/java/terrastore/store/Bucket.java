@@ -105,7 +105,12 @@ public interface Bucket {
     public Value update(Key key, Update update) throws StoreOperationException;
 
      /**
-     * 
+     * Execute a map operation, as described by the {@link terrastore.store.features.Mapper} object,
+     * over the given key.
+     *
+     * @param key The key to map to.
+     * @param mapper The map description.
+      * @throws StoreOperationException If errors occur during map operation.
      */
     public Map<String, Object> map(Key key, Mapper mapper) throws StoreOperationException;
 

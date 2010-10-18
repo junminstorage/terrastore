@@ -65,12 +65,23 @@ public interface Store {
     public Set<String> buckets();
 
     /**
+     * Execute a map operation, as described by the {@link terrastore.store.features.Mapper} object,
+     * over the given bucket and set of keys.
      *
+     * @param bucket The bucket to map to.
+     * @param keys The keys to map to.
+     * @param mapper The map description.
+     * @throws StoreOperationException If errors occur during map operation.
      */
-    public Map<String, Object> map(String bucketName, Set<Key> keys, Mapper mapper) throws StoreOperationException;
+    public Map<String, Object> map(String bucket, Set<Key> keys, Mapper mapper) throws StoreOperationException;
 
     /**
+     * Execute a reduce operation, as described by the {@link terrastore.store.features.Reducer} object,
+     * over the given list of values.
      *
+     * @param values The values to reduce.
+     * @param reducer The reduce description.
+     * @throws StoreOperationException If errors occur during reduce operation.
      */
     public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException;
 
