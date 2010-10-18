@@ -72,6 +72,15 @@ public interface Bucket {
     public Value get(Key key) throws StoreOperationException;
 
     /**
+     * Get the {@link Value}s corresponding to the given set of keys.
+     *
+     * @param keys The key set.
+     * @return The values corresponding to the given keys.
+     * @throws StoreOperationException If no value is found for the given key.
+     */
+    public Map<Key, Value> get(Set<Key> keys) throws StoreOperationException;
+
+    /**
      * Get the {@link Value} under the given key if satisfying the given {@link terrastore.store.features.Predicate}.
      *
      * @param key The key of the value to get.
@@ -81,6 +90,16 @@ public interface Bucket {
      * @throws StoreOperationException If no value is found for the given key.
      */
     public Value conditionalGet(Key key, Predicate predicate) throws StoreOperationException;
+
+    /**
+     * Get the {@link Value}s corresponding to the given set of key, if satisfying the given {@link terrastore.store.features.Predicate}.
+     *
+     * @param keys The key set.
+     * @param predicate The predicate object containing data about the condition to evaluate.
+     * @return The values corresponding to the given keys and satisfying the given predicate.
+     * @throws StoreOperationException If no value is found for the given key.
+     */
+    public Map<Key, Value> conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException;
 
     /**
      * Remove the {@link Value} under the given key.<br>
@@ -104,13 +123,14 @@ public interface Bucket {
      */
     public Value update(Key key, Update update) throws StoreOperationException;
 
-     /**
+    /**
      * Execute a map operation, as described by the {@link terrastore.store.features.Mapper} object,
      * over the given key.
      *
      * @param key The key to map to.
      * @param mapper The map description.
-      * @throws StoreOperationException If errors occur during map operation.
+     * @return A map of key/value pairs as the result of the map operation, or null if the mapped key is not found.
+     * @throws StoreOperationException If errors occur during map operation.
      */
     public Map<String, Object> map(Key key, Mapper mapper) throws StoreOperationException;
 

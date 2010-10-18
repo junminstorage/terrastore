@@ -77,22 +77,17 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
 
     public Map<Key, Value> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
+        Map<Key, Value> result = null;
         if (bucket != null) {
-            Map<Key, Value> entries = new HashMap<Key, Value>();
-            for (Key key : keys) {
-                Value value = null;
-                if (!conditional) {
-                    value = bucket.get(key);
-                } else {
-                    value = bucket.conditionalGet(key, predicate);
-                }
-                if (value != null) {
-                    entries.put(key, value);
-                }
+            if (!conditional) {
+                result = bucket.get(keys);
+            } else {
+                result = bucket.conditionalGet(keys, predicate);
             }
-            return Maps.serializing(entries);
+            return Maps.serializing(result);
         } else {
             return new HashMap<Key, Value>(0);
         }
     }
+
 }
