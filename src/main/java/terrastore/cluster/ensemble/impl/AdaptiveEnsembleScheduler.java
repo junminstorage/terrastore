@@ -32,15 +32,15 @@ import terrastore.communication.Cluster;
  */
 public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FixedEnsembleScheduler.class);
-    private final FuzzyInferenceEngine fuzzy;
-    private final ScheduledExecutorService scheduler;
+    private static final Logger LOG = LoggerFactory.getLogger(AdaptiveEnsembleScheduler.class);
+    private final FuzzyInferenceEngine fuzzyInferenceEngine;
+    private ScheduledExecutorService scheduler;
     private boolean shutdown;
     private long discoveryInterval;
     private View prevView;
 
     public AdaptiveEnsembleScheduler(FuzzyInferenceEngine engine) {
-        this.fuzzy = engine;
+        this.fuzzyInferenceEngine = engine;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
@@ -48,16 +48,16 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
     public final synchronized void schedule(final Cluster cluster, final EnsembleManager ensemble, final EnsembleConfiguration ensembleConfiguration) {
         if (!shutdown) {
             discoveryInterval = ensembleConfiguration.getDiscovery().getInterval();
-            LOG.info("Scheduling discovery for cluster {}", cluster);
+            LOG.info("Scheduling discovery for cluster [{}], discoveryInterval {} ms", cluster, discoveryInterval);
             scheduler.scheduleWithFixedDelay(new Runnable() {
 
                 @Override
                 public void run() {
                     try {
                         View view = ensemble.update(cluster);
-                        if (prevView != null && !view.equals(prevView)) {
+                        if (prevView != null) {
                             scheduler.shutdownNow();
-                            long newEstimatedPeriodLength = fuzzy.estimateNextPeriodLength(
+                            long newEstimatedPeriodLength = fuzzyInferenceEngine.estimateNextPeriodLength(
                                     view.difference(prevView),
                                     discoveryInterval,
                                     ensembleConfiguration.getDiscovery());
@@ -69,12 +69,13 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
                     }
                 }
 
-            }, 0, discoveryInterval, TimeUnit.MILLISECONDS);
+            }, discoveryInterval, discoveryInterval, TimeUnit.MILLISECONDS);
         }
     }
 
     public final synchronized void reschedule(Cluster cluster, EnsembleManager ensemble, EnsembleConfiguration ensembleConfiguration, long estimatedPeriodLength) {
         ensembleConfiguration.getDiscovery().setInterval(estimatedPeriodLength);
+        this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
         schedule(cluster, ensemble, ensembleConfiguration);
     }
 
