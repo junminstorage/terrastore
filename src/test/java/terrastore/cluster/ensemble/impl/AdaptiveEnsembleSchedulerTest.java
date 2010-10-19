@@ -60,7 +60,7 @@ public class AdaptiveEnsembleSchedulerTest {
         AdaptiveEnsembleScheduler scheduler = new AdaptiveEnsembleScheduler(fuzzy);
         try {
             scheduler.schedule(cluster, ensemble, ensembleConfiguration);
-            Thread.sleep(1000);
+            Thread.sleep(11000);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
