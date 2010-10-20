@@ -45,7 +45,7 @@ public class AdaptiveEnsembleSchedulerTest {
         EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
         makeThreadSafe(discoveryConfiguration, true);
         discoveryConfiguration.getInterval();
-        expectLastCall().andReturn(10000L).once();
+        expectLastCall().andReturn(3000L).once();
         EnsembleConfiguration ensembleConfiguration = createMock(EnsembleConfiguration.class);
         makeThreadSafe(ensembleConfiguration, true);
         ensembleConfiguration.getDiscovery();
@@ -60,7 +60,7 @@ public class AdaptiveEnsembleSchedulerTest {
         AdaptiveEnsembleScheduler scheduler = new AdaptiveEnsembleScheduler(fuzzy);
         try {
             scheduler.schedule(cluster, ensemble, ensembleConfiguration);
-            Thread.sleep(11000);
+            Thread.sleep(4000);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
