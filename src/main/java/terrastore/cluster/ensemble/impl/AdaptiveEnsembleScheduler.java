@@ -89,4 +89,8 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
         scheduler.shutdown();
     }
 
+    public ScheduledExecutorService getScheduler() {
+        return scheduler;
+    }
+
 }
