@@ -62,9 +62,9 @@ public class LocalSnapshotManager implements SnapshotManager {
 
     private String getSnapshotName(Bucket bucket, String name) {
         if (name != null && !name.isEmpty()) {
-            return bucket.getName() + ":" + name;
+            return bucket.getName() + "-" + name;
         } else {
-            return bucket.getName() + ":" + "default";
+            return bucket.getName() + "-" + "default";
         }
     }
 
