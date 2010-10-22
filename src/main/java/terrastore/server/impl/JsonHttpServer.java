@@ -120,7 +120,7 @@ public class JsonHttpServer {
     public Response updateValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, @QueryParam("function") String function, @QueryParam("timeout") Long timeout, Parameters parameters) throws ServerOperationException {
         try {
             Value result = core.updateValue(bucket, key, function, timeout, parameters);
-            return Response.seeOther(new URI(bucket + "/" + key)).entity(result).build();
+            return Response.ok(result).contentLocation(new URI(bucket + "/" + key)).build();
         } catch (Exception ex) {
             throw new ServerOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
