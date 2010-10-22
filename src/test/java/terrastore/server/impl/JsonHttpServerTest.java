@@ -660,7 +660,7 @@ public class JsonHttpServerTest {
         method.setRequestEntity(new StringRequestEntity(UPDATE_PARAMS, "application/json", null));
         client.executeMethod(method);
 
-        assertEquals(HttpStatus.SC_SEE_OTHER, method.getStatusCode());
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
         assertEquals(JSON_VALUE, method.getResponseBodyAsString());
 
         method.releaseConnection();
