@@ -12,3 +12,7 @@ src/dist/master/tc-data
 src/dist/server/tc-data
 src/dist/server/backups/.+\.bak
 src/dist/server/snapshots/.+\.hdb
+.idea
+.classpath
+.settings
+.project
