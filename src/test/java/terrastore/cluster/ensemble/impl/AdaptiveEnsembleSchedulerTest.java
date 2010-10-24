@@ -31,9 +31,7 @@ import terrastore.cluster.ensemble.EnsembleConfiguration.DiscoveryConfiguration;
 import terrastore.communication.Cluster;
 
 /**
- * 
  * @author Amir Moulavi
- *
  */
 public class AdaptiveEnsembleSchedulerTest {
 
@@ -52,7 +50,7 @@ public class AdaptiveEnsembleSchedulerTest {
     }
     
     @Test
-    public void scheduler_works() throws Exception {
+    public void scheduler_works_as_expected() throws Exception {
         given(
                 fuzzy_inference_engine(), 
                 view(), 
