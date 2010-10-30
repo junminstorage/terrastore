@@ -57,6 +57,7 @@ public class Startup {
     private static final String DEFAULT_CONFIG_FILE = "terrastore-config.xml";
     private static final int DEFAULT_FAILOVER_RETRIES = 0;
     private static final long DEFAULT_FAILOVER_INTERVAL = 0;
+    private static final boolean DEFAULT_COMPRESS_DOCUMENTS = false;
     private static final String WELCOME_MESSAGE = "Welcome to Terrastore.";
     private static final String POWEREDBY_MESSAGE = "Powered by Terracotta (http://www.terracotta.org).";
 
@@ -86,6 +87,7 @@ public class Startup {
     private long failoverInterval = DEFAULT_FAILOVER_INTERVAL;
     private String eventBus = DEFAULT_EVENT_BUS;
     private String allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
+    private boolean compressDocuments = DEFAULT_COMPRESS_DOCUMENTS;
 
     @Option(name = "--master", required = true)
     public void setMaster(String master) {
@@ -158,6 +160,11 @@ public class Startup {
         this.failoverInterval = interval;
     }
 
+    @Option(name = "--compressDocs", required = false)
+    public void setCompressDocuments(String compressDocuments) {
+        this.compressDocuments = Boolean.parseBoolean(compressDocuments);
+    }
+
     public void start() throws Exception {
         try {
             // TODO: make connection timeout configurable.
@@ -215,6 +222,8 @@ public class Startup {
         // Backoff configuration:
         System.setProperty("failover.retries", Integer.toString(failoverRetries));
         System.setProperty("failover.interval", Long.toString(failoverInterval));
+        // Compression configuration:
+        System.setProperty("compress.documents", Boolean.toString(compressDocuments));
     }
 
     private ApplicationContext startContext() throws Exception {

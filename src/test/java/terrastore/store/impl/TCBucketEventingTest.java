@@ -58,6 +58,8 @@ public class TCBucketEventingTest {
 
         Capture<Event> capturedEvent = new Capture<Event>();
         EventBus eventBus = createMock(EventBus.class);
+        eventBus.isEnabled();
+        expectLastCall().andReturn(true);
         eventBus.publish(capture(capturedEvent));
         expectLastCall().once();
 
@@ -78,6 +80,23 @@ public class TCBucketEventingTest {
     }
 
     @Test
+    public void testPutDoesNotFireEventBusIfNotEnabled() throws StoreOperationException {
+        Key key = new Key("key");
+        Value value = new Value(JSON_VALUE.getBytes());
+
+        EventBus eventBus = createMock(EventBus.class);
+        eventBus.isEnabled();
+        expectLastCall().andReturn(false);
+
+        replay(eventBus);
+
+        bucket.setEventBus(eventBus);
+        bucket.put(key, value);
+
+        verify(eventBus);
+    }
+
+    @Test
     public void testPutAndPutAgainFireEventBus() throws StoreOperationException {
         Key key = new Key("key");
         Value value1 = new Value(JSON_VALUE.getBytes());
@@ -89,6 +108,8 @@ public class TCBucketEventingTest {
 
         bucket.setEventBus(eventBus);
 
+        eventBus.isEnabled();
+        expectLastCall().andReturn(true);
         eventBus.publish(capture(capturedEvent1));
         expectLastCall().once();
 
@@ -106,6 +127,8 @@ public class TCBucketEventingTest {
         verify(eventBus);
         reset(eventBus);
 
+        eventBus.isEnabled();
+        expectLastCall().andReturn(true);
         eventBus.publish(capture(capturedEvent2));
         expectLastCall().once();
 
@@ -135,6 +158,8 @@ public class TCBucketEventingTest {
 
         bucket.setEventBus(eventBus);
 
+        eventBus.isEnabled();
+        expectLastCall().andReturn(true);
         eventBus.publish(capture(capturedEvent1));
         expectLastCall().once();
 
@@ -146,6 +171,8 @@ public class TCBucketEventingTest {
         verify(eventBus);
         reset(eventBus);
 
+        eventBus.isEnabled();
+        expectLastCall().andReturn(true);
         eventBus.publish(capture(capturedEvent2));
         expectLastCall().once();
 
@@ -189,6 +216,8 @@ public class TCBucketEventingTest {
 
         bucket.setEventBus(eventBus);
 
+        eventBus.isEnabled();
+        expectLastCall().andReturn(true);
         eventBus.publish(capture(capturedEvent1));
         expectLastCall().once();
 
@@ -200,6 +229,8 @@ public class TCBucketEventingTest {
         verify(eventBus);
         reset(eventBus);
 
+        eventBus.isEnabled();
+        expectLastCall().andReturn(true);
         eventBus.publish(capture(capturedEvent2));
         expectLastCall().once();
 
