@@ -32,12 +32,21 @@ public class Range implements Serializable {
     private Key endKey;
     private int limit;
     private String keyComparatorName;
+    private long timeToLive;
 
-    public Range(Key startKey, Key endKey, int limit, String keyComparatorName) {
+    public Range(Key startKey, Key endKey, int limit, String keyComparatorName, long timeToLive) {
         this.startKey = startKey;
         this.endKey = endKey;
         this.limit = limit;
         this.keyComparatorName = keyComparatorName;
+        this.timeToLive = timeToLive;
+    }
+
+    public Range() {
+    }
+
+    public boolean isEmpty() {
+        return startKey == null || startKey.toString().isEmpty();
     }
 
     public Key getStartKey() {
@@ -56,6 +65,10 @@ public class Range implements Serializable {
         return keyComparatorName;
     }
 
+    public long getTimeToLive() {
+        return timeToLive;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Range) {
@@ -63,6 +76,7 @@ public class Range implements Serializable {
             return new EqualsBuilder().append(this.startKey, other.startKey).
                     append(this.endKey, other.endKey).
                     append(this.keyComparatorName, other.keyComparatorName).
+                    append(this.timeToLive, timeToLive).
                     isEquals();
         } else {
             return false;
@@ -74,6 +88,8 @@ public class Range implements Serializable {
         return new HashCodeBuilder().append(startKey).
                 append(endKey).
                 append(keyComparatorName).
+                append(timeToLive).
                 toHashCode();
     }
+
 }

@@ -15,31 +15,61 @@
  */
 package terrastore.store.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.collections.ClusteredMap;
+import terrastore.common.ErrorMessage;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.EventBus;
+import terrastore.store.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
+import terrastore.store.Key;
 import terrastore.store.SnapshotManager;
 import terrastore.store.Store;
+import terrastore.store.StoreOperationException;
+import terrastore.store.Value;
+import terrastore.store.features.Mapper;
+import terrastore.store.features.Reducer;
+import terrastore.store.operators.Aggregator;
+import terrastore.store.operators.Comparator;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
+import terrastore.util.global.GlobalExecutor;
+import terrastore.util.json.JsonUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class TCStore implements Store {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TCStore.class);
+    //
     // TODO: buckets marked with tombstones aren't currently removed, only cleared.
     private final static String TOMBSTONE = TCStore.class.getName() + ".TOMBSTONE";
     //
     private final ClusteredMap<String, String> buckets;
     private final ConcurrentMap<String, Bucket> instances;
+    private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
+    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
+    private final Map<String, Function> functions = new HashMap<String, Function>();
+    private final Map<String, Aggregator> aggregators = new HashMap<String, Aggregator>();
+    private Comparator defaultComparator = new LexicographicalComparator(true);
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
     private EventBus eventBus;
@@ -144,10 +174,70 @@ public class TCStore implements Store {
     }
 
     @Override
+    public Map<String, Object> map(final String bucketName, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
+        try {
+            Bucket bucket = get(bucketName);
+            List<Map<String, Object>> mapResults = new ArrayList<Map<String, Object>>(keys.size());
+            for (Key key : keys) {
+                Map<String, Object> mapResult = bucket.map(key, mapper);
+                if (mapResult != null) {
+                    mapResults.add(mapResult);
+                }
+            }
+            Aggregator aggregator = getAggregator(mapper.getCombinerName());
+            if (aggregator != null) {
+                return aggregate(mapResults, aggregator, mapper.getTimeoutInMillis());
+            } else {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Wrong combiner name: " + mapper.getCombinerName()));
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        }
+
+    }
+
+    @Override
+    public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException {
+        Aggregator aggregator = getAggregator(reducer.getReducerName());
+        Map<String, Object> aggregation = aggregate(values, aggregator, reducer.getTimeoutInMillis());
+        return JsonUtils.fromMap(aggregation);
+    }
+
+    @Override
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition) {
         for (Bucket bucket : instances.values()) {
             bucket.flush(flushStrategy, flushCondition);
         }
+    }
+
+    @Override
+    public void setDefaultComparator(Comparator defaultComparator) {
+        this.defaultComparator = defaultComparator;
+    }
+
+    @Override
+    public void setComparators(Map<String, Comparator> comparators) {
+        this.comparators.clear();
+        this.comparators.putAll(comparators);
+    }
+
+    @Override
+    public void setFunctions(Map<String, Function> functions) {
+        this.functions.clear();
+        this.functions.putAll(functions);
+    }
+
+    @Override
+    public void setConditions(Map<String, Condition> conditions) {
+        this.conditions.clear();
+        this.conditions.putAll(conditions);
+    }
+
+    @Override
+    public void setAggregators(Map<String, Aggregator> aggregators) {
+        this.aggregators.clear();
+        this.aggregators.putAll(aggregators);
     }
 
     @Override
@@ -165,11 +255,44 @@ public class TCStore implements Store {
         this.eventBus = eventBus;
     }
 
-    private void hydrateBucket(Bucket requested) {
-        // We need to manually set the event bus because of TC not supporting injection ...
-        requested.setSnapshotManager(snapshotManager);
-        requested.setBackupManager(backupManager);
-        requested.setEventBus(eventBus);
+    private void hydrateBucket(Bucket bucket) {
+        // We need to manually set all of this because of TC not supporting injection ...
+        bucket.setDefaultComparator(defaultComparator);
+        bucket.setComparators(comparators);
+        bucket.setConditions(conditions);
+        bucket.setFunctions(functions);
+        bucket.setSnapshotManager(snapshotManager);
+        bucket.setBackupManager(backupManager);
+        bucket.setEventBus(eventBus);
         // TODO: verify this is not a perf problem.
     }
+
+    private Aggregator getAggregator(String aggregatorName) throws StoreOperationException {
+        if (aggregators.containsKey(aggregatorName)) {
+            return aggregators.get(aggregatorName);
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong function name: " + aggregatorName));
+        }
+    }
+
+    private Map<String, Object> aggregate(final List<Map<String, Object>> values, final Aggregator aggregator, long timeout) throws StoreOperationException {
+        Future<Map<String, Object>> task = null;
+        try {
+            task = GlobalExecutor.getStoreExecutor().submit(new Callable<Map<String, Object>>() {
+
+                @Override
+                public Map<String, Object> call() {
+                    return aggregator.apply(values);
+                }
+
+            });
+            return task.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException ex) {
+            task.cancel(true);
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Aggregation cancelled due to long execution time."));
+        } catch (Exception ex) {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        }
+    }
+
 }

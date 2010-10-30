@@ -37,8 +37,8 @@ public class FuzzyInferenceEngineTest {
         conf = new EnsembleConfiguration.DiscoveryConfiguration();
         conf.setType("adaptive");
         conf.setBaseline(30000L);
-        conf.setUpboundIncrement(10000L);
-        conf.setUpboundLimit(60000L);
+        conf.setIncrement(10000L);
+        conf.setLimit(60000L);
     }
 
     @Test

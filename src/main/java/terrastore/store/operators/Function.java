@@ -15,7 +15,6 @@
  */
 package terrastore.store.operators;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -23,7 +22,7 @@ import java.util.Map;
  *
  * @author Sergio Bossa
  */
-public interface Function extends Serializable {
+public interface Function {
 
     /**
      * Apply this function to the given value, represented as a map of name -> value pairs.

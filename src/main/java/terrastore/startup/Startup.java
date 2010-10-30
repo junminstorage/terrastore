@@ -15,38 +15,25 @@
  */
 package terrastore.startup;
 
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
-import org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap;
-import org.jboss.resteasy.plugins.spring.SpringContextLoaderListener;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.start.Monitor;
-import org.mortbay.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.web.context.support.WebApplicationContextUtils;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 import terrastore.cluster.ClusterUtils;
 import terrastore.cluster.coordinator.Coordinator;
 import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.internal.tc.MasterConnectionException;
 import terrastore.internal.tc.TCMaster;
+import terrastore.server.impl.JsonHttpServer;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -61,8 +48,6 @@ public class Startup {
     private static final int DEFAULT_HTTP_PORT = 8080;
     private static final String DEFAULT_NODE_HOST = "NULL";
     private static final int DEFAULT_NODE_PORT = 8226;
-    private static final int DEFAULT_SHUTDOWN_PORT = 8180;
-    private static final String DEFAULT_SHUTDOWN_KEY = "terrastore";
     private static final String DEFAULT_ALLOWED_ORIGINS = "*";
     private static final long DEFAULT_RECONNECT_TIMEOUT = 10000;
     private static final long DEFAULT_NODE_TIMEOUT = 10000;
@@ -75,7 +60,7 @@ public class Startup {
     private static final String WELCOME_MESSAGE = "Welcome to Terrastore.";
     private static final String POWEREDBY_MESSAGE = "Powered by Terracotta (http://www.terracotta.org).";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Startup startup = new Startup();
         CmdLineParser parser = new CmdLineParser(startup);
         try {
@@ -87,35 +72,12 @@ public class Startup {
         }
     }
 
-    public static void shutdown(String host, int shutdownPort) {
-        Socket shutdownSocket = null;
-        try {
-            shutdownSocket = new Socket(InetAddress.getByName(host), shutdownPort);
-            BufferedWriter outStream = new BufferedWriter(new OutputStreamWriter(shutdownSocket.getOutputStream()));
-            outStream.write(DEFAULT_SHUTDOWN_KEY);
-            outStream.newLine();
-            outStream.write("stop");
-            outStream.newLine();
-            outStream.flush();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            if (shutdownSocket != null) {
-                try {
-                    shutdownSocket.close();
-                } catch (IOException innerEx) {
-                    innerEx.printStackTrace();
-                }
-            }
-        }
-    }
-    //
     private String master = null;
     private EnsembleConfiguration ensembleConfiguration = EnsembleConfiguration.makeDefault(DEFAULT_CLUSTER_NAME);
     private String httpHost = DEFAULT_HTTP_HOST;
     private int httpPort = DEFAULT_HTTP_PORT;
     private String nodeHost = DEFAULT_NODE_HOST;
     private int nodePort = DEFAULT_NODE_PORT;
-    private int shutdownPort = DEFAULT_SHUTDOWN_PORT;
     private long reconnectTimeout = DEFAULT_RECONNECT_TIMEOUT;
     private long nodeTimeout = DEFAULT_NODE_TIMEOUT;
     private int httpThreads = DEFAULT_HTTP_THREADS;
@@ -154,11 +116,6 @@ public class Startup {
     @Option(name = "--nodePort", required = false)
     public void setNodePort(int nodePort) {
         this.nodePort = nodePort;
-    }
-
-    @Option(name = "--shutdownPort", required = false)
-    public void setShutdownPort(int shutdownPort) {
-        this.shutdownPort = shutdownPort;
     }
 
     @Option(name = "--reconnectTimeout", required = false)
@@ -201,21 +158,24 @@ public class Startup {
         this.failoverInterval = interval;
     }
 
-    public void start() {
+    public void start() throws Exception {
         try {
             // TODO: make connection timeout configurable.
             if (TCMaster.getInstance().connect(master, 60, TimeUnit.SECONDS) == true) {
                 verifyNodeHost();
                 verifyWorkerThreads();
                 printInfo();
-                Context context = startServer();
-                startMonitor();
+                setupSystemParams();
+                //
+                ApplicationContext context = startContext();
                 startCoordinator(context);
+                startJsonHttpServer(context);
             } else {
                 throw new MasterConnectionException("Unable to connect to master: " + master);
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            LOG.error(ex.getMessage(), ex);
+            throw ex;
         }
     }
 
@@ -244,71 +204,53 @@ public class Startup {
         LOG.info("Number of worker threads: {}", workerThreads);
     }
 
-    private Context startServer() throws Exception {
-        Server server = new Server();
-        SelectChannelConnector connector = new SelectChannelConnector();
-        QueuedThreadPool threadPool = new QueuedThreadPool();
-        Context context = new Context(server, "/", Context.NO_SESSIONS);
-        context.setInitParams(makeContextParams());
-        context.addEventListener(new ResteasyBootstrap());
-        context.addEventListener(new SpringContextLoaderListener());
-        context.addServlet(new ServletHolder(new HttpServletDispatcher()), "/*");
-        connector.setHost(httpHost);
-        connector.setPort(httpPort);
-        threadPool.setMaxThreads(httpThreads);
-        server.setConnectors(new Connector[]{connector});
-        server.setThreadPool(threadPool);
-        server.setGracefulShutdown(500);
-        server.setStopAtShutdown(true);
-        server.start();
+    private void setupSystemParams() {
+        // EventBus:
+        if (eventBus.startsWith("amq")) {
+            System.setProperty("eventBus.impl", "amq");
+            System.setProperty("eventBus.amq.broker", eventBus.substring(4));
+        } else {
+            System.setProperty("eventBus.impl", "memory");
+        }
+        // Backoff configuration:
+        System.setProperty("failover.retries", Integer.toString(failoverRetries));
+        System.setProperty("failover.interval", Long.toString(failoverInterval));
+    }
+
+    private ApplicationContext startContext() throws Exception {
+        String location = getConfigFileLocation();
+        ApplicationContext context = new FileSystemXmlApplicationContext(location);
         return context;
     }
 
-    private void startMonitor() {
-        System.setProperty("STOP.PORT", Integer.toString(shutdownPort));
-        System.setProperty("STOP.KEY", DEFAULT_SHUTDOWN_KEY);
-        Monitor.monitor();
-    }
-
-    private void startCoordinator(Context context) throws BeansException {
-        Coordinator coordinator = getCoordinatorFromServletContext(context);
-        coordinator.setReconnectTimeout(reconnectTimeout);
-        coordinator.setNodeTimeout(nodeTimeout);
-        coordinator.setWokerThreads(workerThreads);
-        coordinator.start(new ServerConfiguration(
-                ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()),
-                nodeHost, nodePort, httpHost, httpPort),
-                ensembleConfiguration);
-    }
-
-    private Coordinator getCoordinatorFromServletContext(Context context) throws BeansException {
-        Map beans = WebApplicationContextUtils.getWebApplicationContext(context.getServletContext()).getBeansOfType(Coordinator.class);
+    private void startCoordinator(ApplicationContext context) throws Exception {
+        Coordinator coordinator = null;
+        Map beans = context.getBeansOfType(Coordinator.class);
         if (beans.size() == 1) {
-            return (Coordinator) beans.values().iterator().next();
+            coordinator = (Coordinator) beans.values().iterator().next();
+            coordinator.setReconnectTimeout(reconnectTimeout);
+            coordinator.setNodeTimeout(nodeTimeout);
+            coordinator.setWokerThreads(workerThreads);
+            coordinator.start(
+                    new ServerConfiguration(ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()), nodeHost, nodePort, httpHost, httpPort),
+                    ensembleConfiguration);
         } else {
             throw new IllegalStateException("Wrong number of configured beans!");
         }
     }
 
-    private Map<String, String> makeContextParams() {
-        Map<String, String> contextParams = new HashMap<String, String>();
-        // Spring context location:
-        contextParams.put("contextConfigLocation", getConfigFileLocation());
-        // Resteasy providers:
-        contextParams.put("resteasy.use.builtin.providers", "false");
-        // EventBus:
-        if (eventBus.startsWith("amq")) {
-            contextParams.put("eventBus.impl", "amq");
-            contextParams.put("eventBus.amq.broker", eventBus.substring(4));
+    private void startJsonHttpServer(ApplicationContext context) throws Exception {
+        JsonHttpServer server = null;
+        Map beans = context.getBeansOfType(JsonHttpServer.class);
+        if (beans.size() == 1) {
+            Map<String, String> configuration = new HashMap<String, String>();
+            configuration.put(JsonHttpServer.CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER, allowedOrigins);
+            configuration.put(JsonHttpServer.HTTP_THREADS_CONFIGURATION_PARAMETER, Integer.toString(httpThreads));
+            server = (JsonHttpServer) beans.values().iterator().next();
+            server.start(httpHost, httpPort, configuration);
         } else {
-            contextParams.put("eventBus.impl", "memory");
+            throw new IllegalStateException("Wrong number of configured beans!");
         }
-        // Allowed hosts for CORS:
-        contextParams.put("cors.allowed.origins", allowedOrigins);
-        // Backoff configuration:
-        contextParams.put("failover.retries", Integer.toString(failoverRetries));
-        contextParams.put("failover.interval", Long.toString(failoverInterval));
-        return contextParams;
     }
 
     private String getConfigFileLocation() {
@@ -321,4 +263,5 @@ public class Startup {
             throw new IllegalStateException("Terrastore home directory is not set!");
         }
     }
+
 }

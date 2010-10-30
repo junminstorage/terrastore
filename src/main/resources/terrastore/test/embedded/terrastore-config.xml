@@ -9,62 +9,30 @@
     <import resource="comparators-config.xml"/>
     <import resource="conditions-config.xml"/>
     <import resource="functions-config.xml"/>
+    <import resource="aggregators-config.xml"/>
     <import resource="events-config.xml"/>
 
     <!-- Server -->
 
-    <bean id="server" class="terrastore.server.impl.JsonHttpServer">
+    <bean id="server" class="terrastore.server.impl.CoreServer">
         <constructor-arg ref="updateService"/>
         <constructor-arg ref="queryService"/>
         <constructor-arg ref="backupService"/>
         <constructor-arg ref="statsService"/>
     </bean>
 
-    <bean class="terrastore.server.impl.support.JsonServerOperationExceptionMapper"/>
-    <bean class="terrastore.server.impl.support.JsonValueProvider"/>
-    <bean class="terrastore.server.impl.support.JsonValuesProvider"/>
-    <bean class="terrastore.server.impl.support.JsonBucketsProvider"/>
-    <bean class="terrastore.server.impl.support.JsonParametersProvider"/>
-    <bean class="terrastore.server.impl.support.JsonErrorMessageProvider"/>
-    <bean class="terrastore.server.impl.support.JsonClusterStatsProvider"/>
+    <bean id="jsonHttpServer" class="terrastore.server.impl.JsonHttpServer">
+        <constructor-arg ref="server"/>
+    </bean>
 
     <!-- Service -->
 
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
-        <property name="functions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="update-functions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Function"/>
-            </bean>
-        </property>
-        <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="conditions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Condition"/>
-            </bean>
-        </property>
     </bean>
 
     <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
         <constructor-arg ref="router"/>
-        <property name="comparators">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="comparators"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Comparator"/>
-            </bean>
-        </property>
-        <property name="conditions">
-            <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="conditions"/>
-                <constructor-arg ref="scanner"/>
-                <constructor-arg value="terrastore.store.operators.Condition"/>
-            </bean>
-        </property>
-        <property name="defaultComparator" ref="defaultComparator"/>
     </bean>
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
@@ -99,6 +67,35 @@
     <!-- Store -->
 
     <bean id="store" class="terrastore.store.impl.TCStore">
+        <property name="comparators">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="comparators"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Comparator"/>
+            </bean>
+        </property>
+        <property name="conditions">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="conditions"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Condition"/>
+            </bean>
+        </property>
+        <property name="functions">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="functions"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Function"/>
+            </bean>
+        </property>
+        <property name="aggregators">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="aggregators"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Aggregator"/>
+            </bean>
+        </property>
+        <property name="defaultComparator" ref="defaultComparator"/>
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="backupManager" ref="backupManager"/>
         <property name="eventBus" ref="memoryEventBus"/>
@@ -112,6 +109,10 @@
 
     <!-- Events -->
 
+    <bean id="actionExecutor" class="terrastore.event.impl.DefaultActionExecutor">
+        <constructor-arg ref="updateService"/>
+    </bean>
+
     <bean id="memoryEventBus" class="terrastore.event.impl.MemoryEventBus" destroy-method="shutdown" lazy-init="true">
         <constructor-arg>
             <bean class="terrastore.util.annotation.AutowiringList">
@@ -120,6 +121,7 @@
                 <constructor-arg value="terrastore.event.EventListener"/>
             </bean>
         </constructor-arg>
+        <constructor-arg ref="actionExecutor"/>
         <constructor-arg value="3600"/>
     </bean>
 

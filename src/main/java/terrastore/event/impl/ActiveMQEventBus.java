@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
+import terrastore.event.ActionExecutor;
 import terrastore.event.Event;
 import terrastore.event.EventBus;
 import terrastore.event.EventListener;
@@ -67,17 +68,24 @@ public class ActiveMQEventBus implements EventBus {
     private final ConcurrentMap<String, DefaultMessageListenerContainer> consumers = new ConcurrentHashMap<String, DefaultMessageListenerContainer>();
     private final Lock stateLock = new ReentrantLock();
     private final List<EventListener> eventListeners;
+    private final ActionExecutor actionExecutor;
     private final boolean enabled;
     private volatile boolean shutdown;
 
-    public ActiveMQEventBus(List<EventListener> eventListeners, String broker) throws Exception {
+    public ActiveMQEventBus(List<EventListener> eventListeners, ActionExecutor actionExecutor, String broker) throws Exception {
         LOG.info("Configuring event bus: {}", this.getClass().getName());
         this.eventListeners = eventListeners;
+        this.actionExecutor = actionExecutor;
         this.jmsConnectionFactory = new PooledConnectionFactory(broker);
         this.producer = new JmsTemplate(jmsConnectionFactory);
         this.enabled = this.eventListeners.size() > 0;
         initListeners(this.eventListeners);
         initConsumers(broker);
+    }
+
+    @Override
+    public ActionExecutor getActionExecutor() {
+        return actionExecutor;
     }
 
     @Override
@@ -137,7 +145,7 @@ public class ActiveMQEventBus implements EventBus {
                     DefaultMessageListenerContainer consumer = new DefaultMessageListenerContainer();
                     consumer.setConnectionFactory(jmsConnectionFactory);
                     consumer.setSessionTransacted(true);
-                    consumer.setMessageListener(new EventProcessor(eventListeners));
+                    consumer.setMessageListener(new EventProcessor(eventListeners, actionExecutor));
                     consumer.setDestinationName(queue.getQueueName());
                     consumer.start();
                     consumer.initialize();
@@ -164,7 +172,7 @@ public class ActiveMQEventBus implements EventBus {
                     DefaultMessageListenerContainer consumer = new DefaultMessageListenerContainer();
                     consumer.setConnectionFactory(jmsConnectionFactory);
                     consumer.setSessionTransacted(true);
-                    consumer.setMessageListener(new EventProcessor(eventListeners));
+                    consumer.setMessageListener(new EventProcessor(eventListeners, actionExecutor));
                     consumer.setDestinationName(queueName);
                     consumer.start();
                     consumer.initialize();
@@ -186,15 +194,18 @@ public class ActiveMQEventBus implements EventBus {
                 message.setStringProperty("JMSXGroupID", new StringBuilder().append(event.getBucket()).append(":").append(event.getKey()).toString());
                 return message;
             }
+
         });
     }
 
     private static class EventProcessor implements MessageListener {
 
         private final List<EventListener> eventListeners;
+        private final ActionExecutor actionExecutor;
 
-        public EventProcessor(List<EventListener> eventListeners) {
+        public EventProcessor(List<EventListener> eventListeners, ActionExecutor actionExecutor) {
             this.eventListeners = new ArrayList<EventListener>(eventListeners);
+            this.actionExecutor = actionExecutor;
         }
 
         @Override
@@ -211,9 +222,10 @@ public class ActiveMQEventBus implements EventBus {
         private void dispatch(Event event) {
             for (EventListener listener : eventListeners) {
                 if (listener.observes(event.getBucket())) {
-                    event.dispatch(listener);
+                    event.dispatch(listener, actionExecutor);
                 }
             }
         }
+
     }
 }

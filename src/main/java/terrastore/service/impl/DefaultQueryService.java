@@ -15,7 +15,6 @@
  */
 package terrastore.service.impl;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,27 +28,29 @@ import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetKeysCommand;
-import terrastore.communication.protocol.RangeQueryCommand;
+import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
+import terrastore.communication.protocol.MapCommand;
+import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
-import terrastore.service.comparators.LexicographicalComparator;
 import terrastore.store.Key;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
-import terrastore.store.operators.Comparator;
-import terrastore.store.operators.Condition;
+import terrastore.store.features.Reducer;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.parallel.ParallelUtils;
 import terrastore.util.collect.Sets;
 import terrastore.util.collect.parallel.MapCollector;
 import terrastore.util.collect.parallel.MapTask;
 import terrastore.util.collect.parallel.ParallelExecutionException;
+import terrastore.util.global.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
@@ -58,9 +59,6 @@ public class DefaultQueryService implements QueryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultQueryService.class);
     private final Router router;
-    private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
-    private Comparator defaultComparator = new LexicographicalComparator(true);
 
     public DefaultQueryService(Router router) {
         this.router = router;
@@ -94,8 +92,7 @@ public class DefaultQueryService implements QueryService {
             if (predicate == null || predicate.isEmpty()) {
                 command = new GetValueCommand(bucket, key);
             } else {
-                Condition condition = getCondition(predicate.getConditionType());
-                command = new GetValueCommand(bucket, key, predicate, condition);
+                command = new GetValueCommand(bucket, key, predicate);
             }
             Value result = node.<Value>send(command);
             return result;
@@ -131,6 +128,7 @@ public class DefaultQueryService implements QueryService {
                                 throw new RuntimeException(ex);
                             }
                         }
+
                     },
                     new MapCollector<Map<Key, Value>, List<Map<Key, Value>>>() {
 
@@ -138,7 +136,8 @@ public class DefaultQueryService implements QueryService {
                         public List<Map<Key, Value>> collect(List<Map<Key, Value>> allKeyValues) {
                             return allKeyValues;
                         }
-                    });
+
+                    }, GlobalExecutor.getServiceExecutor());
             return Maps.union(allKeyValues);
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -156,12 +155,10 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate, final long timeToLive) throws CommunicationException, QueryOperationException {
+    public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Range query on bucket {}", bucket);
-            final Comparator keyComparator = getComparator(range.getKeyComparatorName());
-            final Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
-            Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range, keyComparator, timeToLive), range.getLimit());
+            Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
             List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
                     nodeToKeys.entrySet(),
@@ -173,16 +170,17 @@ public class DefaultQueryService implements QueryService {
                                 Node node = nodeToKeys.getKey();
                                 Set<Key> keys = nodeToKeys.getValue();
                                 GetValuesCommand command = null;
-                                if (valueCondition == null) {
+                                if (predicate.isEmpty()) {
                                     command = new GetValuesCommand(bucket, keys);
                                 } else {
-                                    command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
+                                    command = new GetValuesCommand(bucket, keys, predicate);
                                 }
                                 return node.<Map<Key, Value>>send(command);
                             } catch (Exception ex) {
                                 throw new RuntimeException(ex);
                             }
                         }
+
                     },
                     new MapCollector<Map<Key, Value>, List<Map<Key, Value>>>() {
 
@@ -190,7 +188,8 @@ public class DefaultQueryService implements QueryService {
                         public List<Map<Key, Value>> collect(List<Map<Key, Value>> allKeyValues) {
                             return allKeyValues;
                         }
-                    });
+
+                    }, GlobalExecutor.getServiceExecutor());
             return Maps.composite(keysInRange, allKeyValues);
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
@@ -211,37 +210,34 @@ public class DefaultQueryService implements QueryService {
     public Map<Key, Value> queryByPredicate(final String bucket, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
             LOG.debug("Predicate-based query on bucket {}", bucket);
-            final Condition valueCondition = predicate.isEmpty() ? null : getCondition(predicate.getConditionType());
-            if (valueCondition != null) {
-                Set<Key> allKeys = getAllKeysForBucket(bucket);
-                Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
-                List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
-                        nodeToKeys.entrySet(),
-                        new MapTask<Map.Entry<Node, Set<Key>>, Map<Key, Value>>() {
+            Set<Key> allKeys = getAllKeysForBucket(bucket);
+            Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
+            List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
+                    nodeToKeys.entrySet(),
+                    new MapTask<Map.Entry<Node, Set<Key>>, Map<Key, Value>>() {
 
-                            @Override
-                            public Map<Key, Value> map(Map.Entry<Node, Set<Key>> nodeToKeys) {
-                                try {
-                                    Node node = nodeToKeys.getKey();
-                                    Set<Key> keys = nodeToKeys.getValue();
-                                    GetValuesCommand command = new GetValuesCommand(bucket, keys, predicate, valueCondition);
-                                    return node.<Map<Key, Value>>send(command);
-                                } catch (Exception ex) {
-                                    throw new RuntimeException(ex);
-                                }
+                        @Override
+                        public Map<Key, Value> map(Map.Entry<Node, Set<Key>> nodeToKeys) {
+                            try {
+                                Node node = nodeToKeys.getKey();
+                                Set<Key> keys = nodeToKeys.getValue();
+                                GetValuesCommand command = new GetValuesCommand(bucket, keys, predicate);
+                                return node.<Map<Key, Value>>send(command);
+                            } catch (Exception ex) {
+                                throw new RuntimeException(ex);
                             }
-                        },
-                        new MapCollector<Map<Key, Value>, List<Map<Key, Value>>>() {
+                        }
 
-                            @Override
-                            public List<Map<Key, Value>> collect(List<Map<Key, Value>> allKeyValues) {
-                                return allKeyValues;
-                            }
-                        });
-                return Maps.union(allKeyValues);
-            } else {
-                throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong predicate!"));
-            }
+                    },
+                    new MapCollector<Map<Key, Value>, List<Map<Key, Value>>>() {
+
+                        @Override
+                        public List<Map<Key, Value>> collect(List<Map<Key, Value>> allKeyValues) {
+                            return allKeyValues;
+                        }
+
+                    }, GlobalExecutor.getServiceExecutor());
+            return Maps.union(allKeyValues);
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -258,37 +254,70 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Comparator getDefaultComparator() {
-        return defaultComparator;
-    }
+    public Value queryByMapReduce(final String bucket, final Range range, final Mapper mapper, final Reducer reducer) throws CommunicationException, QueryOperationException {
+        try {
+            LOG.debug("MapReduce query on bucket {}", bucket);
+            Set<Key> keys = null;
+            if (range != null && !range.isEmpty()) {
+                keys = getKeyRangeForBucket(bucket, range);
+            } else {
+                keys = getAllKeysForBucket(bucket);
+            }
+            Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keys);
+            //
+            // Map:
+            List<Map<String, Object>> mapResults = ParallelUtils.parallelMap(
+                    nodeToKeys.entrySet(),
+                    new MapTask<Map.Entry<Node, Set<Key>>, Map<String, Object>>() {
 
-    @Override
-    public Map<String, Comparator> getComparators() {
-        return comparators;
-    }
+                        @Override
+                        public Map<String, Object> map(Map.Entry<Node, Set<Key>> nodeToKeys) {
+                            try {
+                                Node node = nodeToKeys.getKey();
+                                Set<Key> keys = nodeToKeys.getValue();
+                                MapCommand command = new MapCommand(bucket, keys, mapper);
+                                return node.<Map<String, Object>>send(command);
+                            } catch (Exception ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
 
-    @Override
-    public Map<String, Condition> getConditions() {
-        return conditions;
+                    },
+                    new MapCollector<Map<String, Object>, List<Map<String, Object>>>() {
+
+                        @Override
+                        public List<Map<String, Object>> collect(List<Map<String, Object>> values) {
+                            return values;
+                        }
+
+                    }, GlobalExecutor.getServiceExecutor());
+            //
+            // Reduce:
+            Node reducerNode = router.routeToLocalNode();
+            ReduceCommand reducerCommand = new ReduceCommand(mapResults, reducer);
+            return reducerNode.<Value>send(reducerCommand);
+        } catch (MissingRouteException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new CommunicationException(error);
+        } catch (ParallelExecutionException ex) {
+            if (ex.getCause() instanceof ProcessingException) {
+                ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+                ErrorLogger.LOG(LOG, error, ex.getCause());
+                throw new QueryOperationException(error);
+            } else {
+                throw new QueryOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
+            }
+        } catch (ProcessingException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new QueryOperationException(error);
+        }
     }
 
     @Override
     public Router getRouter() {
         return router;
-    }
-
-    public void setDefaultComparator(Comparator defaultComparator) {
-        this.defaultComparator = defaultComparator;
-    }
-
-    public void setComparators(Map<String, Comparator> comparators) {
-        this.comparators.clear();
-        this.comparators.putAll(comparators);
-    }
-
-    public void setConditions(Map<String, Condition> conditions) {
-        this.conditions.clear();
-        this.conditions.putAll(conditions);
     }
 
     private Set<Key> getAllKeysForBucket(String bucket) throws ParallelExecutionException {
@@ -298,8 +327,8 @@ public class DefaultQueryService implements QueryService {
         return keys;
     }
 
-    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange, Comparator keyComparator, long timeToLive) throws ParallelExecutionException {
-        RangeQueryCommand command = new RangeQueryCommand(bucket, keyRange, keyComparator, timeToLive);
+    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException {
+        KeysInRangeCommand command = new KeysInRangeCommand(bucket, keyRange);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<Key> keys = multicastRangeQueryCommand(perClusterNodes, command);
         return keys;
@@ -326,6 +355,7 @@ public class DefaultQueryService implements QueryService {
                         }
                         return buckets;
                     }
+
                 },
                 new MapCollector<Set<String>, Set<String>>() {
 
@@ -333,7 +363,8 @@ public class DefaultQueryService implements QueryService {
                     public Set<String> collect(List<Set<String>> keys) {
                         return Sets.union(keys);
                     }
-                });
+
+                }, GlobalExecutor.getServiceExecutor());
         return result;
     }
 
@@ -358,6 +389,7 @@ public class DefaultQueryService implements QueryService {
                         }
                         return keys;
                     }
+
                 },
                 new MapCollector<Set<Key>, Set<Key>>() {
 
@@ -365,11 +397,12 @@ public class DefaultQueryService implements QueryService {
                     public Set<Key> collect(List<Set<Key>> keys) {
                         return Sets.union(keys);
                     }
-                });
+
+                }, GlobalExecutor.getServiceExecutor());
         return result;
     }
 
-    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final RangeQueryCommand command) throws ParallelExecutionException {
+    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final KeysInRangeCommand command) throws ParallelExecutionException {
         // Parallel collection of all sets of sorted keys in a list:
         Set<Key> keys = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
@@ -390,6 +423,7 @@ public class DefaultQueryService implements QueryService {
                         }
                         return keys;
                     }
+
                 },
                 new MapCollector<Set<Key>, Set<Key>>() {
 
@@ -397,27 +431,14 @@ public class DefaultQueryService implements QueryService {
                     public Set<Key> collect(List<Set<Key>> keys) {
                         try {
                             // Parallel merge of all sorted sets:
-                            return ParallelUtils.parallelMerge(keys);
+                            return ParallelUtils.parallelMerge(keys, GlobalExecutor.getForkJoinPool());
                         } catch (ParallelExecutionException ex) {
                             throw new IllegalStateException(ex.getCause());
                         }
                     }
-                });
+
+                }, GlobalExecutor.getServiceExecutor());
         return keys;
     }
 
-    private Comparator getComparator(String comparatorName) {
-        if (comparators.containsKey(comparatorName)) {
-            return comparators.get(comparatorName);
-        }
-        return defaultComparator;
-    }
-
-    private Condition getCondition(String conditionType) throws QueryOperationException {
-        if (conditions.containsKey(conditionType)) {
-            return conditions.get(conditionType);
-        } else {
-            throw new QueryOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong condition type: " + conditionType));
-        }
-    }
 }

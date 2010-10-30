@@ -15,17 +15,32 @@
  */
 package terrastore.store.impl;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 import terrastore.internal.tc.TCMaster;
 import terrastore.store.Bucket;
+import terrastore.store.Key;
 import terrastore.store.StoreOperationException;
+import terrastore.store.features.Mapper;
+import terrastore.store.features.Reducer;
+import terrastore.store.operators.Aggregator;
+import terrastore.util.collect.Maps;
+import terrastore.util.collect.Sets;
+import terrastore.util.json.JsonUtils;
 import static org.junit.Assert.*;
+import static org.easymock.classextension.EasyMock.*;
 
 /**
  * @author Sergio Bossa
@@ -121,5 +136,93 @@ public class TCStoreTest {
     public void testRemoveNotExistentBucketHasNoEffect() throws StoreOperationException {
         String bucket = "bucket";
         store.remove(bucket);
+    }
+
+    @Test
+    public void testMap() throws Exception {
+        String bucketName = "bucket";
+        Set<Key> keys = Sets.hash(new Key("k1"), new Key("k2"));
+        Mapper mapper = new Mapper("mapper", "combiner", 60000, Collections.EMPTY_MAP);
+        Map<String, Object> mapResult1 = Maps.hash(new String[]{"k1"}, new Object[]{"v1"});
+        Map<String, Object> mapResult2 = Maps.hash(new String[]{"k2"}, new Object[]{"v2"});
+        Map<String, Object> combinerResult = Maps.hash(new String[]{"c1"}, new Object[]{"c2"});
+
+        Bucket bucket = createMock(Bucket.class);
+        makeThreadSafe(bucket, true);
+        bucket.map(eq(new Key("k1")), same(mapper));
+        expectLastCall().andReturn(mapResult1).once();
+        bucket.map(eq(new Key("k2")), same(mapper));
+        expectLastCall().andReturn(mapResult2).once();
+        TCStore mockedStore = createMockBuilder(TCStore.class).addMockedMethod(TCStore.class.getDeclaredMethod("get", String.class)).withConstructor().createMock();
+        mockedStore.get(bucketName);
+        expectLastCall().andReturn(bucket).once();
+        Aggregator aggregator = createMock(Aggregator.class);
+        Capture<List<Map<String, Object>>> combinerCapture = new Capture<List<Map<String, Object>>>();
+        makeThreadSafe(aggregator, true);
+        aggregator.apply(EasyMock.capture(combinerCapture));
+        expectLastCall().andReturn(combinerResult).once();
+
+        replay(mockedStore, bucket, aggregator);
+
+        mockedStore.setAggregators(Maps.hash(new String[]{"combiner"}, new Aggregator[]{aggregator}));
+        assertEquals(combinerResult, mockedStore.map(bucketName, keys, mapper));
+        assertTrue(combinerCapture.getValue().equals(Arrays.asList(mapResult1, mapResult2)) || combinerCapture.getValue().equals(Arrays.asList(mapResult2, mapResult1)));
+
+        verify(mockedStore, bucket, aggregator);
+    }
+
+    @Test
+    public void testMapToNonExistentKey() throws Exception {
+        String bucketName = "bucket";
+        Set<Key> keys = Sets.hash(new Key("k1"), new Key("k2"));
+        Mapper mapper = new Mapper("mapper", "combiner", 60000, Collections.EMPTY_MAP);
+        Map<String, Object> mapResult1 = Maps.hash(new String[]{"k1"}, new Object[]{"v1"});
+        Map<String, Object> mapResult2 = null;
+        Map<String, Object> combinerResult = Maps.hash(new String[]{"c1"}, new Object[]{"c2"});
+
+        Bucket bucket = createMock(Bucket.class);
+        makeThreadSafe(bucket, true);
+        bucket.map(eq(new Key("k1")), same(mapper));
+        expectLastCall().andReturn(mapResult1).once();
+        bucket.map(eq(new Key("k2")), same(mapper));
+        expectLastCall().andReturn(mapResult2).once();
+        TCStore mockedStore = createMockBuilder(TCStore.class).addMockedMethod(TCStore.class.getDeclaredMethod("get", String.class)).withConstructor().createMock();
+        mockedStore.get(bucketName);
+        expectLastCall().andReturn(bucket).once();
+        Aggregator aggregator = createMock(Aggregator.class);
+        Capture<List<Map<String, Object>>> combinerCapture = new Capture<List<Map<String, Object>>>();
+        makeThreadSafe(aggregator, true);
+        aggregator.apply(EasyMock.capture(combinerCapture));
+        expectLastCall().andReturn(combinerResult).once();
+
+        replay(mockedStore, bucket, aggregator);
+
+        mockedStore.setAggregators(Maps.hash(new String[]{"combiner"}, new Aggregator[]{aggregator}));
+        assertEquals(combinerResult, mockedStore.map(bucketName, keys, mapper));
+        assertEquals(Arrays.asList(mapResult1), combinerCapture.getValue());
+
+        verify(mockedStore, bucket, aggregator);
+    }
+
+    @Test
+    public void testReduce() throws Exception {
+        Map<String, Object> mapResult1 = Maps.hash(new String[]{"k1"}, new Object[]{"v1"});
+        Map<String, Object> mapResult2 = Maps.hash(new String[]{"k2"}, new Object[]{"v2"});
+        List<Map<String, Object>> allResults = Arrays.asList(mapResult1, mapResult2);
+        Reducer reducer = new Reducer("reducer", 60000);
+        Map<String, Object> reducerResult = Maps.hash(new String[]{"r1"}, new Object[]{"r2"});
+
+        TCStore mockedStore = createMockBuilder(TCStore.class).withConstructor().createMock();
+        Aggregator aggregator = createMock(Aggregator.class);
+        makeThreadSafe(aggregator, true);
+        aggregator.apply(same(allResults));
+        expectLastCall().andReturn(reducerResult).once();
+
+        replay(mockedStore, aggregator);
+
+        mockedStore.setAggregators(Maps.hash(new String[]{"reducer"}, new Aggregator[]{aggregator}));
+        assertEquals(JsonUtils.fromMap(reducerResult), mockedStore.reduce(allResults, reducer));
+
+        verify(mockedStore, aggregator);
     }
 }

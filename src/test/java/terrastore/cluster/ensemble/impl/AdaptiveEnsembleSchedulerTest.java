@@ -116,43 +116,38 @@ public class AdaptiveEnsembleSchedulerTest {
     }
 
     private EnsembleManager ensemble_manager() throws Exception {
-        EnsembleManager ensemble = createMock(EnsembleManager.class);
+        ensemble = createMock(EnsembleManager.class);
         makeThreadSafe(ensemble, true);
-        this.ensemble = ensemble;
         ensemble.update(cluster);
         expectLastCall().andReturn(view).once();
         return ensemble;
     }
 
     private EnsembleConfiguration ensemble_configuration() {
-        EnsembleConfiguration ensembleConfiguration = createMock(EnsembleConfiguration.class);
+        ensembleConfiguration = createMock(EnsembleConfiguration.class);
         makeThreadSafe(ensembleConfiguration, true);
-        this.ensembleConfiguration = ensembleConfiguration;
         ensembleConfiguration.getDiscovery();
         expectLastCall().andReturn(discoveryConfiguration).once();
         return ensembleConfiguration;
     }
 
     private EnsembleConfiguration.DiscoveryConfiguration discovery_configuration() {
-        EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
+        discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
         makeThreadSafe(discoveryConfiguration, true);
-        this.discoveryConfiguration = discoveryConfiguration;
         discoveryConfiguration.getInterval();
         expectLastCall().andReturn(3000L).once();
         return discoveryConfiguration;
     }
 
     private View view() {
-        View view = createMock(View.class);
+        view = createMock(View.class);
         makeThreadSafe(view, true);
-        this.view = view;
         return view;
     }
 
     private FuzzyInferenceEngine fuzzy_inference_engine() {
-        FuzzyInferenceEngine fuzzy = createMock(FuzzyInferenceEngine.class);
+        fuzzy = createMock(FuzzyInferenceEngine.class);
         makeThreadSafe(fuzzy, true);
-        this.fuzzy = fuzzy;
         return fuzzy;
     }
 

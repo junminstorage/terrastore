@@ -122,8 +122,8 @@ public class EnsembleConfiguration {
         private String type = "fixed";
         private Long interval;
         private Long baseline;
-        private Long upboundIncrement;
-        private Long upboundLimit;
+        private Long increment;
+        private Long limit;
 
         public void validate() {
             validateForFixedScheduler();
@@ -154,20 +154,20 @@ public class EnsembleConfiguration {
             this.baseline = baseline;
         }
 
-        public Long getUpboundIncrement() {
-            return upboundIncrement;
+        public Long getIncrement() {
+            return increment;
         }
 
-        public void setUpboundIncrement(Long upboundIncrement) {
-            this.upboundIncrement = upboundIncrement;
+        public void setIncrement(Long increment) {
+            this.increment = increment;
         }
 
-        public Long getUpboundLimit() {
-            return upboundLimit;
+        public Long getLimit() {
+            return limit;
         }
 
-        public void setUpboundLimit(Long upboundLimit) {
-            this.upboundLimit = upboundLimit;
+        public void setLimit(Long limit) {
+            this.limit = limit;
         }
 
         private void validateForFixedScheduler() {
@@ -184,10 +184,10 @@ public class EnsembleConfiguration {
                 if (baseline == null || baseline <= 0) {
                     throw new EnsembleConfigurationException("Baseline must be a positive time value (in milliseconds)!");
                 }
-                if (upboundIncrement == null || upboundIncrement <= 0) {
+                if (increment == null || increment <= 0) {
                     throw new EnsembleConfigurationException("Upbouns increment must be a positive time value (in milliseconds)!");
                 }
-                if (upboundLimit == null || upboundLimit <= 0) {
+                if (limit == null || limit <= 0) {
                     throw new EnsembleConfigurationException("Upbound limit must be a positive time value (in milliseconds)!");
                 }
             }

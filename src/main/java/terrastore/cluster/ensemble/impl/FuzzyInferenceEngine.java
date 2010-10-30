@@ -27,8 +27,8 @@ public class FuzzyInferenceEngine {
     private final int f3 = 6;
     private long p1 = 20;
     private long p2 = 40;
-    private long upboundIncrement = 20;
-    private long upboundLimit = 60;
+    private long increment = 20;
+    private long limit = 60;
     private long interval;
 
     public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength, EnsembleConfiguration.DiscoveryConfiguration conf) {
@@ -37,31 +37,31 @@ public class FuzzyInferenceEngine {
 
         long p = previousPeriodLength / 1000;
         if (nrViewChanges == 0) {
-            return Math.min((upboundLimit * 1000), ((p + upboundIncrement) * 1000));
+            return Math.min((limit * 1000), ((p + increment) * 1000));
         } else if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (interval * 1000));
+            return Math.min((limit * 1000), (interval * 1000));
         } else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (2 * interval * 1000));
+            return Math.min((limit * 1000), (2 * interval * 1000));
         } else if (veryHighViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (3 * interval * 1000));
+            return Math.min((limit * 1000), (3 * interval * 1000));
         } else if (highViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (4 * interval * 1000));
+            return Math.min((limit * 1000), (4 * interval * 1000));
         } else if (highViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (5 * interval * 1000));
+            return Math.min((limit * 1000), (5 * interval * 1000));
         } else if (highViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (6 * interval * 1000));
+            return Math.min((limit * 1000), (6 * interval * 1000));
         } else if (lowViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (7 * interval * 1000));
+            return Math.min((limit * 1000), (7 * interval * 1000));
         } else if (lowViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (8 * interval * 1000));
+            return Math.min((limit * 1000), (8 * interval * 1000));
         } else if (lowViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (9 * interval * 1000));
+            return Math.min((limit * 1000), (9 * interval * 1000));
         } else if (veryLowViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (10 * interval * 1000));
+            return Math.min((limit * 1000), (10 * interval * 1000));
         } else if (veryLowViewChanges(nrViewChanges) && frequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (11 * interval * 1000));
+            return Math.min((limit * 1000), (11 * interval * 1000));
         } else if (veryLowViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
-            return Math.min((upboundLimit * 1000), (12 * interval * 1000));
+            return Math.min((limit * 1000), (12 * interval * 1000));
         } else {
             throw new IllegalStateException("Unexpected view changes and frequency values!");
         }
@@ -70,8 +70,8 @@ public class FuzzyInferenceEngine {
     private void calculateParametersFrom(EnsembleConfiguration.DiscoveryConfiguration conf) {
         p1 = (conf.getBaseline() / 1000) / 2;
         p2 = (conf.getBaseline() / 1000) + p1;
-        upboundIncrement = conf.getUpboundIncrement() / 1000;
-        upboundLimit = conf.getUpboundLimit() / 1000;
+        increment = conf.getIncrement() / 1000;
+        limit = conf.getLimit() / 1000;
         interval = (p1 + p2) / 12;
     }
 

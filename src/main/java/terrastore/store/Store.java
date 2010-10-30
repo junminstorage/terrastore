@@ -15,8 +15,16 @@
  */
 package terrastore.store;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
+import terrastore.store.features.Mapper;
+import terrastore.store.features.Reducer;
+import terrastore.store.operators.Aggregator;
+import terrastore.store.operators.Comparator;
+import terrastore.store.operators.Condition;
+import terrastore.store.operators.Function;
 
 /**
  * Store interface for managing {@link Bucket} instances.
@@ -57,6 +65,27 @@ public interface Store {
     public Set<String> buckets();
 
     /**
+     * Execute a map operation, as described by the {@link terrastore.store.features.Mapper} object,
+     * over the given bucket and set of keys.
+     *
+     * @param bucket The bucket to map to.
+     * @param keys The keys to map to.
+     * @param mapper The map description.
+     * @throws StoreOperationException If errors occur during map operation.
+     */
+    public Map<String, Object> map(String bucket, Set<Key> keys, Mapper mapper) throws StoreOperationException;
+
+    /**
+     * Execute a reduce operation, as described by the {@link terrastore.store.features.Reducer} object,
+     * over the given list of values.
+     *
+     * @param values The values to reduce.
+     * @param reducer The reduce description.
+     * @throws StoreOperationException If errors occur during reduce operation.
+     */
+    public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException;
+
+    /**
      * Flush all key/value entries of all buckets contained into this store.
      * <br>
      * The actual decision whether the key must be flushed or not, is left to the given {@link FlushCondition}.
@@ -65,6 +94,41 @@ public interface Store {
      * @param flushCondition The condition to evaluate for flushing keys.
      */
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition);
+
+    /**
+     * Set the default {@link terrastore.store.operators.Comparator} used to compare keys when no other comparator is found.
+     *
+     * @param defaultComparator The default comparator.
+     */
+    public void setDefaultComparator(Comparator defaultComparator);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Comparator} by name.
+     *
+     * @param comparators A map of supported comparators.
+     */
+    public void setComparators(Map<String, Comparator> comparators);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Condition} by name.
+     *
+     * @param conditions  A map of supported conditions.
+     */
+    public void setConditions(Map<String, Condition> conditions);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Function}s by name.
+     *
+     * @param functions  A map of supported functions.
+     */
+    public void setFunctions(Map<String, Function> functions);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Aggregator}s by name.
+     *
+     * @param aggregators A map of supported aggregators.
+     */
+    public void setAggregators(Map<String, Aggregator> aggregators);
 
     /**
      * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.

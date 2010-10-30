@@ -23,9 +23,12 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+import terrastore.common.ErrorMessage;
 import terrastore.server.Parameters;
+import terrastore.util.io.InputReader;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -40,6 +43,13 @@ public class JsonParametersProvider implements MessageBodyReader<Parameters> {
     }
 
     public Parameters readFrom(Class<Parameters> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return JsonUtils.readParameters(entityStream);
+        try {
+            return JsonUtils.readParameters(entityStream);
+        } catch (Exception ex) {
+            throw new WebApplicationException(Response.status(ErrorMessage.BAD_REQUEST_ERROR_CODE).
+                    entity("Error: " + ex.getMessage() + "\n\rInput: " + new String(new InputReader().read(entityStream))).
+                    build());
+        }
     }
+
 }

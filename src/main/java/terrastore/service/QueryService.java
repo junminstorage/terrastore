@@ -22,10 +22,10 @@ import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
-import terrastore.store.operators.Comparator;
-import terrastore.store.operators.Condition;
+import terrastore.store.features.Reducer;
 
 /**
  * The QueryService manages the operations for finding values in buckets, by interacting with a {@link terrastore.router.Router}
@@ -79,35 +79,25 @@ public interface QueryService {
      * {@link terrastore.store.features.Range} object, and values satisfy the condition whose name matches the one contained in the
      * {@link terrastore.store.features.Predicate} object (if any).
      * <br><br>
-     * Comparators are provided by the {@link #getComparators()} method; if no matching comparator is found,
-     * the default one is used (see {@link #getDefaultComparator()}).<br>
-     * Conditions are provided by the {@link #getConditions()} method; if the predicate doesn't specify any condition,
-     * no condition will be used hence all values in range will be returned; if the specified condition is not found, an exception is thrown.
-     * <br><br>
-     * The query is executed over a snapshot view of the bucket keys, so the timeToLive parameter determines,
+     * The query is executed over a snapshot view of the bucket keys, so the timeToLive carried into the range object determines,
      * in milliseconds, the max snapshot age: if the snapshot is older than the given time, it's recomputed,
      * otherwise it will be actually used for the query.
      *
      * @param bucket The bucket to query.
      * @param range The range which keys must be fall into.
      * @param predicate The predicate to evaluate on values.
-     * @param timeToLive Number of milliseconds specifying the snapshot age; if set to 0, a new snapshot will be immediately computed
-     * and the query executed on the fresh snasphot.
      * @return An ordered map containing key/value pairs.
      * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate, long timeToLive) throws CommunicationException, QueryOperationException;
+    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
      * <br><br>
      * Returned key/value pairs, in no particular order, satisfy the condition whose name matches the one contained in the
      * {@link terrastore.store.features.Predicate} object.
-     * <br><br>
-     * Conditions are provided by the {@link #getConditions()} method; if the predicate doesn't specify any condition,
-     * or the condition is not found, an exception is thrown.
      *
      * @param bucket The bucket to query.
      * @param predicate The predicate to evaluate on values.
@@ -119,30 +109,25 @@ public interface QueryService {
     public Map<Key, Value> queryByPredicate(String bucket, Predicate predicate) throws CommunicationException, QueryOperationException;
 
     /**
+     * Execute a map-reduce query over the given bucket and within a given (optional) key {@link terrastore.store.features.Range}, with mapper, combiner and
+     * reducer functions described into the {@link terrastore.store.features.Mapper} and {@link terrastore.store.features.Reducer} objects.
+     * <br><br>
+     * The returned value is a document as resulted from the map-reduce aggregation.
+     *
+     * @param bucket The bucket to query.
+     * @param range The optional key range to query. If null (or empty), the query will be executed over the whole bucket.
+     * @param mapper The mapper object describing the mapper/combiner functions.
+     * @param reducer The reducer object describing the reducer function.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
+     * @throws QueryOperationException If a bucket with the given name doesn't exist, or no mapper/combiner/reducer function is specified or no matching is found.
+     */
+    @HandleFailure(exception = CommunicationException.class)
+    public Value queryByMapReduce(String bucket, Range range, Mapper mapper, Reducer reducer) throws CommunicationException, QueryOperationException;
+
+    /**
      * Get the {@link terrastore.router.Router} instance used for routing actual query operations.
      *
      * @return The router instance.
      */
     public Router getRouter();
-
-    /**
-     * Get the default {@link terrastore.store.operators.Comparator} used to compare keys when no other comparator is found.
-     *
-     * @return The default comparator.
-     */
-    public Comparator getDefaultComparator();
-
-    /**
-     * Get all supported {@link terrastore.store.operators.Comparator} by name.
-     *
-     * @return A map of supported comparators.
-     */
-    public Map<String, Comparator> getComparators();
-
-    /**
-     * Get all supported {@link terrastore.store.operators.Condition} by name.
-     *
-     * @return A map of supported conditions.
-     */
-    public Map<String, Condition> getConditions();
 }

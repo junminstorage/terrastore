@@ -30,7 +30,7 @@ public class EnsembleConfigurationTest {
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String ADAPTIVE_CONFIGURATION = "{"
-            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\", \"upboundIncrement\":\"5000\", \"upboundLimit\":\"60000\"},"
+            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\", \"increment\":\"5000\", \"limit\":\"60000\"},"
             + "\"localCluster\":\"cluster1\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
@@ -40,22 +40,22 @@ public class EnsembleConfigurationTest {
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_INTERVAL_ADAPTIVE_CONFIGURATION = "{"
-            + "\"discovery\":{\"type\":\"adaptive\", \"baseline\":\"25000\", , \"upboundIncrement\":\"5000\", \"upboundLimit\":\"60000\"},"
+            + "\"discovery\":{\"type\":\"adaptive\",\"baseline\":\"25000\",\"increment\":\"5000\", \"limit\":\"60000\"},"
             + "\"localCluster\":\"cluster1\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_BASELINE_ADAPTIVE_CONFIGURATION = "{"
-            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", , \"upboundIncrement\":\"5000\", \"upboundLimit\":\"60000\"},"
+            + "\"discovery\":{\"type\":\"adaptive\",\"interval\":\"1000\",\"increment\":\"5000\", \"limit\":\"60000\"},"
             + "\"localCluster\":\"cluster1\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_INCREMENT_ADAPTIVE_CONFIGURATION = "{"
-            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\", \"upboundLimit\":\"60000\"},"
+            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\", \"limit\":\"60000\"},"
             + "\"localCluster\":\"cluster1\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
     private final String MISSING_LIMIT_ADAPTIVE_CONFIGURATION = "{"
-            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\", \"upboundIncrement\":\"5000\"},"
+            + "\"discovery\":{\"type\":\"adaptive\", \"interval\":\"1000\", \"baseline\":\"25000\", \"increment\":\"5000\"},"
             + "\"localCluster\":\"cluster1\","
             + "\"clusters\":[\"cluster1\", \"cluster2\", \"cluster3\"],"
             + "\"seeds\":{\"cluster2\":\"www.acme2.org:6000\", \"cluster3\":\"www.acme3.org:6000\"}}";
@@ -140,4 +140,5 @@ public class EnsembleConfigurationTest {
         EnsembleConfiguration configuration = JsonUtils.readEnsembleConfiguration(new ByteArrayInputStream(BAD_SEED_CONFIGURATION.getBytes()));
         configuration.validate();
     }
+
 }

@@ -23,8 +23,7 @@ import terrastore.store.Key;
 import terrastore.store.Value;
 
 /**
- * The Server handles client requests relying on the {@link terrastore.service.UpdateService}
- * and {@link terrastore.service.QueryService} to actually execute them.
+ * The Server handles client requests relying on services to actually execute them.
  *
  * @author Sergio Bossa
  */
@@ -128,7 +127,7 @@ public interface Server {
     public Values queryByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
-     * Execute a predicate-based query returning all key/value pairs whosevalue satisfies the given predicate.
+     * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
      *
      * @param bucket The bucket to query.
      * @param predicate The predicate to evaluate.
@@ -136,6 +135,15 @@ public interface Server {
      * @throws ServerOperationException If an error occurs.
      */
     public Values queryByPredicate(String bucket, String predicate) throws ServerOperationException;
+
+    /**
+     * Execute a map-reduce query over the given bucket.
+     *
+     * @param bucket The bucket to query.
+     * @param descriptor The map-reduce query descriptor.
+     * @throws ServerOperationException If an error occurs.
+     */
+    public Value queryByMapReduce(String bucket, MapReduceDescriptor descriptor) throws ServerOperationException;
 
     /**
      * Execute the import of all bucket key/value entries, without interrupting other operations and preserving

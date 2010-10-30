@@ -32,6 +32,7 @@ import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
+import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Key;
@@ -52,7 +53,23 @@ public class JsonUtils {
         }
     }
 
+    public static Map<String, Object> toModifiableMap(byte[] value) {
+        try {
+            return JSON_MAPPER.readValue(new ByteArrayInputStream(value), Map.class);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Value should have been already validated!");
+        }
+    }
+
     public static Map<String, Object> toUnmodifiableMap(Value value) {
+        try {
+            return new JsonStreamingMap(value);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Value should have been already validated!");
+        }
+    }
+
+    public static Map<String, Object> toUnmodifiableMap(byte[] value) {
         try {
             return new JsonStreamingMap(value);
         } catch (Exception ex) {
@@ -114,6 +131,10 @@ public class JsonUtils {
 
     public static EnsembleConfiguration readEnsembleConfiguration(InputStream stream) throws IOException {
         return JSON_MAPPER.readValue(stream, EnsembleConfiguration.class);
+    }
+
+    public static MapReduceDescriptor readMapReduceDescriptor(InputStream stream) throws IOException {
+        return JSON_MAPPER.readValue(stream, MapReduceDescriptor.class);
     }
 
     private static void validateObject(JsonParser parser) throws IOException {

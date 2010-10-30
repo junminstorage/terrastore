@@ -15,7 +15,6 @@
  */
 package terrastore.service;
 
-import java.util.Map;
 import terrastore.communication.CommunicationException;
 import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
@@ -23,8 +22,6 @@ import terrastore.store.Key;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
-import terrastore.store.operators.Condition;
-import terrastore.store.operators.Function;
 
 /**
  * The UpdateService manages the operations of add and removal of buckets and values by interacting with a {@link terrastore.router.Router}
@@ -83,20 +80,6 @@ public interface UpdateService {
      */
     @HandleFailure(exception = CommunicationException.class)
     public Value updateValue(String bucket, Key key, Update update) throws CommunicationException, UpdateOperationException;
-
-    /**
-     * Get all supported {@link terrastore.store.operators.Function}s by name.
-     *
-     * @return A map of supported functions.
-     */
-    public Map<String, Function> getFunctions();
-
-    /**
-     * Get all supported {@link terrastore.store.operators.Condition} by name.
-     *
-     * @return A map of supported conditions.
-     */
-    public Map<String, Condition> getConditions();
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual update operations.

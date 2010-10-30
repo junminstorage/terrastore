@@ -15,7 +15,6 @@
  */
 package terrastore.store.operators;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -24,7 +23,7 @@ import java.util.Map;
  *
  * @author Sergio Bossa
  */
-public interface Condition extends Serializable {
+public interface Condition {
 
     /**
      * Evaluate this condition on the given value, represented as a map of name -> value pairs.

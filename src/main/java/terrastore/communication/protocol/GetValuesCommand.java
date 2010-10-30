@@ -29,7 +29,6 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
-import terrastore.store.operators.Condition;
 import terrastore.util.collect.Maps;
 
 /**
@@ -41,13 +40,11 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
     private final Set<Key> keys;
     private final boolean conditional;
     private final Predicate predicate;
-    private final Condition valueCondition;
 
     public GetValuesCommand(GetValuesCommand command, Set<Key> keys) {
         this.bucketName = command.bucketName;
         this.conditional = command.conditional;
         this.predicate = command.predicate;
-        this.valueCondition = command.valueCondition;
         this.keys = keys;
     }
 
@@ -56,15 +53,13 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
         this.keys = keys;
         this.conditional = false;
         this.predicate = null;
-        this.valueCondition = null;
     }
 
-    public GetValuesCommand(String bucketName, Set<Key> keys, Predicate predicate, Condition valueCondition) {
+    public GetValuesCommand(String bucketName, Set<Key> keys, Predicate predicate) {
         this.bucketName = bucketName;
         this.keys = keys;
         this.conditional = true;
         this.predicate = predicate;
-        this.valueCondition = valueCondition;
     }
 
     @Override
@@ -82,22 +77,17 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
 
     public Map<Key, Value> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
+        Map<Key, Value> result = null;
         if (bucket != null) {
-            Map<Key, Value> entries = new HashMap<Key, Value>();
-            for (Key key : keys) {
-                Value value = null;
-                if (!conditional) {
-                    value = bucket.get(key);
-                } else {
-                    value = bucket.conditionalGet(key, predicate, valueCondition);
-                }
-                if (value != null) {
-                    entries.put(key, value);
-                }
+            if (!conditional) {
+                result = bucket.get(keys);
+            } else {
+                result = bucket.conditionalGet(keys, predicate);
             }
-            return Maps.serializing(entries);
+            return Maps.serializing(result);
         } else {
             return new HashMap<Key, Value>(0);
         }
     }
+
 }

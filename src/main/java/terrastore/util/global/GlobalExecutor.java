@@ -26,7 +26,25 @@ import jsr166y.ForkJoinWorkerThread;
  */
 public class GlobalExecutor {
 
-    private static volatile ExecutorService EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+    private static volatile ExecutorService ACTION_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    });
+    private static volatile ExecutorService SERVICE_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    });
+    private static volatile ExecutorService STORE_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
 
         @Override
         public Thread newThread(Runnable r) {
@@ -45,12 +63,28 @@ public class GlobalExecutor {
         }
     });
 
-    public static void setExecutor(ExecutorService executor) {
-        EXECUTOR = executor;
+    public static void setActionExecutor(ExecutorService executor) {
+        ACTION_EXECUTOR = executor;
     }
 
-    public static ExecutorService getExecutor() {
-        return EXECUTOR;
+    public static ExecutorService getActionExecutor() {
+        return ACTION_EXECUTOR;
+    }
+
+    public static void setServiceExecutor(ExecutorService executor) {
+        SERVICE_EXECUTOR = executor;
+    }
+
+    public static ExecutorService getServiceExecutor() {
+        return SERVICE_EXECUTOR;
+    }
+
+    public static void setStoreExecutor(ExecutorService executor) {
+        STORE_EXECUTOR = executor;
+    }
+
+    public static ExecutorService getStoreExecutor() {
+        return STORE_EXECUTOR;
     }
 
     public static void setForkJoinPool(ForkJoinPool pool) {
