@@ -18,6 +18,8 @@ package terrastore.store;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Map;
+import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;
@@ -42,6 +44,10 @@ public class Value implements Serializable {
 
     public byte[] getBytes() {
         return bytes;
+    }
+
+    public Map<String, Object> dispatch(Key key, Mapper mapper, Function function) {
+        return function.apply(key.toString(), JsonUtils.toModifiableMap(this), mapper.getParameters());
     }
 
     public Value dispatch(Key key, Update update, Function function) {

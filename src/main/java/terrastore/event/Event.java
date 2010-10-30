@@ -16,6 +16,7 @@
 package terrastore.event;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Represent an event related to a key/value pair under a specific bucket.
@@ -47,16 +48,38 @@ public interface Event extends Serializable {
     public String getKey();
 
     /**
-     * Get the value this event refers to.
+     * Get the old value this event refers to (if any).
      *
-     * @return The value.
+     * @return The value as byte array.
      */
-    public byte[] getValue();
+    public byte[] getOldValueAsBytes();
 
     /**
-     * Dispatch this event to the given {@link EventListener}s.
+     * Get the old value this event refers to (if any).
+     *
+     * @return The value as map of primitive objects.
+     */
+    public Map getOldValueAsMap();
+
+    /**
+     * Get the new value this event refers to (if any).
+     *
+     * @return The value as byte array.
+     */
+    public byte[] getNewValueAsBytes();
+
+    /**
+     * Get the new value this event refers to (if any).
+     *
+     * @return The value as map of primitive objects.
+     */
+    public Map getNewValueAsMap();
+
+    /**
+     * Dispatch this event to the given {@link EventListener} with the given {@link ActionExecutor}.
      *
      * @param listener The listener to dispatch this event to.
+     * @param actionExecutor The executor to use for eventually submitting actions.
      */
-    public void dispatch(EventListener listener);
+    public void dispatch(EventListener listener, ActionExecutor actionExecutor);
 }

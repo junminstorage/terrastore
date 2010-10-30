@@ -30,9 +30,13 @@ import terrastore.store.Value;
  */
 public class JsonStreamingList extends AbstractList {
 
-    private final Value json;
+    private final byte[] json;
 
     public JsonStreamingList(Value json) {
+        this.json = json.getBytes();
+    }
+
+    public JsonStreamingList(byte[] json) {
         this.json = json;
     }
 
@@ -84,7 +88,7 @@ public class JsonStreamingList extends AbstractList {
     }
 
     private JsonParser makeParser(JsonFactory factory) throws IOException {
-        JsonParser parser = factory.createJsonParser(json.getBytes());
+        JsonParser parser = factory.createJsonParser(json);
         parser.nextToken();
         return parser;
     }

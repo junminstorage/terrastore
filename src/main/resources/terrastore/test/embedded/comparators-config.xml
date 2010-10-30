@@ -11,9 +11,6 @@
         As an alternative, you may want to annotate your comparator with terrastore.annotation.AutoDetect: Terrastore
         will autodetect your annotated class, create an instance and autowire it here.
 
-        Each entry key, or terrastore.annotation.AutoDetect#name, is the comparator name that will be used in Terrastore query string for range queries, e.g.:
-        http://localhost:8080/bucket/range?comparator=name&...
-
         Comparators manually declared here overwrite autodetected ones: this means that if a manually declared comparator
         has the same name (entry key) of an autodetcted one, the latter will not be wired.
     -->
@@ -21,25 +18,25 @@
     <util:map id="comparators">
 
         <entry key="lexical-asc">
-            <bean class="terrastore.service.comparators.LexicographicalComparator">
+            <bean class="terrastore.store.comparators.LexicographicalComparator">
                 <constructor-arg value="true"/>
             </bean>
         </entry>
 
         <entry key="lexical-desc">
-            <bean class="terrastore.service.comparators.LexicographicalComparator">
+            <bean class="terrastore.store.comparators.LexicographicalComparator">
                 <constructor-arg value="false"/>
             </bean>
         </entry>
 
         <entry key="numeric-asc">
-            <bean class="terrastore.service.comparators.NumberComparator">
+            <bean class="terrastore.store.comparators.NumberComparator">
                 <constructor-arg value="true"/>
             </bean>
         </entry>
 
         <entry key="numeric-desc">
-            <bean class="terrastore.service.comparators.NumberComparator">
+            <bean class="terrastore.store.comparators.NumberComparator">
                 <constructor-arg value="false"/>
             </bean>
         </entry>
@@ -47,10 +44,10 @@
     </util:map>
 
     <!--
-        Configure the default comparator that will be used if no matching comparator is found in range queries.
+        Configure the default comparator that will be used if no matching comparator is found.
     -->
 
-    <bean id="defaultComparator" class="terrastore.service.comparators.LexicographicalComparator">
+    <bean id="defaultComparator" class="terrastore.store.comparators.LexicographicalComparator">
         <constructor-arg value="true"/>
     </bean>
 

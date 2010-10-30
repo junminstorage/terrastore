@@ -18,8 +18,8 @@ package terrastore.communication.remote;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import terrastore.util.io.Serializer;
 
@@ -27,7 +27,7 @@ import terrastore.util.io.Serializer;
  * @param <T>
  * @author Sergio Bossa
  */
-@ChannelPipelineCoverage("all")
+@Sharable
 public class SerializerDecoder<T> extends OneToOneDecoder {
 
     private final Serializer<T> serializer;
@@ -41,4 +41,5 @@ public class SerializerDecoder<T> extends OneToOneDecoder {
         ChannelBuffer buffer = (ChannelBuffer) msg;
         return serializer.deserialize(new ChannelBufferInputStream(buffer));
     }
+
 }

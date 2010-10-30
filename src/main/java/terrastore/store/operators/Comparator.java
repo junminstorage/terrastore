@@ -15,12 +15,10 @@
  */
 package terrastore.store.operators;
 
-import java.io.Serializable;
-
 /**
  * Interface to implement for comparing keys on range queries.
  *
  * @author Sergio Bossa
  */
-public interface Comparator extends java.util.Comparator<String>, Serializable {
+public interface Comparator extends java.util.Comparator<String> {
 }

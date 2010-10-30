@@ -28,10 +28,8 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import terrastore.startup.Startup;
 import static org.junit.Assert.*;
 
 /**
@@ -42,8 +40,6 @@ public class IntegrationTest {
     private static final String HOST = "127.0.0.1";
     private static final int NODE1_PORT = 8080;
     private static final int NODE2_PORT = 8081;
-    private static final int NODE1_SHUTDOWN_PORT = 8280;
-    private static final int NODE2_SHUTDOWN_PORT = 8281;
     private static final int SETUP_TIME = 45000;
     private HttpClient HTTP_CLIENT = new HttpClient();
 
@@ -51,12 +47,6 @@ public class IntegrationTest {
     public static void setUpClass() throws Exception {
         System.err.println("Waiting " + SETUP_TIME + " millis for system to set up ...");
         Thread.sleep(SETUP_TIME);
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        Startup.shutdown(HOST, NODE1_SHUTDOWN_PORT);
-        Startup.shutdown(HOST, NODE2_SHUTDOWN_PORT);
     }
 
     @Test
@@ -532,6 +522,90 @@ public class IntegrationTest {
     }
 
     @Test
+    public void testMapReduceQueryWithRange() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
+        PostMethod doMapReduceQuery = makePostMethodForMapReduce(NODE2_PORT, bucket + "/mapReduce", "{\"range\":{\"startKey\":\"valueb\",\"endKey\":\"valuef\",\"timeToLive\":10000},\"task\":{\"mapper\":\"size\",\"reducer\":\"size\",\"timeout\":10000}}");
+        HTTP_CLIENT.executeMethod(doMapReduceQuery);
+        assertEquals(HttpStatus.SC_OK, doMapReduceQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doMapReduceQuery.getResponseBodyAsString());
+        System.err.println(doMapReduceQuery.getResponseBodyAsString());
+        doMapReduceQuery.releaseConnection();
+        assertEquals(1, values.size());
+        assertEquals(5, values.get("size"));
+    }
+
+    @Test
+    public void testMapReduceQueryWithEmptyRange() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
+        PostMethod doMapReduceQuery = makePostMethodForMapReduce(NODE2_PORT, bucket + "/mapReduce", "{\"range\":{\"startKey\":\"valuez\",\"timeToLive\":10000},\"task\":{\"mapper\":\"size\",\"reducer\":\"size\",\"timeout\":10000}}");
+        HTTP_CLIENT.executeMethod(doMapReduceQuery);
+        assertEquals(HttpStatus.SC_OK, doMapReduceQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doMapReduceQuery.getResponseBodyAsString());
+        System.err.println(doMapReduceQuery.getResponseBodyAsString());
+        doMapReduceQuery.releaseConnection();
+        assertEquals(1, values.size());
+        assertEquals(0, values.get("size"));
+    }
+
+    @Test
+    public void testMapReduceQueryWithNoRange() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        int size = 10;
+
+        for (int i = 1; i <= size; i++) {
+            TestValue value = new TestValue("value" + i, i);
+            PutMethod putValue = makePutMethod(NODE1_PORT, bucket + "/value" + (char) ('a' + i));
+            putValue.setRequestEntity(new StringRequestEntity(fromObjectToJson(value), "application/json", null));
+            HTTP_CLIENT.executeMethod(putValue);
+            assertEquals(HttpStatus.SC_NO_CONTENT, putValue.getStatusCode());
+            putValue.releaseConnection();
+        }
+
+        // Sleep to wait for terracotta broadcasting keys:
+        Thread.sleep(1000);
+
+        PostMethod doMapReduceQuery = makePostMethodForMapReduce(NODE2_PORT, bucket + "/mapReduce", "{\"task\":{\"mapper\":\"size\",\"reducer\":\"size\",\"timeout\":10000}}");
+        HTTP_CLIENT.executeMethod(doMapReduceQuery);
+        assertEquals(HttpStatus.SC_OK, doMapReduceQuery.getStatusCode());
+        Map<String, Object> values = fromJsonToMap(doMapReduceQuery.getResponseBodyAsString());
+        System.err.println(doMapReduceQuery.getResponseBodyAsString());
+        doMapReduceQuery.releaseConnection();
+        assertEquals(1, values.size());
+        assertEquals(10, values.get("size"));
+    }
+
+    @Test
     public void testUpdateValue() throws Exception {
         String bucket = UUID.randomUUID().toString();
 
@@ -693,6 +767,16 @@ public class IntegrationTest {
         try {
             GetMethod method = new GetMethod("http://" + HOST + ":" + nodePort + "/" + path + "?predicate=" + URLEncoder.encode(predicate, "UTF-8"));
             method.setRequestHeader("Content-Type", "application/json");
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private PostMethod makePostMethodForMapReduce(int nodePort, String path, String descriptor) {
+        try {
+            PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + path);
+            method.setRequestEntity(new StringRequestEntity(descriptor, "application/json", "UTF-8"));
             return method;
         } catch (UnsupportedEncodingException ex) {
             throw new RuntimeException("Unsupported UTF-8 encoding.");

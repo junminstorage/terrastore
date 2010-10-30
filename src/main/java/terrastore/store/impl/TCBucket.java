@@ -16,7 +16,8 @@
 package terrastore.store.impl;
 
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -30,8 +31,9 @@ import org.terracotta.locking.ClusteredLock;
 import terrastore.internal.tc.TCMaster;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
-import terrastore.event.ValueChangedEvent;
-import terrastore.event.ValueRemovedEvent;
+import terrastore.event.impl.ValueChangedEvent;
+import terrastore.event.impl.ValueRemovedEvent;
+import terrastore.store.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
@@ -44,9 +46,11 @@ import terrastore.store.StoreOperationException;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
+import terrastore.store.features.Mapper;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
+import terrastore.store.operators.Comparator;
 import terrastore.util.collect.Sets;
 import terrastore.util.collect.Transformer;
 import terrastore.util.global.GlobalExecutor;
@@ -63,6 +67,10 @@ public class TCBucket implements Bucket {
     private EventBus eventBus;
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
+    private Comparator defaultComparator = new LexicographicalComparator(true);
+    private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
+    private final Map<String, Function> functions = new HashMap<String, Function>();
+    private final Map<String, Condition> conditions = new HashMap<String, Condition>();
 
     public TCBucket(String name) {
         this.name = name;
@@ -77,21 +85,22 @@ public class TCBucket implements Bucket {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            bucket.unlockedPutNoReturn(key.toString(), valueToBytes(value));
-            eventBus.publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
+            byte[] old = bucket.put(key.toString(), valueToBytes(value));
+            eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value.getBytes()));
         } finally {
             unlock(key);
         }
     }
 
-    public boolean conditionalPut(Key key, Value value, Predicate predicate, Condition condition) {
+    public boolean conditionalPut(Key key, Value value, Predicate predicate) throws StoreOperationException {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            Value old = bytesToValue(bucket.get(key.toString()));
-            if (old == null || old.dispatch(key, predicate, condition)) {
-                bucket.unlockedPutNoReturn(key.toString(), valueToBytes(value));
-                eventBus.publish(new ValueChangedEvent(name, key.toString(), value.getBytes()));
+            Condition condition = getCondition(predicate.getConditionType());
+            byte[] old = bucket.get(key.toString());
+            if (old == null || bytesToValue(old).dispatch(key, predicate, condition)) {
+                bucket.put(key.toString(), valueToBytes(value));
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value.getBytes()));
                 return true;
             } else {
                 return false;
@@ -102,8 +111,7 @@ public class TCBucket implements Bucket {
     }
 
     public Value get(Key key) throws StoreOperationException {
-        Value value = bytesToValue(bucket.unlockedGet(key.toString()));
-        value = value != null ? value : bytesToValue(bucket.get(key.toString()));
+        Value value = innerGet(key);
         if (value != null) {
             return value;
         } else {
@@ -112,10 +120,22 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Value conditionalGet(Key key, Predicate predicate, Condition condition) throws StoreOperationException {
-        Value value = bytesToValue(bucket.unlockedGet(key.toString()));
-        value = value != null ? value : bytesToValue(bucket.get(key.toString()));
+    public Map<Key, Value> get(Set<Key> keys) throws StoreOperationException {
+        Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
+        for (Key key : keys) {
+            Value value = innerGet(key);
+            if (value != null) {
+                result.put(key, value);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public Value conditionalGet(Key key, Predicate predicate) throws StoreOperationException {
+        Value value = innerGet(key);
         if (value != null) {
+            Condition condition = getCondition(predicate.getConditionType());
             if (value.dispatch(key, predicate, condition)) {
                 return value;
             } else {
@@ -126,13 +146,26 @@ public class TCBucket implements Bucket {
         }
     }
 
+    @Override
+    public Map<Key, Value> conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException {
+        Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
+        for (Key key : keys) {
+            Value value = innerGet(key);
+            Condition condition = getCondition(predicate.getConditionType());
+            if (value.dispatch(key, predicate, condition)) {
+                result.put(key, value);
+            }
+        }
+        return result;
+    }
+
     public void remove(Key key) throws StoreOperationException {
         // Use explicit locking to remove and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
             Value removed = bytesToValue(bucket.remove(key.toString()));
             if (removed != null) {
-                eventBus.publish(new ValueRemovedEvent(name, key.toString()));
+                eventBus.publish(new ValueRemovedEvent(name, key.toString(), removed.getBytes()));
             }
         } finally {
             unlock(key);
@@ -140,25 +173,27 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Value update(final Key key, final Update update, final Function function) throws StoreOperationException {
+    public Value update(final Key key, final Update update) throws StoreOperationException {
         long timeout = update.getTimeoutInMillis();
         Future<Value> task = null;
         // Use explicit locking to update and block concurrent operations on the same key,
         // and also publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            final Value value = bytesToValue(bucket.get(key.toString()));
+            final byte[] value = bucket.get(key.toString());
             if (value != null) {
-                task = GlobalExecutor.getExecutor().submit(new Callable<Value>() {
+                final Function function = getFunction(update.getFunctionName());
+                task = GlobalExecutor.getStoreExecutor().submit(new Callable<Value>() {
 
                     @Override
                     public Value call() {
-                        return value.dispatch(key, update, function);
+                        return bytesToValue(value).dispatch(key, update, function);
                     }
+
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.unlockedPutNoReturn(key.toString(), valueToBytes(result));
-                eventBus.publish(new ValueChangedEvent(name, key.toString(), result.getBytes()));
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result.getBytes()));
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -175,6 +210,32 @@ public class TCBucket implements Bucket {
         }
     }
 
+    public Map<String, Object> map(final Key key, final Mapper mapper) throws StoreOperationException {
+        Future<Map<String, Object>> task = null;
+        try {
+            final byte[] value = bucket.get(key.toString());
+            if (value != null) {
+                final Function function = getFunction(mapper.getMapperName());
+                task = GlobalExecutor.getStoreExecutor().submit(new Callable<Map<String, Object>>() {
+
+                    @Override
+                    public Map<String, Object> call() {
+                        return bytesToValue(value).dispatch(key, mapper, function);
+                    }
+
+                });
+                return task.get(mapper.getTimeoutInMillis(), TimeUnit.MILLISECONDS);
+            } else {
+                return null;
+            }
+        } catch (TimeoutException ex) {
+            task.cancel(true);
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Aggregation cancelled due to long execution time."));
+        } catch (Exception ex) {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        }
+    }
+
     @Override
     public void clear() {
         bucket.clear();
@@ -185,12 +246,15 @@ public class TCBucket implements Bucket {
         return bucket.size();
     }
 
+    @Override
     public Set<Key> keys() {
         return Sets.transformed(bucket.keySet(), new KeyDeserializer());
     }
 
-    public Set<Key> keysInRange(Range keyRange, Comparator<String> keyComparator, long timeToLive) {
-        SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), timeToLive);
+    @Override
+    public Set<Key> keysInRange(Range keyRange) {
+        Comparator keyComparator = getComparator(keyRange.getKeyComparatorName());
+        SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), keyRange.getTimeToLive());
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
     }
 
@@ -207,6 +271,7 @@ public class TCBucket implements Bucket {
                     Value value = bytesToValue(bucket.get(key.toString()));
                     bucket.flush(key, value);
                 }
+
             });
         } else {
             LOG.warn("Running outside of cluster, no keys to flush!");
@@ -238,6 +303,52 @@ public class TCBucket implements Bucket {
         this.backupManager = backupManager;
     }
 
+    @Override
+    public void setDefaultComparator(Comparator defaultComparator) {
+        this.defaultComparator = defaultComparator;
+    }
+
+    @Override
+    public void setComparators(Map<String, Comparator> comparators) {
+        this.comparators.clear();
+        this.comparators.putAll(comparators);
+    }
+
+    @Override
+    public void setFunctions(Map<String, Function> functions) {
+        this.functions.clear();
+        this.functions.putAll(functions);
+    }
+
+    @Override
+    public void setConditions(Map<String, Condition> conditions) {
+        this.conditions.clear();
+        this.conditions.putAll(conditions);
+    }
+
+    private Comparator getComparator(String comparatorName) {
+        if (comparators.containsKey(comparatorName)) {
+            return comparators.get(comparatorName);
+        }
+        return defaultComparator;
+    }
+
+    private Function getFunction(String functionName) throws StoreOperationException {
+        if (functions.containsKey(functionName)) {
+            return functions.get(functionName);
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong function name: " + functionName));
+        }
+    }
+
+    private Condition getCondition(String conditionType) throws StoreOperationException {
+        if (conditions.containsKey(conditionType)) {
+            return conditions.get(conditionType);
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong condition type: " + conditionType));
+        }
+    }
+
     private void lock(Key key) {
         ClusteredLock lock = bucket.createFinegrainedLock(key.toString());
         lock.lock();
@@ -264,11 +375,18 @@ public class TCBucket implements Bucket {
         }
     }
 
+    private Value innerGet(Key key) {
+        Value value = bytesToValue(bucket.unlockedGet(key.toString()));
+        value = value != null ? value : bytesToValue(bucket.get(key.toString()));
+        return value;
+    }
+
     private static class KeyDeserializer implements Transformer<String, Key> {
 
         @Override
         public Key transform(String input) {
             return new Key(input);
         }
+
     }
 }

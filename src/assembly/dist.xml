@@ -53,6 +53,10 @@
             <source>src/dist/terrastore-master.zip</source>
         </file>
         <file>
+        	<outputDirectory>terrastore-server</outputDirectory>
+        	<source>src/dist/server/aggregators-config.xml</source>
+        </file>
+        <file>
             <outputDirectory>terrastore-server</outputDirectory>
             <source>src/dist/server/comparators-config.xml</source>
         </file>

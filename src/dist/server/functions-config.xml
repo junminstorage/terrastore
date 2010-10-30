@@ -8,33 +8,34 @@
 
 
     <!--
-        Configure here your terrastore.store.operators.Function used to atomically update values.
+        Configure here your terrastore.store.operators.Function.
         As an alternative, you may want to annotate your function with terrastore.annotation.AutoDetect: Terrastore
         will autodetect your annotated class, create an instance and autowire it here.
 
-        Each entry key, or terrastore.annotation.AutoDetect#name, is the function name that will be used in Terrastore query string for server-side updates, e.g.:
-        http://localhost:8080/bucket/key/update?function=name&...
-
-        Conditions manually declared here overwrite autodetected ones: this means that if a manually declared condition
+        Functions manually declared here overwrite autodetected ones: this means that if a manually declared function
         has the same name (entry key) of an autodetcted one, the latter will not be wired.
     -->
 
-    <util:map id="update-functions">
+    <util:map id="functions">
 
         <entry key="replace">
-            <bean class="terrastore.service.functions.ReplaceFunction"/>
+            <bean class="terrastore.store.functions.ReplaceFunction"/>
         </entry>
 
         <entry key="merge">
-        	<bean class="terrastore.service.functions.MergeFunction"/>
+        	<bean class="terrastore.store.functions.MergeFunction"/>
         </entry>
 
         <entry key="js">
-            <bean class="terrastore.service.functions.JSFunction"/>
+            <bean class="terrastore.store.functions.JSFunction"/>
         </entry>
         
         <entry key="counter">
-        	<bean class="terrastore.service.functions.AtomicCounterFunction"/>
+        	<bean class="terrastore.store.functions.AtomicCounterFunction"/>
+        </entry>
+
+        <entry key="size">
+        	<bean class="terrastore.store.functions.SizeMapper"/>
         </entry>
 
     </util:map>
