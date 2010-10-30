@@ -113,7 +113,15 @@ public class Value implements Serializable {
 
     @Override
     public String toString() {
-        return new String(bytes, CHARSET);
+        try {
+            if (!compressed) {
+                return new String(bytes, CHARSET);
+            } else {
+                return new String(IOUtils.readCompressed(new ByteArrayInputStream(bytes)), CHARSET);
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
     }
 
 }
