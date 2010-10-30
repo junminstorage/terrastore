@@ -28,7 +28,7 @@ import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Parameters;
-import terrastore.util.io.InputReader;
+import terrastore.util.io.IOUtils;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -47,7 +47,7 @@ public class JsonParametersProvider implements MessageBodyReader<Parameters> {
             return JsonUtils.readParameters(entityStream);
         } catch (Exception ex) {
             throw new WebApplicationException(Response.status(ErrorMessage.BAD_REQUEST_ERROR_CODE).
-                    entity("Error: " + ex.getMessage() + "\n\rInput: " + new String(new InputReader().read(entityStream))).
+                    entity("Error: " + ex.getMessage() + "\n\rInput: " + new String(IOUtils.read(entityStream))).
                     build());
         }
     }

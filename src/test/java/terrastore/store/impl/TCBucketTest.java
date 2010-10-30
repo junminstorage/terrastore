@@ -543,5 +543,10 @@ public class TCBucketTest {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
+        @Override
+        public boolean isEnabled() {
+            return false;
+        }
+
     }
 }
