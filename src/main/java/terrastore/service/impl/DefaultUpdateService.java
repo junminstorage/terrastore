@@ -37,6 +37,8 @@ import terrastore.store.Key;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
+import terrastore.util.json.JsonUtils;
+import terrastore.store.ValidationException;
 
 /**
  * @author Sergio Bossa
@@ -64,9 +66,10 @@ public class DefaultUpdateService implements UpdateService {
         }
     }
 
-    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException {
+    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException, ValidationException {
         try {
             LOG.debug("Putting value with key {} to bucket {}", key, bucket);
+            JsonUtils.validate(value);
             Node node = router.routeToNodeFor(bucket, key);
             PutValueCommand command = null;
             if (predicate == null || predicate.isEmpty()) {
@@ -107,9 +110,9 @@ public class DefaultUpdateService implements UpdateService {
     public Value updateValue(String bucket, Key key, Update update) throws CommunicationException, UpdateOperationException {
         try {
             LOG.debug("Updating value with key {} from bucket {}", key, bucket);
-                Node node = router.routeToNodeFor(bucket, key);
-                UpdateCommand command = new UpdateCommand(bucket, key, update);
-                return node.<Value>send(command);
+            Node node = router.routeToNodeFor(bucket, key);
+            UpdateCommand command = new UpdateCommand(bucket, key, update);
+            return node.<Value>send(command);
         } catch (MissingRouteException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -152,4 +155,5 @@ public class DefaultUpdateService implements UpdateService {
             }
         }
     }
+
 }

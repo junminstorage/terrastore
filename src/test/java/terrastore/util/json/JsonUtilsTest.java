@@ -15,6 +15,7 @@
  */
 package terrastore.util.json;
 
+import terrastore.store.ValidationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class JsonUtilsTest {
     private static final String JSON_VALUE = "{\"key\" : \"value\", "
             + "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], "
             + "\"key\" : {\"object\":\"value\"}}";
+    private static final String ARRAY_JSON_VALUE = "[\"test1\"]";
     private static final String BAD_JSON_VALUE = "{\"key\" : \"value\", "
             + "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], "
             + "\"key\" : {\"bad\":value}}";
@@ -59,7 +61,13 @@ public class JsonUtilsTest {
         JsonUtils.validate(json);
     }
 
-    @Test(expected = IOException.class)
+    @Test(expected = ValidationException.class)
+    public void testValidateWithArrayJson() throws Exception {
+        Value json = new Value(ARRAY_JSON_VALUE.getBytes("UTF-8"));
+        JsonUtils.validate(json);
+    }
+
+    @Test(expected = ValidationException.class)
     public void testValidateWithBadJson() throws Exception {
         Value json = new Value(BAD_JSON_VALUE.getBytes("UTF-8"));
         JsonUtils.validate(json);

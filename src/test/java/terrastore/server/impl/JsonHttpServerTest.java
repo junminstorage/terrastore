@@ -699,32 +699,6 @@ public class JsonHttpServerTest {
         verify(updateService, queryService, backupService, statsService);
     }
 
-    @Test
-    public void testJsonErrorMessageOnBadJson() throws Exception {
-        UpdateService updateService = createMock(UpdateService.class);
-        QueryService queryService = createMock(QueryService.class);
-        BackupService backupService = createMock(BackupService.class);
-        StatsService statsService = createMock(StatsService.class);
-
-        replay(updateService, queryService, backupService, statsService);
-
-        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
-
-        HttpClient client = new HttpClient();
-        PutMethod method = new PutMethod("http://localhost:8080/bucket/key");
-        method.setRequestHeader("Content-Type", "application/json");
-        method.setRequestEntity(new StringRequestEntity(BAD_JSON_VALUE, "application/json", null));
-        client.executeMethod(method);
-
-        assertEquals(400, method.getStatusCode());
-
-        method.releaseConnection();
-
-        stopServer(server);
-
-        verify(updateService, queryService, backupService, statsService);
-    }
-
     private JsonHttpServer startServerWith(UpdateService updateService, QueryService queryService, BackupService backupService, StatsService statsService) throws Exception {
         JsonHttpServer server = new JsonHttpServer(new CoreServer(updateService, queryService, backupService, statsService));
         server.start("127.0.0.1", 8080, Maps.hash(new String[]{JsonHttpServer.CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER, JsonHttpServer.HTTP_THREADS_CONFIGURATION_PARAMETER}, new String[]{"*", "10"}));

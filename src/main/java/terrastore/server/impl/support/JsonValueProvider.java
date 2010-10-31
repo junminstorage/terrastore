@@ -15,7 +15,6 @@
  */
 package terrastore.server.impl.support;
 
-import terrastore.util.json.JsonUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,13 +55,13 @@ public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyW
         try {
             bytes = reader.read(entityStream);
             Value result = new Value(bytes);
-            JsonUtils.validate(result);
             return result;
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
-            throw new WebApplicationException(Response.status(ErrorMessage.BAD_REQUEST_ERROR_CODE).
-                    entity(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json value: " + new String(bytes))).
-                    build());
+            throw new WebApplicationException(Response
+                    .status(ErrorMessage.BAD_REQUEST_ERROR_CODE)
+                    .entity(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json value: " + new String(bytes)))
+                    .build());
         }
     }
 
@@ -77,4 +76,5 @@ public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyW
     public long getSize(Value value, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return -1;
     }
+
 }

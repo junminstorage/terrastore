@@ -30,7 +30,9 @@ import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
+import terrastore.service.UpdateOperationException;
 import terrastore.store.Key;
+import terrastore.store.ValidationException;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
@@ -45,6 +47,7 @@ import static org.junit.Assert.*;
 public class DefaultUpdateServiceTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
+    private static final String BAD_JSON_VALUE = "{\"test\"\"test\"}";
 
     @Test
     public void testRemoveBucket() throws Exception {
@@ -151,6 +154,20 @@ public class DefaultUpdateServiceTest {
         verify(node, router);
     }
 
+    @Test(expected = ValidationException.class)
+    public void testPutBadValue() throws Exception {
+        Router router = createMock(Router.class);
+
+        replay(router);
+
+        try {
+            DefaultUpdateService service = new DefaultUpdateService(router);
+            service.putValue("bucket", new Key("test1"), new Value(BAD_JSON_VALUE.getBytes()), new Predicate(null));
+        } finally {
+            verify(router);
+        }
+    }
+
     @Test
     public void testRemoveValue() throws Exception {
         Node node = createMock(Node.class);
@@ -186,4 +203,5 @@ public class DefaultUpdateServiceTest {
 
         verify(node, router);
     }
+
 }
