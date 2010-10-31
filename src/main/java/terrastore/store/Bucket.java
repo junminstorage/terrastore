@@ -162,8 +162,9 @@ public interface Bucket {
      *
      * @param range The range which keys must be fall into.
      * @return The sorted set of keys in range.
+     * @throws StoreOperationException 
      */
-    public Set<Key> keysInRange(Range range);
+    public Set<Key> keysInRange(Range range) throws StoreOperationException;
 
     /**
      * Flush all key/value entries contained into this bucket.

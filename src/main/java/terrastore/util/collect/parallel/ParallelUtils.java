@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import jsr166y.ForkJoinPool;
 import jsr166y.RecursiveAction;
+import terrastore.service.QueryOperationException;
 import terrastore.util.collect.MergeSet;
 
 /**
@@ -40,14 +41,14 @@ public class ParallelUtils {
         return task.getMerged();
     }
 
-    public static <I, O, C extends Collection> C parallelMap(final Collection<I> input, final MapTask<I, O> mapper, final MapCollector<O, C> collector, ExecutorService executor) throws ParallelExecutionException {
+    public static <I, O, C extends Collection> C parallelMap(final Collection<I> input, final MapTask<I, O> mapper, final MapCollector<O, C> collector, ExecutorService executor) throws ParallelExecutionException, QueryOperationException {
         try {
             List<Callable<O>> tasks = new ArrayList<Callable<O>>(input.size());
             for (final I current : input) {
                 tasks.add(new Callable<O>() {
 
                     @Override
-                    public O call() {
+                    public O call() throws QueryOperationException {
                         return mapper.map(current);
                     }
                 });
