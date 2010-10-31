@@ -16,6 +16,7 @@
 package terrastore.server.impl;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +122,9 @@ public class JsonHttpServer {
         try {
             Value result = core.updateValue(bucket, key, function, timeout, parameters);
             return Response.ok(result).contentLocation(new URI(bucket + "/" + key)).build();
-        } catch (Exception ex) {
+//        } catch (ServerOperationException ex) {
+//            throw ex;
+        } catch (URISyntaxException ex) {
             throw new ServerOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
     }
