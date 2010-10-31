@@ -15,6 +15,7 @@
  */
 package terrastore.event.impl;
 
+import terrastore.store.Value;
 import terrastore.event.Event;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -40,7 +41,7 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
-        Event event = new ValueChangedEvent(bucket, key, null, value);
+        Event event = new ValueChangedEvent(bucket, key, null, new Value(value));
 
         ActionExecutor actionExecutor = createMock(ActionExecutor.class);
         makeThreadSafe(actionExecutor, true);
@@ -81,7 +82,7 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
-        Event event = new ValueRemovedEvent(bucket, key, value);
+        Event event = new ValueRemovedEvent(bucket, key, new Value(value));
 
         ActionExecutor actionExecutor = createMock(ActionExecutor.class);
         makeThreadSafe(actionExecutor, true);
@@ -122,7 +123,7 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
-        Event event = new ValueChangedEvent(bucket, key, null, value);
+        Event event = new ValueChangedEvent(bucket, key, null, new Value(value));
 
         ActionExecutor actionExecutor = createMock(ActionExecutor.class);
         makeThreadSafe(actionExecutor, true);
@@ -180,7 +181,7 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
-        Event event = new ValueChangedEvent(bucket, key, null, value);
+        Event event = new ValueChangedEvent(bucket, key, null, new Value(value));
 
         ActionExecutor actionExecutor = createMock(ActionExecutor.class);
         makeThreadSafe(actionExecutor, true);
@@ -229,8 +230,8 @@ public class MemoryEventBusTest {
         String bucket = "bucket";
         String key = "key";
         byte[] value = "value".getBytes("UTF-8");
-        Event event1 = new ValueChangedEvent(bucket, key, null, value);
-        Event event2 = new ValueChangedEvent(bucket, key, null, value);
+        Event event1 = new ValueChangedEvent(bucket, key, null, new Value(value));
+        Event event2 = new ValueChangedEvent(bucket, key, null, new Value(value));
 
         ActionExecutor actionExecutor = createMock(ActionExecutor.class);
         makeThreadSafe(actionExecutor, true);
@@ -339,7 +340,7 @@ public class MemoryEventBusTest {
 
                 @Override
                 public void run() {
-                    eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
+                    eventBus.publish(new ValueChangedEvent(bucket, key, null, new Value(value)));
                 }
             });
         }
@@ -382,9 +383,9 @@ public class MemoryEventBusTest {
 
         MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), actionExecutor, 1);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
+        eventBus.publish(new ValueChangedEvent(bucket, key, null, new Value(value)));
         Thread.sleep(3000);
-        eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
+        eventBus.publish(new ValueChangedEvent(bucket, key, null, new Value(value)));
 
         listenerLatch.await(3, TimeUnit.SECONDS);
 
@@ -412,7 +413,7 @@ public class MemoryEventBusTest {
         try {
             MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener), actionExecutor);
             eventBus.shutdown();
-            eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
+            eventBus.publish(new ValueChangedEvent(bucket, key, null, new Value(value)));
         } finally {
             verify(listener);
         }
@@ -459,7 +460,7 @@ public class MemoryEventBusTest {
 
         MemoryEventBus eventBus = new MemoryEventBus(Arrays.asList(listener1, listener2), actionExecutor);
 
-        eventBus.publish(new ValueChangedEvent(bucket, key, null, value));
+        eventBus.publish(new ValueChangedEvent(bucket, key, null, new Value(value)));
 
         assertFalse(listenerLatch.await(3, TimeUnit.SECONDS));
 

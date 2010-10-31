@@ -17,13 +17,14 @@ package terrastore.event.impl;
 
 import terrastore.event.ActionExecutor;
 import terrastore.event.EventListener;
+import terrastore.store.Value;
 
 /**
  * @author Sergio Bossa
  */
 public class ValueRemovedEvent extends AbstractEvent {
 
-    public ValueRemovedEvent(String bucket, String key, byte[] oldValue) {
+    public ValueRemovedEvent(String bucket, String key, Value oldValue) {
         super(bucket, key, oldValue, null);
     }
 

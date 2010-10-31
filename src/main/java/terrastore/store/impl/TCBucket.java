@@ -87,7 +87,7 @@ public class TCBucket implements Bucket {
         lock(key);
         try {
             byte[] old = bucket.put(key.toString(), valueToBytes(value));
-            if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), uncompressIfNeeded(old), value.getBytes()));
+            if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
         } finally {
             unlock(key);
         }
@@ -101,7 +101,7 @@ public class TCBucket implements Bucket {
             byte[] old = bucket.get(key.toString());
             if (old == null || bytesToValue(old).dispatch(key, predicate, condition)) {
                 bucket.put(key.toString(), valueToBytes(value));
-                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), uncompressIfNeeded(old), value.getBytes()));
+                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
                 return true;
             } else {
                 return false;
@@ -166,7 +166,7 @@ public class TCBucket implements Bucket {
         try {
             byte[] removed = bucket.remove(key.toString());
             if (removed != null) {
-                if (eventBus.isEnabled()) eventBus.publish(new ValueRemovedEvent(name, key.toString(), uncompressIfNeeded(removed)));
+                if (eventBus.isEnabled()) eventBus.publish(new ValueRemovedEvent(name, key.toString(), bytesToValue(removed)));
             }
         } finally {
             unlock(key);
@@ -194,7 +194,7 @@ public class TCBucket implements Bucket {
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.unlockedPutNoReturn(key.toString(), valueToBytes(result));
-                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), value.getBytes(), result.getBytes()));
+                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result));
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -376,14 +376,6 @@ public class TCBucket implements Bucket {
     private Value bytesToValue(byte[] bytes) {
         if (bytes != null) {
             return new Value(bytes);
-        } else {
-            return null;
-        }
-    }
-
-    private byte[] uncompressIfNeeded(byte[] bytes) {
-        if (bytes != null) {
-            return new Value(bytes).getBytes();
         } else {
             return null;
         }

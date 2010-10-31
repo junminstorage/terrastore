@@ -35,13 +35,9 @@ import terrastore.store.Value;
  */
 public class JsonStreamingMap extends AbstractMap<String, Object> {
 
-    private final byte[] json;
+    private final Value json;
 
     public JsonStreamingMap(Value json) {
-        this.json = json.getBytes();
-    }
-
-    public JsonStreamingMap(byte[] json) {
         this.json = json;
     }
 
@@ -49,7 +45,7 @@ public class JsonStreamingMap extends AbstractMap<String, Object> {
     public final Object get(Object candidate) {
         try {
             JsonFactory factory = new JsonFactory();
-            JsonParser parser = factory.createJsonParser(json);
+            JsonParser parser = factory.createJsonParser(json.getInputStream());
             String key = navigateToKey(parser, candidate.toString());
             if (key != null) {
                 return getObjectValue(factory, parser);
@@ -65,7 +61,7 @@ public class JsonStreamingMap extends AbstractMap<String, Object> {
     public final boolean containsKey(Object candidate) {
         try {
             JsonFactory factory = new JsonFactory();
-            JsonParser parser = factory.createJsonParser(json);
+            JsonParser parser = factory.createJsonParser(json.getInputStream());
             return navigateToKey(parser, candidate.toString()) != null;
         } catch (Exception ex) {
             throw new IllegalStateException(ex.getMessage(), ex);
@@ -172,7 +168,7 @@ public class JsonStreamingMap extends AbstractMap<String, Object> {
 
             public JsonStreamingIterator() throws IOException {
                 this.factory = new JsonFactory();
-                this.parser = factory.createJsonParser(json);
+                this.parser = factory.createJsonParser(json.getInputStream());
                 this.parser.nextToken();
             }
 
