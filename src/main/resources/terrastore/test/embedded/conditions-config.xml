@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+    <!--
+        Configure here your terrastore.store.operators.Condition, used to select values on range queries, and implement conditional put operations.
+        As an alternative, you may want to annotate your condition with terrastore.annotation.AutoDetect: Terrastore
+        will autodetect your annotated class, create an instance and autowire it here.
+
+        Conditions manually declared here overwrite autodetected ones: this means that if a manually declared condition
+        has the same name (entry key) of an autodetcted one, the latter will not be wired.
+    -->
+
+    <util:map id="conditions">
+
+        <entry key="jxpath">
+            <bean class="terrastore.store.conditions.JXPathCondition"/>
+        </entry>
+
+        <entry key="js">
+            <bean class="terrastore.store.conditions.JSCondition"/>
+        </entry>
+
+        <entry key="if">
+            <bean class="terrastore.store.conditions.IfCondition"/>
+        </entry>
+
+    </util:map>
+
+</beans>
