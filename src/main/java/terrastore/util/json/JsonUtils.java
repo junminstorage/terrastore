@@ -15,7 +15,6 @@
  */
 package terrastore.util.json;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,29 +46,13 @@ public class JsonUtils {
 
     public static Map<String, Object> toModifiableMap(Value value) {
         try {
-            return JSON_MAPPER.readValue(new ByteArrayInputStream(value.getBytes()), Map.class);
-        } catch (Exception ex) {
-            throw new IllegalStateException("Value should have been already validated!");
-        }
-    }
-
-    public static Map<String, Object> toModifiableMap(byte[] value) {
-        try {
-            return JSON_MAPPER.readValue(new ByteArrayInputStream(value), Map.class);
+            return JSON_MAPPER.readValue(value.getInputStream(), Map.class);
         } catch (Exception ex) {
             throw new IllegalStateException("Value should have been already validated!");
         }
     }
 
     public static Map<String, Object> toUnmodifiableMap(Value value) {
-        try {
-            return new JsonStreamingMap(value);
-        } catch (Exception ex) {
-            throw new IllegalStateException("Value should have been already validated!");
-        }
-    }
-
-    public static Map<String, Object> toUnmodifiableMap(byte[] value) {
         try {
             return new JsonStreamingMap(value);
         } catch (Exception ex) {

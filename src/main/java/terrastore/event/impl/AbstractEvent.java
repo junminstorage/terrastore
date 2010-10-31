@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import terrastore.event.Event;
+import terrastore.store.Value;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -30,10 +31,10 @@ public abstract class AbstractEvent implements Event {
     private final String id;
     private final String bucket;
     private final String key;
-    private final byte[] oldValue;
-    private final byte[] newValue;
+    private final Value oldValue;
+    private final Value newValue;
 
-    public AbstractEvent(String bucket, String key, byte[] oldValue, byte[] newValue) {
+    public AbstractEvent(String bucket, String key, Value oldValue, Value newValue) {
         this.id = UUID.randomUUID().toString();
         this.bucket = bucket;
         this.key = key;
@@ -58,22 +59,22 @@ public abstract class AbstractEvent implements Event {
 
     @Override
     public final byte[] getOldValueAsBytes() {
-        return oldValue;
+        return oldValue != null ? oldValue.getBytes() : null;
     }
 
     @Override
     public Map getOldValueAsMap() {
-        return JsonUtils.toUnmodifiableMap(oldValue);
+        return oldValue != null ? JsonUtils.toUnmodifiableMap(oldValue) : null;
     }
 
     @Override
     public final byte[] getNewValueAsBytes() {
-        return newValue;
+        return newValue != null ? newValue.getBytes() : null;
     }
 
     @Override
     public Map getNewValueAsMap() {
-        return JsonUtils.toUnmodifiableMap(newValue);
+        return newValue != null ? JsonUtils.toUnmodifiableMap(newValue) : null;
     }
 
     @Override
@@ -90,4 +91,5 @@ public abstract class AbstractEvent implements Event {
     public int hashCode() {
         return new HashCodeBuilder().append(this.id).toHashCode();
     }
+
 }

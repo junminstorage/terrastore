@@ -50,28 +50,28 @@ public interface Event extends Serializable {
     /**
      * Get the old value this event refers to (if any).
      *
-     * @return The value as byte array.
+     * @return The value as byte array, or null if there's no old value.
      */
     public byte[] getOldValueAsBytes();
 
     /**
      * Get the old value this event refers to (if any).
      *
-     * @return The value as map of primitive objects.
+     * @return The value as map of primitive objects, or null if there's no old value.
      */
     public Map getOldValueAsMap();
 
     /**
      * Get the new value this event refers to (if any).
      *
-     * @return The value as byte array.
+     * @return The value as byte array, or null if there's no new value.
      */
     public byte[] getNewValueAsBytes();
 
     /**
      * Get the new value this event refers to (if any).
      *
-     * @return The value as map of primitive objects.
+     * @return The value as map of primitive objects, or null if there's no new value.
      */
     public Map getNewValueAsMap();
 
