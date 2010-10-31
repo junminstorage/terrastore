@@ -181,12 +181,21 @@
     </bean>
 
     <bean id="ensembleManager" class="terrastore.cluster.ensemble.impl.DefaultEnsembleManager">
-        <constructor-arg index="0" ref="ensembleScheduler"/>
+        <constructor-arg index="0">
+            <map>
+                <entry key="fixed" value-ref="fixedEnsembleScheduler"/>
+                <entry key="adaptive" value-ref="adaptiveEnsembleScheduler"/>
+            </map>
+        </constructor-arg>
         <constructor-arg index="1" ref="router"/>
         <constructor-arg index="2" ref="remoteNodeFactory"/>
     </bean>
-
-    <bean id="ensembleScheduler" class="terrastore.cluster.ensemble.impl.FixedEnsembleScheduler"/>
+    <bean id="fixedEnsembleScheduler" class="terrastore.cluster.ensemble.impl.FixedEnsembleScheduler"/>
+    <bean id="adaptiveEnsembleScheduler" class="terrastore.cluster.ensemble.impl.AdaptiveEnsembleScheduler">
+        <constructor-arg>
+            <bean class="terrastore.cluster.ensemble.impl.FuzzyInferenceEngine"/>
+        </constructor-arg>
+    </bean>
 
     <bean id="localNodeFactory" class="terrastore.communication.local.LocalNode$Factory"/>
 

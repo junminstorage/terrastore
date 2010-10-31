@@ -15,6 +15,8 @@
  */
 package terrastore.cluster.ensemble;
 
+import java.util.Map;
+import terrastore.cluster.ensemble.impl.View;
 import terrastore.communication.Cluster;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.RemoteNodeFactory;
@@ -47,7 +49,7 @@ public interface EnsembleManager {
      * @throws MissingRouteException If unable to establish a route to the given cluster.
      * @throws ProcessingException If unable to process membership messages from the given host.
      */
-    public void update(Cluster cluster) throws MissingRouteException, ProcessingException;
+    public View update(Cluster cluster) throws MissingRouteException, ProcessingException;
 
     /**
      * Shutdown by cancelling scheduled updates and disconnecting discovered nodes.
@@ -55,11 +57,11 @@ public interface EnsembleManager {
     public void shutdown();
 
     /**
-     * Get the {@link EnsembleScheduler} used to chedule updates.
+     * Get a map of available {@link EnsembleScheduler}s, used to schedule membership updates.
      *
-     * @return The {@link EnsembleScheduler} instance.
+     * @return The {@link EnsembleScheduler}s.
      */
-    public EnsembleScheduler getEnsembleScheduler();
+    public Map<String, EnsembleScheduler> getEnsembleSchedulers();
 
     /**
      * Get the {@link terrastore.router.Router} used to manage cluster routes.
