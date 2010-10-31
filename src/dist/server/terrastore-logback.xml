@@ -1,0 +1,45 @@
+<configuration>
+
+    <appender name="STANDARD" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>Terrastore Server ${project.version} - %d{HH:mm:ss.SSS} - %thread - %logger - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="MESSAGE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>Terrastore Server ${project.version} - %d{HH:mm:ss.SSS} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root>
+        <level value="WARN"/>
+        <appender-ref ref="STANDARD"/>
+    </root>
+
+    <logger name="terrastore" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.cluster" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.ensemble" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.event" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+    <logger name="terrastore.startup" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="MESSAGE"/>
+    </logger>
+
+</configuration>
