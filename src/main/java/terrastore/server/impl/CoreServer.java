@@ -90,6 +90,10 @@ public class CoreServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
+        } catch (IllegalArgumentException ex) {
+            ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, ex.getMessage());
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
         }
     }
 
@@ -158,6 +162,10 @@ public class CoreServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
+        } catch (IllegalArgumentException ex) {
+            ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, ex.getMessage());
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
         }
     }
 
@@ -200,6 +208,10 @@ public class CoreServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
+        } catch (IllegalArgumentException ex) {
+            ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, ex.getMessage());
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
         }
     }
 
@@ -218,6 +230,10 @@ public class CoreServer implements Server {
             throw new ServerOperationException(error);
         } catch (QueryOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        } catch (IllegalArgumentException ex) {
+            ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, ex.getMessage());
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
