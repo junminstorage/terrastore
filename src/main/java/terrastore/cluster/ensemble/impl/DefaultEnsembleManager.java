@@ -19,9 +19,11 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,16 +53,18 @@ public class DefaultEnsembleManager implements EnsembleManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultEnsembleManager.class);
     //
-    private final EnsembleScheduler ensembleScheduler;
+    private final Map<String, EnsembleScheduler> ensembleSchedulers;
     private final Router router;
     private final RemoteNodeFactory remoteNodeFactory;
     //
     private final ConcurrentMap<Cluster, Node> bootstrapNodes;
     private final ConcurrentMap<Cluster, List<Node>> perClusterNodes;
     private final ConcurrentMap<Cluster, View> perClusterViews;
+    //
+    private EnsembleConfiguration configuration;
 
-    public DefaultEnsembleManager(EnsembleScheduler ensembleScheduler, Router router, RemoteNodeFactory nodeFactory) {
-        this.ensembleScheduler = ensembleScheduler;
+    public DefaultEnsembleManager(Map<String, EnsembleScheduler> ensembleSchedulers, Router router, RemoteNodeFactory nodeFactory) {
+        this.ensembleSchedulers = ensembleSchedulers;
         this.router = router;
         this.remoteNodeFactory = nodeFactory;
         this.bootstrapNodes = new ConcurrentHashMap<Cluster, Node>();
@@ -70,17 +74,24 @@ public class DefaultEnsembleManager implements EnsembleManager {
 
     @Override
     public final synchronized void join(Cluster cluster, String seed, EnsembleConfiguration ensembleConfiguration) throws MissingRouteException, ProcessingException {
-        if (!cluster.isLocal()) {
-            String[] hostPortPair = seed.split(":");
-            bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(new ServerConfiguration(seed, hostPortPair[0], Integer.parseInt(hostPortPair[1]), "", 0)));
-            ensembleScheduler.schedule(cluster, this, ensembleConfiguration);
+        configuration = ensembleConfiguration;
+        EnsembleScheduler scheduler = ensembleSchedulers.get(configuration.getDiscovery().getType());
+        if (scheduler != null) {
+            if (!cluster.isLocal()) {
+                String[] hostPortPair = seed.split(":");
+                bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(new ServerConfiguration(seed, hostPortPair[0], Integer.parseInt(hostPortPair[1]), "", 0)));
+                scheduler.schedule(cluster, this, configuration);
+            } else {
+                throw new IllegalArgumentException("No need to join local cluster: " + cluster);
+            }
         } else {
-            throw new IllegalArgumentException("No need to join local cluster: " + cluster);
+            throw new IllegalArgumentException("No ensmeble scheduler of type: " + configuration.getDiscovery().getType());
         }
     }
 
     @Override
-    public synchronized final void update(Cluster cluster) throws MissingRouteException, ProcessingException {
+    public synchronized final View update(Cluster cluster) throws MissingRouteException, ProcessingException {
+        View view = null;
         try {
             List<Node> nodes = perClusterNodes.get(cluster);
             if (nodes == null || nodes.isEmpty()) {
@@ -89,7 +100,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 if (bootstrap != null) {
                     try {
                         bootstrap.connect();
-                        View view = requestMembership(cluster, Arrays.asList(bootstrap));
+                        view = requestMembership(cluster, Arrays.asList(bootstrap));
                         calculateView(cluster, view);
                     } finally {
                         bootstrap.disconnect();
@@ -97,7 +108,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 }
             } else {
                 LOG.debug("Updating cluster view for {}", cluster);
-                View view = requestMembership(cluster, nodes);
+                view = requestMembership(cluster, nodes);
                 calculateView(cluster, view);
             }
         } catch (Exception ex) {
@@ -105,6 +116,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
             LOG.debug(ex.getMessage(), ex);
             clearView(cluster);
         }
+        return view;
     }
 
     @Override
@@ -114,8 +126,8 @@ public class DefaultEnsembleManager implements EnsembleManager {
     }
 
     @Override
-    public EnsembleScheduler getEnsembleScheduler() {
-        return ensembleScheduler;
+    public Map<String, EnsembleScheduler> getEnsembleSchedulers() {
+        return Collections.unmodifiableMap(ensembleSchedulers);
     }
 
     @Override
@@ -129,7 +141,12 @@ public class DefaultEnsembleManager implements EnsembleManager {
     }
 
     private void cancelScheduler() {
-        ensembleScheduler.shutdown();
+        EnsembleScheduler scheduler = ensembleSchedulers.get(configuration.getDiscovery().getType());
+        if (scheduler != null) {
+            scheduler.shutdown();
+        } else {
+            throw new IllegalArgumentException("No ensmeble scheduler of type: " + configuration.getDiscovery().getType());
+        }
     }
 
     private View requestMembership(Cluster cluster, List<Node> contactNodes) throws MissingRouteException, ProcessingException {
@@ -243,5 +260,6 @@ public class DefaultEnsembleManager implements EnsembleManager {
         public boolean apply(Node node) {
             return node.getName().equals(name);
         }
+
     }
 }

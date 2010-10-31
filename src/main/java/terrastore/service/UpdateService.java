@@ -22,6 +22,7 @@ import terrastore.store.Key;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
+import terrastore.store.ValidationException;
 
 /**
  * The UpdateService manages the operations of add and removal of buckets and values by interacting with a {@link terrastore.router.Router}
@@ -55,7 +56,7 @@ public interface UpdateService {
      * @throws UpdateOperationException If a bucket with the given name, or value with the given key, do not exist.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException;
+    public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException, ValidationException;
 
     /**
      * Remove a value from the given bucket under the given key.

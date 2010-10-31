@@ -26,6 +26,7 @@ import terrastore.communication.Node;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.MembershipCommand;
 import terrastore.router.Router;
+import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -38,11 +39,17 @@ public class DefaultEnsembleManagerTest {
     public void testJoinAndUpdate() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
-        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
-        makeThreadSafe(configuration, true);
+        EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
+        makeThreadSafe(discoveryConfiguration, true);
+        discoveryConfiguration.getType();
+        expectLastCall().andReturn("fixed").anyTimes();
+        EnsembleConfiguration ensembleConfiguration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(ensembleConfiguration, true);
+        ensembleConfiguration.getDiscovery();
+        expectLastCall().andReturn(discoveryConfiguration).anyTimes();
         EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
         makeThreadSafe(scheduler, true);
-        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(configuration));
+        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(ensembleConfiguration));
         expectLastCall().once();
         scheduler.shutdown();
         expectLastCall().once();
@@ -75,17 +82,17 @@ public class DefaultEnsembleManagerTest {
         router.addRouteTo(cluster, discoveredNode);
         expectLastCall().once();
 
-        replay(configuration, scheduler, seed, discoveredNode, nodeFactory, router);
+        replay(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode, nodeFactory, router);
 
-        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(Maps.hash(new String[]{"fixed"}, new EnsembleScheduler[]{scheduler}), router, nodeFactory);
         try {
-            ensemble.join(cluster, "localhost:6000", configuration);
+            ensemble.join(cluster, "localhost:6000", ensembleConfiguration);
             ensemble.update(cluster);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
             ensemble.shutdown();
-            verify(configuration, scheduler, seed, discoveredNode, nodeFactory, router);
+            verify(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode, nodeFactory, router);
         }
     }
 
@@ -93,11 +100,17 @@ public class DefaultEnsembleManagerTest {
     public void testJoinAndUpdateTwoTimesWithNewConnectedNode() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
-        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
-        makeThreadSafe(configuration, true);
+        EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
+        makeThreadSafe(discoveryConfiguration, true);
+        discoveryConfiguration.getType();
+        expectLastCall().andReturn("fixed").anyTimes();
+        EnsembleConfiguration ensembleConfiguration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(ensembleConfiguration, true);
+        ensembleConfiguration.getDiscovery();
+        expectLastCall().andReturn(discoveryConfiguration).anyTimes();
         EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
         makeThreadSafe(scheduler, true);
-        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(configuration));
+        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(ensembleConfiguration));
         expectLastCall().once();
         scheduler.shutdown();
         expectLastCall().once();
@@ -143,18 +156,18 @@ public class DefaultEnsembleManagerTest {
         router.addRouteTo(cluster, discoveredNode2);
         expectLastCall().once();
 
-        replay(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+        replay(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
 
-        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(Maps.hash(new String[]{"fixed"}, new EnsembleScheduler[]{scheduler}), router, nodeFactory);
         try {
-            ensemble.join(cluster, "localhost:6000", configuration);
+            ensemble.join(cluster, "localhost:6000", ensembleConfiguration);
             ensemble.update(cluster);
             ensemble.update(cluster);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
             ensemble.shutdown();
-            verify(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+            verify(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
 
@@ -162,11 +175,17 @@ public class DefaultEnsembleManagerTest {
     public void testJoinAndUpdateTwoTimesWithSameNodeDisconnectingAndConnectingAgain() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
-        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
-        makeThreadSafe(configuration, true);
+        EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
+        makeThreadSafe(discoveryConfiguration, true);
+        discoveryConfiguration.getType();
+        expectLastCall().andReturn("fixed").anyTimes();
+        EnsembleConfiguration ensembleConfiguration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(ensembleConfiguration, true);
+        ensembleConfiguration.getDiscovery();
+        expectLastCall().andReturn(discoveryConfiguration).anyTimes();
         EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
         makeThreadSafe(scheduler, true);
-        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(configuration));
+        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(ensembleConfiguration));
         expectLastCall().once();
         scheduler.shutdown();
         expectLastCall().once();
@@ -203,11 +222,11 @@ public class DefaultEnsembleManagerTest {
         router.removeRouteTo(cluster, discoveredNode1);
         expectLastCall().once();
 
-        replay(configuration, scheduler, seed, discoveredNode1, nodeFactory, router);
+        replay(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode1, nodeFactory, router);
 
-        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(Maps.hash(new String[]{"fixed"}, new EnsembleScheduler[]{scheduler}), router, nodeFactory);
         try {
-            ensemble.join(cluster, "localhost:6000", configuration);
+            ensemble.join(cluster, "localhost:6000", ensembleConfiguration);
             ensemble.update(cluster);
             ensemble.update(cluster);
             ensemble.update(cluster);
@@ -215,7 +234,7 @@ public class DefaultEnsembleManagerTest {
             ex.printStackTrace();
         } finally {
             ensemble.shutdown();
-            verify(configuration, scheduler, seed, discoveredNode1, nodeFactory, router);
+            verify(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode1, nodeFactory, router);
         }
     }
 
@@ -223,11 +242,17 @@ public class DefaultEnsembleManagerTest {
     public void testJoinAndUpdateTwoTimesWithDisconnectedNode() throws Exception {
         Cluster cluster = new Cluster("cluster", false);
 
-        EnsembleConfiguration configuration = createMock(EnsembleConfiguration.class);
-        makeThreadSafe(configuration, true);
+        EnsembleConfiguration.DiscoveryConfiguration discoveryConfiguration = createMock(EnsembleConfiguration.DiscoveryConfiguration.class);
+        makeThreadSafe(discoveryConfiguration, true);
+        discoveryConfiguration.getType();
+        expectLastCall().andReturn("fixed").anyTimes();
+        EnsembleConfiguration ensembleConfiguration = createMock(EnsembleConfiguration.class);
+        makeThreadSafe(ensembleConfiguration, true);
+        ensembleConfiguration.getDiscovery();
+        expectLastCall().andReturn(discoveryConfiguration).anyTimes();
         EnsembleScheduler scheduler = createMock(EnsembleScheduler.class);
         makeThreadSafe(scheduler, true);
-        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(configuration));
+        scheduler.schedule(same(cluster), EasyMock.<EnsembleManager>anyObject(), same(ensembleConfiguration));
         expectLastCall().once();
         scheduler.shutdown();
         expectLastCall().once();
@@ -279,18 +304,18 @@ public class DefaultEnsembleManagerTest {
         router.removeRouteTo(cluster, discoveredNode2);
         expectLastCall().once();
 
-        replay(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+        replay(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
 
-        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(Maps.hash(new String[]{"fixed"}, new EnsembleScheduler[]{scheduler}), router, nodeFactory);
         try {
-            ensemble.join(cluster, "localhost:6000", configuration);
+            ensemble.join(cluster, "localhost:6000", ensembleConfiguration);
             ensemble.update(cluster);
             ensemble.update(cluster);
         } catch (Throwable ex) {
             ex.printStackTrace();
         } finally {
             ensemble.shutdown();
-            verify(configuration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
+            verify(discoveryConfiguration, ensembleConfiguration, scheduler, seed, discoveredNode1, discoveredNode2, nodeFactory, router);
         }
     }
 
@@ -308,7 +333,7 @@ public class DefaultEnsembleManagerTest {
 
         replay(scheduler, nodeFactory, router);
 
-        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(scheduler, router, nodeFactory);
+        DefaultEnsembleManager ensemble = new DefaultEnsembleManager(Maps.hash(new String[]{"fixed"}, new EnsembleScheduler[]{scheduler}), router, nodeFactory);
         try {
             ensemble.update(cluster);
         } finally {

@@ -15,6 +15,7 @@
  */
 package terrastore.util.json;
 
+import terrastore.store.ValidationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,6 +29,8 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
@@ -43,7 +46,8 @@ import terrastore.store.Value;
  */
 public class JsonUtils {
 
-    private static ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final Logger LOG = LoggerFactory.getLogger(JsonUtils.class);
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     public static Map<String, Object> toModifiableMap(Value value) {
         try {
@@ -87,15 +91,20 @@ public class JsonUtils {
         }
     }
 
-    public static void validate(Value value) throws IOException {
-        JsonParser parser = new JsonFactory().createJsonParser(value.getBytes());
-        JsonToken currentToken = parser.nextToken();
-        if (currentToken.equals(JsonToken.START_ARRAY)) {
-            validateArray(parser);
-        } else if (currentToken.equals(JsonToken.START_OBJECT)) {
-            validateObject(parser);
-        } else {
-            throw new IOException("Expected object/array start, found: " + currentToken.toString());
+    public static void validate(Value value) throws ValidationException {
+        try {
+            JsonParser parser = new JsonFactory().createJsonParser(value.getBytes());
+            JsonToken currentToken = parser.nextToken();
+            if (currentToken.equals(JsonToken.START_OBJECT)) {
+                validateObject(parser);
+            } else if (currentToken.equals(JsonToken.START_ARRAY)) {
+                throw new ValidationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Json documents starting with arrays are not supported!"));
+            } else {
+                throw new ValidationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json value starting with: " + currentToken.toString()));
+            }
+        } catch (IOException ex) {
+            LOG.error(ex.getMessage(), ex);
+            throw new ValidationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json value: " + ex.getMessage()));
         }
     }
 
@@ -170,4 +179,5 @@ public class JsonUtils {
             }
         }
     }
+
 }

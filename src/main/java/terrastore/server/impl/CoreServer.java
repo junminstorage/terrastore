@@ -36,6 +36,7 @@ import terrastore.service.StatsService;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.Key;
+import terrastore.store.ValidationException;
 import terrastore.store.Value;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
@@ -88,6 +89,10 @@ public class CoreServer implements Server {
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         } catch (UpdateOperationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        } catch (ValidationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
