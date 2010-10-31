@@ -39,6 +39,7 @@ import terrastore.router.Router;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
 import terrastore.store.Key;
+import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
@@ -320,21 +321,21 @@ public class DefaultQueryService implements QueryService {
         return router;
     }
 
-    private Set<Key> getAllKeysForBucket(String bucket) throws ParallelExecutionException {
+    private Set<Key> getAllKeysForBucket(String bucket) throws ParallelExecutionException, QueryOperationException {
         GetKeysCommand command = new GetKeysCommand(bucket);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<Key> keys = multicastGetAllKeysCommand(perClusterNodes, command);
         return keys;
     }
 
-    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException {
+    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException, QueryOperationException {
         KeysInRangeCommand command = new KeysInRangeCommand(bucket, keyRange);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<Key> keys = multicastRangeQueryCommand(perClusterNodes, command);
         return keys;
     }
 
-    private Set<String> multicastGetBucketsCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetBucketsCommand command) throws ParallelExecutionException {
+    private Set<String> multicastGetBucketsCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetBucketsCommand command) throws ParallelExecutionException, QueryOperationException {
         // Parallel collection of all buckets:
         Set<String> result = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
@@ -368,7 +369,7 @@ public class DefaultQueryService implements QueryService {
         return result;
     }
 
-    private Set<Key> multicastGetAllKeysCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetKeysCommand command) throws ParallelExecutionException {
+    private Set<Key> multicastGetAllKeysCommand(final Map<Cluster, Set<Node>> perClusterNodes, final GetKeysCommand command) throws ParallelExecutionException, QueryOperationException {
         // Parallel collection of all keys:
         Set<Key> result = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
@@ -402,14 +403,14 @@ public class DefaultQueryService implements QueryService {
         return result;
     }
 
-    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final KeysInRangeCommand command) throws ParallelExecutionException {
+    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final KeysInRangeCommand command) throws ParallelExecutionException, QueryOperationException {
         // Parallel collection of all sets of sorted keys in a list:
         Set<Key> keys = ParallelUtils.parallelMap(
                 perClusterNodes.values(),
                 new MapTask<Set<Node>, Set<Key>>() {
 
                     @Override
-                    public Set<Key> map(Set<Node> nodes) {
+                    public Set<Key> map(Set<Node> nodes) throws QueryOperationException {
                         Set<Key> keys = new HashSet<Key>();
                         // Try to send command, stopping after first successful attempt:
                         for (Node node : nodes) {
@@ -417,6 +418,8 @@ public class DefaultQueryService implements QueryService {
                                 keys = node.<Set<Key>>send(command);
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
+                            } catch (ProcessingException ex) {
+                                throw new QueryOperationException(ex.getErrorMessage());
                             } catch (Exception ex) {
                                 LOG.error(ex.getMessage(), ex);
                             }

@@ -23,6 +23,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.cluster.ClusterInfo;
@@ -252,7 +254,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Set<Key> keysInRange(Range keyRange) {
+    public Set<Key> keysInRange(Range keyRange) throws StoreOperationException {
         Comparator keyComparator = getComparator(keyRange.getKeyComparatorName());
         SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), keyRange.getTimeToLive());
         return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
@@ -326,11 +328,14 @@ public class TCBucket implements Bucket {
         this.conditions.putAll(conditions);
     }
 
-    private Comparator getComparator(String comparatorName) {
+    private Comparator getComparator(String comparatorName) throws StoreOperationException {
         if (comparators.containsKey(comparatorName)) {
             return comparators.get(comparatorName);
+        } else if (StringUtils.isBlank(comparatorName)) {
+            return defaultComparator;
         }
-        return defaultComparator;
+        
+        throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Unknown comparator name: " + comparatorName));
     }
 
     private Function getFunction(String functionName) throws StoreOperationException {

@@ -15,10 +15,12 @@
  */
 package terrastore.util.collect.parallel;
 
+import terrastore.service.QueryOperationException;
+
 /**
  * @author Sergio Bossa
  */
 public interface MapTask<I, O> {
 
-    public O map(I input);
+    public O map(I input) throws QueryOperationException;
 }
