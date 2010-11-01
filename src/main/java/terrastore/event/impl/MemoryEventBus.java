@@ -107,6 +107,11 @@ public class MemoryEventBus implements EventBus {
         }
     }
 
+    @Override
+    public boolean isEnabled() {
+        return eventListeners.size() > 0;
+    }
+
     private void initListeners(List<EventListener> eventListeners) {
         for (EventListener listener : eventListeners) {
             LOG.info("Configuring listener: {}", listener.getClass().getName());
@@ -165,6 +170,7 @@ public class MemoryEventBus implements EventBus {
                 stateLock.unlock();
             }
         }
+
     }
 
     private static class EventProcessor implements Runnable {
@@ -229,5 +235,6 @@ public class MemoryEventBus implements EventBus {
                 }
             }
         }
+
     }
 }

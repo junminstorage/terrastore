@@ -66,6 +66,7 @@ public class TCBucket implements Bucket {
     //
     private final String name;
     private final ClusteredMap<String, byte[]> bucket;
+    private boolean compressedDocuments;
     private EventBus eventBus;
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
@@ -88,7 +89,7 @@ public class TCBucket implements Bucket {
         lock(key);
         try {
             byte[] old = bucket.put(key.toString(), valueToBytes(value));
-            eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value.getBytes()));
+            if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
         } finally {
             unlock(key);
         }
@@ -102,7 +103,7 @@ public class TCBucket implements Bucket {
             byte[] old = bucket.get(key.toString());
             if (old == null || bytesToValue(old).dispatch(key, predicate, condition)) {
                 bucket.put(key.toString(), valueToBytes(value));
-                eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value.getBytes()));
+                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
                 return true;
             } else {
                 return false;
@@ -165,9 +166,9 @@ public class TCBucket implements Bucket {
         // Use explicit locking to remove and publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            Value removed = bytesToValue(bucket.remove(key.toString()));
+            byte[] removed = bucket.remove(key.toString());
             if (removed != null) {
-                eventBus.publish(new ValueRemovedEvent(name, key.toString(), removed.getBytes()));
+                if (eventBus.isEnabled()) eventBus.publish(new ValueRemovedEvent(name, key.toString(), bytesToValue(removed)));
             }
         } finally {
             unlock(key);
@@ -182,20 +183,20 @@ public class TCBucket implements Bucket {
         // and also publish on the same "transactional" boundary and keep ordering under concurrency.
         lock(key);
         try {
-            final byte[] value = bucket.get(key.toString());
+            final Value value = bytesToValue(bucket.get(key.toString()));
             if (value != null) {
                 final Function function = getFunction(update.getFunctionName());
                 task = GlobalExecutor.getStoreExecutor().submit(new Callable<Value>() {
 
                     @Override
                     public Value call() {
-                        return bytesToValue(value).dispatch(key, update, function);
+                        return value.dispatch(key, update, function);
                     }
 
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.unlockedPutNoReturn(key.toString(), valueToBytes(result));
-                eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result.getBytes()));
+                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result));
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -291,6 +292,11 @@ public class TCBucket implements Bucket {
     }
 
     @Override
+    public void setCompressDocuments(boolean compressed) {
+        this.compressedDocuments = compressed;
+    }
+
+    @Override
     public void setEventBus(EventBus eventBus) {
         this.eventBus = eventBus;
     }
@@ -366,7 +372,7 @@ public class TCBucket implements Bucket {
 
     private byte[] valueToBytes(Value value) {
         if (value != null) {
-            return value.getBytes();
+            return compressedDocuments ? value.getCompressedBytes() : value.getBytes();
         } else {
             return null;
         }

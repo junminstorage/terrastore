@@ -32,8 +32,8 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
-import terrastore.util.io.InputReader;
 import terrastore.store.Value;
+import terrastore.util.io.IOUtils;
 
 /**
  * @author Sergio Bossa
@@ -44,7 +44,6 @@ import terrastore.store.Value;
 public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyWriter<Value> {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonValueProvider.class);
-    private final InputReader reader = new InputReader();
 
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type.equals(Value.class);
@@ -53,7 +52,7 @@ public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyW
     public Value readFrom(Class<Value> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         byte[] bytes = null;
         try {
-            bytes = reader.read(entityStream);
+            bytes = IOUtils.read(entityStream);
             Value result = new Value(bytes);
             return result;
         } catch (Exception ex) {
@@ -70,7 +69,7 @@ public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyW
     }
 
     public void writeTo(Value value, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        entityStream.write(value.getBytes());
+        IOUtils.read(value.getInputStream(), entityStream);
     }
 
     public long getSize(Value value, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {

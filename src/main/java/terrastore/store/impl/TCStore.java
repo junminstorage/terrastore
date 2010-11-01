@@ -73,6 +73,7 @@ public class TCStore implements Store {
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
     private EventBus eventBus;
+    private boolean compressedDocuments;
 
     public TCStore() {
         buckets = TCMaster.getInstance().getMap(TCStore.class.getName() + ".buckets");
@@ -212,6 +213,11 @@ public class TCStore implements Store {
     }
 
     @Override
+    public void setCompressDocuments(boolean compressed) {
+        this.compressedDocuments = compressed;
+    }
+
+    @Override
     public void setDefaultComparator(Comparator defaultComparator) {
         this.defaultComparator = defaultComparator;
     }
@@ -257,6 +263,7 @@ public class TCStore implements Store {
 
     private void hydrateBucket(Bucket bucket) {
         // We need to manually set all of this because of TC not supporting injection ...
+        bucket.setCompressDocuments(compressedDocuments);
         bucket.setDefaultComparator(defaultComparator);
         bucket.setComparators(comparators);
         bucket.setConditions(conditions);
