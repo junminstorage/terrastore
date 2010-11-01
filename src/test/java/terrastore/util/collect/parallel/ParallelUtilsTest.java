@@ -25,7 +25,6 @@ import java.util.concurrent.Executors;
 import jsr166y.ForkJoinPool;
 import org.junit.Test;
 
-import terrastore.service.QueryOperationException;
 import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 
@@ -49,13 +48,13 @@ public class ParallelUtilsTest {
     }
 
     @Test
-    public void testParallelMap() throws ParallelExecutionException, QueryOperationException {
+    public void testParallelMap() throws ParallelExecutionException {
         List<String> result = ParallelUtils.parallelMap(
                 Arrays.asList("David Gilmour", "Jimmy Page", "Carlos Santana"),
                 new MapTask<String, List<String>>() {
 
                     @Override
-                    public List<String> map(String input) {
+                    public List<String> map(String input) throws ParallelExecutionException {
                         String[] tokens = input.split(" ");
                         return Arrays.asList(tokens);
                     }
@@ -89,9 +88,9 @@ public class ParallelUtilsTest {
                 new MapTask<String, List<String>>() {
 
                     @Override
-                    public List<String> map(String input) {
+                    public List<String> map(String input) throws ParallelExecutionException {
                         if (input.equals("George Orwell")) {
-                            throw new IllegalStateException("Not a guitar player!");
+                            throw new ParallelExecutionException(new IllegalStateException("Not a guitar player!"));
                         } else {
                             String[] tokens = input.split(" ");
                             return Arrays.asList(tokens);

@@ -333,9 +333,9 @@ public class TCBucket implements Bucket {
             return comparators.get(comparatorName);
         } else if (StringUtils.isBlank(comparatorName)) {
             return defaultComparator;
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong comparator name: " + comparatorName));
         }
-        
-        throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Unknown comparator name: " + comparatorName));
     }
 
     private Function getFunction(String functionName) throws StoreOperationException {

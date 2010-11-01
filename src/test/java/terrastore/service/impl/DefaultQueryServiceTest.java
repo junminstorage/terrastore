@@ -26,6 +26,7 @@ import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
+import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetKeysCommand;
@@ -36,9 +37,7 @@ import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.Router;
-import terrastore.server.MapReduceDescriptor;
 import terrastore.service.QueryOperationException;
-import terrastore.service.QueryService;
 import terrastore.store.Key;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
@@ -87,6 +86,29 @@ public class DefaultQueryServiceTest {
         verify(cluster1, cluster2, node1, node2, router);
     }
 
+    @Test(expected = QueryOperationException.class)
+    public void testGetBucketsFailsInCaseOfProcessingException() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        Node node2 = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<GetBucketsCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+
+        replay(cluster1, node1, node2, router);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        try {
+            Collection<String> result = service.getBuckets();
+        } finally {
+            verify(cluster1, node1, node2, router);
+        }
+    }
+
     @Test
     public void testGetBucketsSucceedsBySkippingFailingNodes() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
@@ -98,7 +120,7 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<GetBucketsCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<GetBucketsCommand>anyObject());
         expectLastCall().andReturn(Sets.hash("test1", "test2")).once();
 
@@ -124,9 +146,9 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
 
         replay(cluster1, node1, node2, router);
 
@@ -243,7 +265,7 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<GetKeysCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
 
@@ -264,6 +286,31 @@ public class DefaultQueryServiceTest {
         verify(cluster1, node1, node2, router);
     }
 
+    @Test(expected = QueryOperationException.class)
+    public void testGetAllValuesFailsInCaseOfProcessingException() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
+        Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<GetKeysCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+
+        replay(cluster1, node1, node2, router);
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        try {
+            Map<Key, Value> result = service.getAllValues("bucket", 0);
+        } finally {
+            verify(cluster1, node1, node2, router);
+        }
+    }
+
     @Test
     public void testGetAllValuesIgnoresAllNodesFailing() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
@@ -277,9 +324,9 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
 
         router.routeToNodesFor("bucket", Sets.<Key>hash());
         expectLastCall().andReturn(Maps.hash(new Node[0], new Set[0])).once();
@@ -379,6 +426,32 @@ public class DefaultQueryServiceTest {
         verify(cluster1, cluster2, node1, node2, router);
     }
 
+    @Test(expected = QueryOperationException.class)
+    public void testQueryByRangeFailsInCaseOfProcessingException() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
+        Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+
+        replay(cluster1, node1, node2, router);
+
+
+        DefaultQueryService service = new DefaultQueryService(router);
+        try {
+            Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
+        } finally {
+            verify(cluster1, node1, node2, router);
+        }
+    }
+
     @Test
     public void testQueryByRangeSucceedsBySkippingFailingNodes() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
@@ -397,7 +470,7 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<KeysInRangeCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
 
@@ -432,9 +505,9 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<KeysInRangeCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<KeysInRangeCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
 
         router.routeToNodesFor("bucket", Sets.<Key>hash());
         expectLastCall().andReturn(Maps.hash(new Node[0], new Set[0])).once();
@@ -553,7 +626,7 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<GetKeysCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
 
@@ -588,9 +661,9 @@ public class DefaultQueryServiceTest {
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
 
         node1.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
         node2.send(EasyMock.<GetKeysCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
 
         router.routeToNodesFor("bucket", Sets.<Key>hash());
         expectLastCall().andReturn(Maps.hash(new Node[0], new Set[0])).once();
@@ -770,7 +843,7 @@ public class DefaultQueryServiceTest {
         node1.send(EasyMock.<KeysInRangeCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
         node2.send(EasyMock.<KeysInRangeCommand>anyObject());
-        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
         expectLastCall().andReturn(nodeToKeys).once();

@@ -18,7 +18,6 @@ package terrastore.service;
 import java.util.Map;
 import java.util.Set;
 import terrastore.communication.CommunicationException;
-import terrastore.communication.ProcessingException;
 import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
 import terrastore.store.Key;
