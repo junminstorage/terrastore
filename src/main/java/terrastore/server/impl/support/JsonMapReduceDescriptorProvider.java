@@ -17,7 +17,6 @@ package terrastore.server.impl.support;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import javax.ws.rs.Consumes;
@@ -30,7 +29,7 @@ import javax.ws.rs.ext.Provider;
 import terrastore.common.ErrorMessage;
 import terrastore.server.MapReduceDescriptor;
 import terrastore.server.ServerOperationException;
-import terrastore.util.io.InputReader;
+import terrastore.util.io.IOUtils;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -55,7 +54,7 @@ public class JsonMapReduceDescriptorProvider implements MessageBodyReader<MapRed
                     build());
         } catch (Exception ex) {
             throw new WebApplicationException(Response.status(ErrorMessage.BAD_REQUEST_ERROR_CODE).
-                    entity("Error: " + ex.getMessage() + "\n\rInput: " + new String(new InputReader().read(entityStream))).
+                    entity("Error: " + ex.getMessage() + "\n\rInput: " + new String(IOUtils.read(entityStream))).
                     build());
         }
 

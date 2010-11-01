@@ -17,13 +17,14 @@ package terrastore.event.impl;
 
 import terrastore.event.ActionExecutor;
 import terrastore.event.EventListener;
+import terrastore.store.Value;
 
 /**
  * @author Sergio Bossa
  */
 public class ValueChangedEvent extends AbstractEvent {
 
-    public ValueChangedEvent(String bucket, String key, byte[] oldValue, byte[] newValue) {
+    public ValueChangedEvent(String bucket, String key, Value oldValue, Value newValue) {
         super(bucket, key, oldValue, newValue);
     }
 

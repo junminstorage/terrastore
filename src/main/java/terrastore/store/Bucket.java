@@ -195,6 +195,11 @@ public interface Bucket {
     public void importBackup(String source) throws StoreOperationException;
 
     /**
+     * Set to true for compressing documents, false otherwise.
+     */
+    public void setCompressDocuments(boolean compressed);
+
+    /**
      * Set the default {@link terrastore.store.operators.Comparator} used to compare keys when no other comparator is found.
      *
      * @param defaultComparator The default comparator.

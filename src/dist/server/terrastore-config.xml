@@ -97,6 +97,7 @@
     <!-- Store -->
 
     <bean id="store" class="terrastore.store.impl.TCStore">
+        <property name="compressDocuments" value="${compress.documents}"/>
         <property name="comparators">
             <bean class="terrastore.util.annotation.AutowiringMap">
                 <constructor-arg ref="comparators"/>

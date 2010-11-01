@@ -15,6 +15,9 @@
  */
 package terrastore.store;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -24,6 +27,7 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
+import terrastore.util.io.IOUtils;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -37,24 +41,58 @@ public class Value implements Serializable {
     private static final Charset CHARSET = Charset.forName("UTF-8");
     //
     private final byte[] bytes;
+    private final boolean compressed;
 
     public Value(byte[] bytes) {
         this.bytes = bytes;
+        this.compressed = IOUtils.isCompressed(bytes);
     }
 
-    public byte[] getBytes() {
-        return bytes;
+    public final byte[] getBytes() {
+        try {
+            if (compressed) {
+                return IOUtils.readCompressed(new ByteArrayInputStream(bytes));
+            } else {
+                return bytes;
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
     }
 
-    public Map<String, Object> dispatch(Key key, Mapper mapper, Function function) {
+    public final byte[] getCompressedBytes() {
+        try {
+            if (compressed) {
+                return bytes;
+            } else {
+                return IOUtils.readAndCompress(new ByteArrayInputStream(bytes));
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
+    }
+
+    public final InputStream getInputStream() {
+        try {
+            if (compressed) {
+                return IOUtils.getCompressedInputStream(bytes);
+            } else {
+                return new ByteArrayInputStream(bytes);
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
+    }
+
+    public final Map<String, Object> dispatch(Key key, Mapper mapper, Function function) {
         return function.apply(key.toString(), JsonUtils.toModifiableMap(this), mapper.getParameters());
     }
 
-    public Value dispatch(Key key, Update update, Function function) {
+    public final Value dispatch(Key key, Update update, Function function) {
         return JsonUtils.fromMap(function.apply(key.toString(), JsonUtils.toModifiableMap(this), update.getParameters()));
     }
 
-    public boolean dispatch(Key key, Predicate predicate, Condition condition) {
+    public final boolean dispatch(Key key, Predicate predicate, Condition condition) {
         return condition.isSatisfied(key.toString(), JsonUtils.toUnmodifiableMap(this), predicate.getConditionExpression());
     }
 
@@ -75,6 +113,15 @@ public class Value implements Serializable {
 
     @Override
     public String toString() {
-        return new String(bytes, CHARSET);
+        try {
+            if (!compressed) {
+                return new String(bytes, CHARSET);
+            } else {
+                return new String(IOUtils.readCompressed(new ByteArrayInputStream(bytes)), CHARSET);
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
     }
+
 }

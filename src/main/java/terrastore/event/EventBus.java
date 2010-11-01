@@ -49,4 +49,9 @@ public interface EventBus {
      * Stop events publishing and processing.
      */
     public void shutdown();
+
+    /**
+     * Return true if enabled, that is, if there are registered listeners, false otherwise.
+     */
+    public boolean isEnabled();
 }
