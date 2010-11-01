@@ -59,8 +59,6 @@
                 <arg value="8000"/>
                 <arg value="--nodePort"/>
                 <arg value="6000"/>
-                <arg value="--shutdownPort"/>
-                <arg value="0"/>
                 <arg value="--master"/>
                 <arg value="localhost:9510"/>
             </exec>
@@ -76,8 +74,6 @@
                 <arg value="8001"/>
                 <arg value="--nodePort"/>
                 <arg value="6001"/>
-                <arg value="--shutdownPort"/>
-                <arg value="0"/>
                 <arg value="--master"/>
                 <arg value="localhost:9510"/>
             </exec>
