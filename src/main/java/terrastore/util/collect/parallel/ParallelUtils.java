@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import jsr166y.ForkJoinPool;
 import jsr166y.RecursiveAction;
-import terrastore.service.QueryOperationException;
 import terrastore.util.collect.MergeSet;
 
 /**
@@ -41,16 +40,17 @@ public class ParallelUtils {
         return task.getMerged();
     }
 
-    public static <I, O, C extends Collection> C parallelMap(final Collection<I> input, final MapTask<I, O> mapper, final MapCollector<O, C> collector, ExecutorService executor) throws ParallelExecutionException, QueryOperationException {
+    public static <I, O, C extends Collection> C parallelMap(final Collection<I> input, final MapTask<I, O> mapper, final MapCollector<O, C> collector, ExecutorService executor) throws ParallelExecutionException {
         try {
             List<Callable<O>> tasks = new ArrayList<Callable<O>>(input.size());
             for (final I current : input) {
                 tasks.add(new Callable<O>() {
 
                     @Override
-                    public O call() throws QueryOperationException {
+                    public O call() throws ParallelExecutionException {
                         return mapper.map(current);
                     }
+
                 });
             }
             List<Future<O>> results = executor.invokeAll(tasks);
@@ -60,7 +60,11 @@ public class ParallelUtils {
             }
             return collector.collect(outputs);
         } catch (ExecutionException ex) {
-            throw new ParallelExecutionException(ex.getCause());
+            if (ex.getCause() instanceof ParallelExecutionException) {
+                throw (ParallelExecutionException) ex.getCause();
+            } else {
+                throw new ParallelExecutionException(ex.getCause());
+            }
         } catch (InterruptedException ex) {
             throw new ParallelExecutionException(ex.getCause());
         }
@@ -100,5 +104,6 @@ public class ParallelUtils {
         public Set<E> getMerged() {
             return merged;
         }
+
     }
 }

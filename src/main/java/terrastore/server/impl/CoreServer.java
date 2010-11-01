@@ -21,7 +21,6 @@ import terrastore.common.ClusterStats;
 import terrastore.common.ErrorLogger;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
-import terrastore.communication.ProcessingException;
 import terrastore.server.Buckets;
 import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;

@@ -60,9 +60,7 @@ public class DefaultUpdateService implements UpdateService {
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
             multicastRemoveBucketCommand(perClusterNodes, command);
         } catch (MissingRouteException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new CommunicationException(error);
+            handleMissingRouteException(ex);
         }
     }
 
@@ -79,13 +77,9 @@ public class DefaultUpdateService implements UpdateService {
             }
             node.send(command);
         } catch (MissingRouteException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new CommunicationException(error);
+            handleMissingRouteException(ex);
         } catch (ProcessingException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new UpdateOperationException(error);
+            handleProcessingException(ex);
         }
     }
 
@@ -96,13 +90,9 @@ public class DefaultUpdateService implements UpdateService {
             RemoveValueCommand command = new RemoveValueCommand(bucket, key);
             node.send(command);
         } catch (MissingRouteException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new CommunicationException(error);
+            handleMissingRouteException(ex);
         } catch (ProcessingException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new UpdateOperationException(error);
+            handleProcessingException(ex);
         }
     }
 
@@ -114,13 +104,11 @@ public class DefaultUpdateService implements UpdateService {
             UpdateCommand command = new UpdateCommand(bucket, key, update);
             return node.<Value>send(command);
         } catch (MissingRouteException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new CommunicationException(error);
+            handleMissingRouteException(ex);
+            return null;
         } catch (ProcessingException ex) {
-            ErrorMessage error = ex.getErrorMessage();
-            ErrorLogger.LOG(LOG, error, ex);
-            throw new UpdateOperationException(error);
+            handleProcessingException(ex);
+            return null;
         }
     }
 
@@ -154,6 +142,18 @@ public class DefaultUpdateService implements UpdateService {
                 throw new MissingRouteException(new ErrorMessage(ErrorMessage.UNAVAILABLE_ERROR_CODE, "The operation has been only partially applied. Some clusters of your ensemble may be down or unreachable."));
             }
         }
+    }
+
+    private void handleMissingRouteException(MissingRouteException ex) throws CommunicationException {
+        ErrorMessage error = ex.getErrorMessage();
+        ErrorLogger.LOG(LOG, error, ex);
+        throw new CommunicationException(error);
+    }
+
+    private void handleProcessingException(ProcessingException ex) throws UpdateOperationException {
+        ErrorMessage error = ex.getErrorMessage();
+        ErrorLogger.LOG(LOG, error, ex);
+        throw new UpdateOperationException(error);
     }
 
 }
