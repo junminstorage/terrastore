@@ -9,10 +9,10 @@
         <property name="l1.healthcheck.l2.ping.probes" value="@server.healthcheck.timeout@"/>
     </tc-properties>
     <servers>
-        <server host="@master.host.1@" name="terrastore-ha-master-1">
-            <dso-port>@master.server.port@</dso-port>
-            <jmx-port>@master.jmx.port@</jmx-port>
-            <l2-group-port>@master.ha.port@</l2-group-port>
+        <server host="@master.interface.1@" name="terrastore-ha-master-1">
+            <dso-port bind="@master.host.1@">@master.server.port.1@</dso-port>
+            <jmx-port bind="@master.host.1@">@master.jmx.port.1@</jmx-port>
+            <l2-group-port>@master.ha.port.1@</l2-group-port>
             <data>tc-data/server-data</data>
             <logs>tc-data/server-logs</logs>
             <statistics>tc-data/server-statistics</statistics>
@@ -23,10 +23,10 @@
                 </persistence>
             </dso>
         </server>
-        <server host="@master.host.2@" name="terrastore-ha-master-2">
-            <dso-port>@master.server.port@</dso-port>
-            <jmx-port>@master.jmx.port@</jmx-port>
-            <l2-group-port>@master.ha.port@</l2-group-port>
+        <server host="@master.interface.2@" name="terrastore-ha-master-2">
+            <dso-port bind="@master.host.2@">@master.server.port.2@</dso-port>
+            <jmx-port bind="@master.host.2@">@master.jmx.port.2@</jmx-port>
+            <l2-group-port>@master.ha.port.2@</l2-group-port>
             <data>tc-data/server-data</data>
             <logs>tc-data/server-logs</logs>
             <statistics>tc-data/server-statistics</statistics>
