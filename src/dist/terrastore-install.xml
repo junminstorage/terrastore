@@ -12,21 +12,23 @@
         <antcall target="version"/>
 
         <if>
-            <not><available file="${quickstart.dir}/master"/></not>
+            <not>
+                <available file="${quickstart.dir}/master"/>
+            </not>
             <then>
                 <echo message="Install master on: ${quickstart.dir}/master"/>
                 <antcall target="common-master">
                     <param name="install.dir" value="${quickstart.dir}/master"/>
                     <param name="config" value="terracotta-config.xml"/>
                     <param name="master" value="terrastore-single-master"/>
-                    <param name="master.host.token" value="@master.server.host@"/>
-                    <param name="master.host" value="%i"/>
                 </antcall>
             </then>
         </if>
 
         <if>
-            <not><available file="${quickstart.dir}/server1"/></not>
+            <not>
+                <available file="${quickstart.dir}/server1"/>
+            </not>
             <then>
                 <echo message="Install server on: ${quickstart.dir}/server1"/>
                 <antcall target="common-server">
@@ -36,7 +38,9 @@
         </if>
 
         <if>
-            <not><available file="${quickstart.dir}/server2"/></not>
+            <not>
+                <available file="${quickstart.dir}/server2"/>
+            </not>
             <then>
                 <echo message="Install server on: ${quickstart.dir}/server2"/>
                 <antcall target="common-server">
@@ -60,7 +64,7 @@
                 <arg value="--nodePort"/>
                 <arg value="6000"/>
                 <arg value="--master"/>
-                <arg value="localhost:9510"/>
+                <arg value="127.0.0.1:9510"/>
             </exec>
         </forget>
 
@@ -75,7 +79,7 @@
                 <arg value="--nodePort"/>
                 <arg value="6001"/>
                 <arg value="--master"/>
-                <arg value="localhost:9510"/>
+                <arg value="127.0.0.1:9510"/>
             </exec>
         </forget>
 
@@ -104,11 +108,16 @@
 
         <antcall target="version"/>
 
+        <if>
+            <isset property="master.host"/>
+            <then>
+                <property name="master.interface" value="${master.host}"/>
+            </then>
+        </if>
+
         <antcall target="common-master">
             <param name="config" value="terracotta-config.xml"/>
             <param name="master" value="terrastore-single-master"/>
-            <param name="master.host.token" value="@master.server.host@"/>
-            <param name="master.host" value="%i"/>
         </antcall>
 
     </target>
@@ -116,6 +125,19 @@
     <target name="ha-master-1" if="install.dir" description="Install Terrastore ha master 1.">
 
         <antcall target="version"/>
+
+        <if>
+            <isset property="master.host.1"/>
+            <then>
+                <property name="master.interface.1" value="${master.host.1}"/>
+            </then>
+        </if>
+        <if>
+            <isset property="master.host.2"/>
+            <then>
+                <property name="master.interface.2" value="${master.host.2}"/>
+            </then>
+        </if>
 
         <antcall target="common-master">
             <param name="config" value="terracotta-config-ha.xml"/>
@@ -127,6 +149,19 @@
     <target name="ha-master-2" if="install.dir" description="Install Terrastore ha master 2.">
 
         <antcall target="version"/>
+
+        <if>
+            <isset property="master.host.1"/>
+            <then>
+                <property name="master.interface.1" value="${master.host.1}"/>
+            </then>
+        </if>
+        <if>
+            <isset property="master.host.2"/>
+            <then>
+                <property name="master.interface.2" value="${master.host.2}"/>
+            </then>
+        </if>
 
         <antcall target="common-master">
             <param name="config" value="terracotta-config-ha.xml"/>
@@ -151,29 +186,23 @@
 
     <target name="common-master">
 
+        <property name="master.interface" value="%i"/>
+        <property name="master.interface.1" value="%i"/>
+        <property name="master.interface.2" value="%i"/>
+        <property name="master.host" value="0.0.0.0"/>
+        <property name="master.host.1" value="0.0.0.0"/>
+        <property name="master.host.2" value="0.0.0.0"/>
         <property name="master.server.port" value="9510"/>
         <property name="master.jmx.port" value="9520"/>
         <property name="master.ha.port" value="9530"/>
+        <property name="master.server.port.1" value="9510"/>
+        <property name="master.jmx.port.1" value="9520"/>
+        <property name="master.ha.port.1" value="9530"/>
+        <property name="master.server.port.2" value="9511"/>
+        <property name="master.jmx.port.2" value="9521"/>
+        <property name="master.ha.port.2" value="9531"/>
         <property name="server.reconnection.timeout" value="1"/>
         <property name="server.healthcheck.timeout" value="3"/>
-
-        <condition property="master.host" value="%i">
-            <not>
-                <isset property="master.host.1"/>
-            </not>
-        </condition>
-
-        <condition property="master.host.1" value="%i">
-            <not>
-                <isset property="master.host.1"/>
-            </not>
-        </condition>
-
-        <condition property="master.host.2" value="%i">
-            <not>
-                <isset property="master.host.2"/>
-            </not>
-        </condition>
 
         <delete dir="${java.io.tmpdir}/terrastore-install"/>
 
@@ -183,6 +212,15 @@
         <copy file="terrastore-master/terracotta-master.log4j.properties" tofile="${java.io.tmpdir}/terrastore-install/terrastore-master/.tc.custom.log4j.properties"/>
 
         <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/${config}">
+            <replacefilter
+                token="@master.interface@"
+                value="${master.interface}"/>
+            <replacefilter
+                token="@master.interface.1@"
+                value="${master.interface.1}"/>
+            <replacefilter
+                token="@master.interface.2@"
+                value="${master.interface.2}"/>
             <replacefilter
                 token="@master.host@"
                 value="${master.host}"/>
@@ -201,6 +239,24 @@
             <replacefilter
                 token="@master.ha.port@"
                 value="${master.ha.port}"/>
+            <replacefilter
+                token="@master.server.port.1@"
+                value="${master.server.port.1}"/>
+            <replacefilter
+                token="@master.jmx.port.1@"
+                value="${master.jmx.port.1}"/>
+            <replacefilter
+                token="@master.ha.port.1@"
+                value="${master.ha.port.1}"/>
+            <replacefilter
+                token="@master.server.port.2@"
+                value="${master.server.port.2}"/>
+            <replacefilter
+                token="@master.jmx.port.2@"
+                value="${master.jmx.port.2}"/>
+            <replacefilter
+                token="@master.ha.port.2@"
+                value="${master.ha.port.2}"/>
             <replacefilter
                 token="@server.reconnection.timeout@"
                 value="${server.reconnection.timeout}"/>
