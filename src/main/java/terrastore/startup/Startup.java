@@ -203,6 +203,7 @@ public class Startup {
         LOG.info(POWEREDBY_MESSAGE);
         LOG.info("Listening for HTTP requests on {}:{}", httpHost, httpPort);
         LOG.info("Listening for node requests on {}:{}", nodeHost, nodePort);
+        LOG.info("Document compression is {}.", compressDocuments ? "ENABLED" : "DISABLED");
         LOG.info("Reconnection timeout (in milliseconds): {}", reconnectTimeout);
         LOG.info("Node communication timeout (in milliseconds): {}", nodeTimeout);
         LOG.info("Failover retries: {}", failoverRetries);
