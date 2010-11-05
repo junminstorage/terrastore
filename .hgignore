@@ -1,6 +1,7 @@
 .+\.bak
 .+\.orig
 .DS_Store
+activemq-data
 nbproject
 nbactions.xml
 nb-configuration.xml
