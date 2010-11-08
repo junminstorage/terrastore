@@ -34,6 +34,10 @@
         	<bean class="terrastore.store.functions.AtomicCounterFunction"/>
         </entry>
 
+        <entry key="keys">
+        	<bean class="terrastore.store.functions.KeysMapper"/>
+        </entry>
+
         <entry key="size">
         	<bean class="terrastore.store.functions.SizeMapper"/>
         </entry>

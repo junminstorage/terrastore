@@ -18,6 +18,10 @@
 
     <util:map id="aggregators">
 
+        <entry key="keys">
+            <bean class="terrastore.store.aggregators.KeysAggregator"/>
+        </entry>
+
         <entry key="size">
             <bean class="terrastore.store.aggregators.SizeAggregator"/>
         </entry>
