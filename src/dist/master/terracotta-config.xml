@@ -9,7 +9,7 @@
         <property name="l1.healthcheck.l2.ping.probes" value="@server.healthcheck.timeout@"/>
     </tc-properties>
     <servers>
-        <server host="@master.interface@" name="terrastore-single-master">
+        <server host="@master.interface@" name="terrastore-single-master" bind="@master.host@">
             <dso-port bind="@master.host@">@master.server.port@</dso-port>
             <jmx-port bind="@master.host@">@master.jmx.port@</jmx-port>
             <data>tc-data/server-data</data>
