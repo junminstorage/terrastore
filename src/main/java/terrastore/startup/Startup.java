@@ -234,33 +234,21 @@ public class Startup {
     }
 
     private void startCoordinator(ApplicationContext context) throws Exception {
-        Coordinator coordinator = null;
-        Map beans = context.getBeansOfType(Coordinator.class);
-        if (beans.size() == 1) {
-            coordinator = (Coordinator) beans.values().iterator().next();
-            coordinator.setReconnectTimeout(reconnectTimeout);
-            coordinator.setNodeTimeout(nodeTimeout);
-            coordinator.setWokerThreads(workerThreads);
-            coordinator.start(
-                    new ServerConfiguration(ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()), nodeHost, nodePort, httpHost, httpPort),
-                    ensembleConfiguration);
-        } else {
-            throw new IllegalStateException("Wrong number of configured beans!");
-        }
+        Coordinator coordinator = context.getBean(Coordinator.class);
+        coordinator.setReconnectTimeout(reconnectTimeout);
+        coordinator.setNodeTimeout(nodeTimeout);
+        coordinator.setWokerThreads(workerThreads);
+        coordinator.start(
+                new ServerConfiguration(ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()), nodeHost, nodePort, httpHost, httpPort),
+                ensembleConfiguration);
     }
 
     private void startJsonHttpServer(ApplicationContext context) throws Exception {
-        JsonHttpServer server = null;
-        Map beans = context.getBeansOfType(JsonHttpServer.class);
-        if (beans.size() == 1) {
-            Map<String, String> configuration = new HashMap<String, String>();
-            configuration.put(JsonHttpServer.CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER, allowedOrigins);
-            configuration.put(JsonHttpServer.HTTP_THREADS_CONFIGURATION_PARAMETER, Integer.toString(httpThreads));
-            server = (JsonHttpServer) beans.values().iterator().next();
-            server.start(httpHost, httpPort, configuration);
-        } else {
-            throw new IllegalStateException("Wrong number of configured beans!");
-        }
+        JsonHttpServer server = context.getBean(JsonHttpServer.class);
+        Map<String, String> configuration = new HashMap<String, String>();
+        configuration.put(JsonHttpServer.CORS_ALLOWED_ORIGINS_CONFIGURATION_PARAMETER, allowedOrigins);
+        configuration.put(JsonHttpServer.HTTP_THREADS_CONFIGURATION_PARAMETER, Integer.toString(httpThreads));
+        server.start(httpHost, httpPort, configuration);
     }
 
     private String getConfigFileLocation() {
