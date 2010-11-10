@@ -74,8 +74,8 @@ public class DefaultEnsembleManager implements EnsembleManager {
 
     @Override
     public final synchronized void join(Cluster cluster, String seed, EnsembleConfiguration ensembleConfiguration) throws MissingRouteException, ProcessingException {
-        configuration = ensembleConfiguration;
-        EnsembleScheduler scheduler = ensembleSchedulers.get(configuration.getDiscovery().getType());
+        EnsembleScheduler scheduler = ensembleSchedulers.get(ensembleConfiguration.getDiscovery().getType());
+        this.configuration = ensembleConfiguration;
         if (scheduler != null) {
             if (!cluster.isLocal()) {
                 String[] hostPortPair = seed.split(":");
@@ -85,7 +85,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 throw new IllegalArgumentException("No need to join local cluster: " + cluster);
             }
         } else {
-            throw new IllegalArgumentException("No ensmeble scheduler of type: " + configuration.getDiscovery().getType());
+            throw new IllegalArgumentException("No ensemble scheduler of type: " + configuration.getDiscovery().getType());
         }
     }
 
@@ -141,11 +141,13 @@ public class DefaultEnsembleManager implements EnsembleManager {
     }
 
     private void cancelScheduler() {
-        EnsembleScheduler scheduler = ensembleSchedulers.get(configuration.getDiscovery().getType());
-        if (scheduler != null) {
-            scheduler.shutdown();
-        } else {
-            throw new IllegalArgumentException("No ensmeble scheduler of type: " + configuration.getDiscovery().getType());
+        if (configuration != null) {
+            EnsembleScheduler scheduler = ensembleSchedulers.get(configuration.getDiscovery().getType());
+            if (scheduler != null) {
+                scheduler.shutdown();
+            } else {
+                throw new IllegalArgumentException("No ensmeble scheduler of type: " + configuration.getDiscovery().getType());
+            }
         }
     }
 
