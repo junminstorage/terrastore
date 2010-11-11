@@ -19,8 +19,8 @@ import java.net.InetSocketAddress;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,8 +60,7 @@ public class RemoteNode implements Node {
     private static final transient Logger LOG = LoggerFactory.getLogger(RemoteNode.class);
     //
     private final Lock stateLock = new ReentrantLock();
-    private final ConcurrentMap<String, CountDownLatch> responseConditions = new ConcurrentHashMap<String, CountDownLatch>();
-    private final ConcurrentMap<String, RemoteResponse> responses = new ConcurrentHashMap<String, RemoteResponse>();
+    private final ConcurrentMap<String, SynchronousQueue<RemoteResponse>> rendezvous = new ConcurrentHashMap<String, SynchronousQueue<RemoteResponse>>();
     private final ServerConfiguration configuration;
     private final int maxFrameLength;
     private final long timeoutInMillis;
@@ -117,40 +116,36 @@ public class RemoteNode implements Node {
         if (!connected) {
             connect();
         }
-        if (clientChannel.isOpen() && clientChannel.isConnected()) {
-            String commandId = configureId(command);
-            try {
-                CountDownLatch responseLatch = new CountDownLatch(1);
-                responseConditions.put(commandId, responseLatch);
-                clientChannel.write(command);
-                LOG.debug("Sent command {}", commandId);
-                //
-                long wait = timeoutInMillis;
-                while (!responses.containsKey(commandId) && wait > 0) {
-                    long start = System.currentTimeMillis();
-                    try {
-                        responseLatch.await(wait, TimeUnit.MILLISECONDS);
-                        wait = 0;
-                    } catch (InterruptedException ex) {
-                        wait = wait - (System.currentTimeMillis() - start);
-                    }
+        String commandId = configureId(command);
+        try {
+            SynchronousQueue<RemoteResponse> channel = new SynchronousQueue<RemoteResponse>();
+            rendezvous.put(commandId, channel);
+            clientChannel.write(command);
+            LOG.debug("Sent command {}", commandId);
+            //
+            RemoteResponse response = null;
+            long wait = timeoutInMillis;
+            do {
+                long start = System.currentTimeMillis();
+                try {
+                    response = channel.poll(wait, TimeUnit.MILLISECONDS);
+                    wait = 0;
+                } catch (InterruptedException ex) {
+                    wait = wait - (System.currentTimeMillis() - start);
                 }
+            } while (response == null && wait > 0);
+            //
+            if (response != null && response.isOk()) {
+                // Safe cast: correlation id ensures it's the *correct* command response.
+                return (R) response.getResult();
                 //
-                RemoteResponse response = responses.get(commandId);
-                if (response != null && response.isOk()) {
-                    // Safe cast: correlation id ensures it's the *correct* command response.
-                    return (R) response.getResult();
-                    //
-                } else if (response != null) {
-                    throw new ProcessingException(response.getError());
-                } else {
-                    throw new CommunicationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
-                }
-            } finally {
-                responses.remove(commandId);
+            } else if (response != null) {
+                throw new ProcessingException(response.getError());
+            } else {
+                throw new CommunicationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication timeout!"));
             }
-        } else {
-            throw new CommunicationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Communication error!"));
+        } finally {
+            rendezvous.remove(commandId);
         }
     }
 
@@ -223,10 +218,18 @@ public class RemoteNode implements Node {
         }
 
         private void signalCommandResponse(String commandId, RemoteResponse response) {
-            CountDownLatch responseLatch = responseConditions.remove(commandId);
-            responses.put(commandId, response);
-            responseLatch.countDown();
+            try {
+                SynchronousQueue<RemoteResponse> channel = rendezvous.remove(commandId);
+                // Heuristically waits for 1 sec in case response arrived prior to the sending thread started listening for it:
+                boolean offered = channel.offer(response, 1000, TimeUnit.MILLISECONDS);
+                if (!offered) {
+                    LOG.warn("No consumer thread found, response for command {} is going to be ignored.", commandId);
+                }
+            } catch (InterruptedException ex) {
+                LOG.warn("No consumer thread found, response for command {} is going to be ignored.", commandId);
+            }
         }
+
     }
 
     private static class ClientChannelPipelineFactory implements ChannelPipelineFactory {
@@ -249,6 +252,7 @@ public class RemoteNode implements Node {
                     clientHandler);
             return pipeline;
         }
+
     }
 
     public static class Factory implements RemoteNodeFactory {
@@ -273,5 +277,6 @@ public class RemoteNode implements Node {
         public void setDefaultNodeTimeout(int defaultNodeTimeout) {
             this.defaultNodeTimeout = defaultNodeTimeout;
         }
+
     }
 }
