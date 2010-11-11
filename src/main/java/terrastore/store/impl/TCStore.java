@@ -16,6 +16,7 @@
 package terrastore.store.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -176,32 +178,20 @@ public class TCStore implements Store {
 
     @Override
     public Map<String, Object> map(final String bucketName, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
-        try {
-            Bucket bucket = get(bucketName);
-            List<Map<String, Object>> mapResults = new ArrayList<Map<String, Object>>(keys.size());
-            for (Key key : keys) {
-                Map<String, Object> mapResult = bucket.map(key, mapper);
-                if (mapResult != null) {
-                    mapResults.add(mapResult);
-                }
-            }
+        Bucket bucket = get(bucketName);
+        if (bucket != null) {
             Aggregator aggregator = getAggregator(mapper.getCombinerName());
-            if (aggregator != null) {
-                return aggregate(mapResults, aggregator, mapper.getTimeoutInMillis());
-            } else {
-                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Wrong combiner name: " + mapper.getCombinerName()));
-            }
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+            List<Map<String, Object>> mapResults = doMap(bucket, keys, mapper);
+            return doAggregate(mapResults, aggregator, mapper.getTimeoutInMillis());
+        } else {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No bucket found with name: " + bucketName));
         }
-
     }
 
     @Override
     public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException {
         Aggregator aggregator = getAggregator(reducer.getReducerName());
-        Map<String, Object> aggregation = aggregate(values, aggregator, reducer.getTimeoutInMillis());
+        Map<String, Object> aggregation = doAggregate(values, aggregator, reducer.getTimeoutInMillis());
         return JsonUtils.fromMap(aggregation);
     }
 
@@ -278,11 +268,44 @@ public class TCStore implements Store {
         if (aggregators.containsKey(aggregatorName)) {
             return aggregators.get(aggregatorName);
         } else {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong function name: " + aggregatorName));
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Wrong aggregator name: " + aggregatorName));
         }
     }
 
-    private Map<String, Object> aggregate(final List<Map<String, Object>> values, final Aggregator aggregator, long timeout) throws StoreOperationException {
+    private List<Map<String, Object>> doMap(final Bucket bucket, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
+        Future<List<Map<String, Object>>> task = null;
+        try {
+            task = GlobalExecutor.getStoreExecutor().submit(new Callable<List<Map<String, Object>>>() {
+
+                @Override
+                public List<Map<String, Object>> call() throws StoreOperationException {
+                    List<Map<String, Object>> mapResults = new ArrayList<Map<String, Object>>(keys.size());
+                    for (Key key : keys) {
+                        Map<String, Object> mapResult = bucket.map(key, mapper);
+                        if (mapResult != null) {
+                            mapResults.add(mapResult);
+                        }
+                    }
+                    return mapResults;
+                }
+
+            });
+            return task.get(mapper.getTimeoutInMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException ex) {
+            task.cancel(true);
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Map cancelled due to long execution time."));
+        } catch (ExecutionException ex) {
+            if (ex.getCause() instanceof StoreOperationException) {
+                throw (StoreOperationException) ex.getCause();
+            } else {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getCause().getMessage()));
+            }
+        } catch (Exception ex) {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        }
+    }
+
+    private Map<String, Object> doAggregate(final List<Map<String, Object>> values, final Aggregator aggregator, long timeout) throws StoreOperationException {
         Future<Map<String, Object>> task = null;
         try {
             task = GlobalExecutor.getStoreExecutor().submit(new Callable<Map<String, Object>>() {
