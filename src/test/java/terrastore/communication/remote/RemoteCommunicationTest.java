@@ -98,21 +98,21 @@ public class RemoteCommunicationTest {
 
         final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, 10, router);
         processor.start();
+        final RemoteNode sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 3145728, 10000);
+        sender.connect();
         try {
             final AtomicBoolean corrupted = new AtomicBoolean(false);
             final AtomicBoolean failed = new AtomicBoolean(false);
-            final ExecutorService executor = Executors.newCachedThreadPool();
             final int threads = 100;
-            for (int i = 0; i < threads && corrupted.get() == false && failed.get() == false; i++) {
+            final int times = 10000;
+            final ExecutorService executor = Executors.newFixedThreadPool(threads);
+            long start = System.currentTimeMillis();
+            for (int i = 0; i < times && corrupted.get() == false && failed.get() == false; i++) {
                 executor.submit(new Runnable() {
 
                     @Override
                     public void run() {
-                        Node sender = null;
                         try {
-                            sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 3145728, 3000);
-                            sender.connect();
-                            //
                             GetValueCommand command = new GetValueCommand(bucketName, valueKey);
                             Value result = sender.<Value>send(command);
                             if (result == null || !Arrays.equals(value.getBytes(), result.getBytes())) {
@@ -121,8 +121,6 @@ public class RemoteCommunicationTest {
                         } catch (Exception ex) {
                             ex.printStackTrace();
                             failed.set(true);
-                        } finally {
-                            sender.disconnect();
                         }
                     }
                 });
@@ -135,8 +133,10 @@ public class RemoteCommunicationTest {
             if (failed.get()) {
                 fail("Failed!");
             }
+            System.out.println("---> Elapsed: " + (System.currentTimeMillis() - start));
         } finally {
             try {
+                sender.disconnect();
                 processor.stop();
             } finally {
                 verify(router, node);
