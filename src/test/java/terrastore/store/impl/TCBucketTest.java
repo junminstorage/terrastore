@@ -465,7 +465,6 @@ public class TCBucketTest {
         Map<String, Object> mapResult = Maps.hash(new String[]{"m"}, new Object[]{"r"});
 
         Function mapFunction = createMock(Function.class);
-        makeThreadSafe(mapFunction, true);
         mapFunction.apply(eq("key"), eq(Maps.hash(new String[]{"test"}, new Object[]{"test"})), eq(Collections.EMPTY_MAP));
         expectLastCall().andReturn(mapResult).once();
 

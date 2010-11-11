@@ -89,7 +89,9 @@ public class TCBucket implements Bucket {
         lock(key);
         try {
             byte[] old = bucket.put(key.toString(), valueToBytes(value));
-            if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
+            if (eventBus.isEnabled()) {
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
+            }
         } finally {
             unlock(key);
         }
@@ -103,7 +105,9 @@ public class TCBucket implements Bucket {
             byte[] old = bucket.get(key.toString());
             if (old == null || bytesToValue(old).dispatch(key, predicate, condition)) {
                 bucket.put(key.toString(), valueToBytes(value));
-                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
+                if (eventBus.isEnabled()) {
+                    eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
+                }
                 return true;
             } else {
                 return false;
@@ -168,7 +172,9 @@ public class TCBucket implements Bucket {
         try {
             byte[] removed = bucket.remove(key.toString());
             if (removed != null) {
-                if (eventBus.isEnabled()) eventBus.publish(new ValueRemovedEvent(name, key.toString(), bytesToValue(removed)));
+                if (eventBus.isEnabled()) {
+                    eventBus.publish(new ValueRemovedEvent(name, key.toString(), bytesToValue(removed)));
+                }
             }
         } finally {
             unlock(key);
@@ -196,7 +202,9 @@ public class TCBucket implements Bucket {
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
                 bucket.unlockedPutNoReturn(key.toString(), valueToBytes(result));
-                if (eventBus.isEnabled()) eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result));
+                if (eventBus.isEnabled()) {
+                    eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result));
+                }
                 return result;
             } else {
                 throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -214,28 +222,12 @@ public class TCBucket implements Bucket {
     }
 
     public Map<String, Object> map(final Key key, final Mapper mapper) throws StoreOperationException {
-        Future<Map<String, Object>> task = null;
-        try {
-            final byte[] value = bucket.get(key.toString());
-            if (value != null) {
-                final Function function = getFunction(mapper.getMapperName());
-                task = GlobalExecutor.getStoreExecutor().submit(new Callable<Map<String, Object>>() {
-
-                    @Override
-                    public Map<String, Object> call() {
-                        return bytesToValue(value).dispatch(key, mapper, function);
-                    }
-
-                });
-                return task.get(mapper.getTimeoutInMillis(), TimeUnit.MILLISECONDS);
-            } else {
-                return null;
-            }
-        } catch (TimeoutException ex) {
-            task.cancel(true);
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Aggregation cancelled due to long execution time."));
-        } catch (Exception ex) {
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        byte[] value = bucket.get(key.toString());
+        if (value != null) {
+            Function function = getFunction(mapper.getMapperName());
+            return bytesToValue(value).dispatch(key, mapper, function);
+        } else {
+            return null;
         }
     }
 
