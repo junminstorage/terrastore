@@ -15,9 +15,15 @@
  */
 package terrastore.store.features;
 
-import java.io.Serializable;
+import java.io.IOException;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * Predicate object carrying data about the {@link terrastore.store.operators.Condition} to evaluate.<br>
@@ -27,12 +33,12 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
  *
  * @author Sergio Bossa
  */
-public class Predicate implements Serializable {
+public class Predicate implements MessagePackable, MessageUnpackable {
 
     private static final long serialVersionUID = 12345678901L;
-    private final boolean empty;
-    private final String conditionType;
-    private final String conditionExpression;
+    private boolean empty;
+    private String conditionType;
+    private String conditionExpression;
 
     public Predicate(String predicate) {
         if (predicate != null) {
@@ -50,6 +56,9 @@ public class Predicate implements Serializable {
         }
     }
 
+    public Predicate() {
+    }
+
     public boolean isEmpty() {
         return empty;
     }
@@ -60,6 +69,20 @@ public class Predicate implements Serializable {
 
     public String getConditionExpression() {
         return conditionExpression;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packBoolean(packer, empty);
+        MsgPackUtils.packString(packer, conditionType);
+        MsgPackUtils.packString(packer, conditionExpression);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        empty = MsgPackUtils.unpackBoolean(unpacker);
+        conditionType = MsgPackUtils.unpackString(unpacker);
+        conditionExpression = MsgPackUtils.unpackString(unpacker);
     }
 
     @Override
@@ -84,4 +107,5 @@ public class Predicate implements Serializable {
             return new HashCodeBuilder().append(conditionExpression).append(conditionType).toHashCode();
         }
     }
+
 }

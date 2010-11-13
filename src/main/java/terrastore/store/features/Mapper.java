@@ -15,29 +15,37 @@
  */
 package terrastore.store.features;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.util.Map;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * Mapper object carrying data about the mapper and combiner functions, their timeout and parameters.
  *
  * @author Sergio Bossa
  */
-public class Mapper implements Serializable {
+public class Mapper implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
-    private final String mapperName;
-    private final String combinerName;
-    private final long timeoutInMillis;
-    private final Map<String, Object> parameters;
+    private String mapperName;
+    private String combinerName;
+    private long timeoutInMillis;
+    private Map<String, Object> parameters;
 
     public Mapper(String mapperName, String combinerName, long timeoutInMillis, Map<String, Object> parameters) {
         this.mapperName = mapperName;
         this.combinerName = combinerName;
         this.timeoutInMillis = timeoutInMillis;
         this.parameters = parameters;
+    }
+
+    public Mapper() {
     }
 
     public String getMapperName() {
@@ -54,6 +62,22 @@ public class Mapper implements Serializable {
 
     public Map<String, Object> getParameters() {
         return parameters;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, mapperName);
+        MsgPackUtils.packString(packer, combinerName);
+        MsgPackUtils.packLong(packer, timeoutInMillis);
+        MsgPackUtils.packGenericMap(packer, parameters);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        mapperName = MsgPackUtils.unpackString(unpacker);
+        combinerName = MsgPackUtils.unpackString(unpacker);
+        timeoutInMillis = MsgPackUtils.unpackLong(unpacker);
+        parameters = MsgPackUtils.unpackGenericMap(unpacker);
     }
 
     @Override
@@ -78,4 +102,5 @@ public class Mapper implements Serializable {
                 append(parameters).
                 toHashCode();
     }
+
 }

@@ -15,22 +15,26 @@
  */
 package terrastore.cluster.coordinator;
 
-import java.io.Serializable;
+import java.io.IOException;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
-public class ServerConfiguration implements Serializable {
+public class ServerConfiguration implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
-    //
-    private final String name;
-    private final String nodeHost;
-    private final int nodePort;
-    private final String httpHost;
-    private final int httpPort;
+    private String name;
+    private String nodeHost;
+    private int nodePort;
+    private String httpHost;
+    private int httpPort;
 
     public ServerConfiguration(String name, String nodeHost, int nodePort, String httpHost, int httpPort) {
         this.name = name;
@@ -61,17 +65,36 @@ public class ServerConfiguration implements Serializable {
     }
 
     @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof ServerConfiguration) {
-                ServerConfiguration other = (ServerConfiguration) obj;
-                return new EqualsBuilder().append(this.name, other.name).isEquals();
-            } else {
-                return false;
-            }
-        }
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, name);
+        MsgPackUtils.packString(packer, nodeHost);
+        MsgPackUtils.packInt(packer, nodePort);
+        MsgPackUtils.packString(packer, httpHost);
+        MsgPackUtils.packInt(packer, httpPort);
+    }
 
-        @Override
-        public int hashCode() {
-            return new HashCodeBuilder().append(this.name).toHashCode();
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        name = MsgPackUtils.unpackString(unpacker);
+        nodeHost = MsgPackUtils.unpackString(unpacker);
+        nodePort = MsgPackUtils.unpackInt(unpacker);
+        httpHost = MsgPackUtils.unpackString(unpacker);
+        httpPort = MsgPackUtils.unpackInt(unpacker);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ServerConfiguration) {
+            ServerConfiguration other = (ServerConfiguration) obj;
+            return new EqualsBuilder().append(this.name, other.name).isEquals();
+        } else {
+            return false;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(this.name).toHashCode();
+    }
+
 }

@@ -15,26 +15,34 @@
  */
 package terrastore.cluster.ensemble.impl;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
-public class View implements Serializable {
+public class View implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
-    //
-    private final String cluster;
-    private final Set<Member> members;
+    private String cluster;
+    private Set<Member> members;
 
     public View(String cluster, Set<Member> members) {
         this.cluster = cluster;
         this.members = members;
+    }
+
+    public View() {
     }
 
     public String getCluster() {
@@ -43,6 +51,25 @@ public class View implements Serializable {
 
     public Set<Member> getMembers() {
         return members;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, cluster);
+        MsgPackUtils.packInt(packer, members.size());
+        for (Member member : members) {
+            MsgPackUtils.packServerConfiguration(packer, member.configuration);
+        }
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        cluster = MsgPackUtils.unpackString(unpacker);
+        members = new LinkedHashSet<Member>();
+        int size = MsgPackUtils.unpackInt(unpacker);
+        for (int i = 0; i < size; i++) {
+            members.add(new Member(MsgPackUtils.unpackServerConfiguration(unpacker)));
+        }
     }
 
     @Override
@@ -70,10 +97,8 @@ public class View implements Serializable {
         return sizeOfA + B.size();
     }
 
-    public static class Member implements Serializable {
+    public static class Member {
 
-        private static final long serialVersionUID = 12345678901L;
-        //
         private final ServerConfiguration configuration;
 
         public Member(ServerConfiguration configuration) {

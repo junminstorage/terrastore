@@ -15,8 +15,13 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.ProcessingException;
 import terrastore.router.MissingRouteException;
@@ -25,18 +30,22 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Reducer;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class ReduceCommand extends AbstractCommand<Value> {
 
-    private final List<Map<String, Object>> values;
-    private final Reducer reducer;
+    private List<Map<String, Object>> values;
+    private Reducer reducer;
 
     public ReduceCommand(List<Map<String, Object>> values, Reducer reducer) {
         this.values = values;
         this.reducer = reducer;
+    }
+
+    public ReduceCommand() {
     }
 
     @Override
@@ -46,6 +55,26 @@ public class ReduceCommand extends AbstractCommand<Value> {
 
     public Value executeOn(final Store store) throws StoreOperationException {
         return store.reduce(values, reducer);
+    }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        int size = values.size();
+        MsgPackUtils.packInt(packer, size);
+        for (Map<String, Object> map : values) {
+            MsgPackUtils.packGenericMap(packer, map);
+        }
+        MsgPackUtils.packReducer(packer, reducer);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        int size = MsgPackUtils.unpackInt(unpacker);
+        values = new ArrayList<Map<String, Object>>(size);
+        for (int i = 0; i < size; i++) {
+            values.add(MsgPackUtils.unpackGenericMap(unpacker));
+        }
+        reducer = MsgPackUtils.unpackReducer(unpacker);
     }
 
 }

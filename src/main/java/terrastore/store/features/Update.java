@@ -15,27 +15,35 @@
  */
 package terrastore.store.features;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.util.Map;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * Update object carrying data about the update function, timeout and parameters.
  *
  * @author Sergio Bossa
  */
-public class Update implements Serializable {
+public class Update implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
-    private final String functionName;
-    private final long timeoutInMillis;
-    private final Map<String, Object> parameters;
+    private String functionName;
+    private long timeoutInMillis;
+    private Map<String, Object> parameters;
 
     public Update(String functionName, long timeoutInMillis, Map<String, Object> parameters) {
         this.functionName = functionName;
         this.timeoutInMillis = timeoutInMillis;
         this.parameters = parameters;
+    }
+
+    public Update() {
     }
 
     public long getTimeoutInMillis() {
@@ -48,6 +56,20 @@ public class Update implements Serializable {
 
     public Map<String, Object> getParameters() {
         return parameters;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, functionName);
+        MsgPackUtils.packLong(packer, timeoutInMillis);
+        MsgPackUtils.packGenericMap(packer, parameters);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        functionName = MsgPackUtils.unpackString(unpacker);
+        timeoutInMillis = MsgPackUtils.unpackLong(unpacker);
+        parameters = MsgPackUtils.unpackGenericMap(unpacker);
     }
 
     @Override
@@ -65,4 +87,5 @@ public class Update implements Serializable {
     public int hashCode() {
         return new HashCodeBuilder().append(functionName).append(timeoutInMillis).append(parameters).toHashCode();
     }
+
 }

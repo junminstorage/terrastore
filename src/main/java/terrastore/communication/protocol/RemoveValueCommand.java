@@ -15,6 +15,10 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -24,18 +28,22 @@ import terrastore.store.Bucket;
 import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class RemoveValueCommand extends AbstractCommand {
 
-    private final String bucketName;
-    private final Key key;
+    private String bucketName;
+    private Key key;
 
     public RemoveValueCommand(String bucketName, Key key) {
         this.bucketName = bucketName;
         this.key = key;
+    }
+
+    public RemoveValueCommand() {
     }
 
     @Override
@@ -50,5 +58,17 @@ public class RemoveValueCommand extends AbstractCommand {
             bucket.remove(key);
         }
         return null;
+    }
+    
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packKey(packer, key);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        key = MsgPackUtils.unpackKey(unpacker);
     }
 }

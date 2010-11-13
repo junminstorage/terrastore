@@ -15,7 +15,11 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
 import java.util.Set;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -40,4 +44,13 @@ public class GetBucketsCommand extends AbstractCommand<Set<String>> {
         Set<String> buckets = store.buckets();
         return Sets.serializing(buckets);
     }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+    }
+
 }

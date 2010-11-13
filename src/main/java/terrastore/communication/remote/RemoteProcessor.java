@@ -33,7 +33,6 @@ import org.jboss.netty.channel.StaticChannelPipeline;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +40,10 @@ import terrastore.communication.process.AbstractProcessor;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.process.AsynchronousExecutor;
 import terrastore.communication.protocol.Command;
-import terrastore.util.io.JavaSerializer;
 import terrastore.communication.process.CompletionHandler;
 import terrastore.communication.process.RouterHandler;
 import terrastore.router.Router;
+import terrastore.util.io.MsgPackSerializer;
 
 /**
  * Process {@link terrastore.communication.protocol.Command} messages sent by remote cluster nodes.
@@ -128,7 +127,7 @@ public class RemoteProcessor extends AbstractProcessor {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-            LOG.debug(event.getCause().getMessage(), event.getCause());
+            LOG.error(event.getCause().getMessage(), event.getCause());
         }
     }
 
@@ -146,9 +145,8 @@ public class RemoteProcessor extends AbstractProcessor {
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = new StaticChannelPipeline(
                     new LengthFieldPrepender(4),
-                    new LengthFieldBasedFrameDecoder(maxFrameLength, 0, 4, 0, 4),
-                    new SerializerEncoder(new JavaSerializer<RemoteResponse>()),
-                    new SerializerDecoder(new JavaSerializer<Command>()),
+                    new SerializerEncoder(new MsgPackSerializer()),
+                    new SerializerDecoder(new MsgPackSerializer()),
                     serverHandler);
             return pipeline;
         }

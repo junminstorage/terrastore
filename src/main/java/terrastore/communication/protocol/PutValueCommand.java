@@ -15,6 +15,10 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
@@ -27,17 +31,18 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class PutValueCommand extends AbstractCommand {
 
-    private final String bucketName;
-    private final Key key;
-    private final Value value;
-    private final boolean conditional;
-    private final Predicate predicate;
+    private String bucketName;
+    private Key key;
+    private Value value;
+    private boolean conditional;
+    private Predicate predicate;
 
     public PutValueCommand(String bucketName, Key key, Value value) {
         this.bucketName = bucketName;
@@ -53,6 +58,9 @@ public class PutValueCommand extends AbstractCommand {
         this.value = value;
         this.conditional = true;
         this.predicate = predicate;
+    }
+
+    public PutValueCommand() {
     }
 
     @Override
@@ -75,5 +83,23 @@ public class PutValueCommand extends AbstractCommand {
             }
         }
         return null;
+    }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packKey(packer, key);
+        MsgPackUtils.packValue(packer, value);
+        MsgPackUtils.packBoolean(packer, conditional);
+        MsgPackUtils.packPredicate(packer, predicate);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        key = MsgPackUtils.unpackKey(unpacker);
+        value = MsgPackUtils.unpackValue(unpacker);
+        conditional = MsgPackUtils.unpackBoolean(unpacker);
+        predicate = MsgPackUtils.unpackPredicate(unpacker);
     }
 }

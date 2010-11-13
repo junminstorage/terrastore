@@ -15,19 +15,25 @@
  */
 package terrastore.store;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
-public class Key implements Comparable<Key>, Serializable {
+public class Key implements Comparable<Key>, MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
     private static final Charset CHARSET = Charset.forName("UTF-8");
     //
-    private final byte[] bytes;
+    private byte[] bytes;
 
     public Key(String key) {
         this.bytes = key.getBytes(CHARSET);
@@ -37,8 +43,21 @@ public class Key implements Comparable<Key>, Serializable {
         this.bytes = bytes;
     }
 
+    public Key() {
+    }
+
     public byte[] getBytes() {
         return bytes;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packBytes(packer, bytes);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        bytes = MsgPackUtils.unpackBytes(unpacker);
     }
 
     @Override

@@ -15,24 +15,32 @@
  */
 package terrastore.store.features;
 
-import java.io.Serializable;
+import java.io.IOException;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * Reducer object carrying data about the reducer function and its timeout.
  *
  * @author Sergio Bossa
  */
-public class Reducer implements Serializable {
+public class Reducer implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
-    private final String reducerName;
-    private final long timeoutInMillis;
+    private String reducerName;
+    private long timeoutInMillis;
 
     public Reducer(String reducerName, long timeoutInMillis) {
         this.reducerName = reducerName;
         this.timeoutInMillis = timeoutInMillis;
+    }
+
+    public Reducer() {
     }
 
     public String getReducerName() {
@@ -41,6 +49,18 @@ public class Reducer implements Serializable {
 
     public long getTimeoutInMillis() {
         return timeoutInMillis;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, reducerName);
+        MsgPackUtils.packLong(packer, timeoutInMillis);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        reducerName = MsgPackUtils.unpackString(unpacker);
+        timeoutInMillis = MsgPackUtils.unpackLong(unpacker);
     }
 
     @Override

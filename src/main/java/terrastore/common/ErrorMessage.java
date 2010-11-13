@@ -15,12 +15,18 @@
  */
 package terrastore.common;
 
-import java.io.Serializable;
+import java.io.IOException;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
-public class ErrorMessage implements Serializable {
+public class ErrorMessage implements MessagePackable, MessageUnpackable {
 
     public static final int BAD_REQUEST_ERROR_CODE = 400;
     public static final int FORBIDDEN_ERROR_CODE = 403;
@@ -28,7 +34,6 @@ public class ErrorMessage implements Serializable {
     public static final int CONFLICT_ERROR_CODE = 409;
     public static final int INTERNAL_SERVER_ERROR_CODE = 500;
     public static final int UNAVAILABLE_ERROR_CODE = 503;
-
     private int code;
     private String message;
 
@@ -57,7 +62,20 @@ public class ErrorMessage implements Serializable {
     }
 
     @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packInt(packer, code);
+        MsgPackUtils.packString(packer, message);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        code = MsgPackUtils.unpackInt(unpacker);
+        message = MsgPackUtils.unpackString(unpacker);
+    }
+
+    @Override
     public String toString() {
         return "Code: " + code + "\nMessage: " + message;
     }
+
 }

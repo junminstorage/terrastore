@@ -15,6 +15,12 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
@@ -27,16 +33,17 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class GetValueCommand extends AbstractCommand<Value> {
 
-    private final String bucketName;
-    private final Key key;
-    private final boolean conditional;
-    private final Predicate predicate;
+    private String bucketName;
+    private Key key;
+    private boolean conditional;
+    private Predicate predicate;
 
     public GetValueCommand(String bucketName, Key key) {
         this.bucketName = bucketName;
@@ -50,6 +57,9 @@ public class GetValueCommand extends AbstractCommand<Value> {
         this.key = key;
         this.conditional = true;
         this.predicate = predicate;
+    }
+
+    public GetValueCommand() {
     }
 
     @Override
@@ -77,4 +87,21 @@ public class GetValueCommand extends AbstractCommand<Value> {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
         }
     }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packKey(packer, key);
+        MsgPackUtils.packBoolean(packer, conditional);
+        MsgPackUtils.packPredicate(packer, predicate);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        key = MsgPackUtils.unpackKey(unpacker);
+        conditional = MsgPackUtils.unpackBoolean(unpacker);
+        predicate = MsgPackUtils.unpackPredicate(unpacker);
+    }
+
 }

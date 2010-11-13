@@ -36,7 +36,6 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.StaticChannelPipeline;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +46,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.Command;
-import terrastore.util.io.JavaSerializer;
+import terrastore.util.io.MsgPackSerializer;
 
 /**
  * Send {@link terrastore.communication.protocol.Command} messages to remote cluster nodes, waiting for the asynchronous response.<br>
@@ -214,7 +213,7 @@ public class RemoteNode implements Node {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-            LOG.debug(event.getCause().getMessage(), event.getCause());
+            LOG.error(event.getCause().getMessage(), event.getCause());
         }
 
         private void signalCommandResponse(String commandId, RemoteResponse response) {
@@ -246,9 +245,8 @@ public class RemoteNode implements Node {
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = new StaticChannelPipeline(
                     new LengthFieldPrepender(4),
-                    new LengthFieldBasedFrameDecoder(maxFrameLength, 0, 4, 0, 4),
-                    new SerializerEncoder(new JavaSerializer<Command>()),
-                    new SerializerDecoder(new JavaSerializer<RemoteResponse>()),
+                    new SerializerEncoder(new MsgPackSerializer()),
+                    new SerializerDecoder(new MsgPackSerializer()),
                     clientHandler);
             return pipeline;
         }

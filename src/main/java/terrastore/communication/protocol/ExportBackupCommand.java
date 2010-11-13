@@ -15,6 +15,10 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -23,18 +27,22 @@ import terrastore.router.Router;
 import terrastore.store.Bucket;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class ExportBackupCommand extends AbstractCommand {
 
-    private final String bucketName;
-    private final String destination;
+    private String bucketName;
+    private String destination;
 
     public ExportBackupCommand(String bucketName, String destination) {
         this.bucketName = bucketName;
         this.destination = destination;
+    }
+
+    public ExportBackupCommand() {
     }
 
     @Override
@@ -48,4 +56,17 @@ public class ExportBackupCommand extends AbstractCommand {
         bucket.exportBackup(destination);
         return null;
     }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packString(packer, destination);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        destination = MsgPackUtils.unpackString(unpacker);
+    }
+
 }
