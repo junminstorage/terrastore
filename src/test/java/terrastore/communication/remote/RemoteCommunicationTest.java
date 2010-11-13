@@ -15,7 +15,11 @@
  */
 package terrastore.communication.remote;
 
+import com.google.common.collect.Iterables;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -26,9 +30,13 @@ import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.protocol.GetValueCommand;
+import terrastore.communication.protocol.GetValuesCommand;
+import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Value;
+import terrastore.util.collect.Maps;
+import terrastore.util.collect.Sets;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -39,7 +47,7 @@ public class RemoteCommunicationTest {
 
     private static final String VALUE = "test";
 
-    @Test
+    /*@Test
     public void testSendProcessAndReceive() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
@@ -57,7 +65,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, 10, router);
-        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 3145728, 1000);
+        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 3145728, 60000);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -98,13 +106,13 @@ public class RemoteCommunicationTest {
 
         final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 3145728, 10, router);
         processor.start();
-        final RemoteNode sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 3145728, 10000);
+        final RemoteNode sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 3145728, 60000);
         sender.connect();
         try {
             final AtomicBoolean corrupted = new AtomicBoolean(false);
             final AtomicBoolean failed = new AtomicBoolean(false);
             final int threads = 100;
-            final int times = 10000;
+            final int times = 100;
             final ExecutorService executor = Executors.newFixedThreadPool(threads);
             long start = System.currentTimeMillis();
             for (int i = 0; i < times && corrupted.get() == false && failed.get() == false; i++) {
@@ -126,7 +134,7 @@ public class RemoteCommunicationTest {
                 });
             }
             executor.shutdown();
-            executor.awaitTermination(10, TimeUnit.SECONDS);
+            executor.awaitTermination(60, TimeUnit.SECONDS);
             if (corrupted.get()) {
                 fail("Corrupted data!");
             }
@@ -252,9 +260,47 @@ public class RemoteCommunicationTest {
             processor.stop();
             verify(router, node);
         }
+    }*/
+
+    @Test
+    public void testWithLargeDataSet() throws Exception {
+        String nodeName = "node";
+        String bucketName = "bucket";
+        Set<Key> keys = new HashSet<Key>();
+        for (int i = 0; i < 100000; i++) {
+            keys.add(new Key(i + new String(new byte[100]) + i));
+        }
+
+        Router router = createMock(Router.class);
+        Node node = createMock(Node.class);
+        makeThreadSafe(router, true);
+        makeThreadSafe(node, true);
+        router.routeToNodesFor(eq(bucketName), eq(keys));
+        expectLastCall().andReturn(Maps.hash(new Node[]{node}, new Set[]{keys})).anyTimes();
+        node.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(Collections.EMPTY_MAP).anyTimes();
+
+        replay(router, node);
+
+        RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 1024, 10, router);
+        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1024, 60000);
+
+        GetValuesCommand command = new GetValuesCommand(bucketName, keys);
+
+        try {
+            // Start processor
+            processor.start();
+            // Connect node:
+            sender.connect();
+            // Try to send:
+            sender.<Value>send(command);
+        } finally {
+            verify(router, node);
+            processor.stop();
+        }
     }
 
-    @Test(expected = CommunicationException.class)
+    //@Test(expected = CommunicationException.class)
     public void testCommunicationError() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";

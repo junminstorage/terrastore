@@ -15,19 +15,24 @@
  */
 package terrastore.store.features;
 
-import java.io.Serializable;
+import java.io.IOException;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.store.Key;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * Range object carrying data about range queries.
  *
  * @author Sergio Bossa
  */
-public class Range implements Serializable {
+public class Range implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
     private Key startKey;
     private Key endKey;
     private int limit;
@@ -67,6 +72,24 @@ public class Range implements Serializable {
 
     public long getTimeToLive() {
         return timeToLive;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packKey(packer, startKey);
+        MsgPackUtils.packKey(packer, endKey);
+        MsgPackUtils.packInt(packer, limit);
+        MsgPackUtils.packString(packer, keyComparatorName);
+        MsgPackUtils.packLong(packer, timeToLive);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        startKey = MsgPackUtils.unpackKey(unpacker);
+        endKey = MsgPackUtils.unpackKey(unpacker);
+        limit = MsgPackUtils.unpackInt(unpacker);
+        keyComparatorName = MsgPackUtils.unpackString(unpacker);
+        timeToLive = MsgPackUtils.unpackLong(unpacker);
     }
 
     @Override

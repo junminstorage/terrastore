@@ -18,28 +18,48 @@ package terrastore.communication.remote;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
+import org.jboss.netty.handler.codec.frame.CorruptedFrameException;
+import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import terrastore.util.io.Serializer;
 
 /**
- * @param <T>
  * @author Sergio Bossa
  */
-@Sharable
-public class SerializerDecoder<T> extends OneToOneDecoder {
+public class SerializerDecoder extends FrameDecoder {
 
-    private final Serializer<T> serializer;
+    private final Serializer serializer;
 
-    public SerializerDecoder(Serializer<T> serializer) {
+    public SerializerDecoder(Serializer serializer) {
         this.serializer = serializer;
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
-        ChannelBuffer buffer = (ChannelBuffer) msg;
-        return serializer.deserialize(new ChannelBufferInputStream(buffer));
+    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+        boolean hasLength = buffer.readableBytes() >= 4;
+        if (hasLength) {
+            buffer.markReaderIndex();
+            int length = buffer.readInt();
+            boolean hasContent = buffer.readableBytes() >= length;
+            if (hasContent) {
+                int afterReadIndex = buffer.readerIndex() + length;
+                try {
+                    Object result = serializer.deserialize(new ChannelBufferInputStream(buffer, length));
+                    if (buffer.readerIndex() != afterReadIndex) {
+                        throw new IllegalStateException("Errore while decoding data!");
+                    }
+                    return result;
+                } catch (Exception ex) {
+                    buffer.readerIndex(afterReadIndex);
+                    throw new CorruptedFrameException(ex.getMessage(), ex);
+                }
+            } else {
+                buffer.resetReaderIndex();
+                return null;
+            }
+        } else {
+            return null;
+        }
     }
 
 }

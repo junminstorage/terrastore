@@ -15,9 +15,13 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -28,15 +32,16 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.features.Mapper;
 import terrastore.util.collect.Maps;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class MapCommand extends AbstractCommand<Map<String, Object>> {
 
-    private final String bucketName;
-    private final Set<Key> keys;
-    private final Mapper mapper;
+    private String bucketName;
+    private Set<Key> keys;
+    private Mapper mapper;
 
     public MapCommand(MapCommand command, Set<Key> keys) {
         this.bucketName = command.bucketName;
@@ -48,6 +53,9 @@ public class MapCommand extends AbstractCommand<Map<String, Object>> {
         this.bucketName = bucketName;
         this.keys = keys;
         this.mapper = mapper;
+    }
+
+    public MapCommand() {
     }
 
     @Override
@@ -66,4 +74,19 @@ public class MapCommand extends AbstractCommand<Map<String, Object>> {
     public Map<String, Object> executeOn(final Store store) throws StoreOperationException {
         return Maps.serializing(store.map(bucketName, keys, mapper));
     }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packKeys(packer, keys);
+        MsgPackUtils.packMapper(packer, mapper);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        keys = MsgPackUtils.unpackKeys(unpacker);
+        mapper = MsgPackUtils.unpackMapper(unpacker);
+    }
+
 }

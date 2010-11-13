@@ -15,8 +15,12 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -57,5 +61,13 @@ public class MembershipCommand extends AbstractCommand<View> {
             }
         }
         return locaCluster;
+    }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
     }
 }

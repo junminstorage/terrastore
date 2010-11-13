@@ -15,8 +15,12 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -28,18 +32,22 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.features.Range;
 import terrastore.util.collect.Sets;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class KeysInRangeCommand extends AbstractCommand<Set<Key>> {
 
-    private final String bucketName;
-    private final Range range;
+    private String bucketName;
+    private Range range;
 
     public KeysInRangeCommand(String bucketName, Range range) {
         this.bucketName = bucketName;
         this.range = range;
+    }
+
+    public KeysInRangeCommand() {
     }
 
     @Override
@@ -57,4 +65,17 @@ public class KeysInRangeCommand extends AbstractCommand<Set<Key>> {
             return Collections.<Key>emptySet();
         }
     }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packRange(packer, range);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        range = MsgPackUtils.unpackRange(unpacker);
+    }
+
 }

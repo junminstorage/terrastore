@@ -18,16 +18,21 @@ package terrastore.store;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Map;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.util.io.IOUtils;
+import terrastore.util.io.MsgPackUtils;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -35,17 +40,19 @@ import terrastore.util.json.JsonUtils;
  *
  * @author Sergio Bossa
  */
-public class Value implements Serializable {
+public class Value implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
     private static final Charset CHARSET = Charset.forName("UTF-8");
     //
-    private final byte[] bytes;
-    private final boolean compressed;
+    private byte[] bytes;
+    private boolean compressed;
 
     public Value(byte[] bytes) {
         this.bytes = bytes;
         this.compressed = IOUtils.isCompressed(bytes);
+    }
+
+    public Value() {
     }
 
     public final byte[] getBytes() {
@@ -94,6 +101,16 @@ public class Value implements Serializable {
 
     public final boolean dispatch(Key key, Predicate predicate, Condition condition) {
         return condition.isSatisfied(key.toString(), JsonUtils.toUnmodifiableMap(this), predicate.getConditionExpression());
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packBytes(packer, bytes);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        bytes = MsgPackUtils.unpackBytes(unpacker);
     }
 
     @Override

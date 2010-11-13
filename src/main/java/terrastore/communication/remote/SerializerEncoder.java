@@ -25,18 +25,17 @@ import terrastore.util.io.Serializer;
 /**
  * @author Sergio Bossa
  */
-@Sharable
-public class SerializerEncoder<T> extends OneToOneEncoder {
+public class SerializerEncoder extends OneToOneEncoder {
 
-    private final Serializer<T> serializer;
+    private final Serializer serializer;
 
-    public SerializerEncoder(Serializer<T> serializer) {
+    public SerializerEncoder(Serializer serializer) {
         this.serializer = serializer;
     }
 
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
-        return ChannelBuffers.wrappedBuffer(serializer.serialize((T) msg));
+        return ChannelBuffers.wrappedBuffer(serializer.serialize(msg));
     }
 
 }

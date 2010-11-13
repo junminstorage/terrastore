@@ -15,12 +15,20 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
+import terrastore.util.io.MsgPackUtils;
+
 /**
  * @author Sergio Bossa
  */
-public abstract class AbstractCommand<R> implements Command {
+public abstract class AbstractCommand<R> implements Command, MessagePackable, MessageUnpackable {
 
-    private String id;
+    private String id = "NULL";
 
     public void setId(String id) {
         this.id = id;
@@ -29,4 +37,41 @@ public abstract class AbstractCommand<R> implements Command {
     public String getId() {
         return id;
     }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        if (id == null) {
+            throw new IOException("Trying to serialize a command with no id!");
+        } else {
+            MsgPackUtils.packString(packer, id);
+            doSerialize(packer);
+        }
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        id = MsgPackUtils.unpackString(unpacker);
+        doDeserialize(unpacker);
+
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && (obj instanceof Command) && ((Command) obj).getId().equals(this.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return id;
+    }
+
+    protected abstract void doSerialize(Packer packer) throws IOException;
+
+    protected abstract void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException;
+
 }

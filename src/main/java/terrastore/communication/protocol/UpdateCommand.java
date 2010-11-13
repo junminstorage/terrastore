@@ -15,6 +15,10 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -26,20 +30,24 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Update;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class UpdateCommand extends AbstractCommand<Value> {
 
-    private final String bucketName;
-    private final Key key;
-    private final Update update;
+    private String bucketName;
+    private Key key;
+    private Update update;
 
     public UpdateCommand(String bucketName, Key key, Update update) {
         this.bucketName = bucketName;
         this.key = key;
         this.update = update;
+    }
+
+    public UpdateCommand() {
     }
 
     @Override
@@ -56,4 +64,19 @@ public class UpdateCommand extends AbstractCommand<Value> {
             return null;
         }
     }
+
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packKey(packer, key);
+        MsgPackUtils.packUpdate(packer, update);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        key = MsgPackUtils.unpackKey(unpacker);
+        update = MsgPackUtils.unpackUpdate(unpacker);
+    }
+
 }

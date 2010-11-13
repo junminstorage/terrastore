@@ -15,9 +15,13 @@
  */
 package terrastore.communication.protocol;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.msgpack.MessageTypeException;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
@@ -30,16 +34,17 @@ import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
 import terrastore.util.collect.Maps;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
 public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
 
-    private final String bucketName;
-    private final Set<Key> keys;
-    private final boolean conditional;
-    private final Predicate predicate;
+    private String bucketName;
+    private Set<Key> keys;
+    private boolean conditional;
+    private Predicate predicate;
 
     public GetValuesCommand(GetValuesCommand command, Set<Key> keys) {
         this.bucketName = command.bucketName;
@@ -60,6 +65,9 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
         this.keys = keys;
         this.conditional = true;
         this.predicate = predicate;
+    }
+
+    public GetValuesCommand() {
     }
 
     @Override
@@ -90,4 +98,19 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
         }
     }
 
+    @Override
+    protected void doSerialize(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packKeys(packer, keys);
+        MsgPackUtils.packBoolean(packer, conditional);
+        MsgPackUtils.packPredicate(packer, predicate);
+    }
+
+    @Override
+    protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
+        bucketName = MsgPackUtils.unpackString(unpacker);
+        keys = MsgPackUtils.unpackKeys(unpacker);
+        conditional = MsgPackUtils.unpackBoolean(unpacker);
+        predicate = MsgPackUtils.unpackPredicate(unpacker);
+    }
 }

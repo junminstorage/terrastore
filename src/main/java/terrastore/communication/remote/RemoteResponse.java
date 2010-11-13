@@ -15,19 +15,24 @@
  */
 package terrastore.communication.remote;
 
+import java.io.IOException;
 import java.io.Serializable;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 import terrastore.common.ErrorMessage;
+import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
-public class RemoteResponse implements Serializable {
+public class RemoteResponse implements MessagePackable, MessageUnpackable {
 
-    private static final long serialVersionUID = 12345678901L;
-
-    private final String correlationId;
-    private final Object result;
-    private final ErrorMessage error;
+    private String correlationId;
+    private Object result;
+    private ErrorMessage error;
 
     public RemoteResponse(String correlationId, Object result) {
         this(correlationId, result, null);
@@ -35,6 +40,9 @@ public class RemoteResponse implements Serializable {
 
     public RemoteResponse(String correlationId, ErrorMessage error) {
         this(correlationId, null, error);
+    }
+
+    public RemoteResponse() {
     }
 
     protected RemoteResponse(String correlationId, Object result, ErrorMessage error) {
@@ -57,5 +65,19 @@ public class RemoteResponse implements Serializable {
 
     public boolean isOk() {
         return error == null;
+    }
+
+    @Override
+    public void messagePack(Packer packer) throws IOException {
+        MsgPackUtils.packString(packer, correlationId);
+        MsgPackUtils.packObject(packer, result);
+        MsgPackUtils.packErrorMessage(packer, error);
+    }
+
+    @Override
+    public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
+        correlationId = MsgPackUtils.unpackString(unpacker);
+        result = MsgPackUtils.unpackObject(unpacker);
+        error = MsgPackUtils.unpackErrorMessage(unpacker);
     }
 }
