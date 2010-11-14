@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import terrastore.store.operators.Aggregator;
+import static terrastore.util.concurrent.ConcurrentUtils.*;
 
 /**
  * @author Sergio Bossa
@@ -31,6 +32,7 @@ public class KeysAggregator implements Aggregator {
         Map<String, Object> result = new HashMap<String, Object>(keys.size());
         List<String> list = new ArrayList<String>(keys.size());
         for (Map<String, Object> key : keys) {
+            exitOnTimeout();
             Object value = key.get("keys");
             if (value instanceof String) {
                 list.add((String) value);

@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.util.global;
+package terrastore.util.concurrent;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

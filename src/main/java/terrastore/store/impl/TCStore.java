@@ -52,7 +52,7 @@ import terrastore.store.operators.Aggregator;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
-import terrastore.util.global.GlobalExecutor;
+import terrastore.util.concurrent.GlobalExecutor;
 import terrastore.util.json.JsonUtils;
 
 /**

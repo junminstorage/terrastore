@@ -55,7 +55,7 @@ import terrastore.store.features.Range;
 import terrastore.store.operators.Comparator;
 import terrastore.util.collect.Sets;
 import terrastore.util.collect.Transformer;
-import terrastore.util.global.GlobalExecutor;
+import terrastore.util.concurrent.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
