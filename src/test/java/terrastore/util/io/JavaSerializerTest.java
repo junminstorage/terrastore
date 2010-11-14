@@ -15,6 +15,7 @@
  */
 package terrastore.util.io;
 
+import java.io.Serializable;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -29,7 +30,7 @@ public class JavaSerializerTest {
         assertEquals(obj, deserialized);
     }
 
-    private static class TestObject {
+    public static class TestObject implements Serializable {
 
         private Object data;
 
