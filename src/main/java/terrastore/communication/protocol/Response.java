@@ -13,25 +13,20 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.process;
+package terrastore.communication.protocol;
 
-import terrastore.communication.protocol.Command;
-import terrastore.communication.protocol.Response;
-import terrastore.router.Router;
+import terrastore.common.ErrorMessage;
 
 /**
  * @author Sergio Bossa
  */
-public class RouterHandler<R> implements CommandHandler<R> {
+public interface Response<R> {
 
-    private final Router router;
+    public String getCorrelationId();
 
-    public RouterHandler(Router router) {
-        this.router = router;
-    }
+    public R getResult();
 
-    @Override
-    public Response<R> handle(Command<R> command) throws Exception {
-        return command.executeOn(router);
-    }
+    public ErrorMessage getError();
+
+    public boolean isOk();
 }

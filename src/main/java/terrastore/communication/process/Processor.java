@@ -17,6 +17,7 @@ package terrastore.communication.process;
 
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
+import terrastore.communication.protocol.Response;
 
 /**
  * @author Sergio Bossa

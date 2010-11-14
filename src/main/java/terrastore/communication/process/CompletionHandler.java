@@ -15,12 +15,14 @@
  */
 package terrastore.communication.process;
 
+import terrastore.communication.protocol.Response;
+
 /**
  * @author Sergio Bossa
  */
 public interface CompletionHandler<R, E extends Exception> {
 
-    public void handleSuccess(R response) throws Exception;
+    public void handleSuccess(Response<R> response) throws Exception;
 
     public void handleFailure(E exception) throws Exception;
 }

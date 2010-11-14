@@ -1,15 +1,25 @@
+/**
+ * Copyright 2009 - 2010 Sergio Bossa (sergio.bossa@gmail.com)
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package terrastore.util.io;
 
-import com.ning.compress.lzf.LZFOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.msgpack.MessagePackable;
 import org.msgpack.MessageUnpackable;
 import org.msgpack.Packer;
@@ -24,18 +34,13 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Range;
 import terrastore.store.features.Reducer;
 import terrastore.store.features.Update;
-import terrastore.util.collect.Sets;
 
 /**
  * @author Sergio Bossa
  */
 public class MsgPackUtils {
 
-    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
-    public static void packClass(Packer packer, Class clazz) throws IOException {
-        packer.packString(clazz.getName());
-    }
+    private static final JavaSerializer HELPER = new JavaSerializer();
 
     public static void packBoolean(Packer packer, boolean value) throws IOException {
         packer.packBoolean(value);
@@ -82,21 +87,6 @@ public class MsgPackUtils {
     }
 
     public static void packKeys(Packer packer, Set<Key> keys) throws IOException {
-        /*ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectStream = null;
-        try {
-            objectStream = new ObjectOutputStream(new LZFOutputStream(byteStream));
-            objectStream.writeObject(Sets.serializing(keys));
-        } catch (Exception ex) {
-            throw new IllegalStateException(ex.getMessage(), ex);
-        } finally {
-            try {
-                objectStream.close();
-            } catch (Exception ex) {
-                throw new IllegalStateException(ex.getMessage(), ex);
-            }
-        }
-        packBytes(packer, byteStream.toByteArray());*/
         if (keys != null) {
             packer.packInt(keys.size());
             for (Key key : keys) {
@@ -121,7 +111,15 @@ public class MsgPackUtils {
 
     public static void packGenericMap(Packer packer, Map<String, Object> genericMap) throws IOException {
         if (genericMap != null) {
-            packer.pack(JSON_MAPPER.writeValueAsBytes(genericMap));
+            packer.pack(HELPER.serialize(genericMap));
+        } else {
+            packer.packNil();
+        }
+    }
+
+    public static void packGenericSet(Packer packer, Set genericSet) throws IOException {
+        if (genericSet != null) {
+            packer.pack(HELPER.serialize(genericSet));
         } else {
             packer.packNil();
         }
@@ -180,29 +178,6 @@ public class MsgPackUtils {
             packer.pack(view);
         } else {
             packer.packNil();
-        }
-    }
-
-    public static void packObject(Packer packer, Object object) throws IOException {
-        if (object != null) {
-            if (object instanceof MessagePackable) {
-                MessagePackable packable = (MessagePackable) object;
-                packClass(packer, packable.getClass());
-                packer.pack(packable);
-            } else {
-                throw new IOException("Not a serializable object: " + object);
-            }
-        } else {
-            packer.packNil();
-        }
-    }
-
-    public static Class unpackClass(Unpacker unpacker) throws IOException {
-        try {
-            String className = unpacker.unpackString();
-            return Class.forName(className);
-        } catch (Exception ex) {
-            throw new IllegalStateException(ex.getMessage(), ex);
         }
     }
 
@@ -280,7 +255,15 @@ public class MsgPackUtils {
         if (unpacker.tryUnpackNull()) {
             return null;
         } else {
-            return JSON_MAPPER.readValue(new ByteArrayInputStream(unpacker.unpackByteArray()), Map.class);
+            return (Map<String, Object>) HELPER.deserialize(unpacker.unpackByteArray());
+        }
+    }
+
+    public static Set unpackGenericSet(Unpacker unpacker) throws IOException {
+        if (unpacker.tryUnpackNull()) {
+            return null;
+        } else {
+            return (Set) HELPER.deserialize(unpacker.unpackByteArray());
         }
     }
 
@@ -339,14 +322,4 @@ public class MsgPackUtils {
             return unpacker.unpack(View.class);
         }
     }
-
-    public static Object unpackObject(Unpacker unpacker) throws IOException {
-        Class clazz = unpackClass(unpacker);
-        if (MessageUnpackable.class.isAssignableFrom(clazz)) {
-            return unpacker.unpack(clazz);
-        } else {
-            throw new IOException("Not a serializable class: " + clazz);
-        }
-    }
-
 }

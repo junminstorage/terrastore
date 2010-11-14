@@ -63,10 +63,11 @@ public class ActiveMQEventBus implements EventBus {
     //
     private static final Logger LOG = LoggerFactory.getLogger(ActiveMQEventBus.class);
     //
-    private final ConnectionFactory jmsConnectionFactory;
-    private final JmsTemplate producer;
     private final ConcurrentMap<String, DefaultMessageListenerContainer> consumers = new ConcurrentHashMap<String, DefaultMessageListenerContainer>();
     private final Lock stateLock = new ReentrantLock();
+    //
+    private final ConnectionFactory jmsConnectionFactory;
+    private final JmsTemplate producer;
     private final List<EventListener> eventListeners;
     private final ActionExecutor actionExecutor;
     private final boolean enabled;

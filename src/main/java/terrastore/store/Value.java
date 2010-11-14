@@ -18,6 +18,7 @@ package terrastore.store;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Map;
@@ -40,8 +41,9 @@ import terrastore.util.json.JsonUtils;
  *
  * @author Sergio Bossa
  */
-public class Value implements MessagePackable, MessageUnpackable {
+public class Value implements MessagePackable, MessageUnpackable, Serializable {
 
+    private static final long serialVersionUID = 12345678901L;
     private static final Charset CHARSET = Charset.forName("UTF-8");
     //
     private byte[] bytes;

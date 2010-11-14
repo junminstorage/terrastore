@@ -16,6 +16,7 @@
 package terrastore.store.features;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -31,8 +32,10 @@ import terrastore.util.io.MsgPackUtils;
  *
  * @author Sergio Bossa
  */
-public class Update implements MessagePackable, MessageUnpackable {
+public class Update implements MessagePackable, MessageUnpackable, Serializable {
 
+    private static final long serialVersionUID = 12345678901L;
+    //
     private String functionName;
     private long timeoutInMillis;
     private Map<String, Object> parameters;

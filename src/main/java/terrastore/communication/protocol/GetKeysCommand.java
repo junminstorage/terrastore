@@ -30,7 +30,6 @@ import terrastore.store.Bucket;
 import terrastore.store.Key;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.util.collect.Sets;
 import terrastore.util.io.MsgPackUtils;
 
 /**
@@ -48,17 +47,17 @@ public class GetKeysCommand extends AbstractCommand<Set<Key>> {
     }
 
     @Override
-    public Set<String> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Response<Set<Key>> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
-        return Sets.serializing(node.<Set<String>>send(this));
+        return new KeysResponse(id, node.<Set<Key>>send(this));
     }
 
-    public Set<Key> executeOn(Store store) throws StoreOperationException {
+    public Response<Set<Key>> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
-            return Sets.serializing(bucket.keys());
+            return new KeysResponse(id, bucket.keys());
         } else {
-            return Collections.emptySet();
+            return new KeysResponse(id, Collections.<Key>emptySet());
         }
     }
 

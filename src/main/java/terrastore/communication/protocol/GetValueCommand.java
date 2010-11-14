@@ -16,9 +16,7 @@
 package terrastore.communication.protocol;
 
 import java.io.IOException;
-import org.msgpack.MessagePackable;
 import org.msgpack.MessageTypeException;
-import org.msgpack.MessageUnpackable;
 import org.msgpack.Packer;
 import org.msgpack.Unpacker;
 import terrastore.common.ErrorMessage;
@@ -63,24 +61,24 @@ public class GetValueCommand extends AbstractCommand<Value> {
     }
 
     @Override
-    public Value executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Response<Value> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
-        return node.<Value>send(this);
+        return new ValueResponse(id, node.<Value>send(this));
     }
 
-    public Value executeOn(Store store) throws StoreOperationException {
+    public Response<Value> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             if (conditional) {
                 Value value = bucket.conditionalGet(key, predicate);
                 if (value != null) {
-                    return value;
+                    return new ValueResponse(id, value);
                 } else {
                     throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE,
                             "Unsatisfied condition: " + predicate.getConditionType() + ":" + predicate.getConditionExpression() + " for key: " + key));
                 }
             } else {
-                return bucket.get(key);
+                return new ValueResponse(id, bucket.get(key));
             }
         } else {
             // Deal with non existent bucket as if it were a non existent key:

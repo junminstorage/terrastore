@@ -13,10 +13,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.communication.remote;
+package terrastore.communication.protocol;
 
 import java.io.IOException;
-import java.io.Serializable;
 import org.msgpack.MessagePackable;
 import org.msgpack.MessageTypeException;
 import org.msgpack.MessageUnpackable;
@@ -28,35 +27,25 @@ import terrastore.util.io.MsgPackUtils;
 /**
  * @author Sergio Bossa
  */
-public class RemoteResponse implements MessagePackable, MessageUnpackable {
+public abstract class AbstractResponse<R> implements Response<R>, MessagePackable, MessageUnpackable {
 
     private String correlationId;
-    private Object result;
     private ErrorMessage error;
 
-    public RemoteResponse(String correlationId, Object result) {
-        this(correlationId, result, null);
+    public AbstractResponse(String correlationId) {
+        this(correlationId, null);
     }
 
-    public RemoteResponse(String correlationId, ErrorMessage error) {
-        this(correlationId, null, error);
-    }
-
-    public RemoteResponse() {
-    }
-
-    protected RemoteResponse(String correlationId, Object result, ErrorMessage error) {
+    public AbstractResponse(String correlationId, ErrorMessage error) {
         this.correlationId = correlationId;
-        this.result = result;
         this.error = error;
+    }
+
+    public AbstractResponse() {
     }
 
     public String getCorrelationId() {
         return correlationId;
-    }
-
-    public Object getResult() {
-        return result;
     }
 
     public ErrorMessage getError() {
@@ -70,14 +59,33 @@ public class RemoteResponse implements MessagePackable, MessageUnpackable {
     @Override
     public void messagePack(Packer packer) throws IOException {
         MsgPackUtils.packString(packer, correlationId);
-        MsgPackUtils.packObject(packer, result);
         MsgPackUtils.packErrorMessage(packer, error);
+        doSerialize(packer);
     }
 
     @Override
     public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
         correlationId = MsgPackUtils.unpackString(unpacker);
-        result = MsgPackUtils.unpackObject(unpacker);
         error = MsgPackUtils.unpackErrorMessage(unpacker);
+        doDeserialize(unpacker);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && (obj instanceof Response) && ((Response) obj).getCorrelationId().equals(this.correlationId);
+    }
+
+    @Override
+    public int hashCode() {
+        return correlationId.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return correlationId;
+    }
+
+    protected abstract void doSerialize(Packer packer) throws IOException;
+
+    protected abstract void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException;
 }

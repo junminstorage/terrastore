@@ -64,12 +64,13 @@ public class PutValueCommand extends AbstractCommand {
     }
 
     @Override
-    public Object executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public NullResponse executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
-        return node.send(this);
+        node.send(this);
+        return new NullResponse(id);
     }
 
-    public Object executeOn(Store store) throws StoreOperationException {
+    public NullResponse executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.getOrCreate(bucketName);
         if (bucket != null) {
             if (conditional) {
@@ -82,7 +83,7 @@ public class PutValueCommand extends AbstractCommand {
                 bucket.put(key, value);
             }
         }
-        return null;
+        return new NullResponse(id);
     }
 
     @Override

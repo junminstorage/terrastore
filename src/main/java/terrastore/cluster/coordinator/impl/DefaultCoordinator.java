@@ -64,14 +64,13 @@ import terrastore.util.io.Serializer;
 public class DefaultCoordinator implements Coordinator, ClusterListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCoordinator.class);
+    private static final Serializer SERIALIZER = new JavaSerializer();
     //
     private Lock stateLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".stateLock").writeLock();
     private ClusteredAtomicLong membershipCounter = TCMaster.getInstance().getLong(DefaultCoordinator.class.getName() + ".membershipCounter");
     private Map<String, byte[]> addressTable = TCMaster.getInstance().getMap(DefaultCoordinator.class.getName() + ".addressTable");
     private Condition setupAddressCondition = stateLock.newCondition();
     private Condition setupMembershipCondition = stateLock.newCondition();
-    //
-    private Serializer<ServerConfiguration> javaSerializer = new JavaSerializer<ServerConfiguration>();
     //
     private volatile ReentrantLock reconnectionLock;
     private volatile Condition reconnectionCondition;
@@ -327,7 +326,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void setupAddressTable() {
-        addressTable.put(thisConfiguration.getName(), javaSerializer.serialize(thisConfiguration));
+        addressTable.put(thisConfiguration.getName(), SERIALIZER.serialize(thisConfiguration));
         setupAddressCondition.signalAll();
     }
 
@@ -346,7 +345,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         while (!addressTable.containsKey(remoteNodeName)) {
             setupAddressCondition.await(1000, TimeUnit.MILLISECONDS);
         }
-        ServerConfiguration remoteConfiguration = javaSerializer.deserialize(addressTable.get(remoteNodeName));
+        ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(addressTable.get(remoteNodeName));
         if (remoteConfiguration != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {

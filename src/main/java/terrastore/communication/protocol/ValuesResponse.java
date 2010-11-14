@@ -16,51 +16,41 @@
 package terrastore.communication.protocol;
 
 import java.io.IOException;
+import java.util.Map;
 import org.msgpack.MessageTypeException;
 import org.msgpack.Packer;
 import org.msgpack.Unpacker;
-import terrastore.communication.CommunicationException;
-import terrastore.communication.Node;
-import terrastore.communication.ProcessingException;
-import terrastore.router.MissingRouteException;
-import terrastore.router.Router;
-import terrastore.store.Store;
-import terrastore.store.StoreOperationException;
+import terrastore.store.Key;
+import terrastore.store.Value;
 import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
-public class RemoveBucketCommand extends AbstractCommand {
+public class ValuesResponse extends AbstractResponse<Map<Key, Value>> {
 
-    private String bucketName;
+    private Map<Key, Value> result;
 
-    public RemoveBucketCommand(String bucketName) {
-        this.bucketName = bucketName;
+    public ValuesResponse(String correlationId, Map<Key, Value> result) {
+        super(correlationId);
+        this.result = result;
     }
 
-    public RemoveBucketCommand() {
+    public ValuesResponse() {
     }
 
     @Override
-    public NullResponse executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
-        Node node = router.routeToLocalNode();
-        node.send(this);
-        return new NullResponse(id);
-    }
-
-    public NullResponse executeOn(Store store) throws StoreOperationException {
-        store.remove(bucketName);
-        return new NullResponse(id);
+    public Map<Key, Value> getResult() {
+        return result;
     }
 
     @Override
     protected void doSerialize(Packer packer) throws IOException {
-        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packValues(packer, result);
     }
 
     @Override
     protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
-        bucketName = MsgPackUtils.unpackString(unpacker);
+        result = MsgPackUtils.unpackValues(unpacker);
     }
 }

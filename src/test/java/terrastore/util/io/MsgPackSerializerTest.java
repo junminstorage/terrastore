@@ -17,23 +17,54 @@ package terrastore.util.io;
 
 import java.io.IOException;
 import org.junit.Test;
+import org.msgpack.MessagePackable;
+import org.msgpack.MessageTypeException;
+import org.msgpack.MessageUnpackable;
 import static org.junit.Assert.*;
-import terrastore.communication.protocol.GetValueCommand;
-import terrastore.store.Key;
-import terrastore.store.features.Predicate;
+import org.msgpack.Packer;
+import org.msgpack.Unpacker;
 
+/**
+ * @author Sergio Bossa
+ */
 public class MsgPackSerializerTest {
 
     @Test
     public void testSerializeDeserialize() throws IOException, ClassNotFoundException {
-        GetValueCommand command = new GetValueCommand("bucket", new Key("key"), new Predicate("type:expression"));
-        command.setId("test");
+        TestObject obj = new TestObject("test");
         //
-        MsgPackSerializer<GetValueCommand> serializer = new MsgPackSerializer<GetValueCommand>();
+        MsgPackSerializer<TestObject> serializer = new MsgPackSerializer<TestObject>();
         //
-        byte[] serialized = serializer.serialize(command);
-        GetValueCommand deserialized = serializer.deserialize(serialized);
+        byte[] serialized = serializer.serialize(obj);
+        TestObject deserialized = serializer.deserialize(serialized);
         assertNotNull(deserialized);
+        assertEquals(obj, deserialized);
     }
 
+    public static class TestObject implements MessagePackable, MessageUnpackable {
+
+        private String data;
+
+        public TestObject(String data) {
+            this.data = data;
+        }
+
+        public TestObject() {
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof TestObject) && ((TestObject) obj).data.equals(this.data);
+        }
+
+        @Override
+        public void messagePack(Packer packer) throws IOException {
+            MsgPackUtils.packString(packer, data);
+        }
+
+        @Override
+        public void messageUnpack(Unpacker unpckr) throws IOException, MessageTypeException {
+            data = MsgPackUtils.unpackString(unpckr);
+        }
+    }
 }

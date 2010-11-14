@@ -47,17 +47,18 @@ public class RemoveValueCommand extends AbstractCommand {
     }
 
     @Override
-    public Object executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public NullResponse executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
-        return node.send(this);
+        node.send(this);
+        return new NullResponse(id);
     }
 
-    public Object executeOn(Store store) throws StoreOperationException {
+    public NullResponse executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         if (bucket != null) {
             bucket.remove(key);
         }
-        return null;
+        return new NullResponse(id);
     }
     
     @Override

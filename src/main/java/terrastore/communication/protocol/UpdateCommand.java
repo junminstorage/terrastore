@@ -51,17 +51,17 @@ public class UpdateCommand extends AbstractCommand<Value> {
     }
 
     @Override
-    public Value executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Response<Value> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToNodeFor(bucketName, key);
-        return node.<Value>send(this);
+        return new ValueResponse(id, node.<Value>send(this));
     }
 
-    public Value executeOn(Store store) throws StoreOperationException {
+    public Response<Value> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.getOrCreate(bucketName);
         if (bucket != null) {
-            return bucket.update(key, update);
+            return new ValueResponse(id, bucket.update(key, update));
         } else {
-            return null;
+            return new ValueResponse(id, null);
         }
     }
 

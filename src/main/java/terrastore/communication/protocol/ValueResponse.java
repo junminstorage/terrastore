@@ -19,48 +19,36 @@ import java.io.IOException;
 import org.msgpack.MessageTypeException;
 import org.msgpack.Packer;
 import org.msgpack.Unpacker;
-import terrastore.communication.CommunicationException;
-import terrastore.communication.Node;
-import terrastore.communication.ProcessingException;
-import terrastore.router.MissingRouteException;
-import terrastore.router.Router;
-import terrastore.store.Store;
-import terrastore.store.StoreOperationException;
+import terrastore.store.Value;
 import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
  */
-public class RemoveBucketCommand extends AbstractCommand {
+public class ValueResponse extends AbstractResponse<Value> {
 
-    private String bucketName;
+    private Value result;
 
-    public RemoveBucketCommand(String bucketName) {
-        this.bucketName = bucketName;
+    public ValueResponse(String correlationId, Value result) {
+        super(correlationId);
+        this.result = result;
     }
 
-    public RemoveBucketCommand() {
+    public ValueResponse() {
     }
 
     @Override
-    public NullResponse executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
-        Node node = router.routeToLocalNode();
-        node.send(this);
-        return new NullResponse(id);
-    }
-
-    public NullResponse executeOn(Store store) throws StoreOperationException {
-        store.remove(bucketName);
-        return new NullResponse(id);
+    public Value getResult() {
+        return result;
     }
 
     @Override
     protected void doSerialize(Packer packer) throws IOException {
-        MsgPackUtils.packString(packer, bucketName);
+        MsgPackUtils.packValue(packer, result);
     }
 
     @Override
     protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
-        bucketName = MsgPackUtils.unpackString(unpacker);
+        result = MsgPackUtils.unpackValue(unpacker);
     }
 }

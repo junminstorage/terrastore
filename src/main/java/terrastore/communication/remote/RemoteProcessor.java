@@ -42,6 +42,8 @@ import terrastore.communication.process.AsynchronousExecutor;
 import terrastore.communication.protocol.Command;
 import terrastore.communication.process.CompletionHandler;
 import terrastore.communication.process.RouterHandler;
+import terrastore.communication.protocol.NullResponse;
+import terrastore.communication.protocol.Response;
 import terrastore.router.Router;
 import terrastore.util.io.MsgPackSerializer;
 
@@ -163,13 +165,13 @@ public class RemoteProcessor extends AbstractProcessor {
         }
 
         @Override
-        public void handleSuccess(Object response) throws Exception {
-            channel.write(new RemoteResponse(commandId, response));
+        public void handleSuccess(Response response) throws Exception {
+            channel.write(response);
         }
 
         @Override
         public void handleFailure(ProcessingException exception) throws Exception {
-            channel.write(new RemoteResponse(commandId, exception.getErrorMessage()));
+            channel.write(new NullResponse(commandId, exception.getErrorMessage()));
         }
     }
 }

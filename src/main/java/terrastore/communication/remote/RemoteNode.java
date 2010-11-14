@@ -46,6 +46,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.communication.protocol.Command;
+import terrastore.communication.protocol.Response;
 import terrastore.util.io.MsgPackSerializer;
 
 /**
@@ -59,7 +60,7 @@ public class RemoteNode implements Node {
     private static final transient Logger LOG = LoggerFactory.getLogger(RemoteNode.class);
     //
     private final Lock stateLock = new ReentrantLock();
-    private final ConcurrentMap<String, SynchronousQueue<RemoteResponse>> rendezvous = new ConcurrentHashMap<String, SynchronousQueue<RemoteResponse>>();
+    private final ConcurrentMap<String, SynchronousQueue<Response>> rendezvous = new ConcurrentHashMap<String, SynchronousQueue<Response>>();
     private final ServerConfiguration configuration;
     private final int maxFrameLength;
     private final long timeoutInMillis;
@@ -117,12 +118,12 @@ public class RemoteNode implements Node {
         }
         String commandId = configureId(command);
         try {
-            SynchronousQueue<RemoteResponse> channel = new SynchronousQueue<RemoteResponse>();
+            SynchronousQueue<Response> channel = new SynchronousQueue<Response>();
             rendezvous.put(commandId, channel);
             clientChannel.write(command);
             LOG.debug("Sent command {}", commandId);
             //
-            RemoteResponse response = null;
+            Response response = null;
             long wait = timeoutInMillis;
             do {
                 long start = System.currentTimeMillis();
@@ -202,7 +203,7 @@ public class RemoteNode implements Node {
         @Override
         public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
             try {
-                RemoteResponse response = (RemoteResponse) event.getMessage();
+                Response response = (Response) event.getMessage();
                 String correlationId = response.getCorrelationId();
                 signalCommandResponse(correlationId, response);
             } catch (ClassCastException ex) {
@@ -216,9 +217,9 @@ public class RemoteNode implements Node {
             LOG.error(event.getCause().getMessage(), event.getCause());
         }
 
-        private void signalCommandResponse(String commandId, RemoteResponse response) {
+        private void signalCommandResponse(String commandId, Response response) {
             try {
-                SynchronousQueue<RemoteResponse> channel = rendezvous.remove(commandId);
+                SynchronousQueue<Response> channel = rendezvous.remove(commandId);
                 // Heuristically waits for 1 sec in case response arrived prior to the sending thread started listening for it:
                 boolean offered = channel.offer(response, 1000, TimeUnit.MILLISECONDS);
                 if (!offered) {

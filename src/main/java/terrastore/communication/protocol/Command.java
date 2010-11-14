@@ -34,21 +34,21 @@ public interface Command<R> extends Serializable {
      * Execute this command on the given {@link terrastore.router.Router} instance.
      *
      * @param router The router to execute this command on.
-     * @return The result of the executed command, or null if command doesn't return any result.
+     * @return The result of the executed command.
      * @throws CommunicationException If unable to communicate.
      * @throws MissingRouteException If no route is found for the command.
      * @throws ProcessingException If an error occurs during processing.
      */
-    public R executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException;
+    public Response<R> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException;
     
     /**
      * Execute this command on the given {@link terrastore.store.Store} instance.
      *
      * @param store The store to execute this command on.
-     * @return The result of the executed command, or null if command doesn't return any result.
+     * @return The result of the executed command.
      * @throws StoreOperationException If errors occur during command execution.
      */
-    public R executeOn(Store store) throws StoreOperationException;
+    public Response<R> executeOn(Store store) throws StoreOperationException;
 
     public void setId(String id);
 
