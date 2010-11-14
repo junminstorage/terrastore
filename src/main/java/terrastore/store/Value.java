@@ -108,11 +108,13 @@ public class Value implements MessagePackable, MessageUnpackable, Serializable {
     @Override
     public void messagePack(Packer packer) throws IOException {
         MsgPackUtils.packBytes(packer, bytes);
+        MsgPackUtils.packBoolean(packer, compressed);
     }
 
     @Override
     public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
         bytes = MsgPackUtils.unpackBytes(unpacker);
+        compressed = MsgPackUtils.unpackBoolean(unpacker);
     }
 
     @Override
