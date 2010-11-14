@@ -28,7 +28,7 @@ import terrastore.util.io.MsgPackUtils;
  */
 public abstract class AbstractCommand<R> implements Command, MessagePackable, MessageUnpackable {
 
-    private String id = "NULL";
+    protected String id = "NULL";
 
     public void setId(String id) {
         this.id = id;

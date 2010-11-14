@@ -29,8 +29,9 @@ import terrastore.util.io.MsgPackUtils;
 /**
  * @author Sergio Bossa
  */
-public class Key implements Comparable<Key>, MessagePackable, MessageUnpackable {
+public class Key implements Comparable<Key>, MessagePackable, MessageUnpackable, Serializable {
 
+    private static final long serialVersionUID = 12345678901L;
     private static final Charset CHARSET = Charset.forName("UTF-8");
     //
     private byte[] bytes;

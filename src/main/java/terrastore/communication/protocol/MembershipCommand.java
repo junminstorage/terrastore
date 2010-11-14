@@ -37,18 +37,18 @@ import terrastore.store.StoreOperationException;
 public class MembershipCommand extends AbstractCommand<View> {
 
     @Override
-    public View executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Response<View> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Cluster localCluster = getLocalCluster(router);
         Set<Node> nodes = router.clusterRoute(localCluster);
         Set<View.Member> viewMembers = new HashSet<View.Member>();
         for (Node node : nodes) {
             viewMembers.add(new View.Member(node.getConfiguration()));
         }
-        return new View(localCluster.getName(), viewMembers);
+        return new ViewResponse(id, new View(localCluster.getName(), viewMembers));
     }
 
     @Override
-    public View executeOn(Store store) throws StoreOperationException {
+    public Response<View> executeOn(Store store) throws StoreOperationException {
         throw new UnsupportedOperationException("MembershipCommand cannot be executed on a Store!");
     }
 

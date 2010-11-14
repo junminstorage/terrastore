@@ -16,6 +16,7 @@
 package terrastore.communication.process;
 
 import terrastore.communication.protocol.Command;
+import terrastore.communication.protocol.Response;
 import terrastore.store.Store;
 
 /**
@@ -30,7 +31,7 @@ public class StoreHandler<R> implements CommandHandler<R> {
     }
 
     @Override
-    public R handle(Command<R> command) throws Exception {
+    public Response<R> handle(Command<R> command) throws Exception {
         return command.executeOn(store);
     }
 }

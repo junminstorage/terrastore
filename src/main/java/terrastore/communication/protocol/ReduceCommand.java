@@ -49,12 +49,12 @@ public class ReduceCommand extends AbstractCommand<Value> {
     }
 
     @Override
-    public Value executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
-        return router.routeToLocalNode().<Value>send(this);
+    public Response<Value> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+        return new ValueResponse(id, router.routeToLocalNode().<Value>send(this));
     }
 
-    public Value executeOn(final Store store) throws StoreOperationException {
-        return store.reduce(values, reducer);
+    public Response<Value> executeOn(final Store store) throws StoreOperationException {
+        return new ValueResponse(id, store.reduce(values, reducer));
     }
 
     @Override

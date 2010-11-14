@@ -27,7 +27,6 @@ import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
-import terrastore.util.collect.Sets;
 
 /**
  * @author Sergio Bossa
@@ -35,14 +34,14 @@ import terrastore.util.collect.Sets;
 public class GetBucketsCommand extends AbstractCommand<Set<String>> {
 
     @Override
-    public Set<String> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Response<Set> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
-        return Sets.serializing(node.<Set<String>>send(this));
+        return new GenericSetResponse(id, node.<Set<String>>send(this));
     }
 
-    public Set<String> executeOn(Store store) throws StoreOperationException {
+    public Response<Set> executeOn(Store store) throws StoreOperationException {
         Set<String> buckets = store.buckets();
-        return Sets.serializing(buckets);
+        return new GenericSetResponse(id, buckets);
     }
 
     @Override

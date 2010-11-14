@@ -16,6 +16,7 @@
 package terrastore.cluster.coordinator;
 
 import java.io.IOException;
+import java.io.Serializable;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.msgpack.MessagePackable;
@@ -28,8 +29,10 @@ import terrastore.util.io.MsgPackUtils;
 /**
  * @author Sergio Bossa
  */
-public class ServerConfiguration implements MessagePackable, MessageUnpackable {
+public class ServerConfiguration implements MessagePackable, MessageUnpackable, Serializable {
 
+    private static final long serialVersionUID = 12345678901L;
+    //
     private String name;
     private String nodeHost;
     private int nodePort;

@@ -24,6 +24,7 @@ import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.Command;
+import terrastore.communication.protocol.Response;
 import terrastore.store.StoreOperationException;
 
 /**
@@ -106,7 +107,7 @@ public abstract class AbstractProcessor implements Processor {
 
         @Override
         public R call() throws Exception {
-            return commandHandler.handle(command);
+            return commandHandler.handle(command).getResult();
         }
     }
 
@@ -125,7 +126,7 @@ public abstract class AbstractProcessor implements Processor {
         @Override
         public R call() throws Exception {
             try {
-                R result = commandHandler.handle(command);
+                Response<R> result = commandHandler.handle(command);
                 completionHandler.handleSuccess(result);
             } catch (Exception ex) {
                 if (ex instanceof StoreOperationException) {

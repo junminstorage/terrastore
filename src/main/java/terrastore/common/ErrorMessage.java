@@ -42,7 +42,7 @@ public class ErrorMessage implements MessagePackable, MessageUnpackable {
         this.message = message;
     }
 
-    protected ErrorMessage() {
+    public ErrorMessage() {
     }
 
     public int getCode() {

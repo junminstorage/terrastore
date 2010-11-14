@@ -16,6 +16,7 @@
 package terrastore.cluster.ensemble.impl;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -32,8 +33,10 @@ import terrastore.util.io.MsgPackUtils;
 /**
  * @author Sergio Bossa
  */
-public class View implements MessagePackable, MessageUnpackable {
+public class View implements MessagePackable, MessageUnpackable, Serializable {
 
+    private static final long serialVersionUID = 12345678901L;
+    //
     private String cluster;
     private Set<Member> members;
 
@@ -97,8 +100,10 @@ public class View implements MessagePackable, MessageUnpackable {
         return sizeOfA + B.size();
     }
 
-    public static class Member {
+    public static class Member implements Serializable {
 
+        private static final long serialVersionUID = 12345678901L;
+        //
         private final ServerConfiguration configuration;
 
         public Member(ServerConfiguration configuration) {

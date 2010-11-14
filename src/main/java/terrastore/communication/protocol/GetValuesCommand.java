@@ -16,6 +16,7 @@
 package terrastore.communication.protocol;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +34,6 @@ import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
-import terrastore.util.collect.Maps;
 import terrastore.util.io.MsgPackUtils;
 
 /**
@@ -71,7 +71,7 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
     }
 
     @Override
-    public Map<Key, Value> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Response<Map<Key, Value>> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
         Map<Key, Value> result = new HashMap<Key, Value>();
         for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
@@ -80,10 +80,10 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
             GetValuesCommand command = new GetValuesCommand(this, nodeKeys);
             result.putAll(node.<Map<Key, Value>>send(command));
         }
-        return Maps.serializing(result);
+        return new ValuesResponse(id, result);
     }
 
-    public Map<Key, Value> executeOn(Store store) throws StoreOperationException {
+    public Response<Map<Key, Value>> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         Map<Key, Value> result = null;
         if (bucket != null) {
@@ -92,9 +92,9 @@ public class GetValuesCommand extends AbstractCommand<Map<Key, Value>> {
             } else {
                 result = bucket.conditionalGet(keys, predicate);
             }
-            return Maps.serializing(result);
+            return new ValuesResponse(id, result);
         } else {
-            return new HashMap<Key, Value>(0);
+            return new ValuesResponse(id, Collections.EMPTY_MAP);
         }
     }
 

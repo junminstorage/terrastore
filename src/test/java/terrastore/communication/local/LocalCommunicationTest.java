@@ -20,8 +20,11 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.communication.protocol.Command;
+import terrastore.communication.protocol.Response;
+import terrastore.communication.protocol.ValueResponse;
 import terrastore.router.Router;
 import terrastore.store.Store;
+import terrastore.store.Value;
 import static org.junit.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
@@ -30,9 +33,11 @@ import static org.easymock.classextension.EasyMock.*;
  */
 public class LocalCommunicationTest {
 
+    private static final String VALUE = "test";
+
     @Test
     public void testSynchronousCommunication() throws Exception {
-        Object result = new Object();
+        Response result = new ValueResponse("id1", new Value(VALUE.getBytes()));
 
         Router router = createMock(Router.class);
         Store store = createMock(Store.class);
@@ -45,21 +50,21 @@ public class LocalCommunicationTest {
 
         LocalProcessor processor = new LocalProcessor(router, store);
         LocalNode node = new LocalNode(new ServerConfiguration("node", "localhost", 6000, "localhost", 8000), processor);
-        assertEquals(result, node.send(command));
+        assertEquals(result.getResult(), node.send(command));
 
         verify(router, store, command);
     }
 
     @Test
     public void testSynchronousCommunicationOnPauseCausesRouting() throws Exception {
-        final Object expected = new Object();
+        final Response result = new ValueResponse("id2", new Value(VALUE.getBytes()));
 
         Router router = createMock(Router.class);
         Store store = createMock(Store.class);
         final Command command = createMock(Command.class);
 
         command.executeOn(router);
-        expectLastCall().andReturn(expected).once();
+        expectLastCall().andReturn(result).once();
 
         replay(router, store, command);
 
@@ -73,7 +78,7 @@ public class LocalCommunicationTest {
             @Override
             public void run() {
                 try {
-                    assertEquals(expected, node.send(command));
+                    assertEquals(result.getResult(), node.send(command));
                     success.countDown();
                 } catch (Exception ex) {
                 }

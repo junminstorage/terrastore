@@ -16,11 +16,12 @@
 package terrastore.communication.process;
 
 import terrastore.communication.protocol.Command;
+import terrastore.communication.protocol.Response;
 
 /**
  * @author Sergio Bossa
  */
 public interface CommandHandler<R> {
 
-    public R handle(Command<R> command) throws Exception;
+    public Response<R> handle(Command<R> command) throws Exception;
 }

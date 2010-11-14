@@ -46,15 +46,16 @@ public class ImportBackupCommand extends AbstractCommand {
     }
 
     @Override
-    public Object executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public NullResponse executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Node node = router.routeToLocalNode();
-        return node.send(this);
+        node.send(this);
+        return new NullResponse(id);
     }
 
-    public Object executeOn(Store store) throws StoreOperationException {
+    public NullResponse executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.getOrCreate(bucketName);
         bucket.importBackup(source);
-        return null;
+        return new NullResponse(id);
     }
 
     @Override

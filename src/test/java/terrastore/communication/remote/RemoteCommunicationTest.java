@@ -15,7 +15,6 @@
  */
 package terrastore.communication.remote;
 
-import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,12 +30,10 @@ import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;
-import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.util.collect.Maps;
-import terrastore.util.collect.Sets;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -47,7 +44,7 @@ public class RemoteCommunicationTest {
 
     private static final String VALUE = "test";
 
-    /*@Test
+    @Test
     public void testSendProcessAndReceive() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";
@@ -260,7 +257,7 @@ public class RemoteCommunicationTest {
             processor.stop();
             verify(router, node);
         }
-    }*/
+    }
 
     @Test
     public void testWithLargeDataSet() throws Exception {
@@ -300,7 +297,7 @@ public class RemoteCommunicationTest {
         }
     }
 
-    //@Test(expected = CommunicationException.class)
+    @Test(expected = CommunicationException.class)
     public void testCommunicationError() throws Exception {
         String nodeName = "node";
         String bucketName = "bucket";

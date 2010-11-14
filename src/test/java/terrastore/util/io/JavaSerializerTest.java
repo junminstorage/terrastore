@@ -16,19 +16,33 @@
 package terrastore.util.io;
 
 import org.junit.Test;
-import terrastore.store.Value;
 import static org.junit.Assert.*;
 
 public class JavaSerializerTest {
 
-    private static final String VALUE = "test";
-
     @Test
     public void testSerializeDeserialize() {
-        Value value = new Value(VALUE.getBytes());
-        JavaSerializer<Value> serializer = new JavaSerializer();
-        byte[] serialized = serializer.serialize(value);
-        Value deserialized = serializer.deserialize(serialized);
-        assertArrayEquals(value.getBytes(), deserialized.getBytes());
+        TestObject obj = new TestObject("data");
+        JavaSerializer<TestObject> serializer = new JavaSerializer();
+        byte[] serialized = serializer.serialize(obj);
+        TestObject deserialized = serializer.deserialize(serialized);
+        assertEquals(obj, deserialized);
+    }
+
+    private static class TestObject {
+
+        private Object data;
+
+        public TestObject(Object data) {
+            this.data = data;
+        }
+
+        protected TestObject() {
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof TestObject) && ((TestObject) obj).data.equals(this.data);
+        }
     }
 }
