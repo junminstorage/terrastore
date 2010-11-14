@@ -37,8 +37,6 @@ public interface Coordinator {
 
     public void setWokerThreads(int workerThreads);
 
-    public void setMaxFrameLength(int maxFrameLength);
-
     public void setStore(Store store);
 
     public void setRouter(Router router);

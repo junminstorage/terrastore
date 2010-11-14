@@ -62,15 +62,13 @@ public class RemoteNode implements Node {
     private final Lock stateLock = new ReentrantLock();
     private final ConcurrentMap<String, SynchronousQueue<Response>> rendezvous = new ConcurrentHashMap<String, SynchronousQueue<Response>>();
     private final ServerConfiguration configuration;
-    private final int maxFrameLength;
     private final long timeoutInMillis;
     private volatile ClientBootstrap client;
     private volatile Channel clientChannel;
     private volatile boolean connected;
 
-    protected RemoteNode(ServerConfiguration configuration, int maxFrameLength, long timeoutInMillis) {
+    protected RemoteNode(ServerConfiguration configuration, long timeoutInMillis) {
         this.configuration = configuration;
-        this.maxFrameLength = maxFrameLength;
         this.timeoutInMillis = timeoutInMillis;
     }
 
@@ -80,7 +78,7 @@ public class RemoteNode implements Node {
         try {
             if (!connected) {
                 client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
-                client.setPipelineFactory(new ClientChannelPipelineFactory(maxFrameLength, new ClientHandler()));
+                client.setPipelineFactory(new ClientChannelPipelineFactory(new ClientHandler()));
                 ChannelFuture future = client.connect(new InetSocketAddress(configuration.getNodeHost(), configuration.getNodePort()));
                 future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
                 if (future.isSuccess()) {
@@ -234,11 +232,9 @@ public class RemoteNode implements Node {
 
     private static class ClientChannelPipelineFactory implements ChannelPipelineFactory {
 
-        private final int maxFrameLength;
         private final ClientHandler clientHandler;
 
-        public ClientChannelPipelineFactory(int maxFrameLength, ClientHandler clientHandler) {
-            this.maxFrameLength = maxFrameLength;
+        public ClientChannelPipelineFactory(ClientHandler clientHandler) {
             this.clientHandler = clientHandler;
         }
 
@@ -256,21 +252,16 @@ public class RemoteNode implements Node {
 
     public static class Factory implements RemoteNodeFactory {
 
-        private int defaultMaxFrameLength;
         private int defaultNodeTimeout;
 
         @Override
         public Node makeRemoteNode(ServerConfiguration configuration) {
-            return new RemoteNode(configuration, defaultMaxFrameLength, defaultNodeTimeout);
+            return new RemoteNode(configuration, defaultNodeTimeout);
         }
 
         @Override
-        public RemoteNode makeRemoteNode(ServerConfiguration configuration, int maxFrameLength, long nodeTimeout) {
-            return new RemoteNode(configuration, maxFrameLength, nodeTimeout);
-        }
-
-        public void setDefaultMaxFrameLength(int defaultMaxFrameLength) {
-            this.defaultMaxFrameLength = defaultMaxFrameLength;
+        public RemoteNode makeRemoteNode(ServerConfiguration configuration, long nodeTimeout) {
+            return new RemoteNode(configuration, nodeTimeout);
         }
 
         public void setDefaultNodeTimeout(int defaultNodeTimeout) {

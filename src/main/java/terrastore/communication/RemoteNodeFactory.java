@@ -24,5 +24,5 @@ public interface RemoteNodeFactory {
 
     public Node makeRemoteNode(ServerConfiguration configuration);
 
-    public Node makeRemoteNode(ServerConfiguration configuration, int maxFrameLength, long nodeTimeout);
+    public Node makeRemoteNode(ServerConfiguration configuration, long nodeTimeout);
 }

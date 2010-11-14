@@ -171,7 +171,6 @@
     <!-- Cluster -->
 
     <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator">
-        <property name="maxFrameLength" value="10485760"/>
         <property name="store" ref="store"/>
         <property name="router" ref="router"/>
         <property name="ensembleManager" ref="ensembleManager"/>
@@ -201,7 +200,6 @@
     <bean id="localNodeFactory" class="terrastore.communication.local.LocalNode$Factory"/>
 
     <bean id="remoteNodeFactory" class="terrastore.communication.remote.RemoteNode$Factory">
-        <property name="defaultMaxFrameLength" value="1048576"/>
         <property name="defaultNodeTimeout" value="10000"/>
     </bean>
 
