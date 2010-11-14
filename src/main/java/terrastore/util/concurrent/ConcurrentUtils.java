@@ -13,28 +13,16 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.store.aggregators;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import terrastore.store.operators.Aggregator;
-import static terrastore.util.concurrent.ConcurrentUtils.*;
+package terrastore.util.concurrent;
 
 /**
  * @author Sergio Bossa
  */
-public class SizeAggregator implements Aggregator {
+public class ConcurrentUtils {
 
-    @Override
-    public Map<String, Object> apply(List<Map<String, Object>> counts) {
-        int counter = 0;
-        for (Map<String, Object> count : counts) {
-            exitOnTimeout();
-            counter += (Integer) count.get("size");
+    public static void exitOnTimeout() {
+        if (Thread.interrupted()) {
+            throw new RuntimeException(new InterruptedException("Exiting after timeout!"));
         }
-        Map<String, Object> size = new HashMap<String, Object>();
-        size.put("size", counter);
-        return size;
     }
 }

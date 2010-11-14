@@ -54,7 +54,7 @@ import terrastore.cluster.ensemble.EnsembleManager;
 import terrastore.internal.tc.TCMaster;
 import terrastore.router.Router;
 import terrastore.store.Store;
-import terrastore.util.global.GlobalExecutor;
+import terrastore.util.concurrent.GlobalExecutor;
 import terrastore.util.io.JavaSerializer;
 import terrastore.util.io.Serializer;
 

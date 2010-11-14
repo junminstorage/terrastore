@@ -50,7 +50,7 @@ import terrastore.util.collect.Sets;
 import terrastore.util.collect.parallel.MapCollector;
 import terrastore.util.collect.parallel.MapTask;
 import terrastore.util.collect.parallel.ParallelExecutionException;
-import terrastore.util.global.GlobalExecutor;
+import terrastore.util.concurrent.GlobalExecutor;
 
 /**
  * @author Sergio Bossa

@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
 import terrastore.event.Action;
 import terrastore.event.ActionExecutor;
 import terrastore.service.UpdateService;
-import terrastore.util.global.GlobalExecutor;
+import terrastore.util.concurrent.GlobalExecutor;
 
 /**
  * @author Sergio Bossa
