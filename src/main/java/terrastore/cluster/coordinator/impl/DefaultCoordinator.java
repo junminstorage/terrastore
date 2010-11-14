@@ -83,7 +83,6 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private volatile LocalProcessor localProcessor;
     private volatile RemoteProcessor remoteProcessor;
     //
-    private volatile int maxFrameLength;
     private volatile long nodeTimeout;
     private volatile int remoteProcessorThreads;
     private volatile int globalExecutorThreads;
@@ -118,11 +117,6 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         int threads = workerThreads / 2;
         this.remoteProcessorThreads = threads;
         this.globalExecutorThreads = threads;
-    }
-
-    @Override
-    public void setMaxFrameLength(int maxFrameLength) {
-        this.maxFrameLength = maxFrameLength;
     }
 
     @Override
@@ -309,7 +303,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void setupThisRemoteProcessor() {
-        remoteProcessor = new RemoteProcessor(thisConfiguration.getNodeHost(), thisConfiguration.getNodePort(), maxFrameLength, remoteProcessorThreads, router);
+        remoteProcessor = new RemoteProcessor(thisConfiguration.getNodeHost(), thisConfiguration.getNodePort(), remoteProcessorThreads, router);
         remoteProcessor.start();
         LOG.debug("Set up processor for {}", thisConfiguration.getName());
     }
@@ -349,7 +343,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         if (remoteConfiguration != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {
-                Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, maxFrameLength, nodeTimeout);
+                Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout);
                 remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
                 router.addRouteTo(thisCluster, remoteNode);

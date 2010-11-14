@@ -64,7 +64,7 @@ public class RemoteProcessor extends AbstractProcessor {
     private final Router router;
     private Channel serverChannel;
 
-    public RemoteProcessor(String host, int port, int maxFrameLength, int threads, Router router) {
+    public RemoteProcessor(String host, int port, int threads, Router router) {
         super(new AsynchronousExecutor(threads));
         this.host = host;
         this.port = port;
@@ -72,7 +72,7 @@ public class RemoteProcessor extends AbstractProcessor {
         acceptedChannels = new DefaultChannelGroup(this.toString());
         server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         server.setOption("reuseAddress", true);
-        server.setPipelineFactory(new ServerChannelPipelineFactory(maxFrameLength, new ServerHandler()));
+        server.setPipelineFactory(new ServerChannelPipelineFactory(new ServerHandler()));
     }
 
     protected void doStart() {
@@ -135,11 +135,9 @@ public class RemoteProcessor extends AbstractProcessor {
 
     private static class ServerChannelPipelineFactory implements ChannelPipelineFactory {
 
-        private final int maxFrameLength;
         private final ServerHandler serverHandler;
 
-        public ServerChannelPipelineFactory(int maxFrameLength, ServerHandler serverHandler) {
-            this.maxFrameLength = maxFrameLength;
+        public ServerChannelPipelineFactory(ServerHandler serverHandler) {
             this.serverHandler = serverHandler;
         }
 
