@@ -15,9 +15,11 @@
  */
 package terrastore.util.collect.parallel;
 
+import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -55,8 +57,53 @@ public class ParallelUtils {
             }
             List<Future<O>> results = executor.invokeAll(tasks);
             List<O> outputs = new ArrayList<O>(results.size());
-            for (Future<O> result : results) {
-                outputs.add(result.get());
+            for (Future<O> future : results) {
+                O result = future.get();
+                if (result != null) {
+                    outputs.add(result);
+                }
+            }
+            return collector.collect(outputs);
+        } catch (ExecutionException ex) {
+            if (ex.getCause() instanceof ParallelExecutionException) {
+                throw (ParallelExecutionException) ex.getCause();
+            } else {
+                throw new ParallelExecutionException(ex.getCause());
+            }
+        } catch (InterruptedException ex) {
+            throw new ParallelExecutionException(ex.getCause());
+        }
+    }
+
+    public static <I, O, C extends Collection> C parallelSliceMap(final Collection<I> input, int sliceSize, final MapTask<I, O> mapper, final MapCollector<O, C> collector, ExecutorService executor) throws ParallelExecutionException {
+        try {
+            Iterable<List<I>> slices = Iterables.partition(input, sliceSize);
+            List<Callable<List<O>>> tasks = new LinkedList<Callable<List<O>>>();
+
+            for (final List<I> slice : slices) {
+                tasks.add(new Callable<List<O>>() {
+
+                    @Override
+                    public List<O> call() throws ParallelExecutionException {
+                        List<O> outputs = new ArrayList<O>(slice.size());
+                        for (I current : slice) {
+                            O result = mapper.map(current);
+                            if (result != null) {
+                                outputs.add(result);
+                            }
+                        }
+                        return outputs;
+                    }
+
+                });
+            }
+            List<Future<List<O>>> results = executor.invokeAll(tasks);
+            List<O> outputs = new ArrayList<O>(results.size());
+            for (Future<List<O>> future : results) {
+                List<O> result = future.get();
+                if (result != null) {
+                    outputs.addAll(result);
+                }
             }
             return collector.collect(outputs);
         } catch (ExecutionException ex) {

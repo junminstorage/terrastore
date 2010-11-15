@@ -15,10 +15,9 @@
  */
 package terrastore.store.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.collections.ClusteredMap;
@@ -52,6 +52,10 @@ import terrastore.store.operators.Aggregator;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
+import terrastore.util.collect.parallel.MapCollector;
+import terrastore.util.collect.parallel.MapTask;
+import terrastore.util.collect.parallel.ParallelExecutionException;
+import terrastore.util.collect.parallel.ParallelUtils;
 import terrastore.util.concurrent.GlobalExecutor;
 import terrastore.util.json.JsonUtils;
 
@@ -273,26 +277,52 @@ public class TCStore implements Store {
     }
 
     private List<Map<String, Object>> doMap(final Bucket bucket, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
         Future<List<Map<String, Object>>> task = null;
         try {
             task = GlobalExecutor.getStoreExecutor().submit(new Callable<List<Map<String, Object>>>() {
 
                 @Override
-                public List<Map<String, Object>> call() throws StoreOperationException {
-                    List<Map<String, Object>> mapResults = new ArrayList<Map<String, Object>>(keys.size());
-                    for (Key key : keys) {
-                        Map<String, Object> mapResult = bucket.map(key, mapper);
-                        if (mapResult != null) {
-                            mapResults.add(mapResult);
-                        }
-                    }
-                    return mapResults;
+                public List<Map<String, Object>> call() throws Exception {
+                    List<Map<String, Object>> result = ParallelUtils.parallelSliceMap(
+                            keys, 1000, // FIXME: make the slice size configurable
+                            new MapTask<Key, Map<String, Object>>() {
+
+                                @Override
+                                public Map<String, Object> map(Key input) throws ParallelExecutionException {
+                                    try {
+                                        if (cancelled.get()) {
+                                            throw new ParallelExecutionException(new InterruptedException("Interrupted due to timeout!"));
+                                        } else {
+                                            return bucket.map(input, mapper);
+                                        }
+                                    } catch (StoreOperationException ex) {
+                                        throw new ParallelExecutionException(ex);
+                                    }
+                                }
+
+                            },
+                            new MapCollector<Map<String, Object>, List<Map<String, Object>>>() {
+
+                                @Override
+                                public List<Map<String, Object>> collect(List<Map<String, Object>> outputs) {
+                                    List<Map<String, Object>> result = new LinkedList<Map<String, Object>>();
+                                    for (Map<String, Object> output : outputs) {
+                                        result.add(output);
+                                    }
+                                    return result;
+                                }
+
+                            },
+                            GlobalExecutor.getStoreExecutor());
+                    return result;
                 }
 
             });
             return task.get(mapper.getTimeoutInMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException ex) {
             task.cancel(true);
+            cancelled.set(true);
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Map cancelled due to long execution time."));
         } catch (ExecutionException ex) {
             if (ex.getCause() instanceof StoreOperationException) {
