@@ -17,6 +17,8 @@ package terrastore.util.collect.parallel;
 
 import com.google.common.collect.Lists;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -81,9 +83,39 @@ public class ParallelUtilsTest {
         assertTrue(result.contains("Santana"));
     }
 
+    @Test
+    public void testParallelSliceMap() throws ParallelExecutionException {
+        final Set<Thread> threads = new HashSet<Thread>();
+        ParallelUtils.parallelSliceMap(
+                Arrays.asList("David Gilmour", "Jimmy Page", "Carlos Santana", "Jonny Greenwood", "SRV", "Albert King"), 3,
+                new MapTask<String, List<String>>() {
+
+                    @Override
+                    public List<String> map(String input) throws ParallelExecutionException {
+                        try {
+                            Thread.sleep(500);
+                            threads.add(Thread.currentThread());
+                            return Collections.EMPTY_LIST;
+                        } catch (InterruptedException ex) {
+                            throw new ParallelExecutionException(ex);
+                        }
+                    }
+
+                },
+                new MapCollector<List<String>, List<String>>() {
+
+                    @Override
+                    public List<String> collect(List<List<String>> outputs) {
+                        return Collections.EMPTY_LIST;
+                    }
+
+                }, executor);
+        assertEquals(2, threads.size());
+    }
+
     @Test(expected = ParallelExecutionException.class)
     public void testParallelMapWithException() throws Exception {
-        List<String> result = ParallelUtils.parallelMap(
+        ParallelUtils.parallelMap(
                 Arrays.asList("David Gilmour", "George Orwell", "Carlos Santana"),
                 new MapTask<String, List<String>>() {
 
