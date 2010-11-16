@@ -18,7 +18,6 @@ package terrastore.store;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import org.msgpack.MessagePackable;
 import org.msgpack.MessageTypeException;
 import org.msgpack.MessageUnpackable;
@@ -34,43 +33,39 @@ public class Key implements Comparable<Key>, MessagePackable, MessageUnpackable,
     private static final long serialVersionUID = 12345678901L;
     private static final Charset CHARSET = Charset.forName("UTF-8");
     //
-    private byte[] bytes;
+    private String key;
 
     public Key(String key) {
-        this.bytes = key.getBytes(CHARSET);
-    }
-
-    public Key(byte[] bytes) {
-        this.bytes = bytes;
+        this.key = key;
     }
 
     public Key() {
     }
 
     public byte[] getBytes() {
-        return bytes;
+        return key.getBytes(CHARSET);
     }
 
     @Override
     public void messagePack(Packer packer) throws IOException {
-        MsgPackUtils.packBytes(packer, bytes);
+        MsgPackUtils.packString(packer, key);
     }
 
     @Override
     public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
-        bytes = MsgPackUtils.unpackBytes(unpacker);
+        key = MsgPackUtils.unpackString(unpacker);
     }
 
     @Override
     public String toString() {
-        return new String(bytes, CHARSET);
+        return key;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof Key) {
             Key other = (Key) obj;
-            return Arrays.equals(this.bytes, other.bytes);
+            return this.key.equals(other.key);
         } else {
             return false;
         }
@@ -78,11 +73,11 @@ public class Key implements Comparable<Key>, MessagePackable, MessageUnpackable,
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(bytes);
+        return key.hashCode();
     }
 
     @Override
     public int compareTo(Key other) {
-        return this.toString().compareTo(other.toString());
+        return this.key.compareTo(other.key);
     }
 }
