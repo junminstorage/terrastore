@@ -199,9 +199,7 @@
 
     <bean id="localNodeFactory" class="terrastore.communication.local.LocalNode$Factory"/>
 
-    <bean id="remoteNodeFactory" class="terrastore.communication.remote.RemoteNode$Factory">
-        <property name="defaultNodeTimeout" value="10000"/>
-    </bean>
+    <bean id="remoteNodeFactory" class="terrastore.communication.remote.RemoteNode$Factory"/>
 
     <bean id="flushStrategy" class="terrastore.store.impl.SequentialFlushStrategy"/>
 

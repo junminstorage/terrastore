@@ -62,14 +62,16 @@ public class RemoteNode implements Node {
     private final Lock stateLock = new ReentrantLock();
     private final ConcurrentMap<String, SynchronousQueue<Response>> rendezvous = new ConcurrentHashMap<String, SynchronousQueue<Response>>();
     private final ServerConfiguration configuration;
+    private final boolean compressCommunication;
     private final long timeoutInMillis;
     private volatile ClientBootstrap client;
     private volatile Channel clientChannel;
     private volatile boolean connected;
 
-    protected RemoteNode(ServerConfiguration configuration, long timeoutInMillis) {
+    protected RemoteNode(ServerConfiguration configuration, long timeoutInMillis, boolean compressCommunication) {
         this.configuration = configuration;
         this.timeoutInMillis = timeoutInMillis;
+        this.compressCommunication = compressCommunication;
     }
 
     @Override
@@ -78,7 +80,7 @@ public class RemoteNode implements Node {
         try {
             if (!connected) {
                 client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
-                client.setPipelineFactory(new ClientChannelPipelineFactory(new ClientHandler()));
+                client.setPipelineFactory(new ClientChannelPipelineFactory(new ClientHandler(), compressCommunication));
                 ChannelFuture future = client.connect(new InetSocketAddress(configuration.getNodeHost(), configuration.getNodePort()));
                 future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
                 if (future.isSuccess()) {
@@ -233,17 +235,19 @@ public class RemoteNode implements Node {
     private static class ClientChannelPipelineFactory implements ChannelPipelineFactory {
 
         private final ClientHandler clientHandler;
+        private final boolean compressCommunication;
 
-        public ClientChannelPipelineFactory(ClientHandler clientHandler) {
+        public ClientChannelPipelineFactory(ClientHandler clientHandler, boolean compressCommunication) {
             this.clientHandler = clientHandler;
+            this.compressCommunication = compressCommunication;
         }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = new StaticChannelPipeline(
                     new LengthFieldPrepender(4),
-                    new SerializerEncoder(new MsgPackSerializer()),
-                    new SerializerDecoder(new MsgPackSerializer()),
+                    new SerializerEncoder(new MsgPackSerializer(compressCommunication)),
+                    new SerializerDecoder(new MsgPackSerializer(compressCommunication)),
                     clientHandler);
             return pipeline;
         }
@@ -252,20 +256,17 @@ public class RemoteNode implements Node {
 
     public static class Factory implements RemoteNodeFactory {
 
-        private int defaultNodeTimeout;
+        private static final long DEFAULT_NODE_TIMEOUT = 10000;
+        private static final boolean DEFAULT_COMPRESS_COMMUNICATION = false;
 
         @Override
         public Node makeRemoteNode(ServerConfiguration configuration) {
-            return new RemoteNode(configuration, defaultNodeTimeout);
+            return new RemoteNode(configuration, DEFAULT_NODE_TIMEOUT, DEFAULT_COMPRESS_COMMUNICATION);
         }
 
         @Override
-        public RemoteNode makeRemoteNode(ServerConfiguration configuration, long nodeTimeout) {
-            return new RemoteNode(configuration, nodeTimeout);
-        }
-
-        public void setDefaultNodeTimeout(int defaultNodeTimeout) {
-            this.defaultNodeTimeout = defaultNodeTimeout;
+        public RemoteNode makeRemoteNode(ServerConfiguration configuration, long nodeTimeout, boolean compressCommunication) {
+            return new RemoteNode(configuration, nodeTimeout, compressCommunication);
         }
 
     }

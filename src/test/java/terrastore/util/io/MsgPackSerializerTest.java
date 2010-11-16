@@ -31,9 +31,18 @@ public class MsgPackSerializerTest {
 
     @Test
     public void testSerializeDeserialize() throws IOException, ClassNotFoundException {
+        doTestSerializeDeserialize(false);
+    }
+
+    @Test
+    public void testSerializeDeserializeCompressed() throws IOException, ClassNotFoundException {
+        doTestSerializeDeserialize(true);
+    }
+
+    private void doTestSerializeDeserialize(boolean compressed) throws IOException, ClassNotFoundException {
         TestObject obj = new TestObject("test");
         //
-        MsgPackSerializer<TestObject> serializer = new MsgPackSerializer<TestObject>();
+        MsgPackSerializer<TestObject> serializer = new MsgPackSerializer<TestObject>(compressed);
         //
         byte[] serialized = serializer.serialize(obj);
         TestObject deserialized = serializer.deserialize(serialized);

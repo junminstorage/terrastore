@@ -31,6 +31,8 @@ public interface Coordinator {
 
     public void start(ServerConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration);
 
+    public void setCompressCommunication(boolean compressCommunication);
+
     public void setReconnectTimeout(long reconnectTimeout);
 
     public void setNodeTimeout(long nodeTimeout);
