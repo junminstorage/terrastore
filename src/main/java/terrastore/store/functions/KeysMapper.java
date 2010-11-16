@@ -28,7 +28,7 @@ public class KeysMapper implements Function {
     @Override
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
         exitOnTimeout();
-        Map<String, Object> keys = new HashMap<String, Object>(1);
+        Map<String, Object> keys = new HashMap<String, Object>(1, 100);
         keys.put("keys", key);
         return keys;
     }

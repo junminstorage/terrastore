@@ -33,7 +33,7 @@ public class SizeAggregator implements Aggregator {
             exitOnTimeout();
             counter += (Integer) count.get("size");
         }
-        Map<String, Object> size = new HashMap<String, Object>();
+        Map<String, Object> size = new HashMap<String, Object>(1, 100);
         size.put("size", counter);
         return size;
     }

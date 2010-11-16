@@ -29,7 +29,7 @@ public class KeysAggregator implements Aggregator {
 
     @Override
     public Map<String, Object> apply(List<Map<String, Object>> keys) {
-        Map<String, Object> result = new HashMap<String, Object>(keys.size());
+        Map<String, Object> result = new HashMap<String, Object>(1, 100);
         List<String> list = new ArrayList<String>(keys.size());
         for (Map<String, Object> key : keys) {
             exitOnTimeout();
