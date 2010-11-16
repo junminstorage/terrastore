@@ -52,8 +52,8 @@ public class Startup {
     private static final long DEFAULT_RECONNECT_TIMEOUT = 10000;
     private static final long DEFAULT_NODE_TIMEOUT = 10000;
     private static final int DEFAULT_HTTP_THREADS = 100;
-    private static final int MIN_WORKER_THREADS = 10;
-    private static final int DEFAULT_WORKER_THREADS = Runtime.getRuntime().availableProcessors() * 10;
+    private static final int DEFAULT_WORKER_THREADS = 100;
+    private static final int MIN_WORKER_THREADS = 32;
     private static final String DEFAULT_CONFIG_FILE = "terrastore-config.xml";
     private static final int DEFAULT_FAILOVER_RETRIES = 0;
     private static final long DEFAULT_FAILOVER_INTERVAL = 0;
