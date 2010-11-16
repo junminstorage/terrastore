@@ -39,7 +39,7 @@ public class CommandSerializationTest {
         GetValueCommand command = new GetValueCommand("bucket", new Key("key"), new Predicate("type:expression"));
         command.setId("test");
         //
-        MsgPackSerializer<GetValueCommand> serializer = new MsgPackSerializer<GetValueCommand>();
+        MsgPackSerializer<GetValueCommand> serializer = new MsgPackSerializer<GetValueCommand>(false);
         //
         byte[] serialized = serializer.serialize(command);
         GetValueCommand deserialized = serializer.deserialize(serialized);
@@ -51,7 +51,7 @@ public class CommandSerializationTest {
     public void testValueResponse() throws IOException, ClassNotFoundException {
         ValueResponse response = new ValueResponse("id", new Value("value".getBytes(Charset.forName("UTF-8"))));
         //
-        MsgPackSerializer<ValueResponse> serializer = new MsgPackSerializer<ValueResponse>();
+        MsgPackSerializer<ValueResponse> serializer = new MsgPackSerializer<ValueResponse>(false);
         //
         byte[] serialized = serializer.serialize(response);
         ValueResponse deserialized = serializer.deserialize(serialized);
@@ -63,7 +63,7 @@ public class CommandSerializationTest {
     public void testNullResponse() throws IOException, ClassNotFoundException {
         NullResponse response = new NullResponse("id");
         //
-        MsgPackSerializer<NullResponse> serializer = new MsgPackSerializer<NullResponse>();
+        MsgPackSerializer<NullResponse> serializer = new MsgPackSerializer<NullResponse>(false);
         //
         byte[] serialized = serializer.serialize(response);
         NullResponse deserialized = serializer.deserialize(serialized);
@@ -75,7 +75,7 @@ public class CommandSerializationTest {
     public void testNullResponseWithErrorMessage() throws IOException, ClassNotFoundException {
         NullResponse response = new NullResponse("id", new ErrorMessage(-1, "error"));
         //
-        MsgPackSerializer<NullResponse> serializer = new MsgPackSerializer<NullResponse>();
+        MsgPackSerializer<NullResponse> serializer = new MsgPackSerializer<NullResponse>(false);
         //
         byte[] serialized = serializer.serialize(response);
         NullResponse deserialized = serializer.deserialize(serialized);

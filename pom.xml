@@ -555,8 +555,8 @@
                     <startServer>false</startServer>
                     <activeNodes>node-1,node-2</activeNodes>
                     <processes>
-                        <process nodeName="node-1" className="terrastore.startup.Startup" arguments="--master localhost:9510 --httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8080 --nodePort 8180 --compressDocs true" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9000" />
-                        <process nodeName="node-2" className="terrastore.startup.Startup" arguments="--master localhost:9510 --httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8081 --nodePort 8181 --compressDocs true" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9001" />
+                        <process nodeName="node-1" className="terrastore.startup.Startup" arguments="--master localhost:9510 --httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8080 --nodePort 8180 --compressCommunication true --compressDocs true" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9000" />
+                        <process nodeName="node-2" className="terrastore.startup.Startup" arguments="--master localhost:9510 --httpThreads 100 --httpHost 0.0.0.0 --nodeHost 127.0.0.1 --httpPort 8081 --nodePort 8181 --compressCommunication true --compressDocs true" jvmargs="-DTERRASTORE_HOME=${basedir}/src/dist/server -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9001" />
                     </processes>
                 </configuration>
             </plugin>

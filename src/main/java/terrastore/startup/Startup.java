@@ -58,6 +58,7 @@ public class Startup {
     private static final int DEFAULT_FAILOVER_RETRIES = 0;
     private static final long DEFAULT_FAILOVER_INTERVAL = 0;
     private static final boolean DEFAULT_COMPRESS_DOCUMENTS = false;
+    private static final boolean DEFAULT_COMPRESS_COMMUNICATION = false;
     private static final String WELCOME_MESSAGE = "Welcome to Terrastore.";
     private static final String POWEREDBY_MESSAGE = "Powered by Terracotta (http://www.terracotta.org).";
 
@@ -88,6 +89,7 @@ public class Startup {
     private String eventBus = DEFAULT_EVENT_BUS;
     private String allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
     private boolean compressDocuments = DEFAULT_COMPRESS_DOCUMENTS;
+    private boolean compressCommunication = DEFAULT_COMPRESS_COMMUNICATION;
 
     @Option(name = "--master", required = true)
     public void setMaster(String master) {
@@ -165,6 +167,11 @@ public class Startup {
         this.compressDocuments = Boolean.parseBoolean(compressDocuments);
     }
 
+    @Option(name = "--compressCommunication", required = false)
+    public void setCompressCommunication(String compressCommunication) {
+        this.compressCommunication = Boolean.parseBoolean(compressCommunication);
+    }
+
     public void start() throws Exception {
         try {
             // TODO: make connection timeout configurable.
@@ -203,9 +210,10 @@ public class Startup {
         LOG.info(POWEREDBY_MESSAGE);
         LOG.info("Listening for HTTP requests on {}:{}", httpHost, httpPort);
         LOG.info("Listening for node requests on {}:{}", nodeHost, nodePort);
-        LOG.info("Document compression is {}.", compressDocuments ? "ENABLED" : "DISABLED");
         LOG.info("Reconnection timeout (in milliseconds): {}", reconnectTimeout);
         LOG.info("Node communication timeout (in milliseconds): {}", nodeTimeout);
+        LOG.info("Node communication compression is {}.", compressCommunication ? "ENABLED" : "DISABLED");
+        LOG.info("Document compression is {}.", compressDocuments ? "ENABLED" : "DISABLED");
         LOG.info("Failover retries: {}", failoverRetries);
         LOG.info("Failover retry interval (in milliseconds): {}", failoverInterval);
         LOG.info("Number of http threads: {}", httpThreads);
@@ -235,6 +243,7 @@ public class Startup {
 
     private void startCoordinator(ApplicationContext context) throws Exception {
         Coordinator coordinator = context.getBean(Coordinator.class);
+        coordinator.setCompressCommunication(compressCommunication);
         coordinator.setReconnectTimeout(reconnectTimeout);
         coordinator.setNodeTimeout(nodeTimeout);
         coordinator.setWokerThreads(workerThreads);

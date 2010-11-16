@@ -64,7 +64,7 @@ public class RemoteProcessor extends AbstractProcessor {
     private final Router router;
     private Channel serverChannel;
 
-    public RemoteProcessor(String host, int port, int threads, Router router) {
+    public RemoteProcessor(String host, int port, int threads, boolean compressCommunication, Router router) {
         super(new AsynchronousExecutor(threads));
         this.host = host;
         this.port = port;
@@ -72,7 +72,7 @@ public class RemoteProcessor extends AbstractProcessor {
         acceptedChannels = new DefaultChannelGroup(this.toString());
         server = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
         server.setOption("reuseAddress", true);
-        server.setPipelineFactory(new ServerChannelPipelineFactory(new ServerHandler()));
+        server.setPipelineFactory(new ServerChannelPipelineFactory(new ServerHandler(), compressCommunication));
     }
 
     protected void doStart() {
@@ -136,17 +136,19 @@ public class RemoteProcessor extends AbstractProcessor {
     private static class ServerChannelPipelineFactory implements ChannelPipelineFactory {
 
         private final ServerHandler serverHandler;
+        private final boolean compressCommunication;
 
-        public ServerChannelPipelineFactory(ServerHandler serverHandler) {
+        public ServerChannelPipelineFactory(ServerHandler serverHandler, boolean compressCommunication) {
             this.serverHandler = serverHandler;
+            this.compressCommunication = compressCommunication;
         }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = new StaticChannelPipeline(
                     new LengthFieldPrepender(4),
-                    new SerializerEncoder(new MsgPackSerializer()),
-                    new SerializerDecoder(new MsgPackSerializer()),
+                    new SerializerEncoder(new MsgPackSerializer(compressCommunication)),
+                    new SerializerDecoder(new MsgPackSerializer(compressCommunication)),
                     serverHandler);
             return pipeline;
         }

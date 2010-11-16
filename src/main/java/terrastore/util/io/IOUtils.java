@@ -99,7 +99,27 @@ public class IOUtils {
         return data[0] == 'Z' && data[1] == 'V';
     }
 
+    public static boolean isCompressed(InputStream stream) {
+        try {
+            boolean available = stream.available() >= 2;
+            boolean markSupported = stream.markSupported();
+            if (available && markSupported) {
+                stream.mark(2);
+                boolean compressed = stream.read() == 'Z' && stream.read() == 'V';
+                stream.reset();
+                return compressed;
+            } else if (!available) {
+                throw new IllegalStateException("Not enough bytes to determine stream compression!");
+            } else {
+                throw new IllegalStateException("Unable to determine stream compression!");
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
+    }
+
     public static InputStream getCompressedInputStream(byte[] bytes) throws IOException {
         return new LZFInputStream(new ByteArrayInputStream(bytes));
     }
+
 }
