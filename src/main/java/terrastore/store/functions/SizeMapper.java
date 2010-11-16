@@ -15,6 +15,7 @@
  */
 package terrastore.store.functions;
 
+import com.google.common.collect.Maps;
 import java.util.HashMap;
 import java.util.Map;
 import terrastore.store.operators.Function;
@@ -28,7 +29,7 @@ public class SizeMapper implements Function {
     @Override
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
         exitOnTimeout();
-        Map<String, Object> count = new HashMap<String, Object>();
+        Map<String, Object> count = new HashMap<String, Object>(1, 100);
         count.put("size", 1);
         return count;
     }
