@@ -280,7 +280,7 @@ public class TCStore implements Store {
         final AtomicBoolean cancelled = new AtomicBoolean(false);
         Future<List<Map<String, Object>>> task = null;
         try {
-            task = GlobalExecutor.getStoreExecutor().submit(new Callable<List<Map<String, Object>>>() {
+            task = GlobalExecutor.getQueryExecutor().submit(new Callable<List<Map<String, Object>>>() {
 
                 @Override
                 public List<Map<String, Object>> call() throws Exception {
@@ -314,7 +314,7 @@ public class TCStore implements Store {
                                 }
 
                             },
-                            GlobalExecutor.getStoreExecutor());
+                            GlobalExecutor.getQueryExecutor());
                     return result;
                 }
 
@@ -338,7 +338,7 @@ public class TCStore implements Store {
     private Map<String, Object> doAggregate(final List<Map<String, Object>> values, final Aggregator aggregator, long timeout) throws StoreOperationException {
         Future<Map<String, Object>> task = null;
         try {
-            task = GlobalExecutor.getStoreExecutor().submit(new Callable<Map<String, Object>>() {
+            task = GlobalExecutor.getQueryExecutor().submit(new Callable<Map<String, Object>>() {
 
                 @Override
                 public Map<String, Object> call() {

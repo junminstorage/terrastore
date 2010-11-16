@@ -130,7 +130,7 @@ public class DefaultQueryService implements QueryService {
                             return allKeyValues;
                         }
 
-                    }, GlobalExecutor.getServiceExecutor());
+                    }, GlobalExecutor.getQueryExecutor());
             return Maps.union(allKeyValues);
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
@@ -176,7 +176,7 @@ public class DefaultQueryService implements QueryService {
                             return allKeyValues;
                         }
 
-                    }, GlobalExecutor.getServiceExecutor());
+                    }, GlobalExecutor.getQueryExecutor());
             return Maps.composite(keysInRange, allKeyValues);
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
@@ -217,7 +217,7 @@ public class DefaultQueryService implements QueryService {
                             return allKeyValues;
                         }
 
-                    }, GlobalExecutor.getServiceExecutor());
+                    }, GlobalExecutor.getQueryExecutor());
             return Maps.union(allKeyValues);
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
@@ -265,7 +265,7 @@ public class DefaultQueryService implements QueryService {
                             return values;
                         }
 
-                    }, GlobalExecutor.getServiceExecutor());
+                    }, GlobalExecutor.getQueryExecutor());
             //
             // Reduce:
             Node reducerNode = router.routeToLocalNode();
@@ -335,7 +335,7 @@ public class DefaultQueryService implements QueryService {
                         return Sets.union(keys);
                     }
 
-                }, GlobalExecutor.getServiceExecutor());
+                }, GlobalExecutor.getQueryExecutor());
         return result;
     }
 
@@ -372,7 +372,7 @@ public class DefaultQueryService implements QueryService {
                         return Sets.union(keys);
                     }
 
-                }, GlobalExecutor.getServiceExecutor());
+                }, GlobalExecutor.getQueryExecutor());
         return result;
     }
 
@@ -414,7 +414,7 @@ public class DefaultQueryService implements QueryService {
                         }
                     }
 
-                }, GlobalExecutor.getServiceExecutor());
+                }, GlobalExecutor.getQueryExecutor());
         return keys;
     }
 

@@ -26,72 +26,72 @@ import jsr166y.ForkJoinWorkerThread;
  */
 public class GlobalExecutor {
 
-    private static volatile ExecutorService ACTION_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+    /**
+     * TODO: work stealing would probably be much better, because not all executors will be equally used ...
+     */
 
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            return t;
-        }
-    });
-    private static volatile ExecutorService SERVICE_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+    private static volatile ExecutorService ACTION_EXECUTOR = newExecutor(Runtime.getRuntime().availableProcessors() * 2);
+    private static volatile ExecutorService QUERY_EXECUTOR = newExecutor(Runtime.getRuntime().availableProcessors() * 2);
+    private static volatile ExecutorService UPDATE_EXECUTOR = newExecutor(Runtime.getRuntime().availableProcessors() * 2);
+    private static volatile ForkJoinPool FJ_POOL = newFJPool(Runtime.getRuntime().availableProcessors() * 2);
 
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            return t;
-        }
-    });
-    private static volatile ExecutorService STORE_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+    public static void configure(int threads) {
+        int minThreadsShare = Runtime.getRuntime().availableProcessors() * 2;
+        int actual = threads / 4 > minThreadsShare ? threads / 4 : minThreadsShare;
+        ACTION_EXECUTOR = newExecutor(actual);
+        QUERY_EXECUTOR = newExecutor(actual);
+        UPDATE_EXECUTOR = newExecutor(actual);
+        FJ_POOL = newFJPool(actual);
+    }
 
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            return t;
-        }
-    });
-    private static volatile ForkJoinPool POOL = new ForkJoinPool(Runtime.getRuntime().availableProcessors(), new ForkJoinPool.ForkJoinWorkerThreadFactory() {
-
-        @Override
-        public ForkJoinWorkerThread newThread(ForkJoinPool fjp) {
-            ForkJoinWorkerThread t = new ForkJoinWorkerThread(fjp) {};
-            t.setDaemon(true);
-            return t;
-        }
-    });
-
-    public static void setActionExecutor(ExecutorService executor) {
-        ACTION_EXECUTOR = executor;
+    public static void shutdown() {
+        ACTION_EXECUTOR.shutdownNow();
+        QUERY_EXECUTOR.shutdownNow();
+        UPDATE_EXECUTOR.shutdownNow();
+        FJ_POOL.shutdownNow();
     }
 
     public static ExecutorService getActionExecutor() {
         return ACTION_EXECUTOR;
     }
 
-    public static void setServiceExecutor(ExecutorService executor) {
-        SERVICE_EXECUTOR = executor;
+    public static ExecutorService getQueryExecutor() {
+        return QUERY_EXECUTOR;
     }
 
-    public static ExecutorService getServiceExecutor() {
-        return SERVICE_EXECUTOR;
-    }
-
-    public static void setStoreExecutor(ExecutorService executor) {
-        STORE_EXECUTOR = executor;
-    }
-
-    public static ExecutorService getStoreExecutor() {
-        return STORE_EXECUTOR;
-    }
-
-    public static void setForkJoinPool(ForkJoinPool pool) {
-        POOL = pool;
+    public static ExecutorService getUpdateExecutor() {
+        return UPDATE_EXECUTOR;
     }
 
     public static ForkJoinPool getForkJoinPool() {
-        return POOL;
+        return FJ_POOL;
     }
+
+    private static ExecutorService newExecutor(int threads) {
+        return Executors.newFixedThreadPool(threads, new ThreadFactory() {
+
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r);
+                t.setDaemon(true);
+                return t;
+            }
+
+        });
+    }
+
+    private static ForkJoinPool newFJPool(int parallelism) {
+        return new ForkJoinPool(parallelism, new ForkJoinPool.ForkJoinWorkerThreadFactory() {
+
+            @Override
+            public ForkJoinWorkerThread newThread(ForkJoinPool fjp) {
+                ForkJoinWorkerThread t = new ForkJoinWorkerThread(fjp) {
+                };
+                t.setDaemon(true);
+                return t;
+            }
+
+        });
+    }
+
 }

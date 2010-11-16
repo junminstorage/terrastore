@@ -192,7 +192,7 @@ public class TCBucket implements Bucket {
             final Value value = bytesToValue(bucket.get(key.toString()));
             if (value != null) {
                 final Function function = getFunction(update.getFunctionName());
-                task = GlobalExecutor.getStoreExecutor().submit(new Callable<Value>() {
+                task = GlobalExecutor.getUpdateExecutor().submit(new Callable<Value>() {
 
                     @Override
                     public Value call() {
