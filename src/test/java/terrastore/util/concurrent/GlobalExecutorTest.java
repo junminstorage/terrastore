@@ -50,7 +50,7 @@ public class GlobalExecutorTest {
 
             };
             //
-            future = GlobalExecutor.getServiceExecutor().submit(task);
+            future = GlobalExecutor.getQueryExecutor().submit(task);
             future.get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException ex) {
             assertTrue(future.cancel(true));

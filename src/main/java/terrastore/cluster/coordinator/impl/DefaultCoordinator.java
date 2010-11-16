@@ -21,13 +21,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import jsr166y.ForkJoinPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.cluster.ClusterEvent;
@@ -86,10 +83,6 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private volatile long nodeTimeout;
     private volatile int remoteProcessorThreads;
     private volatile int globalExecutorThreads;
-    private volatile ExecutorService globalActionExecutor;
-    private volatile ExecutorService globalServiceExecutor;
-    private volatile ExecutorService globalStoreExecutor;
-    private volatile ForkJoinPool globalFJPool;
     //
     private volatile Store store;
     private volatile Router router;
@@ -164,15 +157,8 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             thisConfiguration = serverConfiguration;
             // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
-            // Configure global executors and fj pool:
-            globalActionExecutor = Executors.newFixedThreadPool(Math.round(globalExecutorThreads / 4));
-            globalServiceExecutor = Executors.newFixedThreadPool(Math.round(globalExecutorThreads / 4));
-            globalStoreExecutor = Executors.newFixedThreadPool(Math.round(globalExecutorThreads / 4));
-            globalFJPool = new ForkJoinPool(Math.round(globalExecutorThreads / 4));
-            GlobalExecutor.setActionExecutor(globalActionExecutor);
-            GlobalExecutor.setServiceExecutor(globalServiceExecutor);
-            GlobalExecutor.setStoreExecutor(globalStoreExecutor);
-            GlobalExecutor.setForkJoinPool(globalFJPool);
+            // Configure global executor:
+            GlobalExecutor.configure(globalExecutorThreads);
             // Setup ensemble:
             setupEnsemble(ensembleConfiguration);
             // Add cluster listener to listen to events:
@@ -383,10 +369,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         localProcessor.stop();
         remoteProcessor.stop();
         ensembleManager.shutdown();
-        globalActionExecutor.shutdown();
-        globalServiceExecutor.shutdown();
-        globalStoreExecutor.shutdown();
-        globalFJPool.shutdown();
+        GlobalExecutor.shutdown();
     }
 
     private void cleanupEverything() {
