@@ -15,7 +15,6 @@
  */
 package terrastore.cluster.coordinator.impl;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -161,12 +160,13 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             reconnectionCondition = reconnectionLock.newCondition();
             thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
             thisConfiguration = serverConfiguration;
-            // Configure transients:
             nodes = new ConcurrentHashMap<String, Node>();
             // Configure global executor:
             GlobalExecutor.configure(globalExecutorThreads);
             // Setup ensemble:
             setupEnsemble(ensembleConfiguration);
+            // Setup shutdown hook:
+            setupShutdownHook();
             // Add cluster listener to listen to events:
             getCluster().addClusterListener(this);
         } catch (Exception ex) {
@@ -212,10 +212,10 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
                 connectRemoteNode(joinedNodeName);
                 flushThisNodeKeys();
                 completeMembershipChange();
-                resumeProcessing();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
+                resumeProcessing();
                 stateLock.unlock();
             }
         }
@@ -231,10 +231,10 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
                 disconnectRemoteNode(leftNodeName);
                 flushThisNodeKeys();
                 completeMembershipChange();
-                resumeProcessing();
             } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
             } finally {
+                resumeProcessing();
                 stateLock.unlock();
             }
         }
@@ -277,6 +277,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
                         LOG.info("Successful reconnection for this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
                     }
                 }
+
             }.start();
         }
     }
@@ -431,31 +432,23 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         }
     }
 
-    private static class Address implements Serializable {
+    private void setupShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
 
-        private String host;
-        private int port;
+            @Override
+            public void run() {
+                if (connected) {
+                    try {
+                        LOG.info("Shutting down this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
+                        shutdownEverything();
+                        cleanupEverything();
+                    } catch (Exception ex) {
+                        LOG.error(ex.getMessage(), ex);
+                    }
+                }
+            }
 
-        public static String toString(Address address) {
-            return address.getHost() + ":" + address.getPort();
-        }
-
-        public static Address fromString(String address) {
-            String[] parts = address.split(":");
-            return new Address(parts[0], Integer.parseInt(parts[1]));
-        }
-
-        public Address(String host, int port) {
-            this.host = host;
-            this.port = port;
-        }
-
-        public String getHost() {
-            return host;
-        }
-
-        public int getPort() {
-            return port;
-        }
+        });
     }
+
 }
