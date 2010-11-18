@@ -258,7 +258,7 @@ public class TCBucket implements Bucket {
         ClusterInfo cluster = TCMaster.getInstance().getClusterInfo();
         if (cluster != null) {
             Collection<Key> keys = Sets.transformed(cluster.<String>getKeysForLocalValues(bucket), new KeyDeserializer());
-            LOG.info("Request to flush {} keys on bucket {}", keys.size(), name);
+            LOG.warn("Request to flush {} keys on bucket {}", keys.size(), name);
             flushStrategy.flush(this, keys, flushCondition, new FlushCallback() {
 
                 @Override
