@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config">
     <tc-properties>
+        <!-- Connection properties -->
         <property name="l2.l1reconnect.enabled" value="true"/>
         <property name="l2.l1reconnect.timeout.millis" value="@server.reconnection.timeout@"/>
         <property name="l1.healthcheck.l2.ping.enabled" value="true"/>
         <property name="l1.healthcheck.l2.socketConnect" value="true"/>
         <property name="l1.healthcheck.l2.ping.interval" value="1000"/>
         <property name="l1.healthcheck.l2.ping.probes" value="@server.healthcheck.timeout@"/>
+        <!-- Cluster properties -->
+        <property name="l2.cachemanager.percentageToEvict" value="25"/>
+        <property name="l2.objectmanager.passive.sync.batch.size" value="100"/>
+        <property name="l1.cachemanager.percentageToEvict" value="10"/>
+        <property name="l1.cachemanager.threshold" value="90"/>
+        <property name="l1.cachemanager.criticalThreshold" value="95"/>
     </tc-properties>
     <servers>
         <server host="@master.interface.1@" name="terrastore-ha-master-1" bind="@master.host.1@">
@@ -48,6 +55,7 @@
         </update-check>
     </servers>
     <clients>
+        <dso><fault-count>0</fault-count></dso>
         <logs>tc-data/client-logs/%i/%D</logs>
     </clients>
 </tc:tc-config>
