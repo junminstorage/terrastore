@@ -209,7 +209,6 @@
         <unzip src="terrastore-master/terrastore-master.zip" dest="${java.io.tmpdir}/terrastore-install"/>
 
         <copy file="terrastore-master/${config}" todir="${java.io.tmpdir}/terrastore-install/terrastore-master"/>
-        <copy file="terrastore-master/terracotta-master.log4j.properties" tofile="${java.io.tmpdir}/terrastore-install/terrastore-master/.tc.custom.log4j.properties"/>
 
         <replace file="${java.io.tmpdir}/terrastore-install/terrastore-master/${config}">
             <replacefilter
