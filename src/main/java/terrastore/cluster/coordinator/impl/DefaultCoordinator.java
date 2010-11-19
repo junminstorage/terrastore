@@ -15,11 +15,14 @@
  */
 package terrastore.cluster.coordinator.impl;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -31,7 +34,6 @@ import org.terracotta.cluster.ClusterInfo;
 import org.terracotta.cluster.ClusterListener;
 import org.terracotta.cluster.ClusterNode;
 import org.terracotta.cluster.ClusterTopology;
-import org.terracotta.util.ClusteredAtomicLong;
 import terrastore.cluster.ClusterUtils;
 import terrastore.communication.Node;
 import terrastore.cluster.coordinator.Coordinator;
@@ -62,12 +64,15 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCoordinator.class);
     private static final Serializer SERIALIZER = new JavaSerializer();
     //
-    private Lock stateLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".stateLock").writeLock();
-    private ClusteredAtomicLong membershipCounter = TCMaster.getInstance().getLong(DefaultCoordinator.class.getName() + ".membershipCounter");
-    private Map<String, byte[]> addressTable = TCMaster.getInstance().getMap(DefaultCoordinator.class.getName() + ".addressTable");
-    private Condition setupAddressCondition = stateLock.newCondition();
-    private Condition setupMembershipCondition = stateLock.newCondition();
+    private static final byte[] PREMATURE_DISCONNECTION = new byte[]{-1};
     //
+    private Lock stateLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".stateLock").writeLock();
+    private Condition connectCondition = stateLock.newCondition();
+    private Map<String, byte[]> connectionTable = TCMaster.getInstance().getMap(DefaultCoordinator.class.getName() + ".connectionTable");
+    //
+    private volatile ExecutorService connectionExecutor;
+    private volatile ExecutorService disconnectionExecutor;
+    private volatile ExecutorService reconnectionExecutor;
     private volatile ReentrantLock reconnectionLock;
     private volatile Condition reconnectionCondition;
     private volatile long reconnectTimeout;
@@ -156,6 +161,9 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         stateLock.lock();
         try {
             // Configure local data:
+            connectionExecutor = Executors.newSingleThreadExecutor();
+            disconnectionExecutor = Executors.newSingleThreadExecutor();
+            reconnectionExecutor = Executors.newSingleThreadExecutor();
             reconnectionLock = new ReentrantLock();
             reconnectionCondition = reconnectionLock.newCondition();
             thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
@@ -176,6 +184,71 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         }
     }
 
+    public void nodeJoined(final ClusterEvent event) {
+        connectionExecutor.submit(new Runnable() {
+
+            @Override
+            public void run() {
+                String joinedNodeName = ClusterUtils.getServerId(event.getNode());
+                if (isThisNode(joinedNodeName)) {
+                    stateLock.lock();
+                    try {
+                        LOG.info("Joining this node as {}:{}", thisCluster.getName(), thisConfiguration.getName());
+                        setupThisNode();
+                        setupRemoteProcessor();
+                        setupRemoteNodes();
+                        LOG.info("This node is now ready to work as {}:{}", thisCluster.getName(), thisConfiguration.getName());
+                    } catch (Exception ex) {
+                        LOG.error(ex.getMessage(), ex);
+                    } finally {
+                        stateLock.unlock();
+                    }
+                } else {
+                    stateLock.lock();
+                    try {
+                        LOG.info("Joining remote node as {}:{}", thisCluster.getName(), joinedNodeName);
+                        pauseProcessing();
+                        connectRemoteNode(joinedNodeName);
+                        flushThisNodeKeys();
+                        LOG.info("Remote node is now ready to work as {}:{}", thisCluster.getName(), joinedNodeName);
+                    } catch (Exception ex) {
+                        LOG.error(ex.getMessage(), ex);
+                    } finally {
+                        resumeProcessing();
+                        stateLock.unlock();
+                    }
+                }
+            }
+
+        });
+    }
+
+    public void nodeLeft(final ClusterEvent event) {
+        disconnectionExecutor.submit(new Runnable() {
+
+            @Override
+            public void run() {
+                String leftNodeName = ClusterUtils.getServerId(event.getNode());
+                if (!isThisNode(leftNodeName) && isActuallyConnected(leftNodeName)) {
+                    stateLock.lock();
+                    try {
+                        pauseProcessing();
+                        disconnectRemoteNode(leftNodeName);
+                        flushThisNodeKeys();
+                    } catch (Exception ex) {
+                        LOG.error(ex.getMessage(), ex);
+                    } finally {
+                        resumeProcessing();
+                        stateLock.unlock();
+                    }
+                } else if (!isActuallyConnected(leftNodeName)) {
+                    signalPrematureDisconnection();
+                }
+            }
+
+        });
+    }
+
     public void operationsEnabled(ClusterEvent event) {
         reconnectionLock.lock();
         try {
@@ -186,83 +259,13 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         }
     }
 
-    public void nodeJoined(ClusterEvent event) {
-        String joinedNodeName = ClusterUtils.getServerId(event.getNode());
-        if (isThisNode(joinedNodeName)) {
-            stateLock.lock();
-            try {
-                LOG.info("Joining this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
-                startMembershipChange();
-                setupThisNode();
-                setupThisRemoteProcessor();
-                setupAddressTable();
-                setupRemoteNodes();
-                completeMembershipChange();
-            } catch (Exception ex) {
-                LOG.error(ex.getMessage(), ex);
-            } finally {
-                stateLock.unlock();
-            }
-        } else {
-            stateLock.lock();
-            try {
-                LOG.info("Joining remote node {}:{}", thisCluster.getName(), joinedNodeName);
-                pauseProcessing();
-                startMembershipChange();
-                connectRemoteNode(joinedNodeName);
-                flushThisNodeKeys();
-                completeMembershipChange();
-            } catch (Exception ex) {
-                LOG.error(ex.getMessage(), ex);
-            } finally {
-                resumeProcessing();
-                stateLock.unlock();
-            }
-        }
-    }
-
-    public void nodeLeft(ClusterEvent event) {
-        String leftNodeName = ClusterUtils.getServerId(event.getNode());
-        if (!isThisNode(leftNodeName)) {
-            stateLock.lock();
-            try {
-                pauseProcessing();
-                startMembershipChange();
-                disconnectRemoteNode(leftNodeName);
-                flushThisNodeKeys();
-                completeMembershipChange();
-            } catch (Exception ex) {
-                LOG.error(ex.getMessage(), ex);
-            } finally {
-                resumeProcessing();
-                stateLock.unlock();
-            }
-        }
-    }
-
     public void operationsDisabled(ClusterEvent event) {
         if (connected) {
-            new Thread() {
+            reconnectionExecutor.submit(new Runnable() {
 
                 @Override
                 public void run() {
-                    connected = false;
-                    reconnectionLock.lock();
-                    try {
-                        LOG.info("Attempting reconnection for this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
-                        long timeoutInNanos = TimeUnit.MILLISECONDS.toNanos(reconnectTimeout);
-                        while (!connected) {
-                            if (timeoutInNanos > 0) {
-                                timeoutInNanos = reconnectionCondition.awaitNanos(timeoutInNanos);
-                            } else {
-                                break;
-                            }
-                        }
-                    } catch (InterruptedException ex) {
-                        // abort
-                    } finally {
-                        reconnectionLock.unlock();
-                    }
+                    attemptReconnection();
                     if (!connected) {
                         try {
                             LOG.info("Disabling this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
@@ -278,7 +281,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
                     }
                 }
 
-            }.start();
+            });
         }
     }
 
@@ -295,26 +298,34 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         return thisConfiguration.getName().equals(candidateNodeName);
     }
 
-    private void setupThisRemoteProcessor() {
+    private boolean isActuallyConnected(String nodeName) {
+        return nodes.containsKey(nodeName);
+    }
+
+    private void setupRemoteProcessor() {
         remoteProcessor = new RemoteProcessor(thisConfiguration.getNodeHost(), thisConfiguration.getNodePort(), remoteProcessorThreads, compressCommunication, router);
         remoteProcessor.start();
         LOG.debug("Set up processor for {}", thisConfiguration.getName());
     }
 
     private void setupThisNode() {
+        // Local Processor:
         localProcessor = new LocalProcessor(router, store);
-        Node thisNode = localNodeFactory.makeLocalNode(thisConfiguration, localProcessor);
         localProcessor.start();
+        // Local node:
+        Node thisNode = localNodeFactory.makeLocalNode(thisConfiguration, localProcessor);
         thisNode.connect();
         nodes.put(thisConfiguration.getName(), thisNode);
         router.addRouteToLocalNode(thisNode);
         router.addRouteTo(thisCluster, thisNode);
-        LOG.info("Set up this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
+        // Connection table;
+        connectionTable.put(thisConfiguration.getName(), SERIALIZER.serialize(thisConfiguration));
+        connectCondition.signalAll();
     }
 
-    private void setupAddressTable() {
-        addressTable.put(thisConfiguration.getName(), SERIALIZER.serialize(thisConfiguration));
-        setupAddressCondition.signalAll();
+    private void signalPrematureDisconnection() {
+        connectionTable.put(thisConfiguration.getName(), PREMATURE_DISCONNECTION);
+        connectCondition.signalAll();
     }
 
     private void setupRemoteNodes() throws InterruptedException {
@@ -324,23 +335,31 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             if (!isThisNode(serverId)) {
                 String remoteNodeName = serverId;
                 connectRemoteNode(remoteNodeName);
+                LOG.info("Set up remote node {}:{}", thisCluster.getName(), remoteNodeName);
             }
         }
     }
 
     private void connectRemoteNode(String remoteNodeName) throws InterruptedException {
-        while (!addressTable.containsKey(remoteNodeName)) {
-            setupAddressCondition.await(1000, TimeUnit.MILLISECONDS);
+        // Wait for remote connection:
+        int seconds = 0;
+        while (!connectionTable.containsKey(remoteNodeName)) {
+            connectCondition.await(1000, TimeUnit.MILLISECONDS);
+            seconds++;
+            if (seconds > 60) {
+                // FIXME: just logging isn't that good ...
+                LOG.warn("Detected excessive waiting for node: {}", remoteNodeName);
+            }
         }
-        ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(addressTable.get(remoteNodeName));
-        if (remoteConfiguration != null) {
+        // Do actual connection:
+        if (!Arrays.equals(PREMATURE_DISCONNECTION, connectionTable.get(remoteNodeName))) {
+            ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(connectionTable.get(remoteNodeName));
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {
                 Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout, compressCommunication);
-                remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
                 router.addRouteTo(thisCluster, remoteNode);
-                LOG.info("Set up remote node {}:{}", thisCluster.getName(), remoteNodeName);
+                remoteNode.connect();
             }
         } else {
             LOG.warn("Cannot set up remote node {}", remoteNodeName);
@@ -358,8 +377,9 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void flushThisNodeKeys() {
-        LOG.debug("About to flush keys on node {}:{}", thisCluster.getName(), thisConfiguration.getName());
+        LOG.warn("About to flush keys on node {}:{}", thisCluster.getName(), thisConfiguration.getName());
         store.flush(flushStrategy, flushCondition);
+        LOG.warn("Finished flushing keys on node {}:{}", thisCluster.getName(), thisConfiguration.getName());
     }
 
     private void disconnectRemoteNode(String nodeName) {
@@ -376,6 +396,9 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         localProcessor.stop();
         remoteProcessor.stop();
         ensembleManager.shutdown();
+        connectionExecutor.shutdown();
+        disconnectionExecutor.shutdown();
+        reconnectionExecutor.shutdown();
         GlobalExecutor.shutdown();
     }
 
@@ -391,6 +414,26 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         } finally {
             LOG.info("Exiting this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
             System.exit(0);
+        }
+    }
+
+    private void attemptReconnection() {
+        connected = false;
+        reconnectionLock.lock();
+        try {
+            LOG.info("Attempting reconnection for this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
+            long timeoutInNanos = TimeUnit.MILLISECONDS.toNanos(reconnectTimeout);
+            while (!connected) {
+                if (timeoutInNanos > 0) {
+                    timeoutInNanos = reconnectionCondition.awaitNanos(timeoutInNanos);
+                } else {
+                    break;
+                }
+            }
+        } catch (InterruptedException ex) {
+            // abort
+        } finally {
+            reconnectionLock.unlock();
         }
     }
 
@@ -411,24 +454,6 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             String seed = entry.getValue();
             LOG.info("Joining remote cluster {} with seed {}", cluster, seed);
             ensembleManager.join(clusters.get(cluster), seed, ensembleConfiguration);
-        }
-    }
-
-    private void startMembershipChange() {
-        membershipCounter.compareAndSet(0, getCluster().getClusterTopology().getNodes().size());
-        membershipCounter.decrementAndGet();
-    }
-
-    private void completeMembershipChange() {
-        if (membershipCounter.get() > 0) {
-            while (membershipCounter.get() > 0) {
-                try {
-                    setupMembershipCondition.await();
-                } catch (Exception ex) {
-                }
-            }
-        } else {
-            setupMembershipCondition.signalAll();
         }
     }
 
