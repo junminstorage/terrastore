@@ -188,13 +188,13 @@
         </dependency>
         <dependency>
             <groupId>org.terracotta</groupId>
-            <artifactId>terracotta-toolkit-1.0-runtime</artifactId>
-            <version>1.0.0</version>
+            <artifactId>terracotta-toolkit-1.1-runtime</artifactId>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.terracotta.toolkit</groupId>
-            <artifactId>terracotta-toolkit-1.0-impl</artifactId>
-            <version>1.0.0</version>
+            <artifactId>terracotta-toolkit-1.1-impl</artifactId>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.mortbay.jetty</groupId>
@@ -313,12 +313,11 @@
                     <plugin>
                         <groupId>org.terracotta.maven.plugins</groupId>
                         <artifactId>tc-maven-plugin</artifactId>
-                        <version>1.6.0</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.terracotta</groupId>
                                 <artifactId>terracotta</artifactId>
-                                <version>3.3.0</version>
+                                <version>3.4.0</version>
                             </dependency>
                         </dependencies>
                         <configuration>
@@ -403,12 +402,11 @@
                     <plugin>
                         <groupId>org.terracotta.maven.plugins</groupId>
                         <artifactId>tc-maven-plugin</artifactId>
-                        <version>1.6.0</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.terracotta</groupId>
                                 <artifactId>terracotta</artifactId>
-                                <version>3.3.0</version>
+                                <version>3.4.0</version>
                             </dependency>
                         </dependencies>
                         <configuration>
@@ -542,12 +540,11 @@
             <plugin>
                 <groupId>org.terracotta.maven.plugins</groupId>
                 <artifactId>tc-maven-plugin</artifactId>
-                <version>1.6.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.terracotta</groupId>
                         <artifactId>terracotta</artifactId>
-                        <version>3.3.0</version>
+                        <version>3.4.0</version>
                     </dependency>
                 </dependencies>
                 <configuration>

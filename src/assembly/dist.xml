@@ -45,11 +45,6 @@
         </file>
         <file>
             <outputDirectory>terrastore-master</outputDirectory>
-            <source>src/dist/master/terracotta-master.log4j.properties</source>
-            <filtered>true</filtered>
-        </file>
-        <file>
-            <outputDirectory>terrastore-master</outputDirectory>
             <source>src/dist/terrastore-master.zip</source>
         </file>
         <file>
