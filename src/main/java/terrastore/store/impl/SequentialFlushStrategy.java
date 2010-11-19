@@ -37,11 +37,14 @@ public class SequentialFlushStrategy implements FlushStrategy {
 
     @Override
     public void flush(Bucket bucket, Collection<Key> keys, FlushCondition flushCondition, FlushCallback flushCallback) {
+        int flushedKeys = 0;
         for (Key key : keys) {
             if (flushCondition.isSatisfied(bucket, key)) {
                 flushCallback.doFlush(key);
+                flushedKeys++;
                 LOG.debug("Flushed key: {}", key);
             }
         }
+        LOG.warn("Actual number of flushed keys: {}", flushedKeys);
     }
 }
