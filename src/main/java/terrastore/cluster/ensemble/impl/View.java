@@ -58,10 +58,6 @@ public class View implements MessagePackable, MessageUnpackable, Serializable {
         return members;
     }
 
-    public int size() {
-        return members.size();
-    }
-
     public int percentageOfChange(View anotherView) {
         Set<Member> a = new HashSet<Member>(members);
         Set<Member> b = new HashSet<Member>(anotherView.getMembers());
