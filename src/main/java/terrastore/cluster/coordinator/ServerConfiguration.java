@@ -47,6 +47,9 @@ public class ServerConfiguration implements MessagePackable, MessageUnpackable, 
         this.httpPort = httpPort;
     }
 
+    public ServerConfiguration() {
+    }
+
     public String getName() {
         return name;
     }
