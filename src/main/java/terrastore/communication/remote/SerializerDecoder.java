@@ -19,7 +19,6 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.frame.CorruptedFrameException;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import terrastore.util.io.Serializer;
 
@@ -51,7 +50,7 @@ public class SerializerDecoder extends FrameDecoder {
                     return result;
                 } catch (Exception ex) {
                     buffer.readerIndex(afterReadIndex);
-                    throw new CorruptedFrameException(ex.getMessage(), ex);
+                    throw new RuntimeException(ex.getMessage(), ex);
                 }
             } else {
                 buffer.resetReaderIndex();
