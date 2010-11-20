@@ -22,45 +22,45 @@ import terrastore.cluster.ensemble.EnsembleConfiguration;
  */
 public class FuzzyInferenceEngine {
 
-    private final int f1 = 2;
-    private final int f2 = 4;
-    private final int f3 = 6;
+    private final int f1 = 10;
+    private final int f2 = 40;
+    private final int f3 = 70;
     private long p1 = 20;
     private long p2 = 40;
     private long increment = 20;
     private long limit = 60;
     private long interval;
 
-    public long estimateNextPeriodLength(int nrViewChanges, long previousPeriodLength, EnsembleConfiguration.DiscoveryConfiguration conf) {
+    public long estimateNextPeriodLength(int viewChangesPercentage, long previousPeriodLength, EnsembleConfiguration.DiscoveryConfiguration conf) {
 
         calculateParametersFrom(conf);
 
         long p = previousPeriodLength / 1000;
-        if (nrViewChanges == 0) {
+        if (viewChangesPercentage == 0) {
             return Math.min((limit * 1000), ((p + increment) * 1000));
-        } else if (veryHighViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
+        } else if (veryHighViewChanges(viewChangesPercentage) && veryFrequentPeriod(p)) {
             return Math.min((limit * 1000), (interval * 1000));
-        } else if (veryHighViewChanges(nrViewChanges) && frequentPeriod(p)) {
+        } else if (veryHighViewChanges(viewChangesPercentage) && frequentPeriod(p)) {
             return Math.min((limit * 1000), (2 * interval * 1000));
-        } else if (veryHighViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
+        } else if (veryHighViewChanges(viewChangesPercentage) && lessFrequentPeriod(p)) {
             return Math.min((limit * 1000), (3 * interval * 1000));
-        } else if (highViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
+        } else if (highViewChanges(viewChangesPercentage) && veryFrequentPeriod(p)) {
             return Math.min((limit * 1000), (4 * interval * 1000));
-        } else if (highViewChanges(nrViewChanges) && frequentPeriod(p)) {
+        } else if (highViewChanges(viewChangesPercentage) && frequentPeriod(p)) {
             return Math.min((limit * 1000), (5 * interval * 1000));
-        } else if (highViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
+        } else if (highViewChanges(viewChangesPercentage) && lessFrequentPeriod(p)) {
             return Math.min((limit * 1000), (6 * interval * 1000));
-        } else if (lowViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
+        } else if (lowViewChanges(viewChangesPercentage) && veryFrequentPeriod(p)) {
             return Math.min((limit * 1000), (7 * interval * 1000));
-        } else if (lowViewChanges(nrViewChanges) && frequentPeriod(p)) {
+        } else if (lowViewChanges(viewChangesPercentage) && frequentPeriod(p)) {
             return Math.min((limit * 1000), (8 * interval * 1000));
-        } else if (lowViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
+        } else if (lowViewChanges(viewChangesPercentage) && lessFrequentPeriod(p)) {
             return Math.min((limit * 1000), (9 * interval * 1000));
-        } else if (veryLowViewChanges(nrViewChanges) && veryFrequentPeriod(p)) {
+        } else if (veryLowViewChanges(viewChangesPercentage) && veryFrequentPeriod(p)) {
             return Math.min((limit * 1000), (10 * interval * 1000));
-        } else if (veryLowViewChanges(nrViewChanges) && frequentPeriod(p)) {
+        } else if (veryLowViewChanges(viewChangesPercentage) && frequentPeriod(p)) {
             return Math.min((limit * 1000), (11 * interval * 1000));
-        } else if (veryLowViewChanges(nrViewChanges) && lessFrequentPeriod(p)) {
+        } else if (veryLowViewChanges(viewChangesPercentage) && lessFrequentPeriod(p)) {
             return Math.min((limit * 1000), (12 * interval * 1000));
         } else {
             throw new IllegalStateException("Unexpected view changes and frequency values!");

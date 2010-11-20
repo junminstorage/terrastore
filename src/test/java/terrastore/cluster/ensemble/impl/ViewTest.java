@@ -24,15 +24,13 @@ import org.junit.Test;
 import terrastore.cluster.coordinator.ServerConfiguration;
 
 /**
- * 
- * @author Amir Moulavi <amir.moulavi@gmail.com>
- *
+ * @author Amir Moulavi
  */
 public class ViewTest {
 
     private View viewB;
     private View viewA;
-    private int differences;
+    private int percentage;
 
     @Test
     public void two_non_equal_sets_are_compared_correctly() {
@@ -42,7 +40,7 @@ public class ViewTest {
 
         when_sets_are_compared();
 
-        then_the_number_of_different_members_are(1);
+        then_the_percentage_of_change_is(33);
     }
 
     @Test
@@ -53,7 +51,7 @@ public class ViewTest {
 
         when_sets_are_compared();
 
-        then_the_number_of_different_members_are(2);
+        then_the_percentage_of_change_is(50);
     }
 
     @Test
@@ -64,7 +62,7 @@ public class ViewTest {
 
         when_sets_are_compared();
 
-        then_the_number_of_different_members_are(6);
+        then_the_percentage_of_change_is(100);
     }
 
     @Test
@@ -75,7 +73,7 @@ public class ViewTest {
 
         when_sets_are_compared();
 
-        then_the_number_of_different_members_are(0);
+        then_the_percentage_of_change_is(0);
     }
 
     @Test
@@ -86,7 +84,7 @@ public class ViewTest {
 
         when_sets_are_compared();
 
-        then_the_number_of_different_members_are(3);
+        then_the_percentage_of_change_is(100);
     }
 
     @Test
@@ -97,7 +95,7 @@ public class ViewTest {
 
         when_sets_are_compared();
 
-        then_the_number_of_different_members_are(0);
+        then_the_percentage_of_change_is(0);
     }
 
     private void given_sets(View viewA, View viewB) {
@@ -106,11 +104,11 @@ public class ViewTest {
     }
 
     private void when_sets_are_compared() {
-        this.differences = viewA.difference(viewB);
+        this.percentage = viewA.percentageOfChange(viewB);
     }
 
-    private void then_the_number_of_different_members_are(int differences) {
-        Assert.assertTrue("Differences don't match, expected [" + differences + "], but it was [" + this.differences + "]", this.differences == differences);
+    private void then_the_percentage_of_change_is(int percentage) {
+        Assert.assertTrue("Percentage doesn't match, expected [" + percentage + "], but it was [" + this.percentage + "]", this.percentage == percentage);
     }
 
     private View construct_set(String... membersName) {

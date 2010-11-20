@@ -30,10 +30,12 @@ import terrastore.communication.Cluster;
 
 /**
  * @author Amir Moulavi
+ * @author Sergio Bossa
  */
 public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdaptiveEnsembleScheduler.class);
+    //
     private final FuzzyInferenceEngine fuzzyInferenceEngine;
     private ScheduledExecutorService scheduler;
     private ScheduledFuture future;
@@ -56,10 +58,20 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
                 public void run() {
                     try {
                         View view = ensemble.update(cluster);
-                        if (prevView != null) {
+                        if (view!= null && prevView != null) {
                             future.cancel(true);
                             long newEstimatedPeriodLength = fuzzyInferenceEngine.estimateNextPeriodLength(
-                                    view.difference(prevView),
+                                    view.percentageOfChange(prevView),
+                                    discoveryInterval,
+                                    ensembleConfiguration.getDiscovery());
+                            reschedule(cluster,
+                                    ensemble,
+                                    ensembleConfiguration,
+                                    newEstimatedPeriodLength);
+                        } else if (view == null && prevView != null) {
+                            future.cancel(true);
+                            long newEstimatedPeriodLength = fuzzyInferenceEngine.estimateNextPeriodLength(
+                                    100,
                                     discoveryInterval,
                                     ensembleConfiguration.getDiscovery());
                             reschedule(cluster,
@@ -74,7 +86,7 @@ public class AdaptiveEnsembleScheduler implements EnsembleScheduler {
                 }
 
             }, discoveryInterval, discoveryInterval, TimeUnit.MILLISECONDS);
-            LOG.info("Scheduled discovery for cluster [{}], discoveryInterval {} ms", cluster, discoveryInterval);
+            LOG.info("Scheduled discovery for cluster {}, discovery interval is {} ms", cluster, discoveryInterval);
         }
     }
 

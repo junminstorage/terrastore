@@ -43,7 +43,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void no_view_change() {
-        given(view_changes(0), previous_period_length(40));
+        given(view_changes_percentage(0), previous_period_length(40));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -52,7 +52,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void no_view_change_with_upbound_limit() {
-        given(view_changes(0), previous_period_length(60));
+        given(view_changes_percentage(0), previous_period_length(60));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -61,7 +61,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void very_high_view_changes_and_very_frequent_period() {
-        given(view_changes(7), previous_period_length(10));
+        given(view_changes_percentage(80), previous_period_length(10));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -70,7 +70,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void very_high_view_changes_and_frequent_period() {
-        given(view_changes(7), previous_period_length(21));
+        given(view_changes_percentage(80), previous_period_length(21));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -79,7 +79,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void very_high_view_changes_and_less_frequent_period() {
-        given(view_changes(7), previous_period_length(45));
+        given(view_changes_percentage(80), previous_period_length(45));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -88,7 +88,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void high_view_changes_and_very_frequent_period() {
-        given(view_changes(5), previous_period_length(10));
+        given(view_changes_percentage(50), previous_period_length(10));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -97,7 +97,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void high_view_changes_and_frequent_period() {
-        given(view_changes(5), previous_period_length(25));
+        given(view_changes_percentage(50), previous_period_length(25));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -106,7 +106,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void high_view_changes_and_less_frequent_period() {
-        given(view_changes(5), previous_period_length(80));
+        given(view_changes_percentage(50), previous_period_length(80));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -115,7 +115,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void low_view_changes_and_very_frequent_period() {
-        given(view_changes(3), previous_period_length(10));
+        given(view_changes_percentage(20), previous_period_length(10));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -124,7 +124,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void low_view_changes_and_frequent_period() {
-        given(view_changes(3), previous_period_length(30));
+        given(view_changes_percentage(20), previous_period_length(30));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -133,7 +133,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void low_view_changes_and_less_frequent_period() {
-        given(view_changes(3), previous_period_length(90));
+        given(view_changes_percentage(20), previous_period_length(90));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -142,7 +142,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void very_low_view_changes_and_very_frequent_period() {
-        given(view_changes(1), previous_period_length(10));
+        given(view_changes_percentage(5), previous_period_length(10));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -151,7 +151,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void very_low_view_changes_and_frequent_period() {
-        given(view_changes(1), previous_period_length(35));
+        given(view_changes_percentage(5), previous_period_length(35));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -160,7 +160,7 @@ public class FuzzyInferenceEngineTest {
 
     @Test
     public void very_low_view_changes_and_less_frequent_period() {
-        given(view_changes(1), previous_period_length(65));
+        given(view_changes_percentage(5), previous_period_length(65));
 
         when_the_fuzzy_inference_engine_estimates();
 
@@ -180,8 +180,8 @@ public class FuzzyInferenceEngineTest {
         Assert.assertTrue("Wrong estimated value: expected [" + estimatedPeriodLength * 1000 + "], but it was [" + result + "]", estimatedPeriodLength * 1000 == result);
     }
 
-    private int view_changes(int nrViewChanges) {
-        return nrViewChanges;
+    private int view_changes_percentage(int percentage) {
+        return percentage;
     }
 
     private long previous_period_length(int period) {

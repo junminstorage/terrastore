@@ -46,7 +46,7 @@ public class FixedEnsembleScheduler implements EnsembleScheduler {
     @Override
     public final synchronized void schedule(final Cluster cluster, final EnsembleManager ensemble, final EnsembleConfiguration ensembleConfiguration) {
         if (!shutdown) {
-            LOG.info("Scheduling discovery for cluster {}", cluster);
+            long discoveryInterval = ensembleConfiguration.getDiscovery().getInterval();
             scheduler.scheduleWithFixedDelay(new Runnable() {
 
                 @Override
@@ -58,7 +58,8 @@ public class FixedEnsembleScheduler implements EnsembleScheduler {
                     }
                 }
 
-            }, 0, ensembleConfiguration.getDiscovery().getInterval(), TimeUnit.MILLISECONDS);
+            }, 0, discoveryInterval, TimeUnit.MILLISECONDS);
+            LOG.info("Scheduled discovery for cluster {}, discovery interval is {} ms", cluster, discoveryInterval);
         }
     }
 
