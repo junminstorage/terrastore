@@ -84,7 +84,7 @@ public class ParallelUtilsTest {
     }
 
     @Test
-    public void testParallelSliceMap() throws ParallelExecutionException {
+    public void testParallelSliceMap() throws ParallelExecutionException, InterruptedException {
         final Set<Thread> threads = new HashSet<Thread>();
         ParallelUtils.parallelSliceMap(
                 Arrays.asList("David Gilmour", "Jimmy Page", "Carlos Santana", "Jonny Greenwood", "SRV", "Albert King"), 3,
@@ -110,6 +110,7 @@ public class ParallelUtilsTest {
                     }
 
                 }, executor);
+        Thread.sleep(3000);
         assertEquals(2, threads.size());
     }
 
