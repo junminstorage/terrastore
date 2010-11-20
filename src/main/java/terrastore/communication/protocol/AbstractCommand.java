@@ -67,7 +67,7 @@ public abstract class AbstractCommand<R> implements Command, MessagePackable, Me
 
     @Override
     public String toString() {
-        return id;
+        return this.getClass().getName() + ":" + id;
     }
 
     protected abstract void doSerialize(Packer packer) throws IOException;

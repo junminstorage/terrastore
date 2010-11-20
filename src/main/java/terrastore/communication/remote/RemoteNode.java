@@ -84,7 +84,7 @@ public class RemoteNode implements Node {
                 ChannelFuture future = client.connect(new InetSocketAddress(configuration.getNodeHost(), configuration.getNodePort()));
                 future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
                 if (future.isSuccess()) {
-                    LOG.debug("Connected to {}:{}", configuration.getNodeHost(), configuration.getNodePort());
+                    LOG.debug("Connected to remote node {}:{}", configuration.getNodeHost(), configuration.getNodePort());
                     clientChannel = future.getChannel();
                     connected = true;
                 } else {
@@ -104,7 +104,7 @@ public class RemoteNode implements Node {
                 clientChannel.close().awaitUninterruptibly();
                 client.releaseExternalResources();
                 connected = false;
-                LOG.debug("Disconnected from : {}:{}", configuration.getNodeHost(), configuration.getNodePort());
+                LOG.debug("Disconnected from remote node {}:{}", configuration.getNodeHost(), configuration.getNodePort());
             }
         } finally {
             stateLock.unlock();
@@ -121,7 +121,7 @@ public class RemoteNode implements Node {
             SynchronousQueue<Response> channel = new SynchronousQueue<Response>();
             rendezvous.put(commandId, channel);
             clientChannel.write(command);
-            LOG.debug("Sent command {}", commandId);
+            if (LOG.isDebugEnabled()) LOG.debug("Sent command {} to remote node {}:{}", new String[]{commandId, configuration.getNodeHost(), Integer.toString(configuration.getNodePort())});
             //
             Response response = null;
             long wait = timeoutInMillis;

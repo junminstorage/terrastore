@@ -42,6 +42,7 @@ import terrastore.store.Key;
 public class ClusterHashingPartitioner implements ClusterPartitioner {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClusterHashingPartitioner.class);
+    //
     private final int maxPartitions;
     private final HashFunction hashFunction;
     private final Map<Cluster, Partitioner> partitioners;
