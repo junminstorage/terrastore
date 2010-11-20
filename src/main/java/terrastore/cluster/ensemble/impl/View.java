@@ -15,6 +15,7 @@
  */
 package terrastore.cluster.ensemble.impl;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import terrastore.util.io.MsgPackUtils;
 
 /**
  * @author Sergio Bossa
+ * @author Amir Moulavi
  */
 public class View implements MessagePackable, MessageUnpackable, Serializable {
 
@@ -54,6 +56,19 @@ public class View implements MessagePackable, MessageUnpackable, Serializable {
 
     public Set<Member> getMembers() {
         return members;
+    }
+
+    public int size() {
+        return members.size();
+    }
+
+    public int percentageOfChange(View anotherView) {
+        Set<Member> a = new HashSet<Member>(members);
+        Set<Member> b = new HashSet<Member>(anotherView.getMembers());
+        int abDifference = Sets.difference(a, b).size();
+        int baDifference = Sets.difference(b, a).size();
+        int abUnion = Sets.union(a, b).size();
+        return (int) (((float) (abDifference + baDifference) / abUnion) * 100);
     }
 
     @Override
@@ -88,16 +103,6 @@ public class View implements MessagePackable, MessageUnpackable, Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(this.cluster).append(this.members).toHashCode();
-    }
-
-    public int difference(View anotherView) {
-        Set<Member> A = new HashSet<Member>(members);
-        Set<Member> B = new HashSet<Member>(anotherView.getMembers());
-        A.removeAll(B);
-        int sizeOfA = A.size();
-        A = new HashSet<Member>(members);
-        B.removeAll(A);
-        return sizeOfA + B.size();
     }
 
     public static class Member implements Serializable {

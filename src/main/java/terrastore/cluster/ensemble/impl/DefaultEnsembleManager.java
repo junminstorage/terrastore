@@ -112,7 +112,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 calculateView(cluster, view);
             }
         } catch (Exception ex) {
-            LOG.info("Error updating membership information for cluster {}", cluster);
+            LOG.warn("Error updating membership information for cluster {}", cluster);
             LOG.debug(ex.getMessage(), ex);
             clearView(cluster);
         }
@@ -163,11 +163,11 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 successful = true;
                 LOG.debug("Updated cluster view from node {}:{}", cluster, node);
             } catch (Exception ex) {
-                LOG.warn("Failed to contact node {}:{} for updating cluster view!", cluster, node);
+                LOG.warn("Failed to contact ensemble node {}:{} for updating cluster view!", cluster, node);
                 router.removeRouteTo(cluster, node);
                 node.disconnect();
                 nodeIterator.remove();
-                LOG.info("Disconnected remote node {}:{}", cluster, node);
+                LOG.info("Disconnected ensemble remote node {}:{}", cluster, node);
             }
         }
         if (successful) {
@@ -196,7 +196,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                     router.removeRouteTo(cluster, node);
                     node.disconnect();
                     currentNodes.remove(node);
-                    LOG.info("Disconnected remote node {}:{}", cluster, node);
+                    LOG.info("Disconnected ensemble remote node {}:{}", cluster, node);
                 }
             }
             for (View.Member member : joiningMembers) {
@@ -208,7 +208,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
-                LOG.info("Joining remote node {}:{}", cluster, node);
+                LOG.info("Joining ensemble remote node {}:{}", cluster, node);
             }
         } else {
             LOG.debug("No current view for cluster {}", cluster);
@@ -221,7 +221,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
-                LOG.info("Joining remote node {}:{}", cluster, node);
+                LOG.info("Joining ensemble remote node {}:{}", cluster, node);
             }
         }
         perClusterViews.put(cluster, updatedView);
