@@ -42,6 +42,7 @@ import terrastore.util.collect.Sets;
 public class DefaultRouter implements Router {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultRouter.class);
+    //
     private final ReadWriteLock stateLock;
     private final Set<Cluster> clustersCache;
     private final ClusterPartitioner clusterPartitioner;
@@ -81,6 +82,7 @@ public class DefaultRouter implements Router {
         stateLock.writeLock().lock();
         try {
             if (clustersCache.contains(cluster)) {
+                LOG.debug("Adding route to cluster {} and node {}", cluster, node);
                 clusterPartitioner.addNode(cluster, node);
             } else {
                 // TODO : use proper exception here?
@@ -96,6 +98,7 @@ public class DefaultRouter implements Router {
         stateLock.writeLock().lock();
         try {
             if (clustersCache.contains(cluster)) {
+                LOG.debug("Removing route to cluster {} and node {}", cluster, node);
                 clusterPartitioner.removeNode(cluster, node);
             } else {
                 // TODO : use proper exception here?
@@ -108,6 +111,7 @@ public class DefaultRouter implements Router {
 
     @Override
     public Node routeToLocalNode() {
+        LOG.debug("Routing to local node {}", localNode);
         return localNode;
     }
 
@@ -179,6 +183,7 @@ public class DefaultRouter implements Router {
     public Set<Node> clusterRoute(Cluster cluster) {
         stateLock.readLock().lock();
         try {
+            LOG.debug("Routing to all nodes for cluster {}", cluster);
             if (cluster.isLocal()) {
                 return Sets.cons(localNode, clusterPartitioner.getNodesFor(cluster));
             } else {
@@ -193,6 +198,7 @@ public class DefaultRouter implements Router {
     public Map<Cluster, Set<Node>> broadcastRoute() {
         stateLock.readLock().lock();
         try {
+            LOG.debug("Routing to all nodes of all clusters.");
             Map<Cluster, Set<Node>> nodes = new HashMap<Cluster, Set<Node>>(clustersCache.size());
             for (Cluster cluster : clustersCache) {
                 if (cluster.isLocal()) {

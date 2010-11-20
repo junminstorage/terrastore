@@ -55,7 +55,6 @@ public class DefaultUpdateService implements UpdateService {
 
     public void removeBucket(String bucket) throws CommunicationException, UpdateOperationException {
         try {
-            LOG.debug("Removing bucket {}", bucket);
             RemoveBucketCommand command = new RemoveBucketCommand(bucket);
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
             multicastRemoveBucketCommand(perClusterNodes, command);
@@ -66,7 +65,6 @@ public class DefaultUpdateService implements UpdateService {
 
     public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException, ValidationException {
         try {
-            LOG.debug("Putting value with key {} to bucket {}", key, bucket);
             JsonUtils.validate(value);
             Node node = router.routeToNodeFor(bucket, key);
             PutValueCommand command = null;
@@ -85,7 +83,6 @@ public class DefaultUpdateService implements UpdateService {
 
     public void removeValue(String bucket, Key key) throws CommunicationException, UpdateOperationException {
         try {
-            LOG.debug("Removing value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
             RemoveValueCommand command = new RemoveValueCommand(bucket, key);
             node.send(command);
@@ -99,7 +96,6 @@ public class DefaultUpdateService implements UpdateService {
     @Override
     public Value updateValue(String bucket, Key key, Update update) throws CommunicationException, UpdateOperationException {
         try {
-            LOG.debug("Updating value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
             UpdateCommand command = new UpdateCommand(bucket, key, update);
             return node.<Value>send(command);

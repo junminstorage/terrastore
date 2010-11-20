@@ -67,7 +67,6 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Set<String> getBuckets() throws CommunicationException, QueryOperationException {
         try {
-            LOG.debug("Getting bucket names.");
             GetBucketsCommand command = new GetBucketsCommand();
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
             Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
@@ -81,7 +80,6 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Value getValue(String bucket, Key key, Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
-            LOG.debug("Getting value with key {} from bucket {}", key, bucket);
             Node node = router.routeToNodeFor(bucket, key);
             GetValueCommand command = null;
             if (predicate == null || predicate.isEmpty()) {
@@ -103,7 +101,6 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Map<Key, Value> getAllValues(final String bucket, final int limit) throws CommunicationException, QueryOperationException {
         try {
-            LOG.debug("Getting all values from bucket {}", bucket);
             Set<Key> allKeys = Sets.limited(getAllKeysForBucket(bucket), limit);
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
             List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
@@ -144,7 +141,6 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
-            LOG.debug("Range query on bucket {}", bucket);
             Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
             List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
@@ -190,7 +186,6 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Map<Key, Value> queryByPredicate(final String bucket, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
-            LOG.debug("Predicate-based query on bucket {}", bucket);
             Set<Key> allKeys = getAllKeysForBucket(bucket);
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
             List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
@@ -231,7 +226,6 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Value queryByMapReduce(final String bucket, final Range range, final Mapper mapper, final Reducer reducer) throws CommunicationException, QueryOperationException {
         try {
-            LOG.debug("MapReduce query on bucket {}", bucket);
             Set<Key> keys = null;
             if (range != null && !range.isEmpty()) {
                 keys = getKeyRangeForBucket(bucket, range);
@@ -318,9 +312,9 @@ public class DefaultQueryService implements QueryService {
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
                             } catch (CommunicationException ex) {
-                                LOG.error(ex.getMessage(), ex);
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
                             } catch (ProcessingException ex) {
-                                LOG.error(ex.getMessage(), ex);
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
                                 throw new ParallelExecutionException(ex);
                             }
                         }
@@ -355,9 +349,9 @@ public class DefaultQueryService implements QueryService {
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
                             } catch (CommunicationException ex) {
-                                LOG.error(ex.getMessage(), ex);
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
                             } catch (ProcessingException ex) {
-                                LOG.error(ex.getMessage(), ex);
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
                                 throw new ParallelExecutionException(ex);
                             }
                         }
@@ -392,9 +386,9 @@ public class DefaultQueryService implements QueryService {
                                 // Break after first success, we just want to send command to one node per cluster:
                                 break;
                             } catch (CommunicationException ex) {
-                                LOG.error(ex.getMessage(), ex);
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
                             } catch (ProcessingException ex) {
-                                LOG.error(ex.getMessage(), ex);
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
                                 throw new ParallelExecutionException(ex);
                             }
                         }
