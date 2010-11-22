@@ -357,9 +357,9 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             // Double check to tolerate duplicated node joins by terracotta server:
             if (!nodes.containsKey(remoteNodeName)) {
                 Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout, compressCommunication);
+                remoteNode.connect();
                 nodes.put(remoteNodeName, remoteNode);
                 router.addRouteTo(thisCluster, remoteNode);
-                remoteNode.connect();
             }
         } else {
             LOG.warn("Cannot set up remote node {}", remoteNodeName);
