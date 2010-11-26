@@ -37,11 +37,11 @@ public class GlobalExecutor {
 
     public static void configure(int threads) {
         int minThreadsShare = Runtime.getRuntime().availableProcessors() * 2;
-        int actual = threads / 4 > minThreadsShare ? threads / 4 : minThreadsShare;
+        int actual = threads / 3 > minThreadsShare ? threads / 3 : minThreadsShare;
         ACTION_EXECUTOR = newExecutor(actual);
         QUERY_EXECUTOR = newExecutor(actual);
         UPDATE_EXECUTOR = newExecutor(actual);
-        FJ_POOL = newFJPool(actual);
+        FJ_POOL = newFJPool(minThreadsShare);
     }
 
     public static void shutdown() {
