@@ -1,12 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config">
     <tc-properties>
+        <!-- Connection properties -->
         <property name="l2.l1reconnect.enabled" value="true"/>
         <property name="l2.l1reconnect.timeout.millis" value="1"/>
         <property name="l1.healthcheck.l2.ping.enabled" value="true"/>
         <property name="l1.healthcheck.l2.socketConnect" value="true"/>
         <property name="l1.healthcheck.l2.ping.interval" value="1000"/>
         <property name="l1.healthcheck.l2.ping.probes" value="3"/>
+        <!-- Cluster properties -->
+        <property name="l2.berkeleydb.je.log.fileMax" value="10000000"/>
+        <property name="l2.berkeleydb.je.checkpointer.bytesInterval" value="50000000"/>
+        <property name="l2.berkeleydb.je.cleaner.bytesInterval" value="20000000"/>
+        <property name="l2.cachemanager.logging.enabled" value="true"/>
+        <property name="l2.cachemanager.percentageToEvict" value="25"/>
+        <property name="l2.cachemanager.threshold" value="50"/>
+        <property name="l2.cachemanager.criticalThreshold" value="70"/>
+        <property name="l2.objectmanager.passive.sync.batch.size" value="100"/>
+        <property name="l1.cachemanager.percentageToEvict" value="10"/>
+        <property name="l1.cachemanager.threshold" value="80"/>
+        <property name="l1.cachemanager.criticalThreshold" value="90"/>
     </tc-properties>
     <servers>
         <server host="127.0.0.1">
