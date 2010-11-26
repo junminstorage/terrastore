@@ -175,7 +175,7 @@ public class Startup {
     public void start() throws Exception {
         try {
             // TODO: make connection timeout configurable.
-            if (TCMaster.getInstance().connect(master, 60, TimeUnit.SECONDS) == true) {
+            if (TCMaster.getInstance().connect(master, 3, TimeUnit.MINUTES) == true) {
                 verifyNodeHost();
                 verifyWorkerThreads();
                 printInfo();
