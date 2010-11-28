@@ -129,7 +129,13 @@
         <property name="defaultComparator" ref="defaultComparator"/>
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="backupManager" ref="backupManager"/>
+        <property name="lockManager" ref="lockManager"/>
         <property name="eventBus" ref="${eventBus.impl}EventBus"/>
+    </bean>
+
+    <bean id="lockManager" class="terrastore.store.impl.TCLockManager">
+        <constructor-arg value="${node.id}"/>
+        <constructor-arg value="${node.concurrency}"/>
     </bean>
 
     <bean id="snapshotManager" class="terrastore.store.impl.LocalSnapshotManager"/>
@@ -171,6 +177,7 @@
     <!-- Cluster -->
 
     <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator">
+        <property name="lockManager" ref="lockManager"/>
         <property name="store" ref="store"/>
         <property name="router" ref="router"/>
         <property name="ensembleManager" ref="ensembleManager"/>

@@ -60,6 +60,7 @@ public class TCBucketTest {
     public void setUp() {
         TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
         bucket = new TCBucket("bucket");
+        bucket.setLockManager(new TCLockManager("test", 128));
         bucket.setSnapshotManager(new LocalSnapshotManager());
         bucket.setBackupManager(new DefaultBackupManager());
         bucket.setEventBus(new DisabledEventBus());

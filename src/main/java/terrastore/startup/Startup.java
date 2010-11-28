@@ -59,6 +59,7 @@ public class Startup {
     private static final long DEFAULT_FAILOVER_INTERVAL = 0;
     private static final boolean DEFAULT_COMPRESS_DOCUMENTS = false;
     private static final boolean DEFAULT_COMPRESS_COMMUNICATION = false;
+    private static final int DEFAULT_CONCURRENCY_LEVEL = 1024;
     private static final String WELCOME_MESSAGE = "Welcome to Terrastore.";
     private static final String POWEREDBY_MESSAGE = "Powered by Terracotta (http://www.terracotta.org).";
 
@@ -90,6 +91,7 @@ public class Startup {
     private String allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
     private boolean compressDocuments = DEFAULT_COMPRESS_DOCUMENTS;
     private boolean compressCommunication = DEFAULT_COMPRESS_COMMUNICATION;
+    private int concurrencyLevel = DEFAULT_CONCURRENCY_LEVEL;
 
     @Option(name = "--master", required = true)
     public void setMaster(String master) {
@@ -172,6 +174,11 @@ public class Startup {
         this.compressCommunication = Boolean.parseBoolean(compressCommunication);
     }
 
+    @Option(name = "--concurrencyLevel", required = false)
+    public void setConcurrencyLevel(int concurrencyLevel) {
+        this.concurrencyLevel = concurrencyLevel;
+    }
+
     public void start() throws Exception {
         try {
             // TODO: make connection timeout configurable.
@@ -218,6 +225,7 @@ public class Startup {
         LOG.info("Failover retry interval (in milliseconds): {}", failoverInterval);
         LOG.info("Number of http threads: {}", httpThreads);
         LOG.info("Number of worker threads: {}", workerThreads);
+        LOG.info("Internal concurrency level: {}", concurrencyLevel);
     }
 
     private void setupSystemParams() {
@@ -233,6 +241,9 @@ public class Startup {
         System.setProperty("failover.interval", Long.toString(failoverInterval));
         // Compression configuration:
         System.setProperty("compress.documents", Boolean.toString(compressDocuments));
+        // Node configuration:
+        System.setProperty("node.id", ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()));
+        System.setProperty("node.concurrency", Integer.toString(concurrencyLevel));
     }
 
     private ApplicationContext startContext() throws Exception {

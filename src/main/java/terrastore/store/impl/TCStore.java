@@ -42,6 +42,7 @@ import terrastore.store.Bucket;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.store.Key;
+import terrastore.store.LockManager;
 import terrastore.store.SnapshotManager;
 import terrastore.store.Store;
 import terrastore.store.StoreOperationException;
@@ -78,11 +79,12 @@ public class TCStore implements Store {
     private Comparator defaultComparator = new LexicographicalComparator(true);
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
+    private LockManager lockManager;
     private EventBus eventBus;
     private boolean compressedDocuments;
 
     public TCStore() {
-        buckets = TCMaster.getInstance().getMap(TCStore.class.getName() + ".buckets");
+        buckets = TCMaster.getInstance().getAutolockedMap(TCStore.class.getName() + ".buckets");
         instances = new ConcurrentHashMap<String, Bucket>();
     }
 
@@ -251,6 +253,11 @@ public class TCStore implements Store {
     }
 
     @Override
+    public void setLockManager(LockManager lockManager) {
+        this.lockManager = lockManager;
+    }
+
+    @Override
     public void setEventBus(EventBus eventBus) {
         this.eventBus = eventBus;
     }
@@ -264,6 +271,7 @@ public class TCStore implements Store {
         bucket.setFunctions(functions);
         bucket.setSnapshotManager(snapshotManager);
         bucket.setBackupManager(backupManager);
+        bucket.setLockManager(lockManager);
         bucket.setEventBus(eventBus);
         // TODO: verify this is not a perf problem.
     }

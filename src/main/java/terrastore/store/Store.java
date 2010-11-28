@@ -155,4 +155,11 @@ public interface Store {
      * @param backupManager The {@link BackupManager} instance.
      */
     public void setBackupManager(BackupManager backupManager);
+
+    /**
+     * Set the {@link LockManager} used to lock read/write document operations.
+     *
+     * @param lockManager  The {@link LockManager} instance.
+     */
+    public void setLockManager(LockManager lockManager);
 }

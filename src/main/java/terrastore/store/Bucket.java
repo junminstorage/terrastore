@@ -242,6 +242,13 @@ public interface Bucket {
     public void setBackupManager(BackupManager backupManager);
 
     /**
+     * Set the {@link LockManager} used to lock read/write document operations.
+     *
+     * @param lockManager  The {@link LockManager} instance.
+     */
+    public void setLockManager(LockManager lockManager);
+
+    /**
      * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.
      *
      * @param eventBus The event bus instance.

@@ -35,6 +35,7 @@ import org.terracotta.collections.ClusteredMap;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.coordination.Barrier;
 import org.terracotta.locking.ClusteredLock;
+import org.terracotta.locking.LockStrategy;
 import org.terracotta.locking.LockType;
 import org.terracotta.util.ClusteredAtomicLong;
 import org.terracotta.util.ClusteredTextBucket;
@@ -92,8 +93,16 @@ public class TCMaster {
         return toolkit.getReadWriteLock(name);
     }
 
-    public <K, V> ClusteredMap<K, V> getMap(String name) {
-        return toolkit.getMap(name);
+    public void evictReadWriteLock(String name) {
+        toolkit.evictReadWriteLock(name);
+    }
+
+    public <K, V> ClusteredMap<K, V> getAutolockedMap(String name) {
+        return toolkit.getMap(name, LockType.WRITE, LockStrategy.HASH_CODE);
+    }
+
+    public <K, V> ClusteredMap<K, V> getUnlockedMap(String name) {
+        return toolkit.getMap(name, LockType.WRITE, LockStrategy.NULL);
     }
 
     public ClusteredAtomicLong getLong(String name) {
@@ -111,6 +120,7 @@ public class TCMaster {
             public ClusteringToolkit call() throws Exception {
                 return new TerracottaClient(url).getToolkit();
             }
+
         });
         Thread thread = new Thread(futureTask);
         thread.start();
@@ -135,6 +145,11 @@ public class TCMaster {
         }
 
         @Override
+        public void evictReadWriteLock(String name) {
+            locks.remove(name);
+        }
+
+        @Override
         public synchronized <K, V> ClusteredMap<K, V> getMap(String name) {
             if (maps.containsKey(name)) {
                 return maps.get(name);
@@ -142,6 +157,22 @@ public class TCMaster {
                 ClusteredMap<K, V> map = new ConcurrentDistributedMap<K, V>();
                 maps.put(name, map);
                 return map;
+            }
+        }
+
+        @Override
+        public <K, V> ClusteredMap<K, V> getMap(String name, LockType lockType, String lockStrategy) {
+            try {
+                if (maps.containsKey(name)) {
+                    return maps.get(name);
+                } else {
+                    ClusteredMap<K, V> map = new ConcurrentDistributedMap<K, V>(lockType, (LockStrategy<? super K>) Class.forName(lockStrategy).
+                            newInstance());
+                    maps.put(name, map);
+                    return map;
+                }
+            } catch (Exception ex) {
+                throw new IllegalStateException(ex.getMessage(), ex);
             }
         }
 
@@ -190,5 +221,6 @@ public class TCMaster {
         public ClusteredLock createLock(Object monitor, LockType type) throws IllegalArgumentException, NullPointerException {
             throw new UnsupportedOperationException("Not supported yet.");
         }
+
     }
 }
