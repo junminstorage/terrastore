@@ -23,13 +23,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.cluster.ClusterInfo;
 import org.terracotta.collections.ClusteredMap;
-import org.terracotta.locking.ClusteredLock;
 import terrastore.internal.tc.TCMaster;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
@@ -42,6 +40,7 @@ import terrastore.store.FlushCallback;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.store.Key;
+import terrastore.store.LockManager;
 import terrastore.store.SnapshotManager;
 import terrastore.store.SortedSnapshot;
 import terrastore.store.StoreOperationException;
@@ -70,6 +69,7 @@ public class TCBucket implements Bucket {
     private EventBus eventBus;
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
+    private LockManager lockManager;
     private Comparator defaultComparator = new LexicographicalComparator(true);
     private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
     private final Map<String, Function> functions = new HashMap<String, Function>();
@@ -77,7 +77,7 @@ public class TCBucket implements Bucket {
 
     public TCBucket(String name) {
         this.name = name;
-        this.bucket = TCMaster.getInstance().getMap(TCBucket.class.getName() + ".bucket." + name);
+        this.bucket = TCMaster.getInstance().getUnlockedMap(TCBucket.class.getName() + ".bucket." + name);
     }
 
     public String getName() {
@@ -86,39 +86,40 @@ public class TCBucket implements Bucket {
 
     public void put(Key key, Value value) {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
-        lock(key);
+        lockWrite(key);
         try {
-            byte[] old = bucket.put(key.toString(), valueToBytes(value));
+            Value old = doGet(key);
+            doPut(key, value);
             if (eventBus.isEnabled()) {
-                eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
+                eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value));
             }
         } finally {
-            unlock(key);
+            unlockWrite(key);
         }
     }
 
     public boolean conditionalPut(Key key, Value value, Predicate predicate) throws StoreOperationException {
         // Use explicit locking to put and publish on the same "transactional" boundary and keep ordering under concurrency.
-        lock(key);
+        lockWrite(key);
         try {
             Condition condition = getCondition(predicate.getConditionType());
-            byte[] old = bucket.get(key.toString());
-            if (old == null || bytesToValue(old).dispatch(key, predicate, condition)) {
-                bucket.put(key.toString(), valueToBytes(value));
+            Value old = doGet(key);
+            if (old == null || old.dispatch(key, predicate, condition)) {
+                doPut(key, value);
                 if (eventBus.isEnabled()) {
-                    eventBus.publish(new ValueChangedEvent(name, key.toString(), bytesToValue(old), value));
+                    eventBus.publish(new ValueChangedEvent(name, key.toString(), old, value));
                 }
                 return true;
             } else {
                 return false;
             }
         } finally {
-            unlock(key);
+            unlockWrite(key);
         }
     }
 
     public Value get(Key key) throws StoreOperationException {
-        Value value = innerGet(key);
+        Value value = doGet(key);
         if (value != null) {
             return value;
         } else {
@@ -130,7 +131,7 @@ public class TCBucket implements Bucket {
     public Map<Key, Value> get(Set<Key> keys) throws StoreOperationException {
         Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
         for (Key key : keys) {
-            Value value = innerGet(key);
+            Value value = doGet(key);
             if (value != null) {
                 result.put(key, value);
             }
@@ -140,7 +141,7 @@ public class TCBucket implements Bucket {
 
     @Override
     public Value conditionalGet(Key key, Predicate predicate) throws StoreOperationException {
-        Value value = innerGet(key);
+        Value value = doGet(key);
         if (value != null) {
             Condition condition = getCondition(predicate.getConditionType());
             if (value.dispatch(key, predicate, condition)) {
@@ -157,7 +158,7 @@ public class TCBucket implements Bucket {
     public Map<Key, Value> conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException {
         Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
         for (Key key : keys) {
-            Value value = innerGet(key);
+            Value value = doGet(key);
             Condition condition = getCondition(predicate.getConditionType());
             if (value.dispatch(key, predicate, condition)) {
                 result.put(key, value);
@@ -168,16 +169,17 @@ public class TCBucket implements Bucket {
 
     public void remove(Key key) throws StoreOperationException {
         // Use explicit locking to remove and publish on the same "transactional" boundary and keep ordering under concurrency.
-        lock(key);
+        lockWrite(key);
         try {
-            byte[] removed = bucket.remove(key.toString());
+            Value removed = doGet(key);
+            doRemove(key);
             if (removed != null) {
                 if (eventBus.isEnabled()) {
-                    eventBus.publish(new ValueRemovedEvent(name, key.toString(), bytesToValue(removed)));
+                    eventBus.publish(new ValueRemovedEvent(name, key.toString(), removed));
                 }
             }
         } finally {
-            unlock(key);
+            unlockWrite(key);
         }
     }
 
@@ -187,9 +189,9 @@ public class TCBucket implements Bucket {
         Future<Value> task = null;
         // Use explicit locking to update and block concurrent operations on the same key,
         // and also publish on the same "transactional" boundary and keep ordering under concurrency.
-        lock(key);
+        lockWrite(key);
         try {
-            final Value value = bytesToValue(bucket.get(key.toString()));
+            final Value value = doGet(key);
             if (value != null) {
                 final Function function = getFunction(update.getFunctionName());
                 task = GlobalExecutor.getUpdateExecutor().submit(new Callable<Value>() {
@@ -201,7 +203,7 @@ public class TCBucket implements Bucket {
 
                 });
                 Value result = task.get(timeout, TimeUnit.MILLISECONDS);
-                bucket.unlockedPutNoReturn(key.toString(), valueToBytes(result));
+                doPut(key, result);
                 if (eventBus.isEnabled()) {
                     eventBus.publish(new ValueChangedEvent(name, key.toString(), value, result));
                 }
@@ -217,15 +219,15 @@ public class TCBucket implements Bucket {
         } catch (Exception ex) {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         } finally {
-            unlock(key);
+            unlockWrite(key);
         }
     }
 
     public Map<String, Object> map(final Key key, final Mapper mapper) throws StoreOperationException {
-        byte[] value = bucket.get(key.toString());
+        Value value = doGet(key);
         if (value != null) {
             Function function = getFunction(mapper.getMapperName());
-            return bytesToValue(value).dispatch(key, mapper, function);
+            return value.dispatch(key, mapper, function);
         } else {
             return null;
         }
@@ -263,7 +265,7 @@ public class TCBucket implements Bucket {
 
                 @Override
                 public void doFlush(Key key) {
-                    Value value = bytesToValue(bucket.get(key.toString()));
+                    Value value = doGet(key);
                     bucket.flush(key, value);
                 }
 
@@ -301,6 +303,11 @@ public class TCBucket implements Bucket {
     @Override
     public void setBackupManager(BackupManager backupManager) {
         this.backupManager = backupManager;
+    }
+
+    @Override
+    public void setLockManager(LockManager lockManager) {
+        this.lockManager = lockManager;
     }
 
     @Override
@@ -352,14 +359,20 @@ public class TCBucket implements Bucket {
         }
     }
 
-    private void lock(Key key) {
-        ClusteredLock lock = bucket.createFinegrainedLock(key.toString());
-        lock.lock();
+    private void lockRead(Key key) {
+        lockManager.lockRead(name, key);
     }
 
-    private void unlock(Key key) {
-        ClusteredLock lock = bucket.createFinegrainedLock(key.toString());
-        lock.unlock();
+    private void unlockRead(Key key) {
+        lockManager.unlockRead(name, key);
+    }
+
+    private void lockWrite(Key key) {
+        lockManager.lockWrite(name, key);
+    }
+
+    private void unlockWrite(Key key) {
+        lockManager.unlockWrite(name, key);
     }
 
     private byte[] valueToBytes(Value value) {
@@ -378,10 +391,25 @@ public class TCBucket implements Bucket {
         }
     }
 
-    private Value innerGet(Key key) {
-        Value value = bytesToValue(bucket.unlockedGet(key.toString()));
-        value = value != null ? value : bytesToValue(bucket.get(key.toString()));
+    private Value doGet(Key key) {
+        Value value = bytesToValue(bucket.unsafeGet(key.toString()));
+        if (value == null) {
+            lockRead(key);
+            try {
+                value = bytesToValue(bucket.unlockedGet(key.toString()));
+            } finally {
+                unlockRead(key);
+            }
+        }
         return value;
+    }
+
+    private void doRemove(Key key) {
+        bucket.unlockedRemoveNoReturn(key.toString());
+    }
+
+    private void doPut(Key key, Value value) {
+        bucket.unlockedPutNoReturn(key.toString(), valueToBytes(value));
     }
 
     private static class KeyDeserializer implements Transformer<String, Key> {

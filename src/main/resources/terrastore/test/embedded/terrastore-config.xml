@@ -98,7 +98,13 @@
         <property name="defaultComparator" ref="defaultComparator"/>
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="backupManager" ref="backupManager"/>
+        <property name="lockManager" ref="lockManager"/>
         <property name="eventBus" ref="memoryEventBus"/>
+    </bean>
+
+    <bean id="lockManager" class="terrastore.store.impl.TCLockManager">
+        <constructor-arg value="embedded"/>
+        <constructor-arg value="1024"/>
     </bean>
 
     <bean id="snapshotManager" class="terrastore.store.impl.LocalSnapshotManager"/>

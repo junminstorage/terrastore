@@ -49,6 +49,7 @@ public class TCBucketEventingTest {
     public void setUp() {
         TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
         bucket = new TCBucket("bucket");
+        bucket.setLockManager(new TCLockManager("test", 128));
     }
 
     @Test

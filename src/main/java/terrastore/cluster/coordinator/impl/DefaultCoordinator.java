@@ -51,6 +51,7 @@ import terrastore.communication.remote.RemoteProcessor;
 import terrastore.cluster.ensemble.EnsembleManager;
 import terrastore.internal.tc.TCMaster;
 import terrastore.router.Router;
+import terrastore.store.LockManager;
 import terrastore.store.Store;
 import terrastore.util.concurrent.GlobalExecutor;
 import terrastore.util.io.JavaSerializer;
@@ -68,7 +69,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     //
     private Lock stateLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".stateLock").writeLock();
     private Condition connectCondition = stateLock.newCondition();
-    private Map<String, byte[]> connectionTable = TCMaster.getInstance().getMap(DefaultCoordinator.class.getName() + ".connectionTable");
+    private Map<String, byte[]> connectionTable = TCMaster.getInstance().getAutolockedMap(DefaultCoordinator.class.getName() + ".connectionTable");
     //
     private volatile ExecutorService connectionExecutor;
     private volatile ExecutorService disconnectionExecutor;
@@ -84,11 +85,13 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private volatile LocalProcessor localProcessor;
     private volatile RemoteProcessor remoteProcessor;
     //
+    private volatile int concurrencyLevel;
     private volatile boolean compressCommunication;
     private volatile long nodeTimeout;
     private volatile int remoteProcessorThreads;
     private volatile int globalExecutorThreads;
     //
+    private volatile LockManager lockManager;
     private volatile Store store;
     private volatile Router router;
     private volatile EnsembleManager ensembleManager;
@@ -120,6 +123,11 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         int threads = workerThreads / 2;
         this.remoteProcessorThreads = threads;
         this.globalExecutorThreads = threads;
+    }
+
+    @Override
+    public void setLockManager(LockManager lockManager) {
+        this.lockManager = lockManager;
     }
 
     @Override
@@ -385,6 +393,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private void disconnectRemoteNode(String nodeName) {
         Node remoteNode = nodes.remove(nodeName);
         remoteNode.disconnect();
+        lockManager.evictLocks(nodeName);
         router.removeRouteTo(thisCluster, remoteNode);
         LOG.info("Disconnected node {}:{}", thisCluster.getName(), nodeName);
     }

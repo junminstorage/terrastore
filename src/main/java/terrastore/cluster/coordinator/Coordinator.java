@@ -22,6 +22,7 @@ import terrastore.communication.LocalNodeFactory;
 import terrastore.communication.RemoteNodeFactory;
 import terrastore.cluster.ensemble.EnsembleManager;
 import terrastore.router.Router;
+import terrastore.store.LockManager;
 import terrastore.store.Store;
 
 /**
@@ -38,6 +39,8 @@ public interface Coordinator {
     public void setNodeTimeout(long nodeTimeout);
 
     public void setWokerThreads(int workerThreads);
+
+    public void setLockManager(LockManager lockManager);
 
     public void setStore(Store store);
 
