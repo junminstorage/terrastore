@@ -15,7 +15,6 @@
  */
 package terrastore.cluster.coordinator.impl;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,6 +33,7 @@ import org.terracotta.cluster.ClusterInfo;
 import org.terracotta.cluster.ClusterListener;
 import org.terracotta.cluster.ClusterNode;
 import org.terracotta.cluster.ClusterTopology;
+import org.terracotta.collections.ClusteredMap;
 import terrastore.cluster.ClusterUtils;
 import terrastore.communication.Node;
 import terrastore.cluster.coordinator.Coordinator;
@@ -60,16 +60,17 @@ import terrastore.util.io.Serializer;
 /**
  * @author Sergio Bossa
  */
+// TODO: implement evictor thread for unused locks previously held by dead nodes.
+// TODO: implement evictor thread for unused connection table entries previously held by dead nodes.
+// Both need patching the terracotta toolkit to access all values belonging to a given map (all node locks, all tables).
 public class DefaultCoordinator implements Coordinator, ClusterListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCoordinator.class);
     private static final Serializer SERIALIZER = new JavaSerializer();
     //
-    private static final byte[] PREMATURE_DISCONNECTION = new byte[]{-1};
-    //
-    private Lock stateLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".stateLock").writeLock();
-    private Condition connectCondition = stateLock.newCondition();
-    private Map<String, byte[]> connectionTable = TCMaster.getInstance().getAutolockedMap(DefaultCoordinator.class.getName() + ".connectionTable");
+    private Lock startLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".startLock").writeLock();
+    private Lock connectionLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".connectionLock").writeLock();
+    private Condition connectionCondition = connectionLock.newCondition();
     //
     private volatile ExecutorService connectionExecutor;
     private volatile ExecutorService disconnectionExecutor;
@@ -85,7 +86,6 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private volatile LocalProcessor localProcessor;
     private volatile RemoteProcessor remoteProcessor;
     //
-    private volatile int concurrencyLevel;
     private volatile boolean compressCommunication;
     private volatile long nodeTimeout;
     private volatile int remoteProcessorThreads;
@@ -166,7 +166,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     public void start(ServerConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration) {
-        stateLock.lock();
+        startLock.lock();
         try {
             // Configure local data:
             connectionExecutor = Executors.newSingleThreadExecutor();
@@ -188,7 +188,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         } finally {
-            stateLock.unlock();
+            startLock.unlock();
         }
     }
 
@@ -199,31 +199,27 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             public void run() {
                 String joinedNodeName = ClusterUtils.getServerId(event.getNode());
                 if (isThisNode(joinedNodeName)) {
-                    stateLock.lock();
                     try {
                         LOG.info("Joining this node as {}:{}", thisCluster.getName(), thisConfiguration.getName());
                         setupThisNode();
-                        setupRemoteProcessor();
                         setupRemoteNodes();
                         LOG.info("This node is now ready to work as {}:{}", thisCluster.getName(), thisConfiguration.getName());
                     } catch (Exception ex) {
                         LOG.error(ex.getMessage(), ex);
-                    } finally {
-                        stateLock.unlock();
                     }
                 } else {
-                    stateLock.lock();
                     try {
                         LOG.info("Joining remote node as {}:{}", thisCluster.getName(), joinedNodeName);
                         pauseProcessing();
-                        connectRemoteNode(joinedNodeName);
+                        signalConnection(getNodeConnectionTable(joinedNodeName), thisConfiguration);
+                        waitForConnection(getNodeConnectionTable(thisConfiguration.getName()), joinedNodeName);
+                        connectRemoteNode(getNodeConnectionTable(thisConfiguration.getName()), joinedNodeName);
                         flushThisNodeKeys();
                         LOG.info("Remote node is now ready to work as {}:{}", thisCluster.getName(), joinedNodeName);
                     } catch (Exception ex) {
                         LOG.error(ex.getMessage(), ex);
                     } finally {
                         resumeProcessing();
-                        stateLock.unlock();
                     }
                 }
             }
@@ -238,19 +234,16 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             public void run() {
                 String leftNodeName = ClusterUtils.getServerId(event.getNode());
                 if (!isThisNode(leftNodeName) && isActuallyConnected(leftNodeName)) {
-                    stateLock.lock();
                     try {
                         pauseProcessing();
-                        disconnectRemoteNode(leftNodeName);
+                        clearNodeConnectionTable(getNodeConnectionTable(leftNodeName));
+                        disconnectRemoteNode(getNodeConnectionTable(thisConfiguration.getName()), leftNodeName);
                         flushThisNodeKeys();
                     } catch (Exception ex) {
                         LOG.error(ex.getMessage(), ex);
                     } finally {
                         resumeProcessing();
-                        stateLock.unlock();
                     }
-                } else if (!isActuallyConnected(leftNodeName)) {
-                    signalPrematureDisconnection();
                 }
             }
 
@@ -310,12 +303,6 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         return nodes.containsKey(nodeName);
     }
 
-    private void setupRemoteProcessor() {
-        remoteProcessor = new RemoteProcessor(thisConfiguration.getNodeHost(), thisConfiguration.getNodePort(), remoteProcessorThreads, compressCommunication, router);
-        remoteProcessor.start();
-        LOG.debug("Set up processor for {}", thisConfiguration.getName());
-    }
-
     private void setupThisNode() {
         // Local Processor:
         localProcessor = new LocalProcessor(router, store);
@@ -326,14 +313,9 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         nodes.put(thisConfiguration.getName(), thisNode);
         router.addRouteToLocalNode(thisNode);
         router.addRouteTo(thisCluster, thisNode);
-        // Connection table;
-        connectionTable.put(thisConfiguration.getName(), SERIALIZER.serialize(thisConfiguration));
-        connectCondition.signalAll();
-    }
-
-    private void signalPrematureDisconnection() {
-        connectionTable.put(thisConfiguration.getName(), PREMATURE_DISCONNECTION);
-        connectCondition.signalAll();
+        // Remote processor:
+        remoteProcessor = new RemoteProcessor(thisConfiguration.getNodeHost(), thisConfiguration.getNodePort(), remoteProcessorThreads, compressCommunication, router);
+        remoteProcessor.start();
     }
 
     private void setupRemoteNodes() throws InterruptedException {
@@ -341,36 +323,57 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         for (ClusterNode dsoNode : dsoTopology.getNodes()) {
             String serverId = ClusterUtils.getServerId(dsoNode);
             if (!isThisNode(serverId)) {
-                String remoteNodeName = serverId;
-                connectRemoteNode(remoteNodeName);
-                LOG.info("Set up remote node {}:{}", thisCluster.getName(), remoteNodeName);
+                String remoteNode = serverId;
+                ClusteredMap<String, byte[]> remoteTable = getNodeConnectionTable(remoteNode);
+                ClusteredMap<String, byte[]> thisTable = getNodeConnectionTable(thisConfiguration.getName());
+                signalConnection(remoteTable, thisConfiguration);
+                waitForConnection(thisTable, remoteNode);
+                connectRemoteNode(thisTable, remoteNode);
+                LOG.info("Set up remote node {}:{}", thisCluster.getName(), remoteNode);
             }
         }
     }
 
-    private void connectRemoteNode(String remoteNodeName) throws InterruptedException {
-        // Wait for remote connection:
-        int seconds = 0;
-        while (!connectionTable.containsKey(remoteNodeName)) {
-            connectCondition.await(1000, TimeUnit.MILLISECONDS);
-            seconds++;
-            if (seconds > 60) {
-                // FIXME: just logging isn't that good ...
-                LOG.warn("Detected excessive waiting for node: {}", remoteNodeName);
-            }
-        }
-        // Do actual connection:
-        if (!Arrays.equals(PREMATURE_DISCONNECTION, connectionTable.get(remoteNodeName))) {
-            ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(connectionTable.get(remoteNodeName));
+    private void connectRemoteNode(ClusteredMap<String, byte[]> connectionTable, String nodeName) throws InterruptedException {
+        ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(connectionTable.get(nodeName));
+        if (remoteConfiguration != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
-            if (!nodes.containsKey(remoteNodeName)) {
+            if (!nodes.containsKey(nodeName)) {
                 Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout, compressCommunication);
                 remoteNode.connect();
-                nodes.put(remoteNodeName, remoteNode);
+                nodes.put(nodeName, remoteNode);
                 router.addRouteTo(thisCluster, remoteNode);
             }
         } else {
-            LOG.warn("Cannot set up remote node {}", remoteNodeName);
+            LOG.warn("Cannot set up remote node {}", nodeName);
+        }
+    }
+
+    private void waitForConnection(ClusteredMap<String, byte[]> connectionTable, String nodeName) throws InterruptedException {
+        connectionLock.lock();
+        try {
+            int times = 0;
+            while (!connectionTable.containsKey(nodeName) || isDisconnected(nodeName)) {
+                connectionCondition.await(1000, TimeUnit.MILLISECONDS);
+                times++;
+                // FIXME: times should be configurable ...
+                if (times > 100) {
+                    // FIXME: just logging isn't that good ...
+                    LOG.warn("Detected excessive waiting for node: {}", nodeName);
+                }
+            }
+        } finally {
+            connectionLock.unlock();
+        }
+    }
+
+    private void signalConnection(ClusteredMap<String, byte[]> connectionTable, ServerConfiguration configuration) {
+        connectionLock.lock();
+        try {
+            connectionTable.put(configuration.getName(), SERIALIZER.serialize(configuration));
+            connectionCondition.signalAll();
+        } finally {
+            connectionLock.unlock();
         }
     }
 
@@ -385,15 +388,15 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void flushThisNodeKeys() {
-        LOG.warn("About to flush keys on node {}:{}", thisCluster.getName(), thisConfiguration.getName());
+        LOG.warn("About to flush keys on this node {}", thisConfiguration.getName());
         store.flush(flushStrategy, flushCondition);
-        LOG.warn("Finished flushing keys on node {}:{}", thisCluster.getName(), thisConfiguration.getName());
+        LOG.warn("Finished flushing keys on this node {}", thisConfiguration.getName());
     }
 
-    private void disconnectRemoteNode(String nodeName) {
+    private void disconnectRemoteNode(ClusteredMap<String, byte[]> connectionTable, String nodeName) {
         Node remoteNode = nodes.remove(nodeName);
         remoteNode.disconnect();
-        lockManager.evictLocks(nodeName);
+        connectionTable.removeNoReturn(nodeName);
         router.removeRouteTo(thisCluster, remoteNode);
         LOG.info("Disconnected node {}:{}", thisCluster.getName(), nodeName);
     }
@@ -483,6 +486,27 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             }
 
         });
+    }
+
+    private ClusteredMap<String, byte[]> getNodeConnectionTable(String node) {
+        return TCMaster.getInstance().getAutolockedMap(DefaultCoordinator.class.getName() + ".connectionsTable." + node);
+    }
+
+    private void clearNodeConnectionTable(ClusteredMap<String, byte[]> connectionTable) {
+        connectionTable.clear();
+    }
+
+    private boolean isDisconnected(String node) {
+        ClusterTopology dsoTopology = getCluster().getClusterTopology();
+        boolean disconnected = true;
+        for (ClusterNode dsoNode : dsoTopology.getNodes()) {
+            String serverId = ClusterUtils.getServerId(dsoNode);
+            if (serverId.equals(node)) {
+                disconnected = false;
+                break;
+            }
+        }
+        return disconnected;
     }
 
 }
