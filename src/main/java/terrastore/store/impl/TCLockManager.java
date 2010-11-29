@@ -25,7 +25,11 @@ import terrastore.store.Key;
 import terrastore.store.LockManager;
 
 /**
- * Terracotta-based lock manager implementation.
+ * Distributed lock manager implementation based on per-node striped Terracotta locks.
+ * <br>
+ * Each node allocates its own locks, whose number is determined by the internal concurrency level,
+ * and uses them to lock read/write operations over bucket/key pairs, assigning them a lock based on the
+ * modulo of the hash code.
  *
  * @author Sergio Bossa
  */
@@ -39,22 +43,15 @@ public class TCLockManager implements LockManager {
     public TCLockManager(String node, int concurrencyLevel) {
         this.concurrencyLevel = concurrencyLevel;
         this.locks = new ReadWriteLock[concurrencyLevel];
-        ClusteredMap<String, ReadWriteLock> locksMap = TCMaster.getInstance().getAutolockedMap(TCLockManager.class.getName() + ".CLUSTER_LOCKS." + node);
-        for (int i = 0; i < concurrencyLevel; i++) {
-            String name = node + ":" + i;
-            ReadWriteLock lock = TCMaster.getInstance().getReadWriteLock(name);
-            locksMap.put(name, lock);
-            locks[i] = lock;
-            LOG.debug("Created lock {}", name);
-        }
+        initLocks(node, concurrencyLevel);
     }
 
     @Override
     public void evictLocks(String node) {
-        ReadWriteLock evictorLock = TCMaster.getInstance().getReadWriteLock(TCLockManager.class.getName() + ".EVICTOR");
-        evictorLock.writeLock().lock();
+        ReadWriteLock mainLock = TCMaster.getInstance().getReadWriteLock(TCLockManager.class.getName() + ".MAIN_LOCK");
+        mainLock.writeLock().lock();
         try {
-            Map<String, ReadWriteLock> nodeLocks = TCMaster.getInstance().<String, ReadWriteLock>getAutolockedMap(TCLockManager.class.getName() + ".CLUSTER_LOCKS." + node);
+            Map<String, ReadWriteLock> nodeLocks = TCMaster.getInstance().getUnlockedMap(TCLockManager.class.getName() + ".CLUSTER_LOCKS." + node);
             for (String lock : nodeLocks.keySet()) {
                 TCMaster.getInstance().evictReadWriteLock(lock);
                 LOG.debug("Evicted lock {}", lock);
@@ -62,7 +59,7 @@ public class TCLockManager implements LockManager {
             nodeLocks.clear();
             // TODO: evict the map itself too.
         } finally {
-            evictorLock.writeLock().unlock();
+            mainLock.writeLock().unlock();
         }
     }
 
@@ -93,6 +90,23 @@ public class TCLockManager implements LockManager {
     private ReadWriteLock lockFor(String bucket, Key key) {
         String name = bucket + ":" + key;
         return locks[Math.abs(name.hashCode()) % concurrencyLevel];
+    }
+
+    private void initLocks(String node, int concurrencyLevel) {
+        ReadWriteLock mainLock = TCMaster.getInstance().getReadWriteLock(TCLockManager.class.getName() + ".MAIN_LOCK");
+        mainLock.writeLock().lock();
+        try {
+            ClusteredMap<String, ReadWriteLock> locksMap = TCMaster.getInstance().getUnlockedMap(TCLockManager.class.getName() + ".CLUSTER_LOCKS." + node);
+            for (int i = 0; i < concurrencyLevel; i++) {
+                String name = node + ":" + i;
+                ReadWriteLock lock = TCMaster.getInstance().getReadWriteLock(name);
+                locksMap.put(name, lock);
+                locks[i] = lock;
+                LOG.debug("Created lock {}", name);
+            }
+        } finally {
+            mainLock.writeLock().unlock();
+        }
     }
 
 }
