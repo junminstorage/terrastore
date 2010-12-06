@@ -333,13 +333,10 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private void connectRemoteNode(ClusteredMap<String, byte[]> connectionTable, String nodeName) throws InterruptedException {
         ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(connectionTable.get(nodeName));
         if (remoteConfiguration != null) {
-            // Double check to tolerate duplicated node joins by terracotta server:
-            if (!clusterNodes.containsKey(nodeName)) {
-                Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout, compressCommunication);
-                remoteNode.connect();
-                clusterNodes.put(nodeName, remoteNode);
-                router.addRouteTo(thisCluster, remoteNode);
-            }
+            Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout, compressCommunication);
+            remoteNode.connect();
+            clusterNodes.put(nodeName, remoteNode);
+            router.addRouteTo(thisCluster, remoteNode);
         } else {
             LOG.warn("Cannot set up remote node {}", nodeName);
         }
