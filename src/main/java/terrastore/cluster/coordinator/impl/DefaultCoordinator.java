@@ -82,7 +82,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     //
     private volatile Cluster thisCluster;
     private volatile ServerConfiguration thisConfiguration;
-    private volatile ConcurrentMap<String, Node> nodes;
+    private volatile ConcurrentMap<String, Node> clusterNodes;
     private volatile LocalProcessor localProcessor;
     private volatile RemoteProcessor remoteProcessor;
     //
@@ -176,7 +176,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             reconnectionCondition = reconnectionLock.newCondition();
             thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
             thisConfiguration = serverConfiguration;
-            nodes = new ConcurrentHashMap<String, Node>();
+            clusterNodes = new ConcurrentHashMap<String, Node>();
             // Configure global executor:
             GlobalExecutor.configure(globalExecutorThreads);
             // Setup ensemble:
@@ -233,7 +233,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
             @Override
             public void run() {
                 String leftNodeName = ClusterUtils.getServerId(event.getNode());
-                if (!isThisNode(leftNodeName) && isActuallyConnected(leftNodeName)) {
+                if (!isThisNode(leftNodeName) && clusterNodes.containsKey(leftNodeName)) {
                     try {
                         pauseProcessing();
                         clearNodeConnectionTable(getNodeConnectionTable(leftNodeName));
@@ -299,10 +299,6 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         return thisConfiguration.getName().equals(candidateNodeName);
     }
 
-    private boolean isActuallyConnected(String nodeName) {
-        return nodes.containsKey(nodeName);
-    }
-
     private void setupThisNode() {
         // Local Processor:
         localProcessor = new LocalProcessor(router, store);
@@ -310,7 +306,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         // Local node:
         Node thisNode = localNodeFactory.makeLocalNode(thisConfiguration, localProcessor);
         thisNode.connect();
-        nodes.put(thisConfiguration.getName(), thisNode);
+        clusterNodes.put(thisConfiguration.getName(), thisNode);
         router.addRouteToLocalNode(thisNode);
         router.addRouteTo(thisCluster, thisNode);
         // Remote processor:
@@ -338,10 +334,10 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(connectionTable.get(nodeName));
         if (remoteConfiguration != null) {
             // Double check to tolerate duplicated node joins by terracotta server:
-            if (!nodes.containsKey(nodeName)) {
+            if (!clusterNodes.containsKey(nodeName)) {
                 Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout, compressCommunication);
                 remoteNode.connect();
-                nodes.put(nodeName, remoteNode);
+                clusterNodes.put(nodeName, remoteNode);
                 router.addRouteTo(thisCluster, remoteNode);
             }
         } else {
@@ -353,12 +349,11 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         connectionLock.lock();
         try {
             int times = 0;
-            while (!connectionTable.containsKey(nodeName) || isDisconnected(nodeName)) {
+            while (!connectionTable.containsKey(nodeName) && !isPrematurelyDead(nodeName)) {
                 connectionCondition.await(1000, TimeUnit.MILLISECONDS);
                 times++;
-                // FIXME: times should be configurable ...
+                // FIXME: "times" should be configurable ...
                 if (times > 100) {
-                    // FIXME: just logging isn't that good ...
                     LOG.warn("Detected excessive waiting for node: {}", nodeName);
                 }
             }
@@ -394,7 +389,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void disconnectRemoteNode(ClusteredMap<String, byte[]> connectionTable, String nodeName) {
-        Node remoteNode = nodes.remove(nodeName);
+        Node remoteNode = clusterNodes.remove(nodeName);
         remoteNode.disconnect();
         connectionTable.removeNoReturn(nodeName);
         router.removeRouteTo(thisCluster, remoteNode);
@@ -402,7 +397,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void shutdownEverything() {
-        for (Node node : nodes.values()) {
+        for (Node node : clusterNodes.values()) {
             node.disconnect();
         }
         localProcessor.stop();
@@ -415,7 +410,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private void cleanupEverything() {
-        nodes.clear();
+        clusterNodes.clear();
         router.cleanup();
     }
 
@@ -496,17 +491,17 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         connectionTable.clear();
     }
 
-    private boolean isDisconnected(String node) {
+    private boolean isPrematurelyDead(String node) {
         ClusterTopology dsoTopology = getCluster().getClusterTopology();
-        boolean disconnected = true;
+        boolean dead = true;
         for (ClusterNode dsoNode : dsoTopology.getNodes()) {
             String serverId = ClusterUtils.getServerId(dsoNode);
             if (serverId.equals(node)) {
-                disconnected = false;
+                dead = false;
                 break;
             }
         }
-        return disconnected;
+        return dead;
     }
 
 }
