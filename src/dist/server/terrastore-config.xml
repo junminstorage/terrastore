@@ -176,7 +176,7 @@
 
     <!-- Cluster -->
 
-    <bean id="coordinator" class="terrastore.cluster.coordinator.impl.DefaultCoordinator">
+    <bean id="coordinator" class="terrastore.cluster.coordinator.impl.TCCoordinator">
         <property name="lockManager" ref="lockManager"/>
         <property name="store" ref="store"/>
         <property name="router" ref="router"/>

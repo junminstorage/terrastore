@@ -60,16 +60,15 @@ import terrastore.util.io.Serializer;
 /**
  * @author Sergio Bossa
  */
-// TODO: implement evictor thread for unused locks previously held by dead nodes.
-// TODO: implement evictor thread for unused connection table entries previously held by dead nodes.
-// Both need patching the terracotta toolkit to access all values belonging to a given map (all node locks, all tables).
-public class DefaultCoordinator implements Coordinator, ClusterListener {
+// TODO: implement cancellation of unused locks previously held by dead nodes.
+// TODO: implement cancellation of unused connection table entries previously held by dead nodes.
+public class TCCoordinator implements Coordinator, ClusterListener {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultCoordinator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TCCoordinator.class);
     private static final Serializer SERIALIZER = new JavaSerializer();
     //
-    private Lock startLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".startLock").writeLock();
-    private Lock connectionLock = TCMaster.getInstance().getReadWriteLock(DefaultCoordinator.class.getName() + ".connectionLock").writeLock();
+    private Lock startLock = TCMaster.getInstance().getReadWriteLock(TCCoordinator.class.getName() + ".startLock").writeLock();
+    private Lock connectionLock = TCMaster.getInstance().getReadWriteLock(TCCoordinator.class.getName() + ".connectionLock").writeLock();
     private Condition connectionCondition = connectionLock.newCondition();
     //
     private volatile ExecutorService connectionExecutor;
@@ -100,7 +99,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     private volatile FlushStrategy flushStrategy;
     private volatile FlushCondition flushCondition;
 
-    public DefaultCoordinator() {
+    public TCCoordinator() {
     }
 
     @Override
@@ -202,7 +201,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
                     try {
                         LOG.info("Joining this node as {}:{}", thisCluster.getName(), thisConfiguration.getName());
                         setupThisNode();
-                        setupRemoteNodes();
+                        connectRemoteNodes();
                         LOG.info("This node is now ready to work as {}:{}", thisCluster.getName(), thisConfiguration.getName());
                     } catch (Exception ex) {
                         LOG.error(ex.getMessage(), ex);
@@ -314,7 +313,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
         remoteProcessor.start();
     }
 
-    private void setupRemoteNodes() throws InterruptedException {
+    private void connectRemoteNodes() throws InterruptedException {
         ClusterTopology dsoTopology = getCluster().getClusterTopology();
         for (ClusterNode dsoNode : dsoTopology.getNodes()) {
             String serverId = ClusterUtils.getServerId(dsoNode);
@@ -481,7 +480,7 @@ public class DefaultCoordinator implements Coordinator, ClusterListener {
     }
 
     private ClusteredMap<String, byte[]> getNodeConnectionTable(String node) {
-        return TCMaster.getInstance().getAutolockedMap(DefaultCoordinator.class.getName() + ".connectionsTable." + node);
+        return TCMaster.getInstance().getAutolockedMap(TCCoordinator.class.getName() + ".connectionsTable." + node);
     }
 
     private void clearNodeConnectionTable(ClusteredMap<String, byte[]> connectionTable) {
