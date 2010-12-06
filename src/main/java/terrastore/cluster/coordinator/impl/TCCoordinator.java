@@ -67,7 +67,6 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     private static final Logger LOG = LoggerFactory.getLogger(TCCoordinator.class);
     private static final Serializer SERIALIZER = new JavaSerializer();
     //
-    private Lock startLock = TCMaster.getInstance().getReadWriteLock(TCCoordinator.class.getName() + ".startLock").writeLock();
     private Lock connectionLock = TCMaster.getInstance().getReadWriteLock(TCCoordinator.class.getName() + ".connectionLock").writeLock();
     private Condition connectionCondition = connectionLock.newCondition();
     //
@@ -165,7 +164,6 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     }
 
     public void start(ServerConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration) {
-        startLock.lock();
         try {
             // Configure local data:
             connectionExecutor = Executors.newSingleThreadExecutor();
@@ -186,8 +184,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
             getCluster().addClusterListener(this);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
-        } finally {
-            startLock.unlock();
+            throw new IllegalStateException(ex.getMessage(), ex);
         }
     }
 
