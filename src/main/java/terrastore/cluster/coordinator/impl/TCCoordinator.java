@@ -235,7 +235,6 @@ public class TCCoordinator implements Coordinator, ClusterListener {
                 if (!isThisNode(leftNodeName) && clusterNodes.containsKey(leftNodeName)) {
                     try {
                         pauseProcessing();
-                        clearNodeConnectionTable(getNodeConnectionTable(leftNodeName));
                         disconnectRemoteNode(getNodeConnectionTable(thisConfiguration.getName()), leftNodeName);
                         flushThisNodeKeys();
                     } catch (Exception ex) {
@@ -481,10 +480,6 @@ public class TCCoordinator implements Coordinator, ClusterListener {
 
     private ClusteredMap<String, byte[]> getNodeConnectionTable(String node) {
         return TCMaster.getInstance().getAutolockedMap(TCCoordinator.class.getName() + ".connectionsTable." + node);
-    }
-
-    private void clearNodeConnectionTable(ClusteredMap<String, byte[]> connectionTable) {
-        connectionTable.clear();
     }
 
     private boolean isPrematurelyDead(String node) {
