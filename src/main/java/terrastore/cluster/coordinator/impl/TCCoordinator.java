@@ -20,12 +20,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.cluster.ClusterEvent;
@@ -67,16 +65,11 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     private static final Logger LOG = LoggerFactory.getLogger(TCCoordinator.class);
     private static final Serializer SERIALIZER = new JavaSerializer();
     //
-    private Lock connectionLock = TCMaster.getInstance().getReadWriteLock(TCCoordinator.class.getName() + ".connectionLock").writeLock();
-    private Condition connectionCondition = connectionLock.newCondition();
+    private Lock coordinatorLock = TCMaster.getInstance().getReadWriteLock(TCCoordinator.class.getName() + ".coordinatorLock").writeLock();
+    private Condition connectCondition = coordinatorLock.newCondition();
     //
-    private volatile ExecutorService connectionExecutor;
-    private volatile ExecutorService disconnectionExecutor;
-    private volatile ExecutorService reconnectionExecutor;
-    private volatile ReentrantLock reconnectionLock;
-    private volatile Condition reconnectionCondition;
+    private final AtomicBoolean connected = new AtomicBoolean(false);
     private volatile long reconnectTimeout;
-    private volatile boolean connected;
     //
     private volatile Cluster thisCluster;
     private volatile ServerConfiguration thisConfiguration;
@@ -166,11 +159,6 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     public void start(ServerConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration) {
         try {
             // Configure local data:
-            connectionExecutor = Executors.newSingleThreadExecutor();
-            disconnectionExecutor = Executors.newSingleThreadExecutor();
-            reconnectionExecutor = Executors.newSingleThreadExecutor();
-            reconnectionLock = new ReentrantLock();
-            reconnectionCondition = reconnectionLock.newCondition();
             thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
             thisConfiguration = serverConfiguration;
             clusterNodes = new ConcurrentHashMap<String, Node>();
@@ -188,81 +176,64 @@ public class TCCoordinator implements Coordinator, ClusterListener {
         }
     }
 
-    public void nodeJoined(final ClusterEvent event) {
-        connectionExecutor.submit(new Runnable() {
-
-            @Override
-            public void run() {
-                String joinedNodeName = ClusterUtils.getServerId(event.getNode());
-                if (isThisNode(joinedNodeName)) {
-                    try {
-                        LOG.info("Joining this node as {}:{}", thisCluster.getName(), thisConfiguration.getName());
-                        setupThisNode();
-                        connectRemoteNodes();
-                        LOG.info("This node is now ready to work as {}:{}", thisCluster.getName(), thisConfiguration.getName());
-                    } catch (Exception ex) {
-                        LOG.error(ex.getMessage(), ex);
-                    }
-                } else {
-                    try {
-                        LOG.info("Joining remote node as {}:{}", thisCluster.getName(), joinedNodeName);
-                        pauseProcessing();
-                        signalConnection(getNodeConnectionTable(joinedNodeName), thisConfiguration);
-                        waitForConnection(getNodeConnectionTable(thisConfiguration.getName()), joinedNodeName);
-                        connectRemoteNode(getNodeConnectionTable(thisConfiguration.getName()), joinedNodeName);
-                        flushThisNodeKeys();
-                        LOG.info("Remote node is now ready to work as {}:{}", thisCluster.getName(), joinedNodeName);
-                    } catch (Exception ex) {
-                        LOG.error(ex.getMessage(), ex);
-                    } finally {
-                        resumeProcessing();
-                    }
-                }
+    public void nodeJoined(ClusterEvent event) {
+        String joinedNodeName = ClusterUtils.getServerId(event.getNode());
+        if (isThisNode(joinedNodeName)) {
+            try {
+                LOG.info("Joining this node as {}:{}", thisCluster.getName(), thisConfiguration.getName());
+                setupThisNode();
+                connectRemoteNodes();
+                LOG.info("This node is now ready to work as {}:{}", thisCluster.getName(), thisConfiguration.getName());
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
             }
-
-        });
+        } else {
+            try {
+                LOG.info("Joining remote node as {}:{}", thisCluster.getName(), joinedNodeName);
+                pauseProcessing();
+                signalConnection(getNodeConnectionTable(joinedNodeName), thisConfiguration);
+                waitForConnection(getNodeConnectionTable(thisConfiguration.getName()), joinedNodeName);
+                connectRemoteNode(getNodeConnectionTable(thisConfiguration.getName()), joinedNodeName);
+                flushThisNodeKeys();
+                LOG.info("Remote node is now ready to work as {}:{}", thisCluster.getName(), joinedNodeName);
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+            } finally {
+                resumeProcessing();
+            }
+        }
     }
 
     public void nodeLeft(final ClusterEvent event) {
-        disconnectionExecutor.submit(new Runnable() {
-
-            @Override
-            public void run() {
-                String leftNodeName = ClusterUtils.getServerId(event.getNode());
-                if (!isThisNode(leftNodeName) && clusterNodes.containsKey(leftNodeName)) {
-                    try {
-                        pauseProcessing();
-                        disconnectRemoteNode(getNodeConnectionTable(thisConfiguration.getName()), leftNodeName);
-                        flushThisNodeKeys();
-                    } catch (Exception ex) {
-                        LOG.error(ex.getMessage(), ex);
-                    } finally {
-                        resumeProcessing();
-                    }
-                }
+        String leftNodeName = ClusterUtils.getServerId(event.getNode());
+        if (!isThisNode(leftNodeName) && clusterNodes.containsKey(leftNodeName)) {
+            try {
+                pauseProcessing();
+                disconnectRemoteNode(getNodeConnectionTable(thisConfiguration.getName()), leftNodeName);
+                flushThisNodeKeys();
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+            } finally {
+                resumeProcessing();
             }
-
-        });
+        }
     }
 
     public void operationsEnabled(ClusterEvent event) {
-        reconnectionLock.lock();
-        try {
-            connected = true;
-            reconnectionCondition.signalAll();
-        } finally {
-            reconnectionLock.unlock();
+        synchronized (connected) {
+            connected.set(true);
+            connected.notifyAll();
         }
     }
 
     public void operationsDisabled(ClusterEvent event) {
-        if (connected) {
-            reconnectionExecutor.submit(new Runnable() {
+        if (connected.get()) {
+            new Thread() {
 
                 @Override
                 public void run() {
                     attemptReconnection();
-                    if (!connected) {
+                    if (!connected.get()) {
                         try {
                             LOG.info("Disabling this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
                             shutdownEverything();
@@ -277,7 +248,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
                     }
                 }
 
-            });
+            }.start();
         }
     }
 
@@ -338,11 +309,11 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     }
 
     private void waitForConnection(ClusteredMap<String, byte[]> connectionTable, String nodeName) throws InterruptedException {
-        connectionLock.lock();
+        coordinatorLock.lock();
         try {
             int times = 0;
             while (!connectionTable.containsKey(nodeName) && !isPrematurelyDead(nodeName)) {
-                connectionCondition.await(1000, TimeUnit.MILLISECONDS);
+                connectCondition.await(1000, TimeUnit.MILLISECONDS);
                 times++;
                 // FIXME: "times" should be configurable ...
                 if (times > 100) {
@@ -350,17 +321,17 @@ public class TCCoordinator implements Coordinator, ClusterListener {
                 }
             }
         } finally {
-            connectionLock.unlock();
+            coordinatorLock.unlock();
         }
     }
 
     private void signalConnection(ClusteredMap<String, byte[]> connectionTable, ServerConfiguration configuration) {
-        connectionLock.lock();
+        coordinatorLock.lock();
         try {
             connectionTable.put(configuration.getName(), SERIALIZER.serialize(configuration));
-            connectionCondition.signalAll();
+            connectCondition.signalAll();
         } finally {
-            connectionLock.unlock();
+            coordinatorLock.unlock();
         }
     }
 
@@ -395,9 +366,6 @@ public class TCCoordinator implements Coordinator, ClusterListener {
         localProcessor.stop();
         remoteProcessor.stop();
         ensembleManager.shutdown();
-        connectionExecutor.shutdown();
-        disconnectionExecutor.shutdown();
-        reconnectionExecutor.shutdown();
         GlobalExecutor.shutdown();
     }
 
@@ -417,22 +385,22 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     }
 
     private void attemptReconnection() {
-        connected = false;
-        reconnectionLock.lock();
-        try {
-            LOG.info("Attempting reconnection for this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
-            long timeoutInNanos = TimeUnit.MILLISECONDS.toNanos(reconnectTimeout);
-            while (!connected) {
-                if (timeoutInNanos > 0) {
-                    timeoutInNanos = reconnectionCondition.awaitNanos(timeoutInNanos);
-                } else {
-                    break;
+        synchronized (connected) {
+            try {
+                LOG.info("Attempting reconnection for this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
+                connected.set(false);
+                long now = System.currentTimeMillis();
+                long waitTime = reconnectTimeout;
+                long startTime = now;
+                while (!connected.get() && waitTime > 0) {
+                    connected.wait(waitTime);
+                    now = System.currentTimeMillis();
+                    waitTime = waitTime - (now - startTime);
+                    startTime = now;
                 }
+            } catch (InterruptedException ex) {
+                // abort
             }
-        } catch (InterruptedException ex) {
-            // abort
-        } finally {
-            reconnectionLock.unlock();
         }
     }
 
@@ -461,7 +429,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
 
             @Override
             public void run() {
-                if (connected) {
+                if (connected.get()) {
                     try {
                         LOG.info("Shutting down this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
                         shutdownEverything();
