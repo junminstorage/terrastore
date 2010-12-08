@@ -18,7 +18,6 @@ package terrastore.store.impl;
 import terrastore.util.collect.Maps;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +46,7 @@ public class TCBucketEventingTest {
 
     @Before
     public void setUp() {
-        TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
+        TCMaster.getInstance().setupLocally();
         bucket = new TCBucket("bucket");
         bucket.setLockManager(new TCLockManager("test", 128));
     }

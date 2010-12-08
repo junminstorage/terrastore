@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.easymock.Capture;
@@ -51,7 +50,7 @@ public class TCStoreTest {
 
     @Before
     public void setUp() {
-        TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
+        TCMaster.getInstance().setupLocally();
         store = new TCStore();
     }
 
