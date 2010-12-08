@@ -45,7 +45,7 @@ public class Startup {
     private static final String DEFAULT_CLUSTER_NAME = "terrastore-cluster";
     private static final String DEFAULT_EVENT_BUS = "memory";
     private static final String DEFAULT_HTTP_HOST = "127.0.0.1";
-    private static final int DEFAULT_HTTP_PORT = 8080;
+    private static final int DEFAULT_HTTP_PORT = 8205;
     private static final String DEFAULT_NODE_HOST = "NULL";
     private static final int DEFAULT_NODE_PORT = 8226;
     private static final String DEFAULT_ALLOWED_ORIGINS = "*";
