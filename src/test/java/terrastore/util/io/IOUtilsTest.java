@@ -17,6 +17,7 @@ package terrastore.util.io;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,7 +53,7 @@ public class IOUtilsTest {
     @Test
     public void testMultithreadRead() throws Exception {
         final int total = 100;
-        final List<byte[]> values = new ArrayList<byte[]>(total);
+        final List<byte[]> values = Collections.synchronizedList(new ArrayList<byte[]>(total));
 
         ExecutorService executor = Executors.newCachedThreadPool();
         for (int i = 0; i < total; i++) {
@@ -81,7 +82,7 @@ public class IOUtilsTest {
     @Test
     public void testMultithreadCompression() throws Exception {
         final int total = 100;
-        final List<byte[]> values = new ArrayList<byte[]>(total);
+        final List<byte[]> values = Collections.synchronizedList(new ArrayList<byte[]>(total));
 
         ExecutorService executor = Executors.newCachedThreadPool();
         for (int i = 0; i < total; i++) {
