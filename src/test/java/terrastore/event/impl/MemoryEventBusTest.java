@@ -345,7 +345,11 @@ public class MemoryEventBusTest {
             });
         }
 
-        publishingLatch.await(threads, TimeUnit.SECONDS);
+        assertTrue(publishingLatch.await(threads, TimeUnit.SECONDS));
+
+        // Sleep to avoid bad timing between listener answer and mock verification
+        Thread.sleep(1000);
+        //
 
         eventBus.shutdown();
 
