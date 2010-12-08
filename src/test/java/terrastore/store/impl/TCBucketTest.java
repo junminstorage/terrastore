@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import terrastore.event.ActionExecutor;
@@ -58,7 +57,7 @@ public class TCBucketTest {
 
     @Before
     public void setUp() {
-        TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
+        TCMaster.getInstance().setupLocally();
         bucket = new TCBucket("bucket");
         bucket.setLockManager(new TCLockManager("test", 128));
         bucket.setSnapshotManager(new LocalSnapshotManager());

@@ -35,7 +35,7 @@ public class TCLockManagerTest {
 
     @Before
     public void setUp() {
-        TCMaster.getInstance().connect("localhost:9510", 1, TimeUnit.SECONDS);
+        TCMaster.getInstance().setupLocally();
     }
 
     @Test

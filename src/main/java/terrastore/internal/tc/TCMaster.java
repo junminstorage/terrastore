@@ -89,6 +89,11 @@ public class TCMaster {
         return connected;
     }
 
+    public void setupLocally() {
+        connected = false;
+        toolkit = new LocalToolkit();
+    }
+
     public ReadWriteLock getReadWriteLock(String name) {
         return toolkit.getReadWriteLock(name);
     }
