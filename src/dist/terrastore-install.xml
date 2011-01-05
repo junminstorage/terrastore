@@ -171,7 +171,7 @@
     </target>
 
     <target name="version">
-        <echo message="Terrastore Install Tool - Version 0.8.0"/>
+        <echo message="Terrastore Install Tool - Version 0.8.1"/>
     </target>
 
     <target name="common-server">
