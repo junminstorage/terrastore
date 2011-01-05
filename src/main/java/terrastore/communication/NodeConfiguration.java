@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.cluster.coordinator;
+package terrastore.communication;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -34,7 +34,7 @@ import terrastore.util.io.MsgPackUtils;
 /**
  * @author Sergio Bossa
  */
-public class ServerConfiguration implements MessagePackable, MessageUnpackable, Serializable {
+public class NodeConfiguration implements MessagePackable, MessageUnpackable, Serializable {
 
     private static final long serialVersionUID = 12345678901L;
     //
@@ -45,7 +45,7 @@ public class ServerConfiguration implements MessagePackable, MessageUnpackable, 
     private String httpHost;
     private int httpPort;
 
-    public ServerConfiguration(String name, String nodeHost, int nodePort, String httpHost, int httpPort) {
+    public NodeConfiguration(String name, String nodeHost, int nodePort, String httpHost, int httpPort) {
         try {
             this.name = name;
             this.nodeBindHost = nodeHost;
@@ -58,7 +58,7 @@ public class ServerConfiguration implements MessagePackable, MessageUnpackable, 
         }
     }
 
-    public ServerConfiguration() {
+    public NodeConfiguration() {
     }
 
     public String getName() {
@@ -108,8 +108,8 @@ public class ServerConfiguration implements MessagePackable, MessageUnpackable, 
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof ServerConfiguration) {
-            ServerConfiguration other = (ServerConfiguration) obj;
+        if (obj instanceof NodeConfiguration) {
+            NodeConfiguration other = (NodeConfiguration) obj;
             return new EqualsBuilder().append(this.name, other.name).isEquals();
         } else {
             return false;

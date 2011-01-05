@@ -16,7 +16,7 @@
 package terrastore.service.impl;
 
 import org.junit.Test;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.common.ClusterStats;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
@@ -35,7 +35,7 @@ public class DefaultStatsServiceTest {
         Cluster cluster = createMock(Cluster.class);
         cluster.getName();
         expectLastCall().andReturn("cluster1").once();
-        ServerConfiguration configuration = createMock(ServerConfiguration.class);
+        NodeConfiguration configuration = createMock(NodeConfiguration.class);
         configuration.getName();
         expectLastCall().andReturn("node1").once();
         configuration.getHttpHost();

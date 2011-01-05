@@ -15,7 +15,6 @@
  */
 package terrastore.communication;
 
-import terrastore.cluster.coordinator.ServerConfiguration;
 import terrastore.communication.local.LocalProcessor;
 
 /**
@@ -23,5 +22,5 @@ import terrastore.communication.local.LocalProcessor;
  */
 public interface LocalNodeFactory {
 
-    public Node makeLocalNode(ServerConfiguration configuration, LocalProcessor processor);
+    public Node makeLocalNode(NodeConfiguration configuration, LocalProcessor processor);
 }

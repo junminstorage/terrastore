@@ -17,7 +17,7 @@ package terrastore.test.embedded;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
 import terrastore.communication.local.LocalNode;
@@ -50,7 +50,7 @@ public class TerrastoreEmbeddedServer {
     }
 
     private void configureCluster(Router router, Store store, String httpHost, int httpPort) {
-        ServerConfiguration configuration = new ServerConfiguration("in-memory-terrastore", httpHost, -1, httpHost, httpPort);
+        NodeConfiguration configuration = new NodeConfiguration("in-memory-terrastore", httpHost, -1, httpHost, httpPort);
         Cluster localCluster = new Cluster("in-memory-cluster", true);
         Node localNode = new LocalNode.Factory().makeLocalNode(configuration, new LocalProcessor(router, store));
         router.setupClusters(Sets.hash(localCluster));
