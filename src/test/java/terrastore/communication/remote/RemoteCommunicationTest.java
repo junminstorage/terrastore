@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.protocol.GetValueCommand;
@@ -62,7 +62,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 10, false, router);
-        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 60000, false);
+        Node sender = new RemoteNode(new NodeConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 60000, false);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -103,7 +103,7 @@ public class RemoteCommunicationTest {
 
         final RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9990, 10, false, router);
         processor.start();
-        final RemoteNode sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 60000, false);
+        final RemoteNode sender = new RemoteNode(new NodeConfiguration(nodeName, "localhost", 9990, "localhost", 8000), 60000, false);
         sender.connect();
         try {
             final AtomicBoolean corrupted = new AtomicBoolean(false);
@@ -167,7 +167,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 10, false, router);
-        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
+        Node sender = new RemoteNode(new NodeConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -200,7 +200,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 10, false, router);
-        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
+        Node sender = new RemoteNode(new NodeConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -238,7 +238,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 10, false, router);
-        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
+        Node sender = new RemoteNode(new NodeConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -280,7 +280,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 10, false, router);
-        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 60000, false);
+        Node sender = new RemoteNode(new NodeConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 60000, false);
 
         GetValuesCommand command = new GetValuesCommand(bucketName, keys);
 
@@ -309,7 +309,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("127.0.0.1", 9991, 10, false, router);
-        Node sender = new RemoteNode(new ServerConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
+        Node sender = new RemoteNode(new NodeConfiguration(nodeName, "localhost", 9991, "localhost", 8000), 1000, false);
         GetValueCommand command = new GetValueCommand(bucketName, valueKey);
 
         try {
@@ -334,7 +334,7 @@ public class RemoteCommunicationTest {
         replay(router, node);
 
         RemoteProcessor processor = new RemoteProcessor("0.0.0.0", 9991, 10, false, router);
-        Node sender = new RemoteNode(new ServerConfiguration("node", "0.0.0.0", 9991, "localhost", 8000), 1000, false);
+        Node sender = new RemoteNode(new NodeConfiguration("node", "0.0.0.0", 9991, "localhost", 8000), 1000, false);
 
         try {
             // Start processor

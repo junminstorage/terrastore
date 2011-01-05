@@ -17,7 +17,7 @@ package terrastore.communication.local;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.LocalNodeFactory;
 import terrastore.communication.Node;
@@ -35,10 +35,10 @@ import terrastore.communication.protocol.Command;
 public class LocalNode implements Node {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalNode.class);
-    private final ServerConfiguration configuration;
+    private final NodeConfiguration configuration;
     private final LocalProcessor processor;
 
-    protected LocalNode(ServerConfiguration configuration, LocalProcessor processor) {
+    protected LocalNode(NodeConfiguration configuration, LocalProcessor processor) {
         this.configuration = configuration;
         this.processor = processor;
     }
@@ -73,7 +73,7 @@ public class LocalNode implements Node {
     }
 
     @Override
-    public ServerConfiguration getConfiguration() {
+    public NodeConfiguration getConfiguration() {
         return configuration;
     }
 
@@ -100,7 +100,7 @@ public class LocalNode implements Node {
     public static class Factory implements LocalNodeFactory {
 
         @Override
-        public Node makeLocalNode(ServerConfiguration configuration, LocalProcessor processor) {
+        public Node makeLocalNode(NodeConfiguration configuration, LocalProcessor processor) {
             return new LocalNode(configuration, processor);
         }
     }

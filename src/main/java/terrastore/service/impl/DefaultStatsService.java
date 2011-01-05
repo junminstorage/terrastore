@@ -20,7 +20,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 
 import terrastore.common.ClusterStats;
 import terrastore.communication.Cluster;
@@ -49,7 +49,7 @@ public class DefaultStatsService implements StatsService {
             Set<ClusterStats.Node> nodeStats = new HashSet<ClusterStats.Node>();
             Set<Node> nodesForCluster = router.clusterRoute(cluster);
             for (Node node : nodesForCluster) {
-                ServerConfiguration configuration = node.getConfiguration();
+                NodeConfiguration configuration = node.getConfiguration();
                 nodeStats.add(new ClusterStats.Node(configuration.getName(), configuration.getHttpHost(), configuration.getHttpPort()));
             }
             clusterStats.add(new ClusterStats.Cluster(cluster.getName(), nodeStats));

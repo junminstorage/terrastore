@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.Cluster;
 import terrastore.communication.Node;
@@ -79,7 +79,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
         if (scheduler != null) {
             if (!cluster.isLocal()) {
                 String[] hostPortPair = seed.split(":");
-                bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(new ServerConfiguration(seed, hostPortPair[0], Integer.parseInt(hostPortPair[1]), "", 0)));
+                bootstrapNodes.put(cluster, remoteNodeFactory.makeRemoteNode(new NodeConfiguration(seed, hostPortPair[0], Integer.parseInt(hostPortPair[1]), "", 0)));
                 scheduler.schedule(cluster, this, configuration);
             } else {
                 throw new IllegalArgumentException("No need to join local cluster: " + cluster);

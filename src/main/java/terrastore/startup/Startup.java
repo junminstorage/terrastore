@@ -29,7 +29,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import terrastore.cluster.ClusterUtils;
 import terrastore.cluster.coordinator.Coordinator;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.internal.tc.MasterConnectionException;
 import terrastore.internal.tc.TCMaster;
@@ -259,7 +259,7 @@ public class Startup {
         coordinator.setNodeTimeout(nodeTimeout);
         coordinator.setWokerThreads(workerThreads);
         coordinator.start(
-                new ServerConfiguration(ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()), nodeHost, nodePort, httpHost, httpPort),
+                new NodeConfiguration(ClusterUtils.getServerId(TCMaster.getInstance().getClusterInfo().getCurrentNode()), nodeHost, nodePort, httpHost, httpPort),
                 ensembleConfiguration);
     }
 

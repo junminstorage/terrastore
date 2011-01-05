@@ -15,14 +15,12 @@
  */
 package terrastore.communication;
 
-import terrastore.cluster.coordinator.ServerConfiguration;
-
 /**
  * @author Sergio Bossa
  */
 public interface RemoteNodeFactory {
 
-    public Node makeRemoteNode(ServerConfiguration configuration);
+    public Node makeRemoteNode(NodeConfiguration configuration);
 
-    public Node makeRemoteNode(ServerConfiguration configuration, long nodeTimeout, boolean compressCommunication);
+    public Node makeRemoteNode(NodeConfiguration configuration, long nodeTimeout, boolean compressCommunication);
 }

@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import org.msgpack.Packer;
 import org.msgpack.Unpacker;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.cluster.ensemble.impl.View;
 import terrastore.common.ErrorMessage;
 import terrastore.store.Key;
@@ -163,7 +163,7 @@ public class MsgPackUtils {
         }
     }
 
-    public static void packServerConfiguration(Packer packer, ServerConfiguration serverConfiguration) throws IOException {
+    public static void packServerConfiguration(Packer packer, NodeConfiguration serverConfiguration) throws IOException {
         if (serverConfiguration != null) {
             packer.pack(serverConfiguration);
         } else {
@@ -305,11 +305,11 @@ public class MsgPackUtils {
         }
     }
 
-    public static ServerConfiguration unpackServerConfiguration(Unpacker unpacker) throws IOException {
+    public static NodeConfiguration unpackServerConfiguration(Unpacker unpacker) throws IOException {
         if (unpacker.tryUnpackNull()) {
             return null;
         } else {
-            return unpacker.unpack(ServerConfiguration.class);
+            return unpacker.unpack(NodeConfiguration.class);
         }
     }
 

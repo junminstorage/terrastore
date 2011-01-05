@@ -15,6 +15,7 @@
  */
 package terrastore.cluster.coordinator;
 
+import terrastore.communication.NodeConfiguration;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
@@ -30,7 +31,7 @@ import terrastore.store.Store;
  */
 public interface Coordinator {
 
-    public void start(ServerConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration);
+    public void start(NodeConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration);
 
     public void setCompressCommunication(boolean compressCommunication);
 

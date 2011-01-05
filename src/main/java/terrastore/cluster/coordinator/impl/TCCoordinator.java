@@ -35,7 +35,7 @@ import org.terracotta.collections.ClusteredMap;
 import terrastore.cluster.ClusterUtils;
 import terrastore.communication.Node;
 import terrastore.cluster.coordinator.Coordinator;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.communication.ProcessingException;
 import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.communication.Cluster;
@@ -72,7 +72,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     private volatile long reconnectTimeout;
     //
     private volatile Cluster thisCluster;
-    private volatile ServerConfiguration thisConfiguration;
+    private volatile NodeConfiguration thisConfiguration;
     private volatile ConcurrentMap<String, Node> clusterNodes;
     private volatile LocalProcessor localProcessor;
     private volatile RemoteProcessor remoteProcessor;
@@ -156,7 +156,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
         this.flushCondition = flushCondition;
     }
 
-    public void start(ServerConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration) {
+    public void start(NodeConfiguration serverConfiguration, EnsembleConfiguration ensembleConfiguration) {
         try {
             // Configure local data:
             thisCluster = new Cluster(ensembleConfiguration.getLocalCluster(), true);
@@ -297,7 +297,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     }
 
     private void connectRemoteNode(ClusteredMap<String, byte[]> connectionTable, String nodeName) throws InterruptedException {
-        ServerConfiguration remoteConfiguration = (ServerConfiguration) SERIALIZER.deserialize(connectionTable.get(nodeName));
+        NodeConfiguration remoteConfiguration = (NodeConfiguration) SERIALIZER.deserialize(connectionTable.get(nodeName));
         if (remoteConfiguration != null) {
             Node remoteNode = remoteNodeFactory.makeRemoteNode(remoteConfiguration, nodeTimeout, compressCommunication);
             remoteNode.connect();
@@ -325,7 +325,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
         }
     }
 
-    private void signalConnection(ClusteredMap<String, byte[]> connectionTable, ServerConfiguration configuration) {
+    private void signalConnection(ClusteredMap<String, byte[]> connectionTable, NodeConfiguration configuration) {
         coordinatorLock.lock();
         try {
             connectionTable.put(configuration.getName(), SERIALIZER.serialize(configuration));

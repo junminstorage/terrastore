@@ -39,7 +39,7 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
@@ -61,14 +61,14 @@ public class RemoteNode implements Node {
     //
     private final Lock stateLock = new ReentrantLock();
     private final ConcurrentMap<String, SynchronousQueue<Response>> rendezvous = new ConcurrentHashMap<String, SynchronousQueue<Response>>();
-    private final ServerConfiguration configuration;
+    private final NodeConfiguration configuration;
     private final boolean compressCommunication;
     private final long timeoutInMillis;
     private volatile ClientBootstrap client;
     private volatile Channel clientChannel;
     private volatile boolean connected;
 
-    protected RemoteNode(ServerConfiguration configuration, long timeoutInMillis, boolean compressCommunication) {
+    protected RemoteNode(NodeConfiguration configuration, long timeoutInMillis, boolean compressCommunication) {
         this.configuration = configuration;
         this.timeoutInMillis = timeoutInMillis;
         this.compressCommunication = compressCommunication;
@@ -173,7 +173,7 @@ public class RemoteNode implements Node {
     }
 
     @Override
-    public ServerConfiguration getConfiguration() {
+    public NodeConfiguration getConfiguration() {
         return configuration;
     }
 
@@ -280,12 +280,12 @@ public class RemoteNode implements Node {
         private static final boolean DEFAULT_COMPRESS_COMMUNICATION = false;
 
         @Override
-        public Node makeRemoteNode(ServerConfiguration configuration) {
+        public Node makeRemoteNode(NodeConfiguration configuration) {
             return new RemoteNode(configuration, DEFAULT_NODE_TIMEOUT, DEFAULT_COMPRESS_COMMUNICATION);
         }
 
         @Override
-        public RemoteNode makeRemoteNode(ServerConfiguration configuration, long nodeTimeout, boolean compressCommunication) {
+        public RemoteNode makeRemoteNode(NodeConfiguration configuration, long nodeTimeout, boolean compressCommunication) {
             return new RemoteNode(configuration, nodeTimeout, compressCommunication);
         }
 

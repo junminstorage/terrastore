@@ -28,7 +28,7 @@ import org.msgpack.MessageTypeException;
 import org.msgpack.MessageUnpackable;
 import org.msgpack.Packer;
 import org.msgpack.Unpacker;
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 import terrastore.util.io.MsgPackUtils;
 
 /**
@@ -105,13 +105,13 @@ public class View implements MessagePackable, MessageUnpackable, Serializable {
 
         private static final long serialVersionUID = 12345678901L;
         //
-        private final ServerConfiguration configuration;
+        private final NodeConfiguration configuration;
 
-        public Member(ServerConfiguration configuration) {
+        public Member(NodeConfiguration configuration) {
             this.configuration = configuration;
         }
 
-        public ServerConfiguration getConfiguration() {
+        public NodeConfiguration getConfiguration() {
             return configuration;
         }
 

@@ -21,7 +21,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-import terrastore.cluster.coordinator.ServerConfiguration;
+import terrastore.communication.NodeConfiguration;
 
 /**
  * @author Amir Moulavi
@@ -115,7 +115,7 @@ public class ViewTest {
 
         Set<View.Member> members = new HashSet<View.Member>();
         for (String member : membersName) {
-            ServerConfiguration serverConfig = new ServerConfiguration(member, "127.0.0.1", 8080, "127.0.0.1", 8080);
+            NodeConfiguration serverConfig = new NodeConfiguration(member, "127.0.0.1", 8080, "127.0.0.1", 8080);
             View.Member m = new View.Member(serverConfig);
             members.add(m);
         }
