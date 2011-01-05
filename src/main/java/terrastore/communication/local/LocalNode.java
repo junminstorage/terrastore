@@ -64,12 +64,12 @@ public class LocalNode implements Node {
 
     @Override
     public String getHost() {
-        return configuration.getNodeHost();
+        return "local";
     }
 
     @Override
     public int getPort() {
-        return configuration.getNodePort();
+        return -1;
     }
 
     @Override
