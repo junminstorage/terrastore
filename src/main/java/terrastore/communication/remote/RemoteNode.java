@@ -81,14 +81,20 @@ public class RemoteNode implements Node {
             if (!connected) {
                 client = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
                 client.setPipelineFactory(new ClientChannelPipelineFactory(new ClientHandler(), compressCommunication));
-                ChannelFuture future = client.connect(new InetSocketAddress(configuration.getNodeHost(), configuration.getNodePort()));
-                future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
+                ChannelFuture future = tryConnect();
                 if (future.isSuccess()) {
-                    LOG.debug("Connected to remote node {}:{}", configuration.getNodeHost(), configuration.getNodePort());
                     clientChannel = future.getChannel();
                     connected = true;
+                    LOG.debug("Connected to remote node {}", clientChannel.getRemoteAddress());
                 } else {
-                    throw new RuntimeException("Error connecting to " + configuration.getNodeHost() + ":" + configuration.getNodePort(), future.getCause());
+                    StringBuilder addresses = new StringBuilder();
+                    for (String address : configuration.getNodePublishHosts()) {
+                        if (addresses.length() > 0) {
+                            addresses.append(",");
+                        }
+                        addresses.append(address);
+                    }
+                    throw new RuntimeException("Error connecting to the following addresses: " + addresses.toString());
                 }
             }
         } finally {
@@ -104,7 +110,7 @@ public class RemoteNode implements Node {
                 clientChannel.close().awaitUninterruptibly();
                 client.releaseExternalResources();
                 connected = false;
-                LOG.debug("Disconnected from remote node {}:{}", configuration.getNodeHost(), configuration.getNodePort());
+                LOG.debug("Disconnected from remote node {}", clientChannel.getRemoteAddress());
             }
         } finally {
             stateLock.unlock();
@@ -121,7 +127,9 @@ public class RemoteNode implements Node {
             SynchronousQueue<Response> channel = new SynchronousQueue<Response>();
             rendezvous.put(commandId, channel);
             clientChannel.write(command);
-            if (LOG.isDebugEnabled()) LOG.debug("Sent command {} to remote node {}:{}", new String[]{commandId, configuration.getNodeHost(), Integer.toString(configuration.getNodePort())});
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Sent command {} to remote node {}", commandId, clientChannel.getRemoteAddress());
+            }
             //
             Response response = null;
             long wait = timeoutInMillis;
@@ -156,12 +164,12 @@ public class RemoteNode implements Node {
 
     @Override
     public String getHost() {
-        return configuration.getNodeHost();
+        return ((InetSocketAddress) clientChannel.getRemoteAddress()).getHostName();
     }
 
     @Override
     public int getPort() {
-        return configuration.getNodePort();
+        return ((InetSocketAddress) clientChannel.getRemoteAddress()).getPort();
     }
 
     @Override
@@ -186,6 +194,18 @@ public class RemoteNode implements Node {
     @Override
     public String toString() {
         return configuration.getName();
+    }
+
+    private ChannelFuture tryConnect() throws RuntimeException {
+        ChannelFuture future = null;
+        for (String address : configuration.getNodePublishHosts()) {
+            future = client.connect(new InetSocketAddress(address, configuration.getNodePort()));
+            future.awaitUninterruptibly(timeoutInMillis, TimeUnit.MILLISECONDS);
+            if (future.isSuccess()) {
+                break;
+            }
+        }
+        return future;
     }
 
     private String configureId(Command command) {

@@ -200,11 +200,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
                 }
             }
             for (View.Member member : joiningMembers) {
-                Node node = remoteNodeFactory.makeRemoteNode(
-                        new ServerConfiguration(
-                        member.getConfiguration().getName(),
-                        member.getConfiguration().getNodeHost(), member.getConfiguration().getNodePort(),
-                        member.getConfiguration().getHttpHost(), member.getConfiguration().getHttpPort()));
+                Node node = remoteNodeFactory.makeRemoteNode(member.getConfiguration());
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);
@@ -214,10 +210,7 @@ public class DefaultEnsembleManager implements EnsembleManager {
             LOG.debug("No current view for cluster {}", cluster);
             LOG.debug("Updated view for cluster {} :  {}", cluster, updatedView);
             for (View.Member member : updatedView.getMembers()) {
-                Node node = remoteNodeFactory.makeRemoteNode(new ServerConfiguration(
-                        member.getConfiguration().getName(),
-                        member.getConfiguration().getNodeHost(), member.getConfiguration().getNodePort(),
-                        member.getConfiguration().getHttpHost(), member.getConfiguration().getHttpPort()));
+                Node node = remoteNodeFactory.makeRemoteNode(member.getConfiguration());
                 router.addRouteTo(cluster, node);
                 node.connect();
                 currentNodes.add(node);

@@ -276,7 +276,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
         router.addRouteToLocalNode(thisNode);
         router.addRouteTo(thisCluster, thisNode);
         // Remote processor:
-        remoteProcessor = new RemoteProcessor(thisConfiguration.getNodeHost(), thisConfiguration.getNodePort(), remoteProcessorThreads, compressCommunication, router);
+        remoteProcessor = new RemoteProcessor(thisConfiguration.getNodeBindHost(), thisConfiguration.getNodePort(), remoteProcessorThreads, compressCommunication, router);
         remoteProcessor.start();
     }
 

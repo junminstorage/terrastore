@@ -325,4 +325,26 @@ public class RemoteCommunicationTest {
             verify(router, node);
         }
     }
+
+    @Test
+    public void testBindAndConnectToAnyHost() throws Exception {
+        Router router = createMock(Router.class);
+        Node node = createMock(Node.class);
+
+        replay(router, node);
+
+        RemoteProcessor processor = new RemoteProcessor("0.0.0.0", 9991, 10, false, router);
+        Node sender = new RemoteNode(new ServerConfiguration("node", "0.0.0.0", 9991, "localhost", 8000), 1000, false);
+
+        try {
+            // Start processor
+            processor.start();
+            // Connect node:
+            sender.connect();
+        } finally {
+            sender.disconnect();
+            processor.stop();
+            verify(router, node);
+        }
+    }
 }
