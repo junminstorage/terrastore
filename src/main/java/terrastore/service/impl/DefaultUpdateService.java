@@ -130,12 +130,12 @@ public class DefaultUpdateService implements UpdateService {
     	try {
     		Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range), range.getLimit());
     		Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
-    		List<Map<Key, Value>> removedKeyMap = ParallelUtils.parallelMap(
+    		List<Set<Key>> removedKeyMap = ParallelUtils.parallelMap(
     		        nodeToKeys.entrySet(),
-    		        new MapTask<Map.Entry<Node, Set<Key>>, Map<Key, Value>>() {
+    		        new MapTask<Map.Entry<Node, Set<Key>>, Set<Key>>() {
 
                         @Override
-                        public Map<Key, Value> map(Entry<Node, Set<Key>> nodeToKeys) throws ParallelExecutionException {
+                        public Set<Key> map(Entry<Node, Set<Key>> nodeToKeys) throws ParallelExecutionException {
                             try {
                                 Node node = nodeToKeys.getKey();
                                 Set<Key> keys = nodeToKeys.getValue();
@@ -145,15 +145,15 @@ public class DefaultUpdateService implements UpdateService {
                                 } else {
                                     command = new RemoveValuesCommand(bucket, keys, predicate);
                                 }
-                                return node.<Map<Key, Value>>send(command);
+                                return node.<Set<Key>>send(command);
                             } catch (Exception ex) {
                                 throw new ParallelExecutionException(ex);
                             }
                         }
     		        },
-    		        new MapCollector<Map<Key, Value>, List<Map<Key, Value>>>() {
+    		        new MapCollector<Set<Key>, List<Set<Key>>>() {
     		            @Override
-                        public List<Map<Key, Value>> collect(List<Map<Key, Value>> allKeyValues) {
+                        public List<Set<Key>> collect(List<Set<Key>> allKeyValues) {
                             return allKeyValues;
                         }
                     },
@@ -161,8 +161,8 @@ public class DefaultUpdateService implements UpdateService {
     		);
     		
     		Set<Key> removedKeys = new HashSet<Key>();
-    		for (Map<Key, Value> kvMap : removedKeyMap) {
-    		    removedKeys.addAll(kvMap.keySet());
+    		for (Set<Key> keysFromNode : removedKeyMap) {
+    		    removedKeys.addAll(keysFromNode);
     		}
     		
     		return Keys.fromKeySet(removedKeys);
