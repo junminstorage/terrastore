@@ -15,10 +15,14 @@
  */
 package terrastore.service;
 
+import java.util.List;
+
 import terrastore.communication.CommunicationException;
 import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
+import terrastore.server.Keys;
 import terrastore.store.Key;
+import terrastore.store.features.Range;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
@@ -70,6 +74,15 @@ public interface UpdateService {
     public void removeValue(String bucket, Key key) throws CommunicationException, UpdateOperationException;
 
     /**
+     * TODO: Document
+     * @param bucket
+     * @param range
+     * @param predicate
+     * @return
+     */
+	public Keys removeByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, UpdateOperationException;
+    
+    /**
      * Update the value from the given bucket under the given key.
      *
      * @param bucket The name of the bucket holding the value to update.
@@ -88,4 +101,5 @@ public interface UpdateService {
      * @return The router instance.
      */
     public Router getRouter();
+
 }
