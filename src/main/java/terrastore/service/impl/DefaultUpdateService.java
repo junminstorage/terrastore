@@ -15,8 +15,14 @@
  */
 package terrastore.service.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorLogger;
@@ -25,18 +31,29 @@ import terrastore.communication.Cluster;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
+import terrastore.communication.protocol.RemoveValuesCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
+import terrastore.server.Keys;
+import terrastore.service.QueryOperationException;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.Key;
+import terrastore.store.features.Range;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.store.features.Predicate;
+import terrastore.util.collect.Sets;
+import terrastore.util.collect.parallel.MapCollector;
+import terrastore.util.collect.parallel.MapTask;
+import terrastore.util.collect.parallel.ParallelExecutionException;
+import terrastore.util.collect.parallel.ParallelUtils;
+import terrastore.util.concurrent.GlobalExecutor;
 import terrastore.util.json.JsonUtils;
 import terrastore.store.ValidationException;
 
@@ -109,6 +126,108 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
+	public Keys removeByRange(final String bucket, Range range, final Predicate predicate) throws CommunicationException, UpdateOperationException {
+    	try {
+    		Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range), range.getLimit());
+    		Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
+    		List<Map<Key, Value>> removedKeyMap = ParallelUtils.parallelMap(
+    		        nodeToKeys.entrySet(),
+    		        new MapTask<Map.Entry<Node, Set<Key>>, Map<Key, Value>>() {
+
+                        @Override
+                        public Map<Key, Value> map(Entry<Node, Set<Key>> nodeToKeys) throws ParallelExecutionException {
+                            try {
+                                Node node = nodeToKeys.getKey();
+                                Set<Key> keys = nodeToKeys.getValue();
+                                RemoveValuesCommand command = null;
+                                if (predicate.isEmpty()) {
+                                    command = new RemoveValuesCommand(bucket, keys);
+                                } else {
+                                    command = new RemoveValuesCommand(bucket, keys, predicate);
+                                }
+                                return node.<Map<Key, Value>>send(command);
+                            } catch (Exception ex) {
+                                throw new ParallelExecutionException(ex);
+                            }
+                        }
+    		        },
+    		        new MapCollector<Map<Key, Value>, List<Map<Key, Value>>>() {
+    		            @Override
+                        public List<Map<Key, Value>> collect(List<Map<Key, Value>> allKeyValues) {
+                            return allKeyValues;
+                        }
+                    },
+                    GlobalExecutor.getQueryExecutor()
+    		);
+    		
+    		Set<Key> removedKeys = new HashSet<Key>();
+    		for (Map<Key, Value> kvMap : removedKeyMap) {
+    		    removedKeys.addAll(kvMap.keySet());
+    		}
+    		
+    		return Keys.fromKeySet(removedKeys);
+	   } catch (MissingRouteException ex) {
+           handleMissingRouteException(ex);
+           return null;
+       } catch (ParallelExecutionException ex) {
+           handleParallelExecutionException(ex);
+           return null;
+       }    
+    }
+    
+    // TODO: Duplicated from DefaultQueryService
+    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException {
+        KeysInRangeCommand command = new KeysInRangeCommand(bucket, keyRange);
+        Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
+        Set<Key> keys = multicastRangeQueryCommand(perClusterNodes, command);
+        return keys;
+    }
+    
+    // TODO: Duplicated from DefaultQueryService
+    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final KeysInRangeCommand command) throws ParallelExecutionException {
+        // Parallel collection of all sets of sorted keys in a list:
+        Set<Key> keys = ParallelUtils.parallelMap(
+                perClusterNodes.values(),
+                new MapTask<Set<Node>, Set<Key>>() {
+
+                    @Override
+                    public Set<Key> map(Set<Node> nodes) throws ParallelExecutionException {
+                        Set<Key> keys = new HashSet<Key>();
+                        // Try to send command, stopping after first successful attempt:
+                        for (Node node : nodes) {
+                            try {
+                                keys = node.<Set<Key>>send(command);
+                                // Break after first success, we just want to send command to one node per cluster:
+                                break;
+                            } catch (CommunicationException ex) {
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
+                            } catch (ProcessingException ex) {
+                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
+                                throw new ParallelExecutionException(ex);
+                            }
+                        }
+                        return keys;
+                    }
+
+                },
+                new MapCollector<Set<Key>, Set<Key>>() {
+
+                    @Override
+                    public Set<Key> collect(List<Set<Key>> keys) {
+                        try {
+                            // Parallel merge of all sorted sets:
+                            return ParallelUtils.parallelMerge(keys, GlobalExecutor.getForkJoinPool());
+                        } catch (ParallelExecutionException ex) {
+                            throw new IllegalStateException(ex.getCause());
+                        }
+                    }
+
+                }, GlobalExecutor.getQueryExecutor());
+        return keys;
+    }
+    
+
+	@Override
     public Router getRouter() {
         return router;
     }
@@ -150,6 +269,18 @@ public class DefaultUpdateService implements UpdateService {
         ErrorMessage error = ex.getErrorMessage();
         ErrorLogger.LOG(LOG, error, ex);
         throw new UpdateOperationException(error);
+    }
+    
+    private void handleParallelExecutionException(ParallelExecutionException ex) throws UpdateOperationException, CommunicationException {
+        if (ex.getCause() instanceof ProcessingException) {
+            ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex.getCause());
+            throw new UpdateOperationException(error);
+        } else if (ex.getCause() instanceof CommunicationException) {
+            throw (CommunicationException) ex.getCause();
+        } else {
+            throw new UpdateOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Unexpected error: " + ex.getMessage()));
+        }
     }
 
 }

@@ -15,6 +15,8 @@
  */
 package terrastore.server;
 
+import java.util.List;
+
 import terrastore.common.ClusterStats;
 import terrastore.service.BackupService;
 import terrastore.service.QueryService;
@@ -127,6 +129,19 @@ public interface Server {
     public Values queryByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
+     * TODO: Document
+     * @param bucket
+     * @param startKey
+     * @param endKey
+     * @param limit
+     * @param comparator
+     * @param predicateExpression
+     * @param timeToLive
+     * @return
+     */
+	public Keys removeByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicateExpression, long timeToLive) throws ServerOperationException;
+    
+    /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
      *
      * @param bucket The bucket to query.
@@ -193,4 +208,5 @@ public interface Server {
      * @return The {@link terrastore.service.BackupService} instance.
      */
     public BackupService getBackupService();
+
 }
