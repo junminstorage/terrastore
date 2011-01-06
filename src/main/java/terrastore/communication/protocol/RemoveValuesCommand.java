@@ -3,6 +3,7 @@ package terrastore.communication.protocol;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,7 +48,7 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
         this.predicate = predicate;
     }
     
-    public RemoveValuesCommand(RemoveValuesCommand command, Set<Key> nodeKeys) {
+    public RemoveValuesCommand(RemoveValuesCommand command, Set<Key> keys) {
         this.bucketName = command.bucketName;
         this.conditional = command.conditional;
         this.predicate = command.predicate;
@@ -57,37 +58,37 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
     @Override
     public Response executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
-        Map<Key, Value> result = new HashMap<Key, Value>();
+        Set<Key> result = new HashSet<Key>();
         for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
             Node node = nodeToKeysEntry.getKey();
             Set<Key> nodeKeys = nodeToKeysEntry.getValue();
             RemoveValuesCommand command = new RemoveValuesCommand(this, nodeKeys);
-            result.putAll(node.<Map<Key, Value>>send(command));
+            result.addAll(node.<Set<Key>>send(command));
         }
-        return new ValuesResponse(id, result);
+        return new KeysResponse(id, result);
     }
 
     @Override
     public Response executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
-        Map<Key, Value> result = new HashMap<Key, Value>();
+        Set<Key> result = new HashSet<Key>();
         if (bucket != null) {
             if (!conditional) {
                 for (Key key : keys) {
                     bucket.remove(key);
-                    result.put(key, new Value("removed".getBytes()));
+                    result.add(key);
                 }
             } else {
                 for (Key key : keys) {
                     Value value = bucket.conditionalGet(key, predicate);
                     if (value != null) {
                         bucket.remove(key);
-                        result.put(key, new Value("removed".getBytes()));
+                        result.add(key);
                     }
                 }
             }
         }
-        return new ValuesResponse(id, result);
+        return new KeysResponse(id, result);
     }
     
     @Override
