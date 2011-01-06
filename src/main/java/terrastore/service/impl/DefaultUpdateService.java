@@ -157,7 +157,7 @@ public class DefaultUpdateService implements UpdateService {
                             return allKeyValues;
                         }
                     },
-                    GlobalExecutor.getQueryExecutor()
+                    GlobalExecutor.getUpdateExecutor()
     		);
     		
     		Set<Key> removedKeys = new HashSet<Key>();
