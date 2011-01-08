@@ -15,8 +15,11 @@
  */
 package terrastore.service.impl;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
@@ -25,18 +28,24 @@ import terrastore.communication.Cluster;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
+import terrastore.communication.protocol.RemoveValuesCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
+import terrastore.server.Keys;
+import terrastore.service.UpdateOperationException;
 import terrastore.store.Key;
 import terrastore.store.ValidationException;
 import terrastore.store.features.Predicate;
+import terrastore.store.features.Range;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -183,6 +192,117 @@ public class DefaultUpdateServiceTest {
         service.removeValue("bucket", new Key("test1"));
 
         verify(node, router);
+    }
+    
+    @Test
+    public void testRemoveByRange() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Cluster cluster2 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
+        Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
+        Router router = createMock(Router.class);
+        Map<Node, Set<Key>> nodeToKeys = new HashMap<Node, Set<Key>>();
+        nodeToKeys.put(node1, new HashSet<Key>(Arrays.asList(new Key("test1"))));
+        nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test2"))));
+        Set<Key> keys1 = new HashSet<Key>();
+        keys1.add(new Key("test1"));
+        Set<Key> keys2 = new HashSet<Key>();
+        keys2.add(new Key("test2"));
+        
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
+
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash(new Key("test1"))).once();
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash(new Key("test2"))).once();
+
+        router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
+        expectLastCall().andReturn(nodeToKeys).once();
+        
+        node1.send(EasyMock.<RemoveValuesCommand>anyObject());
+        expectLastCall().andReturn(keys1).once();
+        node2.send(EasyMock.<RemoveValuesCommand>anyObject());
+        expectLastCall().andReturn(keys2).once();
+        
+        replay(cluster1, cluster2, node1, node2, router);
+        
+        DefaultUpdateService service = new DefaultUpdateService(router);
+        
+        Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
+        assertEquals(2, removedKeys.size());
+        assertTrue(removedKeys.contains("test1"));
+        assertTrue(removedKeys.contains("test2"));
+        
+        verify(cluster1, cluster2, node1, node2, router);
+    }
+    
+    @Test(expected = UpdateOperationException.class)
+    public void testRemoveByRangeFailsInCaseOfProcessingException() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
+        Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
+        Router router = createMock(Router.class);
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
+        expectLastCall().andThrow(new ProcessingException(new ErrorMessage(0, ""))).once();
+
+        replay(cluster1, node1, node2, router);
+
+
+        DefaultUpdateService service = new DefaultUpdateService(router);
+        try {
+            Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
+        } finally {
+            verify(cluster1, node1, node2, router);
+        }
+    }
+    
+    @Test
+    public void testRemoveByRangeSucceedsBySkippingFailingNodes() throws Exception {
+        Cluster cluster1 = createMock(Cluster.class);
+        Node node1 = createMock(Node.class);
+        makeThreadSafe(node1, true);
+        Node node2 = createMock(Node.class);
+        makeThreadSafe(node2, true);
+        Router router = createMock(Router.class);
+        
+        Map<Node, Set<Key>> nodeToKeys = new HashMap<Node, Set<Key>>();
+        nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test1"), new Key("test2"))));
+        Set<Key> keys2 = new HashSet<Key>();
+        keys2.add(new Key("test1"));
+        keys2.add(new Key("test2"));
+
+        router.broadcastRoute();
+        expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1}, new Set[]{Sets.linked(node1, node2)})).once();
+
+        node1.send(EasyMock.<KeysInRangeCommand>anyObject());
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage(0, ""))).once();
+        node2.send(EasyMock.<KeysInRangeCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
+
+        router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
+        expectLastCall().andReturn(nodeToKeys).once();
+
+        node2.send(EasyMock.<RemoveValuesCommand>anyObject());
+        expectLastCall().andReturn(keys2).once();
+
+        replay(cluster1, node1, node2, router);
+
+        DefaultUpdateService service = new DefaultUpdateService(router);
+        Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
+        assertEquals(2, removedKeys.size());
+        assertTrue(removedKeys.contains("test1"));
+        assertTrue(removedKeys.contains("test2"));
+
+        verify(cluster1, node1, node2, router);
     }
 
     @Test
