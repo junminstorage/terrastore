@@ -63,9 +63,9 @@ public class DefaultQueryService implements QueryService {
     private final Router router;
     private final KeyRangeService keyRangeService;
 
-    public DefaultQueryService(Router router) {
+    public DefaultQueryService(Router router, KeyRangeService keyRangeService) {
         this.router = router;
-        this.keyRangeService = new DefaultKeyRangeService(router);
+        this.keyRangeService = keyRangeService;
     }
 
     @Override

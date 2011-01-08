@@ -68,9 +68,9 @@ public class DefaultUpdateService implements UpdateService {
     private final Router router;
     private final KeyRangeService keyRangeService;
 
-    public DefaultUpdateService(Router router) {
+    public DefaultUpdateService(Router router, KeyRangeService keyRangeService) {
         this.router = router;
-        this.keyRangeService = new DefaultKeyRangeService(router);
+        this.keyRangeService = keyRangeService;
     }
 
     public void removeBucket(String bucket) throws CommunicationException, UpdateOperationException {
