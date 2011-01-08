@@ -74,12 +74,21 @@ public interface UpdateService {
     public void removeValue(String bucket, Key key) throws CommunicationException, UpdateOperationException;
 
     /**
-     * TODO: Document
-     * @param bucket
-     * @param range
-     * @param predicate
-     * @return
-     */
+     * Execute a range query removing all key/value pairs whose key falls within the given range, and whose values satisfies the given predicate (if any).
+     * <br><br>
+     * The method returns an unordered set of all keys that were successfully removed in the form of a {@link Keys} object.
+     * <br><br>
+     * The command is executed over a snapshot view of the bucket keys, so the timeToLive carried into the range object determines,
+     * in milliseconds, the max snapshot age: if the snapshot is older than the given time, it's recomputed,
+     * otherwise it will be actually used for the command.
+     * 
+     * @param bucket The bucket to remove keys/values from.
+     * @param range The range which keys must fall within. 
+     * @param predicate The predicate to evaluate values against.
+     * @return An unordered {@link Keys} set containing all keys that were successfully removed.
+	 * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
+	 * @throws UpdateOperationException If errors occur during the operation.
+	 */
 	public Keys removeByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, UpdateOperationException;
     
     /**

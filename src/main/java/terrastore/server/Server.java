@@ -129,17 +129,31 @@ public interface Server {
     public Values queryByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
 
     /**
-     * TODO: Document
-     * @param bucket
-     * @param startKey
-     * @param endKey
-     * @param limit
-     * @param comparator
-     * @param predicateExpression
-     * @param timeToLive
-     * @return
+     * Remove all key/value pairs whose key falls wihtin the given range, and whose value satisfies the given predicate (if any).
+     * <br><br>
+     * the selected range goes from start key to end key, with the max number of elements equal to the provided limit.<br>
+     * The limit specifies the max number of key/value pairs to examine and possibly delete. If the limit is lower than the number of
+     * keys in the range and a predicate is used, the number of actually removed key/value pairs may be lower than the limit, while 
+     * values matching the predicate may still remain in the bucket.
+     * If the limit is set to zero, all key/value pairs in the range will be examined.
+     * <br><br> 
+     * If no end key is provided, all elements starting from the start key and up to the limit will be removed.
+     * <br><br>
+     * The range query is executed over a snapshot view of the bucket keys, so the timeToLive parameter determines,
+     * in milliseconds, the snapshot max age: if the snapshot is older than the given time, it's recomputed,
+     * otherwise it will be actually used for the query.
+     * 
+     * @param bucket The bucket to query.
+     * @param startKey First key in range.
+     * @param endKey Last key in range (inclusive); if null, all elements starting from start key and up to the limit will be removed.
+     * @param limit Max number of keys to examine/elements to remove (even if not reaching the end of the range); if zero, all elements in range will be deleted.
+     * @param comparator Name of the comparator to use for testing if a key is in range.
+     * @param predicate The predicate to evaluate against values (optional).
+     * @param timeToLive Number of milliseconds specifying the snapshot age; if set to 0, a new snapshot will be immediately computed
+     * for the delete operation to be executed on.
+     * @return An unordered {@link Keys} set containing the keys that were actually removed.
      */
-	public Keys removeByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicateExpression, long timeToLive) throws ServerOperationException;
+	public Keys removeByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
     
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
