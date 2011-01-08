@@ -56,7 +56,7 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
     }
 
     @Override
-    public Response executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
+    public Response<Set<Key>> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
         Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucketName, keys);
         Set<Key> result = new HashSet<Key>();
         for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
@@ -69,7 +69,7 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
     }
 
     @Override
-    public Response executeOn(Store store) throws StoreOperationException {
+    public Response<Set<Key>> executeOn(Store store) throws StoreOperationException {
         Bucket bucket = store.get(bucketName);
         Set<Key> result = new HashSet<Key>();
         if (bucket != null) {
@@ -80,9 +80,8 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
                 }
             } else {
                 for (Key key : keys) {
-                    Value value = bucket.conditionalGet(key, predicate);
-                    if (value != null) {
-                        bucket.remove(key);
+                    boolean removedValue = bucket.conditionalRemove(key, predicate);
+                    if (removedValue) {
                         result.add(key);
                     }
                 }
