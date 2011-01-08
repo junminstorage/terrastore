@@ -19,7 +19,6 @@ import terrastore.store.features.Update;
 import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
-import terrastore.event.impl.ValueRemovedEvent;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
