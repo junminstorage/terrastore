@@ -19,6 +19,7 @@ import terrastore.store.features.Update;
 import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
+import terrastore.event.impl.ValueRemovedEvent;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
@@ -101,6 +102,19 @@ public interface Bucket {
      */
     public Map<Key, Value> conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException;
 
+    /**
+     * Remove this {@link Value} under the given key under the condition that the provided
+     * predicate is satisfied.
+     * This publishes a {@link terrastore.event.ValueRemovedEvent} to the 
+     * {@link terrastore.event.EventBus}.
+     * 
+     * @param key The key of the value to remove.
+     * @param predicate The predicate that must be satisfied for the value to be removed
+     * @return <code>true</code> if the value was removed, otherwise <code>false</code>.
+     * @throws StoreOperationException if the predicate is invalid.
+     */
+    public boolean conditionalRemove(Key key, Predicate predicate) throws StoreOperationException;
+    
     /**
      * Remove the {@link Value} under the given key.<br>
      * This publishes a {@link terrastore.event.ValueRemovedEvent} to the
