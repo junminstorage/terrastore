@@ -37,6 +37,7 @@
         <constructor-arg index="0">
             <bean class="terrastore.service.impl.DefaultUpdateService">
                 <constructor-arg ref="router"/>
+                <constructor-arg ref="keyRangeService"/>
             </bean>
         </constructor-arg>
         <constructor-arg index="1" value="terrastore.service.UpdateService"/>
@@ -48,11 +49,16 @@
         <constructor-arg index="0">
             <bean class="terrastore.service.impl.DefaultQueryService">
                 <constructor-arg ref="router"/>
+                <constructor-arg ref="keyRangeService"/>
             </bean>
         </constructor-arg>
         <constructor-arg index="1" value="terrastore.service.QueryService"/>
         <constructor-arg index="2" value="${failover.retries}"/>
         <constructor-arg index="3" value="${failover.interval}"/>
+    </bean>
+    
+    <bean id="keyRangeService" class="terrastore.service.impl.DefaultKeyRangeService">
+    	<constructor-arg ref="router" />
     </bean>
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
