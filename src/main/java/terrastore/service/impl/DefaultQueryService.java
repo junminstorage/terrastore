@@ -36,6 +36,7 @@ import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
+import terrastore.service.KeyRangeService;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
 import terrastore.store.Key;
@@ -58,10 +59,13 @@ import terrastore.util.concurrent.GlobalExecutor;
 public class DefaultQueryService implements QueryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultQueryService.class);
+    //
     private final Router router;
+    private final KeyRangeService keyRangeService;
 
     public DefaultQueryService(Router router) {
         this.router = router;
+        this.keyRangeService = new DefaultKeyRangeService(router);
     }
 
     @Override
@@ -141,7 +145,7 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
-            Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range), range.getLimit());
+            Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(bucket, range), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
             List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
                     nodeToKeys.entrySet(),
@@ -228,7 +232,7 @@ public class DefaultQueryService implements QueryService {
         try {
             Set<Key> keys = null;
             if (range != null && !range.isEmpty()) {
-                keys = getKeyRangeForBucket(bucket, range);
+                keys = keyRangeService.getKeyRangeForBucket(bucket, range);
             } else {
                 keys = getAllKeysForBucket(bucket);
             }
@@ -286,13 +290,6 @@ public class DefaultQueryService implements QueryService {
         GetKeysCommand command = new GetKeysCommand(bucket);
         Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
         Set<Key> keys = multicastGetAllKeysCommand(perClusterNodes, command);
-        return keys;
-    }
-
-    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException {
-        KeysInRangeCommand command = new KeysInRangeCommand(bucket, keyRange);
-        Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-        Set<Key> keys = multicastRangeQueryCommand(perClusterNodes, command);
         return keys;
     }
 
@@ -368,48 +365,6 @@ public class DefaultQueryService implements QueryService {
 
                 }, GlobalExecutor.getQueryExecutor());
         return result;
-    }
-
-    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final KeysInRangeCommand command) throws ParallelExecutionException {
-        // Parallel collection of all sets of sorted keys in a list:
-        Set<Key> keys = ParallelUtils.parallelMap(
-                perClusterNodes.values(),
-                new MapTask<Set<Node>, Set<Key>>() {
-
-                    @Override
-                    public Set<Key> map(Set<Node> nodes) throws ParallelExecutionException {
-                        Set<Key> keys = new HashSet<Key>();
-                        // Try to send command, stopping after first successful attempt:
-                        for (Node node : nodes) {
-                            try {
-                                keys = node.<Set<Key>>send(command);
-                                // Break after first success, we just want to send command to one node per cluster:
-                                break;
-                            } catch (CommunicationException ex) {
-                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
-                            } catch (ProcessingException ex) {
-                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
-                                throw new ParallelExecutionException(ex);
-                            }
-                        }
-                        return keys;
-                    }
-
-                },
-                new MapCollector<Set<Key>, Set<Key>>() {
-
-                    @Override
-                    public Set<Key> collect(List<Set<Key>> keys) {
-                        try {
-                            // Parallel merge of all sorted sets:
-                            return ParallelUtils.parallelMerge(keys, GlobalExecutor.getForkJoinPool());
-                        } catch (ParallelExecutionException ex) {
-                            throw new IllegalStateException(ex.getCause());
-                        }
-                    }
-
-                }, GlobalExecutor.getQueryExecutor());
-        return keys;
     }
 
     private void handleMissingRouteException(MissingRouteException ex) throws CommunicationException {

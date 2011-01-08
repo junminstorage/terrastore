@@ -40,6 +40,7 @@ import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.server.Keys;
+import terrastore.service.KeyRangeService;
 import terrastore.service.QueryOperationException;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
@@ -65,9 +66,11 @@ public class DefaultUpdateService implements UpdateService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultUpdateService.class);
     //
     private final Router router;
+    private final KeyRangeService keyRangeService;
 
     public DefaultUpdateService(Router router) {
         this.router = router;
+        this.keyRangeService = new DefaultKeyRangeService(router);
     }
 
     public void removeBucket(String bucket) throws CommunicationException, UpdateOperationException {
@@ -128,7 +131,7 @@ public class DefaultUpdateService implements UpdateService {
     @Override
 	public Keys removeByRange(final String bucket, Range range, final Predicate predicate) throws CommunicationException, UpdateOperationException {
     	try {
-    		Set<Key> keysInRange = Sets.limited(getKeyRangeForBucket(bucket, range), range.getLimit());
+    		Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(bucket, range), range.getLimit());
     		Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
     		List<Set<Key>> removedKeyMap = ParallelUtils.parallelMap(
     		        nodeToKeys.entrySet(),
@@ -174,58 +177,6 @@ public class DefaultUpdateService implements UpdateService {
            return null;
        }    
     }
-    
-    // TODO: Duplicated from DefaultQueryService
-    private Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException {
-        KeysInRangeCommand command = new KeysInRangeCommand(bucket, keyRange);
-        Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
-        Set<Key> keys = multicastRangeQueryCommand(perClusterNodes, command);
-        return keys;
-    }
-    
-    // TODO: Duplicated from DefaultQueryService
-    private Set<Key> multicastRangeQueryCommand(final Map<Cluster, Set<Node>> perClusterNodes, final KeysInRangeCommand command) throws ParallelExecutionException {
-        // Parallel collection of all sets of sorted keys in a list:
-        Set<Key> keys = ParallelUtils.parallelMap(
-                perClusterNodes.values(),
-                new MapTask<Set<Node>, Set<Key>>() {
-
-                    @Override
-                    public Set<Key> map(Set<Node> nodes) throws ParallelExecutionException {
-                        Set<Key> keys = new HashSet<Key>();
-                        // Try to send command, stopping after first successful attempt:
-                        for (Node node : nodes) {
-                            try {
-                                keys = node.<Set<Key>>send(command);
-                                // Break after first success, we just want to send command to one node per cluster:
-                                break;
-                            } catch (CommunicationException ex) {
-                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
-                            } catch (ProcessingException ex) {
-                                ErrorLogger.LOG(LOG, ex.getErrorMessage(), ex);
-                                throw new ParallelExecutionException(ex);
-                            }
-                        }
-                        return keys;
-                    }
-
-                },
-                new MapCollector<Set<Key>, Set<Key>>() {
-
-                    @Override
-                    public Set<Key> collect(List<Set<Key>> keys) {
-                        try {
-                            // Parallel merge of all sorted sets:
-                            return ParallelUtils.parallelMerge(keys, GlobalExecutor.getForkJoinPool());
-                        } catch (ParallelExecutionException ex) {
-                            throw new IllegalStateException(ex.getCause());
-                        }
-                    }
-
-                }, GlobalExecutor.getQueryExecutor());
-        return keys;
-    }
-    
 
 	@Override
     public Router getRouter() {
