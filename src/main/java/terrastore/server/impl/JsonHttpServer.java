@@ -123,8 +123,6 @@ public class JsonHttpServer {
         try {
             Value result = core.updateValue(bucket, key, function, timeout, parameters);
             return Response.ok(result).contentLocation(new URI(bucket + "/" + key)).build();
-//        } catch (ServerOperationException ex) {
-//            throw ex;
         } catch (URISyntaxException ex) {
             throw new ServerOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
