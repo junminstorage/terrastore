@@ -117,6 +117,26 @@ public class TCBucket implements Bucket {
             unlockWrite(key);
         }
     }
+    
+    public boolean conditionalRemove(Key key, Predicate predicate) throws StoreOperationException {
+        // Use explicit locking to make sure we see a consistent state while examining, removing and publishing.
+        lockWrite(key);
+        try {
+            Condition condition = getCondition(predicate.getConditionType());
+            Value value = doGet(key);
+            if (value != null && value.dispatch(key, predicate, condition)) {
+                doRemove(key);
+                if (eventBus.isEnabled()) {
+                    eventBus.publish(new ValueRemovedEvent(name, key.toString(), value));
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } finally {
+            unlockWrite(key);
+        }
+    }
 
     public Value get(Key key) throws StoreOperationException {
         Value value = doGet(key);
