@@ -54,6 +54,7 @@ import terrastore.server.impl.cors.CorsInterceptor;
 import terrastore.server.impl.support.JsonBucketsProvider;
 import terrastore.server.impl.support.JsonClusterStatsProvider;
 import terrastore.server.impl.support.JsonErrorMessageProvider;
+import terrastore.server.impl.support.JsonKeysProvider;
 import terrastore.server.impl.support.JsonMapReduceDescriptorProvider;
 import terrastore.server.impl.support.JsonParametersProvider;
 import terrastore.server.impl.support.JsonServerOperationExceptionMapper;
@@ -209,6 +210,7 @@ public class JsonHttpServer {
 
     private void registerProviders(ResteasyDeployment deployment, Map<String, String> configuration) {
         List providers = Arrays.asList(
+                new JsonKeysProvider(),
                 new JsonBucketsProvider(),
                 new JsonValuesProvider(),
                 new JsonValueProvider(),
