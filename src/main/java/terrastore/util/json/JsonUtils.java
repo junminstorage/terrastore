@@ -34,6 +34,7 @@ import terrastore.cluster.ensemble.EnsembleConfiguration;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
+import terrastore.server.Keys;
 import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
@@ -101,6 +102,10 @@ public class JsonUtils {
 
     public static void write(Buckets buckets, OutputStream stream) throws IOException {
         JSON_MAPPER.writeValue(stream, buckets);
+    }
+    
+    public static void write(Keys keys, OutputStream stream) throws IOException {
+        JSON_MAPPER.writeValue(stream, keys);
     }
 
     public static void write(Values values, OutputStream stream) throws IOException {
