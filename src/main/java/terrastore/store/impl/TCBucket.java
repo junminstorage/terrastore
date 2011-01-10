@@ -117,7 +117,7 @@ public class TCBucket implements Bucket {
             unlockWrite(key);
         }
     }
-    
+
     public boolean conditionalRemove(Key key, Predicate predicate) throws StoreOperationException {
         // Use explicit locking to make sure we see a consistent state while examining, removing and publishing.
         lockWrite(key);

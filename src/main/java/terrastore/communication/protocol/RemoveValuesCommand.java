@@ -16,8 +16,6 @@
 package terrastore.communication.protocol;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -48,29 +46,30 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
     private Set<Key> keys;
     private boolean conditional;
     private Predicate predicate;
-    
+
     public RemoveValuesCommand(String bucketName, Set<Key> keys) {
         this.bucketName = bucketName;
         this.keys = keys;
         this.conditional = false;
         this.predicate = null;
     }
-    
+
     public RemoveValuesCommand(String bucketName, Set<Key> keys, Predicate predicate) {
         this.bucketName = bucketName;
         this.keys = keys;
         this.conditional = true;
         this.predicate = predicate;
     }
-    
+
     public RemoveValuesCommand(RemoveValuesCommand command, Set<Key> keys) {
         this.bucketName = command.bucketName;
         this.conditional = command.conditional;
         this.predicate = command.predicate;
         this.keys = keys;
     }
-    
-    public RemoveValuesCommand() { }
+
+    public RemoveValuesCommand() {
+    }
 
     @Override
     public Response<Set<Key>> executeOn(Router router) throws CommunicationException, MissingRouteException, ProcessingException {
@@ -106,7 +105,7 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
         }
         return new KeysResponse(id, result);
     }
-    
+
     @Override
     protected void doDeserialize(Unpacker unpacker) throws IOException, MessageTypeException {
         bucketName = MsgPackUtils.unpackString(unpacker);
@@ -123,5 +122,4 @@ public class RemoveValuesCommand extends AbstractCommand<Map<Key, Value>> {
         MsgPackUtils.packPredicate(packer, predicate);
     }
 
-  
 }

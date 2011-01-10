@@ -103,7 +103,7 @@ public class JsonUtils {
     public static void write(Buckets buckets, OutputStream stream) throws IOException {
         JSON_MAPPER.writeValue(stream, buckets);
     }
-    
+
     public static void write(Keys keys, OutputStream stream) throws IOException {
         JSON_MAPPER.writeValue(stream, keys);
     }

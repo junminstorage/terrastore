@@ -160,13 +160,13 @@ public class JsonHttpServer {
         Values result = core.queryByRange(bucket, startKey, endKey, limit, comparator, predicateExpression, timeToLive);
         return Response.ok(result).build();
     }
-    
+
     @DELETE
     @Path("/{bucket}/range")
     @Produces("application/json")
     public Response removeByRange(@PathParam("bucket") String bucket, @QueryParam("startKey") Key startKey, @QueryParam("endKey") Key endKey, @QueryParam("limit") int limit, @QueryParam("comparator") String comparator, @QueryParam("predicate") String predicateExpression, @QueryParam("timeToLive") long timeToLive) throws ServerOperationException {
-    	Keys removedKeys = core.removeByRange(bucket, startKey, endKey, limit, comparator, predicateExpression, timeToLive);
-    	return Response.ok(removedKeys).build();
+        Keys removedKeys = core.removeByRange(bucket, startKey, endKey, limit, comparator, predicateExpression, timeToLive);
+        return Response.ok(removedKeys).build();
     }
 
     @GET

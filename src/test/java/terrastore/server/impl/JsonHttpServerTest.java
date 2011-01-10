@@ -719,4 +719,5 @@ public class JsonHttpServerTest {
         JsonUtils.write(errorMessage, stream);
         return new String(stream.toByteArray());
     }
+
 }

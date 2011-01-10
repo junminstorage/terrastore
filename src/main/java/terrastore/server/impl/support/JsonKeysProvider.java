@@ -37,7 +37,7 @@ public class JsonKeysProvider implements MessageBodyWriter<Keys> {
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return Keys.class.isAssignableFrom(type);
     }
-    
+
     @Override
     public long getSize(Keys keys, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return -1;
