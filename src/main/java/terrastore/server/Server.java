@@ -15,8 +15,6 @@
  */
 package terrastore.server;
 
-import java.util.List;
-
 import terrastore.common.ClusterStats;
 import terrastore.service.BackupService;
 import terrastore.service.QueryService;
@@ -153,8 +151,8 @@ public interface Server {
      * for the delete operation to be executed on.
      * @return An unordered {@link Keys} set containing the keys that were actually removed.
      */
-	public Keys removeByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
-    
+    public Keys removeByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicate, long timeToLive) throws ServerOperationException;
+
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
      *

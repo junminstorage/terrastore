@@ -28,7 +28,6 @@ import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.GetKeysCommand;
-import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.GetBucketsCommand;
 import terrastore.communication.protocol.GetValueCommand;
 import terrastore.communication.protocol.GetValuesCommand;

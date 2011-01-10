@@ -15,8 +15,6 @@
  */
 package terrastore.server.impl;
 
-import java.util.Collections;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -225,24 +223,24 @@ public class CoreServer implements Server {
     }
 
     @Override
-	public Keys removeByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicateExpression, long timeToLive) throws ServerOperationException {
-		try {
-			if (startKey == null) {
-				ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");
-				throw new ServerOperationException(error);
-			}
-			if (comparator == null) {
-				comparator = "";
-			}
-			LOG.info("Executing range delete from {} to {} ordered by {} on bucket {}", new Object[]{startKey, endKey, comparator, bucket});
-			Range range = new Range(startKey, endKey, limit, comparator, timeToLive);
-			Predicate predicate = new Predicate(predicateExpression);
-			return updateService.removeByRange(bucket, range, predicate);
-		} catch (CommunicationException ex) {
+    public Keys removeByRange(String bucket, Key startKey, Key endKey, int limit, String comparator, String predicateExpression, long timeToLive) throws ServerOperationException {
+        try {
+            if (startKey == null) {
+                ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No startKey provided!");
+                throw new ServerOperationException(error);
+            }
+            if (comparator == null) {
+                comparator = "";
+            }
+            LOG.info("Executing range delete from {} to {} ordered by {} on bucket {}", new Object[]{startKey, endKey, comparator, bucket});
+            Range range = new Range(startKey, endKey, limit, comparator, timeToLive);
+            Predicate predicate = new Predicate(predicateExpression);
+            return updateService.removeByRange(bucket, range, predicate);
+        } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
-		} catch (UpdateOperationException ex) {
+        } catch (UpdateOperationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
@@ -251,9 +249,9 @@ public class CoreServer implements Server {
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
         }
-	}
+    }
 
-	public Values queryByPredicate(String bucket, String predicateExpression) throws ServerOperationException {
+    public Values queryByPredicate(String bucket, String predicateExpression) throws ServerOperationException {
         try {
             if (predicateExpression == null) {
                 ErrorMessage error = new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No predicate provided!");

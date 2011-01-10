@@ -113,7 +113,7 @@ public interface Bucket {
      * @throws StoreOperationException if the predicate is invalid.
      */
     public boolean conditionalRemove(Key key, Predicate predicate) throws StoreOperationException;
-    
+
     /**
      * Remove the {@link Value} under the given key.<br>
      * This publishes a {@link terrastore.event.ValueRemovedEvent} to the

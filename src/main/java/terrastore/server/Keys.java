@@ -13,7 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package terrastore.server;
 
 import java.io.Serializable;
@@ -30,13 +29,12 @@ import terrastore.store.Key;
 public class Keys extends AbstractSet<String> implements Serializable {
 
     private static final long serialVersionUID = 6257689309668637360L;
-
     private final Set<String> keys;
-    
+
     public Keys(Set<String> keys) {
         this.keys = keys;
     }
-    
+
     @Override
     public Iterator<String> iterator() {
         return keys.iterator();
@@ -54,4 +52,5 @@ public class Keys extends AbstractSet<String> implements Serializable {
         }
         return new Keys(keys);
     }
+
 }

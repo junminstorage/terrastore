@@ -46,7 +46,6 @@ import terrastore.store.features.Update;
 import terrastore.store.Value;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
-import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.classextension.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -201,7 +200,7 @@ public class DefaultUpdateServiceTest {
 
         verify(node, router);
     }
-    
+
     @Test
     public void testRemoveByRange() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
@@ -218,7 +217,7 @@ public class DefaultUpdateServiceTest {
         keys1.add(new Key("test1"));
         Set<Key> keys2 = new HashSet<Key>();
         keys2.add(new Key("test2"));
-        
+
         router.broadcastRoute();
         expectLastCall().andReturn(Maps.hash(new Cluster[]{cluster1, cluster2}, new Set[]{Sets.hash(node1), Sets.hash(node2)})).once();
 
@@ -229,25 +228,25 @@ public class DefaultUpdateServiceTest {
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
         expectLastCall().andReturn(nodeToKeys).once();
-        
+
         node1.send(EasyMock.<RemoveValuesCommand>anyObject());
         expectLastCall().andReturn(keys1).once();
         node2.send(EasyMock.<RemoveValuesCommand>anyObject());
         expectLastCall().andReturn(keys2).once();
-        
+
         replay(cluster1, cluster2, node1, node2, router);
-        
+
         KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
         DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
-        
+
         Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, removedKeys.size());
         assertTrue(removedKeys.contains("test1"));
         assertTrue(removedKeys.contains("test2"));
-        
+
         verify(cluster1, cluster2, node1, node2, router);
     }
-    
+
     @Test(expected = UpdateOperationException.class)
     public void testRemoveByRangeFailsInCaseOfProcessingException() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
@@ -274,7 +273,7 @@ public class DefaultUpdateServiceTest {
             verify(cluster1, node1, node2, router);
         }
     }
-    
+
     @Test
     public void testRemoveByRangeSucceedsBySkippingFailingNodes() throws Exception {
         Cluster cluster1 = createMock(Cluster.class);
@@ -283,7 +282,7 @@ public class DefaultUpdateServiceTest {
         Node node2 = createMock(Node.class);
         makeThreadSafe(node2, true);
         Router router = createMock(Router.class);
-        
+
         Map<Node, Set<Key>> nodeToKeys = new HashMap<Node, Set<Key>>();
         nodeToKeys.put(node2, new HashSet<Key>(Arrays.asList(new Key("test1"), new Key("test2"))));
         Set<Key> keys2 = new HashSet<Key>();
@@ -305,7 +304,7 @@ public class DefaultUpdateServiceTest {
         expectLastCall().andReturn(keys2).once();
 
         replay(cluster1, node1, node2, router);
-        
+
         KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
         DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
         Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));

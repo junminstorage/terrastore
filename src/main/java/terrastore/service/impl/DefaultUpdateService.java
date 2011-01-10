@@ -15,8 +15,6 @@
  */
 package terrastore.service.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +29,6 @@ import terrastore.communication.Cluster;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
@@ -41,7 +38,6 @@ import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.server.Keys;
 import terrastore.service.KeyRangeService;
-import terrastore.service.QueryOperationException;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.Key;
@@ -129,13 +125,13 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
-	public Keys removeByRange(final String bucket, Range range, final Predicate predicate) throws CommunicationException, UpdateOperationException {
-    	try {
-    		Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(bucket, range), range.getLimit());
-    		Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
-    		List<Set<Key>> removedKeyMap = ParallelUtils.parallelMap(
-    		        nodeToKeys.entrySet(),
-    		        new MapTask<Map.Entry<Node, Set<Key>>, Set<Key>>() {
+    public Keys removeByRange(final String bucket, Range range, final Predicate predicate) throws CommunicationException, UpdateOperationException {
+        try {
+            Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(bucket, range), range.getLimit());
+            Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
+            List<Set<Key>> removedKeyMap = ParallelUtils.parallelMap(
+                    nodeToKeys.entrySet(),
+                    new MapTask<Map.Entry<Node, Set<Key>>, Set<Key>>() {
 
                         @Override
                         public Set<Key> map(Entry<Node, Set<Key>> nodeToKeys) throws ParallelExecutionException {
@@ -153,32 +149,34 @@ public class DefaultUpdateService implements UpdateService {
                                 throw new ParallelExecutionException(ex);
                             }
                         }
-    		        },
-    		        new MapCollector<Set<Key>, List<Set<Key>>>() {
-    		            @Override
+
+                    },
+                    new MapCollector<Set<Key>, List<Set<Key>>>() {
+
+                        @Override
                         public List<Set<Key>> collect(List<Set<Key>> allKeyValues) {
                             return allKeyValues;
                         }
+
                     },
-                    GlobalExecutor.getUpdateExecutor()
-    		);
-    		
-    		Set<Key> removedKeys = new HashSet<Key>();
-    		for (Set<Key> keysFromNode : removedKeyMap) {
-    		    removedKeys.addAll(keysFromNode);
-    		}
-    		
-    		return Keys.fromKeySet(removedKeys);
-	   } catch (MissingRouteException ex) {
-           handleMissingRouteException(ex);
-           return null;
-       } catch (ParallelExecutionException ex) {
-           handleParallelExecutionException(ex);
-           return null;
-       }    
+                    GlobalExecutor.getUpdateExecutor());
+
+            Set<Key> removedKeys = new HashSet<Key>();
+            for (Set<Key> keysFromNode : removedKeyMap) {
+                removedKeys.addAll(keysFromNode);
+            }
+
+            return Keys.fromKeySet(removedKeys);
+        } catch (MissingRouteException ex) {
+            handleMissingRouteException(ex);
+            return null;
+        } catch (ParallelExecutionException ex) {
+            handleParallelExecutionException(ex);
+            return null;
+        }
     }
 
-	@Override
+    @Override
     public Router getRouter() {
         return router;
     }
@@ -221,7 +219,7 @@ public class DefaultUpdateService implements UpdateService {
         ErrorLogger.LOG(LOG, error, ex);
         throw new UpdateOperationException(error);
     }
-    
+
     private void handleParallelExecutionException(ParallelExecutionException ex) throws UpdateOperationException, CommunicationException {
         if (ex.getCause() instanceof ProcessingException) {
             ErrorMessage error = ((ProcessingException) ex.getCause()).getErrorMessage();

@@ -259,19 +259,21 @@ public class TCBucketTest {
         bucket.put(key, value);
         assertNull(bucket.conditionalGet(key, predicate));
     }
-    
+
     @Test
     public void testPutAndConditionallyRemoveValueWhenConditionIsSatisfied() throws StoreOperationException {
         Key key = new Key("key");
         Value value = new Value(JSON_VALUE.getBytes());
         Predicate predicate = new Predicate("test:test");
         Condition condition = new Condition() {
+
             @Override
             public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return value.get(expression) != null;
             }
+
         };
-        
+
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         bucket.put(key, value);
         assertTrue(bucket.conditionalRemove(key, predicate));
@@ -279,10 +281,9 @@ public class TCBucketTest {
             bucket.get(key);
             fail("Key should not have been found.");
         } catch (StoreOperationException e) {
-            
         }
     }
-    
+
     @Test
     public void testPutAndConditionallyRemoveValueWhenConditionIsUnsatisfied() throws StoreOperationException {
         Key key = new Key("key");
@@ -294,25 +295,28 @@ public class TCBucketTest {
             public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return value.get(expression) != null;
             }
+
         };
-        
+
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         bucket.put(key, value);
-        assertFalse(bucket.conditionalRemove(key, predicate));        
+        assertFalse(bucket.conditionalRemove(key, predicate));
         assertNotNull(bucket.get(key));
     }
-    
+
     @Test
-    public void testConditionallyRemoveValueWhenValueDoesNotExist() throws StoreOperationException { 
+    public void testConditionallyRemoveValueWhenValueDoesNotExist() throws StoreOperationException {
         Key key = new Key("key");
         Predicate predicate = new Predicate("test:test");
         Condition condition = new Condition() {
+
             @Override
             public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
                 return value.get(expression) != null;
             }
+
         };
-        
+
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         assertFalse(bucket.conditionalRemove(key, predicate));
     }
@@ -344,7 +348,7 @@ public class TCBucketTest {
         bucket.remove(key);
         bucket.get(key);
     }
-    
+
     @Test
     public void testKeys() throws StoreOperationException {
         Key key1 = new Key("key");

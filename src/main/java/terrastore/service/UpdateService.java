@@ -15,8 +15,6 @@
  */
 package terrastore.service;
 
-import java.util.List;
-
 import terrastore.communication.CommunicationException;
 import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
@@ -86,11 +84,11 @@ public interface UpdateService {
      * @param range The range which keys must fall within. 
      * @param predicate The predicate to evaluate values against.
      * @return An unordered {@link Keys} set containing all keys that were successfully removed.
-	 * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
-	 * @throws UpdateOperationException If errors occur during the operation.
-	 */
-	public Keys removeByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, UpdateOperationException;
-    
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
+     * @throws UpdateOperationException If errors occur during the operation.
+     */
+    public Keys removeByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, UpdateOperationException;
+
     /**
      * Update the value from the given bucket under the given key.
      *

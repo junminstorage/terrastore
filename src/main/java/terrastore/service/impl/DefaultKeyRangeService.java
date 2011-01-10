@@ -52,7 +52,7 @@ public class DefaultKeyRangeService implements KeyRangeService {
     public DefaultKeyRangeService(Router router) {
         this.router = router;
     }
-    
+
     @Override
     public Set<Key> getKeyRangeForBucket(String bucket, Range keyRange) throws ParallelExecutionException {
         KeysInRangeCommand command = new KeysInRangeCommand(bucket, keyRange);
@@ -102,5 +102,5 @@ public class DefaultKeyRangeService implements KeyRangeService {
                 }, GlobalExecutor.getQueryExecutor());
         return keys;
     }
-    
+
 }

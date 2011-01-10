@@ -18,7 +18,6 @@ package terrastore.util.json;
 import terrastore.store.ValidationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class JsonUtilsTest {
     private static final String VALUES = "{\"value\":{\"key\":\"value\"}}";
     private static final String PARAMETERS = "{\"key\":\"value\"}";
     private static final String BUCKETS = "[\"1\",\"2\"]";
-        private static final String MAPREDUCE_DESCRIPTOR = "{\"range\":{\"startKey\":\"k1\",\"timeToLive\":10000},\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
+    private static final String MAPREDUCE_DESCRIPTOR = "{\"range\":{\"startKey\":\"k1\",\"timeToLive\":10000},\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
 
     @Test
     public void testValidate() throws Exception {
@@ -163,4 +162,5 @@ public class JsonUtilsTest {
         assertEquals("reducer", descriptor.task.reducer);
         assertEquals(10000, descriptor.task.timeout);
     }
+
 }

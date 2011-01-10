@@ -29,5 +29,5 @@ import terrastore.util.collect.parallel.ParallelExecutionException;
 public interface KeyRangeService {
 
     Set<Key> getKeyRangeForBucket(String bucket, Range range) throws ParallelExecutionException;
-    
+
 }

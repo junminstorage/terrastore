@@ -30,16 +30,16 @@ import static org.junit.Assert.*;
 public class JsonKeysProviderTest {
 
     private static final String KEYS_JSON = "[\"key1\",\"key2\",\"key3\"]";
-    
+
     @Test
     public void testWrite() throws Exception {
         JsonKeysProvider provider = new JsonKeysProvider();
         Keys keysToWrite = new Keys(Sets.linked("key1", "key2", "key3"));
-        
+
         ByteArrayOutputStream jsonOutputStream = new ByteArrayOutputStream();
         provider.writeTo(keysToWrite, null, null, null, null, null, jsonOutputStream);
-        
+
         assertEquals(new String(KEYS_JSON.getBytes(), "UTF-8"), new String(jsonOutputStream.toByteArray(), "UTF-8"));
     }
-    
+
 }
