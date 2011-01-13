@@ -87,6 +87,7 @@ public interface UpdateService {
      * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If errors occur during the operation.
      */
+    @HandleFailure(exception = CommunicationException.class)
     public Keys removeByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, UpdateOperationException;
 
     /**
