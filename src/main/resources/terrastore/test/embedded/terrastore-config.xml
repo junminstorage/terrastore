@@ -29,17 +29,15 @@
 
     <bean id="updateService" class="terrastore.service.impl.DefaultUpdateService">
         <constructor-arg ref="router"/>
-        <constructor-arg ref="keyRangeService" />
+        <constructor-arg ref="keyRangeStrategy" />
     </bean>
 
     <bean id="queryService" class="terrastore.service.impl.DefaultQueryService">
         <constructor-arg ref="router"/>
-        <constructor-arg ref="keyRangeService" />
+        <constructor-arg ref="keyRangeStrategy" />
     </bean>
     
-    <bean id="keyRangeService" class="terrastore.service.impl.DefaultKeyRangeService">
-    	<constructor-arg ref="router"/>
-    </bean>
+    <bean id="keyRangeStrategy" class="terrastore.service.impl.DefaultKeyRangeStrategy" />
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
         <constructor-arg ref="router"/>

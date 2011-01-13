@@ -37,7 +37,7 @@ import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.Router;
-import terrastore.service.KeyRangeService;
+import terrastore.service.KeyRangeStrategy;
 import terrastore.service.QueryOperationException;
 import terrastore.store.Key;
 import terrastore.store.features.Predicate;
@@ -78,8 +78,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Collection<String> result = service.getBuckets();
         assertEquals(2, result.size());
@@ -104,8 +103,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         try {
             Collection<String> result = service.getBuckets();
@@ -131,8 +129,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Collection<String> result = service.getBuckets();
         assertEquals(2, result.size());
@@ -159,8 +156,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         assertTrue(service.getBuckets().isEmpty());
 
@@ -183,8 +179,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Collection<String> result = service.getBuckets();
         assertEquals(2, result.size());
@@ -208,8 +203,7 @@ public class DefaultQueryServiceTest {
 
         replay(node, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         assertEquals(JSON_VALUE, new String(service.getValue("bucket", new Key("test1"), new Predicate(null)).getBytes()));
 
@@ -251,8 +245,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.getAllValues("bucket", 0);
         assertEquals(2, result.size());
@@ -292,8 +285,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.getAllValues("bucket", 0);
         assertEquals(2, result.size());
@@ -320,8 +312,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         try {
             Map<Key, Value> result = service.getAllValues("bucket", 0);
@@ -352,8 +343,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         assertTrue(service.getAllValues("bucket", 0).isEmpty());
 
@@ -393,8 +383,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.getAllValues("bucket", 0);
         assertEquals(2, result.size());
@@ -439,8 +428,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, result.size());
@@ -467,9 +455,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         try {
             Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
@@ -509,8 +495,7 @@ public class DefaultQueryServiceTest {
         replay(cluster1, node1, node2, router);
 
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, result.size());
@@ -542,8 +527,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         assertTrue(service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null)).isEmpty());
 
@@ -583,8 +567,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.queryByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, result.size());
@@ -629,8 +612,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());
@@ -670,8 +652,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+         DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());
@@ -703,8 +684,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         assertTrue(service.queryByPredicate("bucket", new Predicate("test:true")).isEmpty());
 
@@ -744,8 +724,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Map<Key, Value> result = service.queryByPredicate("bucket", new Predicate("test:true"));
         assertEquals(2, result.size());
@@ -795,8 +774,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);
@@ -847,8 +825,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Mapper mapper = new Mapper("mapper", null, 1000, null);
         Reducer reducer = new Reducer("reducer", 1000);
@@ -892,8 +869,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);
@@ -932,8 +908,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);
@@ -978,8 +953,7 @@ public class DefaultQueryServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultQueryService service = new DefaultQueryService(router, keyRangeService);
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);

@@ -36,7 +36,7 @@ import terrastore.communication.protocol.RemoveValuesCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
 import terrastore.server.Keys;
-import terrastore.service.KeyRangeService;
+import terrastore.service.KeyRangeStrategy;
 import terrastore.service.UpdateOperationException;
 import terrastore.store.Key;
 import terrastore.store.ValidationException;
@@ -74,8 +74,7 @@ public class DefaultUpdateServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         service.removeBucket("bucket");
 
         verify(cluster1, cluster2, node1, node2, router);
@@ -97,8 +96,7 @@ public class DefaultUpdateServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         service.removeBucket("bucket");
 
         verify(cluster1, node1, node2, router);
@@ -121,8 +119,7 @@ public class DefaultUpdateServiceTest {
         replay(cluster1, node1, node2, router);
 
         try {
-            KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-            DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+            DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
             service.removeBucket("bucket");
         } finally {
             verify(cluster1, node1, node2, router);
@@ -140,8 +137,7 @@ public class DefaultUpdateServiceTest {
         replay(cluster1, router);
 
         try {
-            KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-            DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+            DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
             service.removeBucket("bucket");
         } finally {
             verify(cluster1, router);
@@ -160,8 +156,7 @@ public class DefaultUpdateServiceTest {
 
         replay(node, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         service.putValue("bucket", new Key("test1"), new Value(JSON_VALUE.getBytes()), new Predicate(null));
 
         verify(node, router);
@@ -174,8 +169,7 @@ public class DefaultUpdateServiceTest {
         replay(router);
 
         try {
-            KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-            DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+            DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
             service.putValue("bucket", new Key("test1"), new Value(BAD_JSON_VALUE.getBytes()), new Predicate(null));
         } finally {
             verify(router);
@@ -194,8 +188,7 @@ public class DefaultUpdateServiceTest {
 
         replay(node, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         service.removeValue("bucket", new Key("test1"));
 
         verify(node, router);
@@ -236,8 +229,7 @@ public class DefaultUpdateServiceTest {
 
         replay(cluster1, cluster2, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
 
         Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, removedKeys.size());
@@ -265,8 +257,7 @@ public class DefaultUpdateServiceTest {
         replay(cluster1, node1, node2, router);
 
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         try {
             Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         } finally {
@@ -305,8 +296,7 @@ public class DefaultUpdateServiceTest {
 
         replay(cluster1, node1, node2, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, removedKeys.size());
         assertTrue(removedKeys.contains("test1"));
@@ -327,8 +317,7 @@ public class DefaultUpdateServiceTest {
 
         replay(node, router);
 
-        KeyRangeService keyRangeService = new DefaultKeyRangeService(router);
-        DefaultUpdateService service = new DefaultUpdateService(router, keyRangeService);
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         assertEquals(new Value(JSON_VALUE.getBytes()), service.updateValue("bucket", new Key("test1"), new Update("update", 1000, new HashMap<String, Object>())));
 
         verify(node, router);

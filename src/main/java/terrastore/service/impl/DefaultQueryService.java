@@ -35,7 +35,7 @@ import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
-import terrastore.service.KeyRangeService;
+import terrastore.service.KeyRangeStrategy;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
 import terrastore.store.Key;
@@ -60,11 +60,11 @@ public class DefaultQueryService implements QueryService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultQueryService.class);
     //
     private final Router router;
-    private final KeyRangeService keyRangeService;
+    private final KeyRangeStrategy keyRangeStrategy;
 
-    public DefaultQueryService(Router router, KeyRangeService keyRangeService) {
+    public DefaultQueryService(Router router, KeyRangeStrategy keyRangeStrategy) {
         this.router = router;
-        this.keyRangeService = keyRangeService;
+        this.keyRangeStrategy = keyRangeStrategy;
     }
 
     @Override
@@ -144,7 +144,7 @@ public class DefaultQueryService implements QueryService {
     @Override
     public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
-            Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(bucket, range), range.getLimit());
+            Set<Key> keysInRange = Sets.limited(keyRangeStrategy.getKeyRangeForBucket(router, bucket, range), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
             List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
                     nodeToKeys.entrySet(),
@@ -231,7 +231,7 @@ public class DefaultQueryService implements QueryService {
         try {
             Set<Key> keys = null;
             if (range != null && !range.isEmpty()) {
-                keys = keyRangeService.getKeyRangeForBucket(bucket, range);
+                keys = keyRangeStrategy.getKeyRangeForBucket(router, bucket, range);
             } else {
                 keys = getAllKeysForBucket(bucket);
             }
