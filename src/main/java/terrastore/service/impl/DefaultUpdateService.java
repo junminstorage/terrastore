@@ -37,7 +37,7 @@ import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.server.Keys;
-import terrastore.service.KeyRangeService;
+import terrastore.service.KeyRangeStrategy;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
 import terrastore.store.Key;
@@ -62,9 +62,9 @@ public class DefaultUpdateService implements UpdateService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultUpdateService.class);
     //
     private final Router router;
-    private final KeyRangeService keyRangeService;
+    private final KeyRangeStrategy keyRangeService;
 
-    public DefaultUpdateService(Router router, KeyRangeService keyRangeService) {
+    public DefaultUpdateService(Router router, KeyRangeStrategy keyRangeService) {
         this.router = router;
         this.keyRangeService = keyRangeService;
     }
@@ -127,7 +127,7 @@ public class DefaultUpdateService implements UpdateService {
     @Override
     public Keys removeByRange(final String bucket, Range range, final Predicate predicate) throws CommunicationException, UpdateOperationException {
         try {
-            Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(bucket, range), range.getLimit());
+            Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(router, bucket, range), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
             List<Set<Key>> removedKeyMap = ParallelUtils.parallelMap(
                     nodeToKeys.entrySet(),
