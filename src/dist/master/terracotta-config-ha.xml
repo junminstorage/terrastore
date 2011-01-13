@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+    <tc-properties>
+        <!-- Connection properties -->
+        <property name="l2.l1reconnect.enabled" value="true"/>
+        <property name="l2.l1reconnect.timeout.millis" value="@server.reconnection.timeout@"/>
+        <property name="l1.healthcheck.l2.ping.enabled" value="true"/>
+        <property name="l1.healthcheck.l2.socketConnect" value="true"/>
+        <property name="l1.healthcheck.l2.ping.interval" value="1000"/>
+        <property name="l1.healthcheck.l2.ping.probes" value="@server.healthcheck.timeout@"/>
+        <!-- Cluster properties -->
+        <property name="l2.berkeleydb.je.log.fileMax" value="10000000"/>
+        <property name="l2.berkeleydb.je.checkpointer.bytesInterval" value="50000000"/>
+        <property name="l2.berkeleydb.je.cleaner.bytesInterval" value="20000000"/>
+        <property name="l2.cachemanager.percentageToEvict" value="25"/>
+        <property name="l2.cachemanager.threshold" value="50"/>
+        <property name="l2.cachemanager.criticalThreshold" value="70"/>
+        <property name="l2.objectmanager.passive.sync.batch.size" value="100"/>
+        <property name="l1.cachemanager.percentageToEvict" value="10"/>
+        <property name="l1.cachemanager.threshold" value="80"/>
+        <property name="l1.cachemanager.criticalThreshold" value="90"/>
+    </tc-properties>
+    <servers>
+        <server host="@master.interface.1@" name="terrastore-ha-master-1" bind="@master.host.1@">
+            <dso-port bind="@master.host.1@">@master.server.port.1@</dso-port>
+            <jmx-port bind="@master.host.1@">@master.jmx.port.1@</jmx-port>
+            <l2-group-port>@master.ha.port.1@</l2-group-port>
+            <data>tc-data/server-data</data>
+            <logs>tc-data/server-logs</logs>
+            <statistics>tc-data/server-statistics</statistics>
+            <dso>
+                <client-reconnect-window>30</client-reconnect-window>
+                <persistence>
+                    <mode>permanent-store</mode>
+                </persistence>
+            </dso>
+        </server>
+        <server host="@master.interface.2@" name="terrastore-ha-master-2" bind="@master.host.2@">
+            <dso-port bind="@master.host.2@">@master.server.port.2@</dso-port>
+            <jmx-port bind="@master.host.2@">@master.jmx.port.2@</jmx-port>
+            <l2-group-port>@master.ha.port.2@</l2-group-port>
+            <data>tc-data/server-data</data>
+            <logs>tc-data/server-logs</logs>
+            <statistics>tc-data/server-statistics</statistics>
+            <dso>
+                <client-reconnect-window>30</client-reconnect-window>
+                <persistence>
+                    <mode>permanent-store</mode>
+                </persistence>
+            </dso>
+        </server>
+        <ha>
+            <mode>networked-active-passive</mode>
+            <networked-active-passive>
+                <election-time>5</election-time>
+            </networked-active-passive>
+        </ha>
+        <update-check>
+            <enabled>false</enabled>
+        </update-check>
+    </servers>
+    <clients>
+        <dso><fault-count>0</fault-count></dso>
+        <logs>tc-data/client-logs/%i/%D</logs>
+    </clients>
+</tc:tc-config>

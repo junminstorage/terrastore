@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+
+    <!--
+        Configure here your terrastore.store.operators.Aggregator.
+        As an alternative, you may want to annotate your aggregator with terrastore.annotation.AutoDetect: Terrastore
+        will autodetect your annotated class, create an instance and autowire it here.
+
+        Aggregators manually declared here overwrite autodetected ones: this means that if a manually declared aggregator
+        has the same name (entry key) of an autodetected one, the latter will not be wired.
+    -->
+
+    <util:map id="aggregators">
+
+        <entry key="keys">
+            <bean class="terrastore.store.aggregators.KeysAggregator"/>
+        </entry>
+
+        <entry key="size">
+            <bean class="terrastore.store.aggregators.SizeAggregator"/>
+        </entry>
+
+    </util:map>
+
+</beans>
