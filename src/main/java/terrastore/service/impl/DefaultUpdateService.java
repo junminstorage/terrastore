@@ -166,7 +166,7 @@ public class DefaultUpdateService implements UpdateService {
                 removedKeys.addAll(keysFromNode);
             }
 
-            return Keys.fromKeySet(removedKeys);
+            return new Keys(removedKeys);
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
             return null;

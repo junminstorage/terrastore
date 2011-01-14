@@ -26,6 +26,7 @@ import org.junit.Test;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Buckets;
+import terrastore.server.Keys;
 import terrastore.server.MapReduceDescriptor;
 import terrastore.server.Parameters;
 import terrastore.server.Values;
@@ -39,6 +40,7 @@ import static org.junit.Assert.*;
  */
 public class JsonUtilsTest {
 
+    private static final String JSON_KEYS = "[\"key1\",\"key2\",\"key3\"]";
     private static final String JSON_VALUE = "{\"key\" : \"value\", "
             + "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], "
             + "\"key\" : {\"object\":\"value\"}}";
@@ -119,6 +121,14 @@ public class JsonUtilsTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonUtils.write(message, stream);
         assertEquals(ERROR_MESSAGE, new String(stream.toByteArray()));
+    }
+
+    @Test
+    public void testWriteKeys() throws Exception {
+        Keys keysToWrite = new Keys(Sets.linked(new Key("key1"), new Key("key2"), new Key("key3")));
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        JsonUtils.write(keysToWrite, stream);
+        assertEquals(JSON_KEYS, new String(stream.toByteArray()));
     }
 
     @Test

@@ -105,7 +105,13 @@ public class JsonUtils {
     }
 
     public static void write(Keys keys, OutputStream stream) throws IOException {
-        JSON_MAPPER.writeValue(stream, keys);
+        JsonGenerator jsonGenerator = new JsonFactory().createJsonGenerator(stream, JsonEncoding.UTF8);
+        jsonGenerator.writeStartArray();
+        for (Key key : keys) {
+            jsonGenerator.writeString(key.toString());
+        }
+        jsonGenerator.writeEndArray();
+        jsonGenerator.close();
     }
 
     public static void write(Values values, OutputStream stream) throws IOException {
