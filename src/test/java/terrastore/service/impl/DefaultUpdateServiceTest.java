@@ -233,8 +233,8 @@ public class DefaultUpdateServiceTest {
 
         Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, removedKeys.size());
-        assertTrue(removedKeys.contains("test1"));
-        assertTrue(removedKeys.contains("test2"));
+        assertTrue(removedKeys.contains(new Key("test1")));
+        assertTrue(removedKeys.contains(new Key("test2")));
 
         verify(cluster1, cluster2, node1, node2, router);
     }
@@ -299,8 +299,8 @@ public class DefaultUpdateServiceTest {
         DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
         Keys removedKeys = service.removeByRange("bucket", new Range(new Key("test1"), new Key("test2"), 0, "order", 0), new Predicate(null));
         assertEquals(2, removedKeys.size());
-        assertTrue(removedKeys.contains("test1"));
-        assertTrue(removedKeys.contains("test2"));
+        assertTrue(removedKeys.contains(new Key("test1")));
+        assertTrue(removedKeys.contains(new Key("test2")));
 
         verify(cluster1, node1, node2, router);
     }

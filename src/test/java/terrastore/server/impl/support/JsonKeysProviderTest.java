@@ -15,6 +15,7 @@
  */
 package terrastore.server.impl.support;
 
+import terrastore.store.Key;
 import java.io.ByteArrayOutputStream;
 
 import org.junit.Test;
@@ -34,7 +35,7 @@ public class JsonKeysProviderTest {
     @Test
     public void testWrite() throws Exception {
         JsonKeysProvider provider = new JsonKeysProvider();
-        Keys keysToWrite = new Keys(Sets.linked("key1", "key2", "key3"));
+        Keys keysToWrite = new Keys(Sets.linked(new Key("key1"), new Key("key2"), new Key("key3")));
 
         ByteArrayOutputStream jsonOutputStream = new ByteArrayOutputStream();
         provider.writeTo(keysToWrite, null, null, null, null, null, jsonOutputStream);
