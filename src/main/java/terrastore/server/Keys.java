@@ -17,7 +17,6 @@ package terrastore.server;
 
 import java.io.Serializable;
 import java.util.AbstractSet;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -26,17 +25,17 @@ import terrastore.store.Key;
 /**
  * @author Sven Johansson
  */
-public class Keys extends AbstractSet<String> implements Serializable {
+public class Keys extends AbstractSet<Key> implements Serializable {
 
     private static final long serialVersionUID = 6257689309668637360L;
-    private final Set<String> keys;
+    private final Set<Key> keys;
 
-    public Keys(Set<String> keys) {
+    public Keys(Set<Key> keys) {
         this.keys = keys;
     }
 
     @Override
-    public Iterator<String> iterator() {
+    public Iterator<Key> iterator() {
         return keys.iterator();
     }
 
@@ -44,13 +43,4 @@ public class Keys extends AbstractSet<String> implements Serializable {
     public int size() {
         return keys.size();
     }
-
-    public static Keys fromKeySet(Set<Key> keySet) {
-        Set<String> keys = new HashSet<String>();
-        for (Key key : keySet) {
-            keys.add(key.toString());
-        }
-        return new Keys(keys);
-    }
-
 }
