@@ -93,12 +93,12 @@ public class Value implements MessagePackable, MessageUnpackable, Serializable {
         }
     }
 
-    public final Map<String, Object> dispatch(Key key, Mapper mapper, Function function) {
-        return function.apply(key.toString(), JsonUtils.toModifiableMap(this), mapper.getParameters());
-    }
-
     public final Value dispatch(Key key, Update update, Function function) {
         return JsonUtils.fromMap(function.apply(key.toString(), JsonUtils.toModifiableMap(this), update.getParameters()));
+    }
+
+    public final Map<String, Object> dispatch(Key key, Mapper mapper, Function function) {
+        return function.apply(key.toString(), JsonUtils.toUnmodifiableMap(this), mapper.getParameters());
     }
 
     public final boolean dispatch(Key key, Predicate predicate, Condition condition) {
