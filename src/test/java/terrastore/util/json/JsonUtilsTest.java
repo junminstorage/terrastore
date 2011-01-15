@@ -32,6 +32,7 @@ import terrastore.server.Parameters;
 import terrastore.server.Values;
 import terrastore.store.Key;
 import terrastore.store.Value;
+import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import static org.junit.Assert.*;
 
@@ -41,9 +42,18 @@ import static org.junit.Assert.*;
 public class JsonUtilsTest {
 
     private static final String JSON_KEYS = "[\"key1\",\"key2\",\"key3\"]";
-    private static final String JSON_VALUE = "{\"key\" : \"value\", "
-            + "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], "
-            + "\"key\" : {\"object\":\"value\"}}";
+    private static final String JSON_VALUE = "{\"key\":\"value\","
+            + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
+            + "\"object\":{\"inner\":\"value\"}}";
+    private static final String JSON_VALUE_WITH_UPDATED_VALUE = "{\"key\":\"update\","
+            + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
+            + "\"object\":{\"inner\":\"value\"}}";
+    private static final String JSON_VALUE_WITH_UPDATED_ARRAY = "{\"key\":\"value\","
+            + "\"array\":[\"primitive\",{\"nested\":[\"array\"]},\"update\"],"
+            + "\"object\":{\"inner\":\"value\"}}";
+    private static final String JSON_VALUE_WITH_UPDATED_OBJECT = "{\"key\":\"value\","
+            + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
+            + "\"object\":{\"updated\":\"object\"}}";
     private static final String ARRAY_JSON_VALUE = "[\"test1\"]";
     private static final String BAD_JSON_VALUE = "{\"key\" : \"value\", "
             + "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], "
@@ -72,6 +82,24 @@ public class JsonUtilsTest {
     public void testValidateWithBadJson() throws Exception {
         Value json = new Value(BAD_JSON_VALUE.getBytes("UTF-8"));
         JsonUtils.validate(json);
+    }
+
+    @Test
+    public void testUpdateValue() throws Exception {
+        Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
+        assertEquals(JSON_VALUE_WITH_UPDATED_VALUE, new String(JsonUtils.update(json, Maps.<String, Object>hash(new String[]{"key"}, new Object[]{"update"})).getBytes()));
+    }
+
+    @Test
+    public void testUpdateArray() throws Exception {
+        Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
+        assertEquals(JSON_VALUE_WITH_UPDATED_ARRAY, new String(JsonUtils.update(json, Maps.<String, Object>hash(new String[]{"array"}, new Object[]{"update"})).getBytes()));
+    }
+
+    @Test
+    public void testUpdateObject() throws Exception {
+        Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
+        assertEquals(JSON_VALUE_WITH_UPDATED_OBJECT, new String(JsonUtils.update(json, Maps.<String, Object>hash(new String[]{"object"}, new Object[]{Maps.hash(new String[]{"updated"}, new String[]{"object"})})).getBytes()));
     }
 
     @Test
