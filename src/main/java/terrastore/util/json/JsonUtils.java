@@ -205,15 +205,19 @@ public class JsonUtils {
             String currentField = parser.getCurrentName();
             Object valueToAdd = updates.get('+' + currentField);
             Object valueToRemove = updates.get('-' + currentField);
+            Object valueToReplace = updates.get('*' + currentField);
             Object valueToFollow = updates.get(currentField);
-            if (valueToAdd != null && (currentToken.toString().startsWith("VALUE_") || currentToken.equals(JsonToken.START_OBJECT))) {
-                replaceValue(generator, currentField, valueToAdd);
+            if (valueToAdd != null && valueToAdd instanceof Map && currentToken.equals(JsonToken.START_OBJECT)) {
+                addToObject(parser, generator, currentField, (Map) valueToAdd);
             } else if (valueToAdd != null && valueToAdd instanceof List && currentToken.equals(JsonToken.START_ARRAY)) {
                 addToArray(parser, generator, currentField, (List) valueToAdd);
             } else if (valueToRemove != null && (currentToken.toString().startsWith("VALUE_") || currentToken.equals(JsonToken.START_OBJECT))) {
-                skipValue(parser);
+                removeValue(parser);
             } else if (valueToRemove != null && valueToRemove instanceof List && currentToken.equals(JsonToken.START_ARRAY)) {
                 removeFromArray(parser, generator, currentField, (List) valueToRemove);
+            } else if (valueToReplace != null && (currentToken.toString().startsWith("VALUE_") || currentToken.equals(JsonToken.START_ARRAY) || currentToken.
+                    equals(JsonToken.START_OBJECT))) {
+                replaceValue(generator, currentField, valueToReplace);
             } else if (valueToFollow != null && valueToFollow instanceof Map && currentToken.equals(JsonToken.START_OBJECT)) {
                 generator.writeFieldName(currentField);
                 mergeObject(parser, generator, (Map) valueToFollow);
@@ -223,7 +227,22 @@ public class JsonUtils {
             }
             currentToken = parser.skipChildren().nextValue();
         }
-        addToObject(generator, updates);
+        addNewObjectsIfAny(generator, updates);
+        generator.writeEndObject();
+    }
+
+    private static void addToObject(JsonParser parser, JsonGenerator generator, String field, Map<String, Object> values) throws IOException {
+        JsonToken currentToken = parser.nextToken();
+        generator.writeFieldName(field);
+        generator.writeStartObject();
+        while (currentToken != null && !currentToken.equals(JsonToken.END_OBJECT)) {
+            generator.copyCurrentStructure(parser);
+            currentToken = parser.nextToken();
+        }
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            generator.writeFieldName(entry.getKey());
+            generator.writeObject(entry.getValue());
+        }
         generator.writeEndObject();
     }
 
@@ -232,7 +251,7 @@ public class JsonUtils {
         generator.writeObject(element);
     }
 
-    private static void skipValue(JsonParser parser) throws IOException {
+    private static void removeValue(JsonParser parser) throws IOException {
         parser.skipChildren();
     }
 
@@ -267,7 +286,7 @@ public class JsonUtils {
         generator.writeEndArray();
     }
 
-    private static void addToObject(JsonGenerator generator, Map<String, Object> updates) throws IOException {
+    private static void addNewObjectsIfAny(JsonGenerator generator, Map<String, Object> updates) throws IOException {
         Object valuesToAdd = updates.get("+");
         if (valuesToAdd != null && valuesToAdd instanceof Map) {
             Map<String, Object> newValues = (Map<String, Object>) valuesToAdd;
@@ -277,4 +296,5 @@ public class JsonUtils {
             }
         }
     }
+
 }
