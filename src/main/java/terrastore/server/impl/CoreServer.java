@@ -142,6 +142,21 @@ public class CoreServer implements Server {
         }
     }
 
+    public Value mergeValue(String bucket, Key key, Value value) throws ServerOperationException {
+        try {
+            LOG.info("Merging value with key {} from bucket {}", key, bucket);
+            return updateService.mergeValue(bucket, key, value);
+        } catch (CommunicationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        } catch (UpdateOperationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        }
+    }
+
     public Buckets getBuckets() throws ServerOperationException {
         try {
             LOG.info("Getting buckets.");

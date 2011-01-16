@@ -30,7 +30,6 @@ import org.msgpack.Unpacker;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
-import terrastore.store.internal.InPlace;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.util.io.IOUtils;
@@ -94,13 +93,12 @@ public class Value implements MessagePackable, MessageUnpackable, Serializable {
         }
     }
 
+    public final Value merge(Value value) throws ValidationException {
+        return JsonUtils.merge(this, JsonUtils.toModifiableMap(value));
+    }
+
     public final Value dispatch(Key key, Update update, Function function) {
-        if (function instanceof InPlace) {
-            InPlace inPlaceFunction = (InPlace) function;
-            return inPlaceFunction.apply(key.toString(), this, update.getParameters());
-        } else {
-            return JsonUtils.fromMap(function.apply(key.toString(), JsonUtils.toModifiableMap(this), update.getParameters()));
-        }
+        return JsonUtils.fromMap(function.apply(key.toString(), JsonUtils.toModifiableMap(this), update.getParameters()));
     }
 
     public final Map<String, Object> dispatch(Key key, Mapper mapper, Function function) {

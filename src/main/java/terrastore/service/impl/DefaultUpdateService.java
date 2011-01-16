@@ -29,6 +29,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.protocol.MergeCommand;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
@@ -114,6 +115,21 @@ public class DefaultUpdateService implements UpdateService {
         try {
             Node node = router.routeToNodeFor(bucket, key);
             UpdateCommand command = new UpdateCommand(bucket, key, update);
+            return node.<Value>send(command);
+        } catch (MissingRouteException ex) {
+            handleMissingRouteException(ex);
+            return null;
+        } catch (ProcessingException ex) {
+            handleProcessingException(ex);
+            return null;
+        }
+    }
+
+    @Override
+    public Value mergeValue(String bucket, Key key, Value value) throws CommunicationException, UpdateOperationException {
+        try {
+            Node node = router.routeToNodeFor(bucket, key);
+            MergeCommand command = new MergeCommand(bucket, key, value);
             return node.<Value>send(command);
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);

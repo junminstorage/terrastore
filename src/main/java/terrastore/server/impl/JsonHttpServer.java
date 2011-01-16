@@ -129,6 +129,19 @@ public class JsonHttpServer {
         }
     }
 
+    @POST
+    @Path("/{bucket}/{key}/merge")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response mergeValue(@PathParam("bucket") String bucket, @PathParam("key") Key key, Value value) throws ServerOperationException {
+        try {
+            Value result = core.mergeValue(bucket, key, value);
+            return Response.ok(result).contentLocation(new URI(bucket + "/" + key)).build();
+        } catch (URISyntaxException ex) {
+            throw new ServerOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        }
+    }
+
     @GET
     @Path("/")
     @Produces("application/json")

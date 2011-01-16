@@ -44,6 +44,7 @@ import terrastore.store.LockManager;
 import terrastore.store.SnapshotManager;
 import terrastore.store.SortedSnapshot;
 import terrastore.store.StoreOperationException;
+import terrastore.store.ValidationException;
 import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.Value;
@@ -238,6 +239,33 @@ public class TCBucket implements Bucket {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Update cancelled due to long execution time."));
         } catch (Exception ex) {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+        } finally {
+            unlockWrite(key);
+        }
+    }
+
+    @Override
+    public Value merge(Key key, Value value) throws StoreOperationException {
+        // Use explicit locking to update and block concurrent operations on the same key,
+        // and also publish on the same "transactional" boundary and keep ordering under concurrency.
+        lockWrite(key);
+        try {
+            Value old = doGet(key);
+            Value result = null;
+            if (old != null) {
+                result = old.merge(value);
+                doPut(key, result);
+                if (eventBus.isEnabled()) {
+                    eventBus.publish(new ValueChangedEvent(name, key.toString(), old, result));
+                }
+                return result;
+            } else {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
+            }
+        } catch (StoreOperationException ex) {
+            throw ex;
+        } catch (ValidationException ex) {
+            throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, ex.getMessage()));
         } finally {
             unlockWrite(key);
         }
