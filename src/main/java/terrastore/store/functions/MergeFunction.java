@@ -16,33 +16,31 @@
 package terrastore.store.functions;
 
 import java.util.Map;
-import java.util.Map.Entry;
+import terrastore.store.ValidationException;
+import terrastore.store.Value;
+import terrastore.store.internal.InPlace;
 
 import terrastore.store.operators.Function;
+import terrastore.util.json.JsonUtils;
 
 /**
  * @author Sven Johansson
  * @author Sergio Bossa
  */
-public class MergeFunction implements Function {
+public class MergeFunction implements InPlace, Function {
 
     @Override
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
-        mergeFields(parameters, value);
-        return value;
+        throw new UnsupportedOperationException();
     }
 
-    private void mergeFields(Map<String, Object> source, Map<String, Object> destination) {
-        for (Entry<String, Object> sourceEntry : source.entrySet()) {
-            if (isMap(sourceEntry.getValue()) && isMap(destination.get(sourceEntry.getKey()))) {
-                mergeFields((Map<String, Object>) sourceEntry.getValue(), (Map<String, Object>) destination.get(sourceEntry.getKey()));
-            } else {
-                destination.put(sourceEntry.getKey(), sourceEntry.getValue());
-            }
+    @Override
+    public Value apply(String key, Value value, Map<String, Object> updates) {
+        try {
+            return JsonUtils.merge(value, updates);
+        } catch (ValidationException ex) {
+            throw new IllegalStateException(ex.getErrorMessage().getMessage(), ex);
         }
     }
 
-    private boolean isMap(Object object) {
-        return object != null && Map.class.isAssignableFrom(object.getClass());
-    }
 }
