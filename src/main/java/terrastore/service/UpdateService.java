@@ -104,6 +104,19 @@ public interface UpdateService {
     public Value updateValue(String bucket, Key key, Update update) throws CommunicationException, UpdateOperationException;
 
     /**
+     * Update the value from the given bucket under the given key.
+     *
+     * @param bucket The name of the bucket holding the value to update.
+     * @param key The key of the value to update.
+     * @param update The update object.
+     * @return The updated value
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
+     * @throws UpdateOperationException If errors occur during update.
+     */
+    @HandleFailure(exception = CommunicationException.class)
+    public Value mergeValue(String bucket, Key key, Value value) throws CommunicationException, UpdateOperationException;
+
+    /**
      * Get the {@link terrastore.router.Router} instance used for routing actual update operations.
      *
      * @return The router instance.
