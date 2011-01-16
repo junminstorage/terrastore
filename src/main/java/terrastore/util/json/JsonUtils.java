@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.codehaus.jackson.JsonEncoding;
@@ -92,7 +93,7 @@ public class JsonUtils {
         }
     }
 
-    public static Value update(Value value, Map<String, Object> updates) throws ValidationException {
+    public static Value merge(Value value, Map<String, Object> updates) throws ValidationException {
         try {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             JsonFactory factory = new JsonFactory();
@@ -101,7 +102,7 @@ public class JsonUtils {
             JsonToken currentToken = parser.nextToken();
             generator.setCodec(JSON_MAPPER);
             if (currentToken.equals(JsonToken.START_OBJECT)) {
-                updateObject(parser, generator, updates);
+                mergeObject(parser, generator, updates);
             } else if (currentToken.equals(JsonToken.START_ARRAY)) {
                 throw new ValidationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Json documents starting with arrays are not supported!"));
             } else {
@@ -197,58 +198,83 @@ public class JsonUtils {
         }
     }
 
-    private static void updateObject(JsonParser parser, JsonGenerator generator, Map<String, Object> updates) throws IOException {
+    private static void mergeObject(JsonParser parser, JsonGenerator generator, Map<String, Object> updates) throws IOException {
         JsonToken currentToken = parser.nextValue();
         generator.writeStartObject();
         while (currentToken != null && !currentToken.equals(JsonToken.END_OBJECT)) {
-            generator.writeFieldName(parser.getCurrentName());
-            if (currentToken.toString().startsWith("VALUE_")) {
-                if (updates.containsKey(parser.getCurrentName())) {
-                    generator.writeObject(updates.get(parser.getCurrentName()));
-                    currentToken = parser.nextValue();
-                } else {
-                    generator.copyCurrentEvent(parser);
-                    currentToken = parser.nextValue();
-                }
-            } else if (currentToken.equals(JsonToken.START_OBJECT)) {
-                if (updates.containsKey(parser.getCurrentName())) {
-                    generator.writeObject(updates.get(parser.getCurrentName()));
-                    currentToken = parser.skipChildren().nextValue();
-                } else {
-                    updateObject(parser, generator, updates);
-                    currentToken = parser.nextValue();
-                }
-            } else if (currentToken.equals(JsonToken.START_ARRAY)) {
-                updateArray(parser.getCurrentName(), parser, generator, updates);
-                currentToken = parser.nextValue();
+            String currentField = parser.getCurrentName();
+            Object valueToAdd = updates.get('+' + currentField);
+            Object valueToRemove = updates.get('-' + currentField);
+            Object valueToFollow = updates.get(currentField);
+            if (valueToAdd != null && (currentToken.toString().startsWith("VALUE_") || currentToken.equals(JsonToken.START_OBJECT))) {
+                replaceValue(generator, currentField, valueToAdd);
+            } else if (valueToAdd != null && valueToAdd instanceof List && currentToken.equals(JsonToken.START_ARRAY)) {
+                addToArray(parser, generator, currentField, (List) valueToAdd);
+            } else if (valueToRemove != null && (currentToken.toString().startsWith("VALUE_") || currentToken.equals(JsonToken.START_OBJECT))) {
+                skipValue(parser);
+            } else if (valueToRemove != null && valueToRemove instanceof List && currentToken.equals(JsonToken.START_ARRAY)) {
+                removeFromArray(parser, generator, currentField, (List) valueToRemove);
+            } else if (valueToFollow != null && valueToFollow instanceof Map && currentToken.equals(JsonToken.START_OBJECT)) {
+                generator.writeFieldName(currentField);
+                mergeObject(parser, generator, (Map) valueToFollow);
             } else {
-                throw new IOException("Expected object/array start, found: " + currentToken.toString());
+                generator.writeFieldName(currentField);
+                generator.copyCurrentStructure(parser);
             }
+            currentToken = parser.skipChildren().nextValue();
         }
+        addToObject(generator, updates);
         generator.writeEndObject();
     }
 
-    private static void updateArray(String field, JsonParser parser, JsonGenerator generator, Map<String, Object> updates) throws IOException {
+    private static void replaceValue(JsonGenerator generator, String field, Object element) throws IOException {
+        generator.writeFieldName(field);
+        generator.writeObject(element);
+    }
+
+    private static void skipValue(JsonParser parser) throws IOException {
+        parser.skipChildren();
+    }
+
+    private static void addToArray(JsonParser parser, JsonGenerator generator, String field, List<Object> elements) throws IOException {
         JsonToken currentToken = parser.nextValue();
+        generator.writeFieldName(field);
         generator.writeStartArray();
         while (currentToken != null && !currentToken.equals(JsonToken.END_ARRAY)) {
-            if (currentToken.toString().startsWith("VALUE_")) {
-                generator.copyCurrentEvent(parser);
-                currentToken = parser.nextValue();
-            } else if (currentToken.equals(JsonToken.START_OBJECT)) {
-                updateObject(parser, generator, updates);
-                currentToken = parser.nextValue();
-            } else if (currentToken.equals(JsonToken.START_ARRAY)) {
-                updateArray(field, parser, generator, updates);
-                currentToken = parser.nextValue();
-            } else {
-                throw new IOException("Expected object/array start, found: " + currentToken.toString());
-            }
+            generator.copyCurrentStructure(parser);
+            currentToken = parser.nextValue();
         }
-        if (updates.containsKey(field)) {
-            generator.writeObject(updates.get(field));
+        for (Object element : elements) {
+            generator.writeObject(element);
         }
         generator.writeEndArray();
     }
 
+    private static void removeFromArray(JsonParser parser, JsonGenerator generator, String field, List<Object> indexes) throws IOException {
+        JsonToken currentToken = parser.nextValue();
+        int index = 0;
+        generator.writeFieldName(field);
+        generator.writeStartArray();
+        while (currentToken != null && !currentToken.equals(JsonToken.END_ARRAY)) {
+            if (!indexes.contains(index) && !indexes.contains(Integer.toString(index))) {
+                generator.copyCurrentStructure(parser);
+                currentToken = parser.nextValue();
+            } else {
+                currentToken = parser.skipChildren().nextValue();
+            }
+            index++;
+        }
+        generator.writeEndArray();
+    }
+
+    private static void addToObject(JsonGenerator generator, Map<String, Object> updates) throws IOException {
+        Object valuesToAdd = updates.get("+");
+        if (valuesToAdd != null && valuesToAdd instanceof Map) {
+            Map<String, Object> newValues = (Map<String, Object>) valuesToAdd;
+            for (Map.Entry<String, Object> entry : newValues.entrySet()) {
+                generator.writeFieldName(entry.getKey());
+                generator.writeObject(entry.getValue());
+            }
+        }
+    }
 }
