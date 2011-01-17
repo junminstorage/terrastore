@@ -57,7 +57,7 @@ public class JsonUtilsTest {
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]},\"update\"],"
             + "\"object\":{\"inner\":\"value\"}}";
     private static final String JSON_VALUE_WITH_VALUE_REMOVED_FROM_ARRAY = "{\"key\":\"value\","
-            + "\"array\":[\"primitive\"],"
+            + "\"array\":[{\"nested\":[\"array\"]}],"
             + "\"object\":{\"inner\":\"value\"}}";
     private static final String JSON_VALUE_WITH_REPLACED_OBJECT = "{\"key\":\"value\","
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
@@ -125,7 +125,7 @@ public class JsonUtilsTest {
     @Test
     public void testMergeWithValueRemovedFromArray() throws Exception {
         Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"-array\":[1]}", Map.class);
+        Map<String, Object> update = JSON_MAPPER.readValue("{\"-array\":[\"primitive\"]}", Map.class);
         assertEquals(JSON_VALUE_WITH_VALUE_REMOVED_FROM_ARRAY, new String(JsonUtils.merge(json, update).getBytes()));
     }
 
