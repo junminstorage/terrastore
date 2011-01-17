@@ -269,19 +269,17 @@ public class JsonUtils {
         generator.writeEndArray();
     }
 
-    private static void removeFromArray(JsonParser parser, JsonGenerator generator, String field, List<Object> indexes) throws IOException {
+    private static void removeFromArray(JsonParser parser, JsonGenerator generator, String field, List<Object> objects) throws IOException {
         JsonToken currentToken = parser.nextValue();
-        int index = 0;
         generator.writeFieldName(field);
         generator.writeStartArray();
         while (currentToken != null && !currentToken.equals(JsonToken.END_ARRAY)) {
-            if (!indexes.contains(index) && !indexes.contains(Integer.toString(index))) {
+            if (!currentToken.toString().equals("VALUE_STRING") || !objects.contains(parser.getText())) {
                 generator.copyCurrentStructure(parser);
                 currentToken = parser.nextValue();
             } else {
                 currentToken = parser.skipChildren().nextValue();
             }
-            index++;
         }
         generator.writeEndArray();
     }
