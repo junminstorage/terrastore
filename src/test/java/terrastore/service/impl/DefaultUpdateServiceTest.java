@@ -340,4 +340,18 @@ public class DefaultUpdateServiceTest {
 
         verify(node, router);
     }
+
+    @Test(expected = ValidationException.class)
+    public void testMergeWithBadValue() throws Exception {
+        Router router = createMock(Router.class);
+
+        replay(router);
+
+        try {
+            DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
+            service.mergeValue("bucket", new Key("test1"), new Value(BAD_JSON_VALUE.getBytes()));
+        } finally {
+            verify(router);
+        }
+    }
 }

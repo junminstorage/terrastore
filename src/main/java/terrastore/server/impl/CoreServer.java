@@ -154,6 +154,10 @@ public class CoreServer implements Server {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
             throw new ServerOperationException(error);
+        } catch (ValidationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
         }
     }
 

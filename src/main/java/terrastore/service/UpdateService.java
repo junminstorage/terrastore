@@ -56,6 +56,7 @@ public interface UpdateService {
      * @param predicate The predicate object containing the condition to evaluate.
      * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If a bucket with the given name, or value with the given key, do not exist.
+     * @throws ValidationException If the passed value isn't a valid one.
      */
     @HandleFailure(exception = CommunicationException.class)
     public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException, ValidationException;
@@ -112,9 +113,10 @@ public interface UpdateService {
      * @return The merged value
      * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If errors occur during update.
+     * @throws ValidationException If the passed value isn't a valid one.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public Value mergeValue(String bucket, Key key, Value value) throws CommunicationException, UpdateOperationException;
+    public Value mergeValue(String bucket, Key key, Value value) throws CommunicationException, UpdateOperationException, ValidationException;
 
     /**
      * Get the {@link terrastore.router.Router} instance used for routing actual update operations.

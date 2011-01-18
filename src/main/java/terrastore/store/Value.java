@@ -93,6 +93,15 @@ public class Value implements MessagePackable, MessageUnpackable, Serializable {
         }
     }
 
+    public final ValidationResult validate() {
+        try {
+            JsonUtils.validate(this);
+            return new ValidationResult(true, null);
+        } catch (ValidationException ex) {
+            return new ValidationResult(false, ex);
+        }
+    }
+
     public final Value merge(Value value) throws ValidationException {
         return JsonUtils.merge(this, JsonUtils.toModifiableMap(value));
     }
@@ -149,4 +158,23 @@ public class Value implements MessagePackable, MessageUnpackable, Serializable {
         }
     }
 
+    public static class ValidationResult {
+
+        private final boolean valid;
+        private final ValidationException exception;
+
+        public ValidationResult(boolean valid, ValidationException exception) {
+            this.valid = valid;
+            this.exception = exception;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public ValidationException getException() {
+            return exception;
+        }
+
+    }
 }
