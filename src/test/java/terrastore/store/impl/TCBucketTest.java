@@ -53,6 +53,7 @@ public class TCBucketTest {
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
     private static final String JSON_VALUE_2 = "{\"test2\":\"test2\"}";
     private static final String JSON_UPDATED = "{\"test\":\"value1\"}";
+    private static final String JSON_MERGED = "{\"test\":\"test2\"}";
     private TCBucket bucket;
 
     @Before
@@ -518,6 +519,17 @@ public class TCBucketTest {
         Value updated = bucket.update(key, update);
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), updated.getBytes());
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), bucket.get(key).getBytes());
+    }
+
+    @Test
+    public void testMerge() throws StoreOperationException, UnsupportedEncodingException {
+        Key key = new Key("key");
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        Value merge = new Value("{\"*test\":\"test2\"}".getBytes());
+        bucket.put(key, value);
+        Value merged = bucket.merge(key, merge);
+        assertArrayEquals(JSON_MERGED.getBytes("UTF-8"), merged.getBytes());
+        assertArrayEquals(JSON_MERGED.getBytes("UTF-8"), bucket.get(key).getBytes());
     }
 
     @Test

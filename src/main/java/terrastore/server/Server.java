@@ -73,17 +73,15 @@ public interface Server {
     public Value updateValue(String bucket, Key key, String function, Long timeoutInMillis, Parameters parameters) throws ServerOperationException;
 
     /**
-     * Execute an update on a value from the given bucket under the given key.
+     * Merge the value stored under the given bucket and key with the new passed value.
      *
-     * @param bucket The name of the bucket holding the value to update.
-     * @param key The key of the value to update.
-     * @param function The name of the server-side function performing the actual update.
-     * @param timeoutInMillis The timeout for the update operation (update operations lasting more than the given timeout will be aborted).
-     * @param parameters The update operation parameters.
-     * @return The updated value
+     * @param bucket The name of the bucket holding the value to merge.
+     * @param key The key of the value to merge.
+     * @param merge The value representing the merge.
+     * @return The merged value
      * @throws ServerOperationException If an error occurs.
      */
-    public Value mergeValue(String bucket, Key key, Value value) throws ServerOperationException;
+    public Value mergeValue(String bucket, Key key, Value merge) throws ServerOperationException;
 
     /**
      * Get the name of all buckets.

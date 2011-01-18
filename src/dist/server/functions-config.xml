@@ -22,10 +22,6 @@
             <bean class="terrastore.store.functions.ReplaceFunction"/>
         </entry>
 
-        <entry key="merge">
-        	<bean class="terrastore.store.functions.MergeFunction"/>
-        </entry>
-
         <entry key="js">
             <bean class="terrastore.store.functions.JSFunction"/>
         </entry>

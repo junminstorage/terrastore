@@ -137,16 +137,16 @@ public interface Bucket {
     public Value update(Key key, Update update) throws StoreOperationException;
 
     /**
-     * Update the {@link Value} under the given key.<br>
+     * Merge the {@link Value} under the given key.<br>
      * This publishes a {@link terrastore.event.ValueChangedEvent} to the
      * {@link terrastore.event.EventBus}.
      *
      * @param key The key of the value to update.
-     * @param update The update object containing data about the function to apply.
-     * @return The updated value.
+     * @param merge The value representing the merge operation.
+     * @return The merged value.
      * @throws StoreOperationException If errors occur during updating.
      */
-    public Value merge(Key key, Value value) throws StoreOperationException;
+    public Value merge(Key key, Value merge) throws StoreOperationException;
 
     /**
      * Execute a map operation, as described by the {@link terrastore.store.features.Mapper} object,
