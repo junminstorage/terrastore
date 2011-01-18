@@ -52,7 +52,6 @@ import terrastore.util.collect.parallel.MapTask;
 import terrastore.util.collect.parallel.ParallelExecutionException;
 import terrastore.util.collect.parallel.ParallelUtils;
 import terrastore.util.concurrent.GlobalExecutor;
-import terrastore.util.json.JsonUtils;
 import terrastore.store.ValidationException;
 
 /**
@@ -81,20 +80,24 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException, ValidationException {
-        try {
-            JsonUtils.validate(value);
-            Node node = router.routeToNodeFor(bucket, key);
-            PutValueCommand command = null;
-            if (predicate == null || predicate.isEmpty()) {
-                command = new PutValueCommand(bucket, key, value);
-            } else {
-                command = new PutValueCommand(bucket, key, value, predicate);
+        Value.ValidationResult validation = value.validate();
+        if (validation.isValid()) {
+            try {
+                Node node = router.routeToNodeFor(bucket, key);
+                PutValueCommand command = null;
+                if (predicate == null || predicate.isEmpty()) {
+                    command = new PutValueCommand(bucket, key, value);
+                } else {
+                    command = new PutValueCommand(bucket, key, value, predicate);
+                }
+                node.send(command);
+            } catch (MissingRouteException ex) {
+                handleMissingRouteException(ex);
+            } catch (ProcessingException ex) {
+                handleProcessingException(ex);
             }
-            node.send(command);
-        } catch (MissingRouteException ex) {
-            handleMissingRouteException(ex);
-        } catch (ProcessingException ex) {
-            handleProcessingException(ex);
+        } else {
+            throw validation.getException();
         }
     }
 
@@ -126,17 +129,22 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
-    public Value mergeValue(String bucket, Key key, Value value) throws CommunicationException, UpdateOperationException {
-        try {
-            Node node = router.routeToNodeFor(bucket, key);
-            MergeCommand command = new MergeCommand(bucket, key, value);
-            return node.<Value>send(command);
-        } catch (MissingRouteException ex) {
-            handleMissingRouteException(ex);
-            return null;
-        } catch (ProcessingException ex) {
-            handleProcessingException(ex);
-            return null;
+    public Value mergeValue(String bucket, Key key, Value value) throws CommunicationException, UpdateOperationException, ValidationException {
+        Value.ValidationResult validation = value.validate();
+        if (validation.isValid()) {
+            try {
+                Node node = router.routeToNodeFor(bucket, key);
+                MergeCommand command = new MergeCommand(bucket, key, value);
+                return node.<Value>send(command);
+            } catch (MissingRouteException ex) {
+                handleMissingRouteException(ex);
+                return null;
+            } catch (ProcessingException ex) {
+                handleProcessingException(ex);
+                return null;
+            }
+        } else {
+            throw validation.getException();
         }
     }
 
