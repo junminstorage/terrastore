@@ -29,6 +29,7 @@ import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.KeysInRangeCommand;
+import terrastore.communication.protocol.MergeCommand;
 import terrastore.communication.protocol.PutValueCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
@@ -36,7 +37,6 @@ import terrastore.communication.protocol.RemoveValuesCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
 import terrastore.server.Keys;
-import terrastore.service.KeyRangeStrategy;
 import terrastore.service.UpdateOperationException;
 import terrastore.store.Key;
 import terrastore.store.ValidationException;
@@ -323,4 +323,21 @@ public class DefaultUpdateServiceTest {
         verify(node, router);
     }
 
+    @Test
+    public void testMergeValue() throws Exception {
+        Node node = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.routeToNodeFor("bucket", new Key("test1"));
+        expectLastCall().andReturn(node).once();
+        node.send(EasyMock.<MergeCommand>anyObject());
+        expectLastCall().andReturn(new Value(JSON_VALUE.getBytes())).once();
+
+        replay(node, router);
+
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
+        assertEquals(new Value(JSON_VALUE.getBytes()), service.mergeValue("bucket", new Key("test1"), new Value("{}".getBytes())));
+
+        verify(node, router);
+    }
 }

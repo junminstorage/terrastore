@@ -104,12 +104,12 @@ public interface UpdateService {
     public Value updateValue(String bucket, Key key, Update update) throws CommunicationException, UpdateOperationException;
 
     /**
-     * Update the value from the given bucket under the given key.
+     * Merge the value stored under the given bucket and key with the new passed value.
      *
-     * @param bucket The name of the bucket holding the value to update.
-     * @param key The key of the value to update.
-     * @param update The update object.
-     * @return The updated value
+     * @param bucket The name of the bucket holding the value to merge.
+     * @param key The key of the value to merge.
+     * @param merge The value representing the merge.
+     * @return The merged value
      * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
      * @throws UpdateOperationException If errors occur during update.
      */

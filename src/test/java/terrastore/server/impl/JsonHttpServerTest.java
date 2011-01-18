@@ -788,6 +788,38 @@ public class JsonHttpServerTest {
     }
 
     @Test
+    public void testMergeValue() throws Exception {
+        String mergeValue = "{}";
+
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+        StatsService statsService = createMock(StatsService.class);
+
+        updateService.mergeValue(eq("bucket"), eq(new Key("key")), eq(new Value(mergeValue.getBytes())));
+        expectLastCall().andReturn(new Value(JSON_VALUE.getBytes())).once();
+
+        replay(updateService, queryService, backupService, statsService);
+
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
+        HttpClient client = new HttpClient();
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/key/merge");
+        method.setRequestHeader("Content-Type", "application/json");
+        method.setRequestEntity(new StringRequestEntity(mergeValue, "application/json", null));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        assertEquals(JSON_VALUE, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService, statsService);
+    }
+
+    @Test
     public void testJsonErrorMessageOnInternalFail() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
