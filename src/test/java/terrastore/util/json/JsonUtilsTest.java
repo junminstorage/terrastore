@@ -47,10 +47,10 @@ public class JsonUtilsTest {
     private static final String JSON_VALUE = "{\"key\":\"value\","
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
             + "\"object\":{\"inner\":\"value\"}}";
-    private static final String JSON_VALUE_WITH_REPLACED_SCALAR_VALUE = "{\"key\":\"update\","
+    private static final String JSON_VALUE_WITH_REPLACED_VALUE = "{\"key\":\"update\","
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
             + "\"object\":{\"inner\":\"value\"}}";
-    private static final String JSON_VALUE_WITH_REMOVED_SCALAR_VALUE = "{"
+    private static final String JSON_VALUE_WITH_REMOVED_VALUE = "{"
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
             + "\"object\":{\"inner\":\"value\"}}";
     private static final String JSON_VALUE_WITH_VALUE_ADDED_TO_ARRAY = "{\"key\":\"value\","
@@ -59,18 +59,12 @@ public class JsonUtilsTest {
     private static final String JSON_VALUE_WITH_VALUE_REMOVED_FROM_ARRAY = "{\"key\":\"value\","
             + "\"array\":[{\"nested\":[\"array\"]}],"
             + "\"object\":{\"inner\":\"value\"}}";
-    private static final String JSON_VALUE_WITH_REPLACED_OBJECT = "{\"key\":\"value\","
+    private static final String JSON_VALUE_WITH_VALUE_ADDED_TO_THIS_OBJECT = "{\"key\":\"value\","
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
-            + "\"object\":{\"updated\":\"object\"}}";
-    private static final String JSON_VALUE_WITH_REMOVED_OBJECT = "{\"key\":\"value\","
-            + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}]"
-            + "}";
-    private static final String JSON_VALUE_WITH_FOLLOWED_OBJECT = "{\"key\":\"value\","
+            + "\"object\":{\"inner\":\"value\"},\"new\":\"value\"}";
+    private static final String JSON_VALUE_WITH_VALUE_ADDED_TO_NESTED_OBJECT = "{\"key\":\"value\","
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
-            + "\"object\":{\"inner\":\"value2\"}}";
-    private static final String JSON_VALUE_WITH_NEW_VALUES = "{\"key\":\"value\","
-            + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
-            + "\"object\":{\"inner\":\"value\",\"inner2\":\"value2\"},\"new\":\"value\"}";
+            + "\"object\":{\"inner\":\"value\",\"inner2\":\"value2\"}}";
     private static final String ARRAY_JSON_VALUE = "[\"test1\"]";
     private static final String BAD_JSON_VALUE = "{\"key\" : \"value\", "
             + "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], "
@@ -102,59 +96,45 @@ public class JsonUtilsTest {
     }
 
     @Test
-    public void testMergeWithReplacedScalarValue() throws Exception {
+    public void testMergeWithReplacedValue() throws Exception {
         Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"*key\":\"update\"}", Map.class);
-        assertEquals(JSON_VALUE_WITH_REPLACED_SCALAR_VALUE, new String(JsonUtils.merge(json, update).getBytes()));
+        Map<String, Object> update = JSON_MAPPER.readValue("{\"*\":{\"key\":\"update\"}}", Map.class);
+        assertEquals(JSON_VALUE_WITH_REPLACED_VALUE, new String(JsonUtils.merge(json, update).getBytes()));
     }
 
     @Test
-    public void testMergeWithRemovedScalarValue() throws Exception {
+    public void testMergeWithRemovedValue() throws Exception {
         Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"-key\":\"\"}", Map.class);
-        assertEquals(JSON_VALUE_WITH_REMOVED_SCALAR_VALUE, new String(JsonUtils.merge(json, update).getBytes()));
+        Map<String, Object> update = JSON_MAPPER.readValue("{\"-\":[\"key\"]}", Map.class);
+        assertEquals(JSON_VALUE_WITH_REMOVED_VALUE, new String(JsonUtils.merge(json, update).getBytes()));
     }
 
     @Test
     public void testMergeWithValueAddedToArray() throws Exception {
         Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"+array\":[\"update\"]}", Map.class);
+        Map<String, Object> update = JSON_MAPPER.readValue("{\"array\":[\"+\",\"update\"]}", Map.class);
         assertEquals(JSON_VALUE_WITH_VALUE_ADDED_TO_ARRAY, new String(JsonUtils.merge(json, update).getBytes()));
     }
 
     @Test
     public void testMergeWithValueRemovedFromArray() throws Exception {
         Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"-array\":[\"primitive\"]}", Map.class);
+        Map<String, Object> update = JSON_MAPPER.readValue("{\"array\":[\"-\",\"primitive\"]}", Map.class);
         assertEquals(JSON_VALUE_WITH_VALUE_REMOVED_FROM_ARRAY, new String(JsonUtils.merge(json, update).getBytes()));
     }
 
     @Test
-    public void testMergeWithReplacedObject() throws Exception {
+    public void testMergeWithValueAddedToThisObject() throws Exception {
         Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"*object\":{\"updated\":\"object\"}}", Map.class);
-        assertEquals(JSON_VALUE_WITH_REPLACED_OBJECT, new String(JsonUtils.merge(json, update).getBytes()));
+        Map<String, Object> update = JSON_MAPPER.readValue("{\"+\":{\"new\":\"value\"}}", Map.class);
+        assertEquals(JSON_VALUE_WITH_VALUE_ADDED_TO_THIS_OBJECT, new String(JsonUtils.merge(json, update).getBytes()));
     }
 
     @Test
-    public void testMergeWithRemovedObject() throws Exception {
+    public void testMergeWithValueAddedToNestedObject() throws Exception {
         Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"-object\":\"\"}", Map.class);
-        assertEquals(JSON_VALUE_WITH_REMOVED_OBJECT, new String(JsonUtils.merge(json, update).getBytes()));
-    }
-
-    @Test
-    public void testMergeWithFollowedObject() throws Exception {
-        Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"object\":{\"*inner\":\"value2\"}}", Map.class);
-        assertEquals(JSON_VALUE_WITH_FOLLOWED_OBJECT, new String(JsonUtils.merge(json, update).getBytes()));
-    }
-
-    @Test
-    public void testMergeWithNewValues() throws Exception {
-        Value json = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> update = JSON_MAPPER.readValue("{\"+object\":{\"inner2\":\"value2\"},\"+\":{\"new\":\"value\"}}", Map.class);
-        assertEquals(JSON_VALUE_WITH_NEW_VALUES, new String(JsonUtils.merge(json, update).getBytes()));
+        Map<String, Object> update = JSON_MAPPER.readValue("{\"object\":{\"+\":{\"inner2\":\"value2\"}}}", Map.class);
+        assertEquals(JSON_VALUE_WITH_VALUE_ADDED_TO_NESTED_OBJECT, new String(JsonUtils.merge(json, update).getBytes()));
     }
 
     @Test
