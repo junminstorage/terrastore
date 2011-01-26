@@ -188,7 +188,7 @@ public class TCStore implements Store {
         if (bucket != null) {
             Aggregator aggregator = getAggregator(mapper.getCombinerName());
             List<Map<String, Object>> mapResults = doMap(bucket, keys, mapper);
-            return doAggregate(mapResults, aggregator, mapper.getTimeoutInMillis());
+            return doAggregate(mapResults, aggregator, mapper.getTimeoutInMillis(), mapper.getParameters());
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No bucket found with name: " + bucketName));
         }
@@ -197,7 +197,7 @@ public class TCStore implements Store {
     @Override
     public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException {
         Aggregator aggregator = getAggregator(reducer.getReducerName());
-        Map<String, Object> aggregation = doAggregate(values, aggregator, reducer.getTimeoutInMillis());
+        Map<String, Object> aggregation = doAggregate(values, aggregator, reducer.getTimeoutInMillis(), reducer.getParameters());
         return JsonUtils.fromMap(aggregation);
     }
 
@@ -343,14 +343,14 @@ public class TCStore implements Store {
         }
     }
 
-    private Map<String, Object> doAggregate(final List<Map<String, Object>> values, final Aggregator aggregator, long timeout) throws StoreOperationException {
+    private Map<String, Object> doAggregate(final List<Map<String, Object>> values, final Aggregator aggregator, final long timeout, final Map<String, Object> parameters) throws StoreOperationException {
         Future<Map<String, Object>> task = null;
         try {
             task = GlobalExecutor.getQueryExecutor().submit(new Callable<Map<String, Object>>() {
 
                 @Override
                 public Map<String, Object> call() {
-                    return aggregator.apply(values);
+                    return aggregator.apply(values, parameters);
                 }
 
             });

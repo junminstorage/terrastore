@@ -60,7 +60,6 @@ import static org.junit.Assert.*;
 public class JsonHttpServerTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
-    private static final String BAD_JSON_VALUE = "{\"test\":\"test}";
     private static final String JSON_VALUES = "{\"test\":" + JSON_VALUE + "}";
     private static final String JSON_VALUES_x2 = "{\"test1\":" + JSON_VALUE + ",\"test2\":" + JSON_VALUE + "}";
     private static final String MAPREDUCE_WITH_RANGE = "{\"range\":{\"startKey\":\"k1\",\"timeToLive\":10000},\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
@@ -688,7 +687,7 @@ public class JsonHttpServerTest {
         String bucket = "bucket";
         Range range = new Range(new Key("k1"), null, 0, "", 10000);
         Mapper mapper = new Mapper("mapper", "reducer", 10000, Collections.EMPTY_MAP);
-        Reducer reducer = new Reducer("reducer", 10000);
+        Reducer reducer = new Reducer("reducer", 10000, Collections.EMPTY_MAP);
         Value result = new Value(JSON_VALUE.getBytes());
 
         UpdateService updateService = createMock(UpdateService.class);
@@ -723,7 +722,7 @@ public class JsonHttpServerTest {
     public void testQueryByMapReduceWithoutRange() throws Exception {
         String bucket = "bucket";
         Mapper mapper = new Mapper("mapper", "reducer", 10000, Collections.EMPTY_MAP);
-        Reducer reducer = new Reducer("reducer", 10000);
+        Reducer reducer = new Reducer("reducer", 10000, Collections.EMPTY_MAP);
         Value result = new Value(JSON_VALUE.getBytes());
 
         UpdateService updateService = createMock(UpdateService.class);

@@ -28,7 +28,7 @@ import static terrastore.util.concurrent.ConcurrentUtils.*;
 public class KeysAggregator implements Aggregator {
 
     @Override
-    public Map<String, Object> apply(List<Map<String, Object>> keys) {
+    public Map<String, Object> apply(List<Map<String, Object>> keys, Map<String, Object> parameters) {
         Map<String, Object> result = new HashMap<String, Object>(1, 100);
         List<String> list = new ArrayList<String>(keys.size());
         for (Map<String, Object> key : keys) {

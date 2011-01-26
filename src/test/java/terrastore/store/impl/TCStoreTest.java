@@ -158,7 +158,7 @@ public class TCStoreTest {
         Aggregator aggregator = createMock(Aggregator.class);
         Capture<List<Map<String, Object>>> combinerCapture = new Capture<List<Map<String, Object>>>();
         makeThreadSafe(aggregator, true);
-        aggregator.apply(EasyMock.capture(combinerCapture));
+        aggregator.apply(EasyMock.capture(combinerCapture), EasyMock.eq(Collections.EMPTY_MAP));
         expectLastCall().andReturn(combinerResult).once();
 
         replay(mockedStore, bucket, aggregator);
@@ -191,7 +191,7 @@ public class TCStoreTest {
         Aggregator aggregator = createMock(Aggregator.class);
         Capture<List<Map<String, Object>>> combinerCapture = new Capture<List<Map<String, Object>>>();
         makeThreadSafe(aggregator, true);
-        aggregator.apply(EasyMock.capture(combinerCapture));
+        aggregator.apply(EasyMock.capture(combinerCapture), EasyMock.eq(Collections.EMPTY_MAP));
         expectLastCall().andReturn(combinerResult).once();
 
         replay(mockedStore, bucket, aggregator);
@@ -208,13 +208,13 @@ public class TCStoreTest {
         Map<String, Object> mapResult1 = Maps.hash(new String[]{"k1"}, new Object[]{"v1"});
         Map<String, Object> mapResult2 = Maps.hash(new String[]{"k2"}, new Object[]{"v2"});
         List<Map<String, Object>> allResults = Arrays.asList(mapResult1, mapResult2);
-        Reducer reducer = new Reducer("reducer", 60000);
+        Reducer reducer = new Reducer("reducer", 60000, Collections.EMPTY_MAP);
         Map<String, Object> reducerResult = Maps.hash(new String[]{"r1"}, new Object[]{"r2"});
 
         TCStore mockedStore = createMockBuilder(TCStore.class).withConstructor().createMock();
         Aggregator aggregator = createMock(Aggregator.class);
         makeThreadSafe(aggregator, true);
-        aggregator.apply(same(allResults));
+        aggregator.apply(same(allResults), eq(Collections.EMPTY_MAP));
         expectLastCall().andReturn(reducerResult).once();
 
         replay(mockedStore, aggregator);
