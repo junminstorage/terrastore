@@ -305,7 +305,7 @@ public class CoreServer implements Server {
                 range = new Range();
             }
             Mapper mapper = new Mapper(descriptor.task.mapper, descriptor.task.combiner, descriptor.task.timeout, descriptor.task.parameters);
-            Reducer reducer = new Reducer(descriptor.task.reducer, descriptor.task.timeout);
+            Reducer reducer = new Reducer(descriptor.task.reducer, descriptor.task.timeout, descriptor.task.parameters);
             return queryService.queryByMapReduce(bucket, range, mapper, reducer);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();

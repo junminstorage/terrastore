@@ -13,35 +13,38 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.store.functions;
+package terrastore.store.js;
 
 import org.junit.Test;
 import terrastore.store.Value;
 import terrastore.util.json.JsonUtils;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import terrastore.util.collect.Maps;
 import static org.junit.Assert.*;
 
 /**
  * @author Giuseppe Santoro
  * @author Sergio Bossa
  */
-public class JSFunctionTest {
+public class JSInvokerTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
 
     @Test
-    public void testWithUpdateFunction() throws Exception {
+    public void testWithFunction() throws Exception {
         Map<String, Object> params = new HashMap<String, Object>();
-        String f = "function " + JSFunction.FUNCTION_NAME + "(key, value, params) {"
+        String f = "function(key, value, params) {"
                 + "   if(value['test'] == 'test')"
                 + "       value['test'] = params.newValue;"
                 + "   return value;"
                 + "}";
-        params.put(JSFunction.FUNCTION_NAME, f);
+        params.put(JSInvoker.FUNCTION_NAME, f);
         params.put("newValue", "test2");
 
-        JSFunction function = new JSFunction();
+        JSInvoker function = new JSInvoker();
         Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> newMap = function.apply("key", JsonUtils.toModifiableMap(value), params);
 
@@ -49,33 +52,23 @@ public class JSFunctionTest {
     }
 
     @Test
-    public void testWithMoreUpdateFunctionsHavingTheSameName() throws Exception {
+    public void testWithAggregator() throws Exception {
+        List<Map<String, Object>> values = new LinkedList<Map<String, Object>>();
         Map<String, Object> params = new HashMap<String, Object>();
-        String f1 = "function " + JSFunction.FUNCTION_NAME + "(key, value, params) {"
-                + "   if(value['test'] == 'test')"
-                + "       value['test'] = 'test2';"
-                + "   return value;"
+        String f = "function(values, params) {"
+                + "   var sum = 0;"
+                + "   for (index in values) {"
+                + "       sum = sum + values[index]['value']"
+                + "   }"
+                + "   return {'result' : sum};"
                 + "}";
-        String f2 = "function " + JSFunction.FUNCTION_NAME + "(key, value, params) {"
-                + "   if(value['test'] == 'test')"
-                + "       value['test'] = 'test3';"
-                + "   return value;"
-                + "}";
+        values.add(Maps.hash(new String[]{"value"}, new Object[]{1}));
+        values.add(Maps.hash(new String[]{"value"}, new Object[]{2}));
+        params.put(JSInvoker.FUNCTION_NAME, f);
 
-        params.put(JSFunction.FUNCTION_NAME, f1);
+        JSInvoker function = new JSInvoker();
+        Map<String, Object> result = function.apply(values, params);
 
-        JSFunction function = new JSFunction();
-        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Map<String, Object> newMap = function.apply("key", JsonUtils.toModifiableMap(value), params);
-
-        assertEquals("test2", newMap.get("test"));
-
-        params.clear();
-
-        params.put(JSFunction.FUNCTION_NAME, f2);
-
-        newMap = function.apply("key", JsonUtils.toModifiableMap(value), params);
-
-        assertEquals("test3", newMap.get("test"));
+        assertEquals(3, result.get("result"));
     }
 }

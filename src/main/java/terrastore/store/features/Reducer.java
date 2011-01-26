@@ -17,6 +17,7 @@ package terrastore.store.features;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Map;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.msgpack.MessagePackable;
@@ -37,10 +38,12 @@ public class Reducer implements MessagePackable, MessageUnpackable, Serializable
     //
     private String reducerName;
     private long timeoutInMillis;
+    private Map<String, Object> parameters;
 
-    public Reducer(String reducerName, long timeoutInMillis) {
+    public Reducer(String reducerName, long timeoutInMillis, Map<String, Object> parameters) {
         this.reducerName = reducerName;
         this.timeoutInMillis = timeoutInMillis;
+        this.parameters = parameters;
     }
 
     public Reducer() {
@@ -54,16 +57,22 @@ public class Reducer implements MessagePackable, MessageUnpackable, Serializable
         return timeoutInMillis;
     }
 
+    public Map<String, Object> getParameters() {
+        return parameters;
+    }
+
     @Override
     public void messagePack(Packer packer) throws IOException {
         MsgPackUtils.packString(packer, reducerName);
         MsgPackUtils.packLong(packer, timeoutInMillis);
+        MsgPackUtils.packGenericMap(packer, parameters);
     }
 
     @Override
     public void messageUnpack(Unpacker unpacker) throws IOException, MessageTypeException {
         reducerName = MsgPackUtils.unpackString(unpacker);
         timeoutInMillis = MsgPackUtils.unpackLong(unpacker);
+        parameters = MsgPackUtils.unpackGenericMap(unpacker);
     }
 
     @Override
@@ -71,7 +80,7 @@ public class Reducer implements MessagePackable, MessageUnpackable, Serializable
         if (obj instanceof Reducer) {
             Reducer other = (Reducer) obj;
             return new EqualsBuilder().append(this.reducerName, other.reducerName).
-                    append(this.timeoutInMillis, other.timeoutInMillis).
+                    append(this.timeoutInMillis, other.timeoutInMillis).append(this.parameters, other.parameters).
                     isEquals();
         } else {
             return false;
@@ -81,7 +90,7 @@ public class Reducer implements MessagePackable, MessageUnpackable, Serializable
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(reducerName).
-                append(timeoutInMillis).
+                append(timeoutInMillis).append(parameters).
                 toHashCode();
     }
 

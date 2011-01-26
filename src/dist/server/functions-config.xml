@@ -21,10 +21,6 @@
         <entry key="replace">
             <bean class="terrastore.store.functions.ReplaceFunction"/>
         </entry>
-
-        <entry key="js">
-            <bean class="terrastore.store.functions.JSFunction"/>
-        </entry>
         
         <entry key="counter">
         	<bean class="terrastore.store.functions.AtomicCounterFunction"/>
@@ -36,6 +32,10 @@
 
         <entry key="size">
         	<bean class="terrastore.store.functions.SizeMapper"/>
+        </entry>
+
+        <entry key="js">
+            <bean class="terrastore.store.js.JSInvoker"/>
         </entry>
 
     </util:map>

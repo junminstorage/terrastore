@@ -28,5 +28,5 @@ public interface Aggregator {
     /**
      * 
      */
-    public Map<String, Object> apply(List<Map<String, Object>> values);
+    public Map<String, Object> apply(List<Map<String, Object>> values, Map<String, Object> parameters);
 }

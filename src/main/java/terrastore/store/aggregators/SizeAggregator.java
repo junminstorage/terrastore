@@ -27,7 +27,7 @@ import static terrastore.util.concurrent.ConcurrentUtils.*;
 public class SizeAggregator implements Aggregator {
 
     @Override
-    public Map<String, Object> apply(List<Map<String, Object>> counts) {
+    public Map<String, Object> apply(List<Map<String, Object>> counts, Map<String, Object> parameters) {
         int counter = 0;
         for (Map<String, Object> count : counts) {
             exitOnTimeout();

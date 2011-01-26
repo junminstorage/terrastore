@@ -26,6 +26,10 @@
             <bean class="terrastore.store.aggregators.SizeAggregator"/>
         </entry>
 
+        <entry key="js">
+            <bean class="terrastore.store.js.JSInvoker"/>
+        </entry>
+
     </util:map>
 
 </beans>

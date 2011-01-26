@@ -37,7 +37,6 @@ import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.Router;
-import terrastore.service.KeyRangeStrategy;
 import terrastore.service.QueryOperationException;
 import terrastore.store.Key;
 import terrastore.store.features.Predicate;
@@ -778,7 +777,7 @@ public class DefaultQueryServiceTest {
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);
-        Reducer reducer = new Reducer("reducer", 1000);
+        Reducer reducer = new Reducer("reducer", 1000, Collections.EMPTY_MAP);
         Value result = service.queryByMapReduce("bucket", range, mapper, reducer);
         assertEquals(new Value(REDUCE_VALUE.getBytes()), result);
 
@@ -828,7 +827,7 @@ public class DefaultQueryServiceTest {
         DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
 
         Mapper mapper = new Mapper("mapper", null, 1000, null);
-        Reducer reducer = new Reducer("reducer", 1000);
+        Reducer reducer = new Reducer("reducer", 1000, Collections.EMPTY_MAP);
         Value result = service.queryByMapReduce("bucket", null, mapper, reducer);
         assertEquals(new Value(REDUCE_VALUE.getBytes()), result);
 
@@ -873,7 +872,7 @@ public class DefaultQueryServiceTest {
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);
-        Reducer reducer = new Reducer("reducer", 1000);
+        Reducer reducer = new Reducer("reducer", 1000, Collections.EMPTY_MAP);
         Value result = service.queryByMapReduce("bucket", range, mapper, reducer);
         assertEquals(new Value(REDUCE_VALUE.getBytes()), result);
 
@@ -912,7 +911,7 @@ public class DefaultQueryServiceTest {
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);
-        Reducer reducer = new Reducer("reducer", 1000);
+        Reducer reducer = new Reducer("reducer", 1000, Collections.EMPTY_MAP);
         try {
             service.queryByMapReduce("bucket", range, mapper, reducer);
         } finally {
@@ -957,7 +956,7 @@ public class DefaultQueryServiceTest {
 
         Range range = new Range(new Key("k1"), null, 0, null, 1000);
         Mapper mapper = new Mapper("mapper", null, 1000, null);
-        Reducer reducer = new Reducer("reducer", 1000);
+        Reducer reducer = new Reducer("reducer", 1000, Collections.EMPTY_MAP);
         try {
             service.queryByMapReduce("bucket", range, mapper, reducer);
         } finally {
