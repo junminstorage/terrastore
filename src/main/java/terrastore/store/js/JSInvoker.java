@@ -32,7 +32,8 @@ import terrastore.store.operators.Aggregator;
  * This implementation evaluates a JavaScript function passed as a client parameter named "js".
  * <br>
  * <br>
- * In order to work as a {@link terrastore.store.operators.Aggregator}, the function must accept the following two parameters and return a json object:
+ * In order to work as a {@link terrastore.store.operators.Aggregator}, the function must be passed as a client parameter named "function",
+ * and accept the following two parameters and return a json object:
  * <ul>
  * <li>The values to aggregate.</li>
  * <li>The user-defined parameters map.</li>
@@ -45,7 +46,8 @@ import terrastore.store.operators.Aggregator;
  * }
  * </pre>
  * <br>
- * In order to work as a {@link terrastore.store.operators.Function}, the function must accept the following three parameters and return a json object:
+ * In order to work as a {@link terrastore.store.operators.Function}, the function must be passed as a client parameter named "aggregator",
+ * and accept the following three parameters and return a json object:
  * <ul>
  * <li>The key of the value to update.</li>
  * <li>The value to update</li>
@@ -64,7 +66,8 @@ import terrastore.store.operators.Aggregator;
  */
 public class JSInvoker implements Aggregator, Function {
 
-    public static final String FUNCTION_NAME = "js";
+    public static final String FUNCTION_NAME = "function";
+    public static final String AGGREGATOR_NAME = "aggregator";
     //
     private static final Logger LOG = LoggerFactory.getLogger(JSInvoker.class);
     //
@@ -81,6 +84,7 @@ public class JSInvoker implements Aggregator, Function {
     //
     private static ScriptEngine ENGINE;
     private static IllegalStateException EXCEPTION;
+
     {
         ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
         try {
@@ -102,11 +106,18 @@ public class JSInvoker implements Aggregator, Function {
     public Map<String, Object> apply(List<Map<String, Object>> values, Map<String, Object> parameters) {
         if (EXCEPTION == null) {
             try {
-                Object result = ((Invocable) ENGINE).invokeFunction("invokeAggregator",
-                        ENGINE.eval("(" + parameters.remove(FUNCTION_NAME).toString() + ")"),
-                        ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(values) + ")"),
-                        ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(parameters) + ")"));
-                return JSON_MAPPER.readValue(result.toString(), Map.class);
+                Object fn = parameters.get(AGGREGATOR_NAME);
+                if (fn != null) {
+                    Object result = ((Invocable) ENGINE).invokeFunction("invokeAggregator",
+                            ENGINE.eval("(" + fn.toString() + ")"),
+                            ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(values) + ")"),
+                            ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(parameters) + ")"));
+                    return JSON_MAPPER.readValue(result.toString(), Map.class);
+                } else {
+                    throw new IllegalStateException("No aggregator provided in client parameters!");
+                }
+            } catch (IllegalStateException ex) {
+                throw ex;
             } catch (Exception ex) {
                 LOG.error("Error in script execution.", ex);
                 throw new IllegalStateException("Error in script execution.", ex);
@@ -119,12 +130,19 @@ public class JSInvoker implements Aggregator, Function {
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
         if (EXCEPTION == null) {
             try {
-                Object result = ((Invocable) ENGINE).invokeFunction("invokeFunction",
-                        ENGINE.eval("(" + parameters.remove(FUNCTION_NAME).toString() + ")"),
-                        key,
-                        ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(value) + ")"),
-                        ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(parameters) + ")"));
-                return JSON_MAPPER.readValue(result.toString(), Map.class);
+                Object fn = parameters.get(FUNCTION_NAME);
+                if (fn != null) {
+                    Object result = ((Invocable) ENGINE).invokeFunction("invokeFunction",
+                            ENGINE.eval("(" + fn.toString() + ")"),
+                            key,
+                            ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(value) + ")"),
+                            ENGINE.eval("(" + JSON_MAPPER.writeValueAsString(parameters) + ")"));
+                    return JSON_MAPPER.readValue(result.toString(), Map.class);
+                } else {
+                    throw new IllegalStateException("No function provided in client parameters!");
+                }
+            } catch (IllegalStateException ex) {
+                throw ex;
             } catch (Exception ex) {
                 LOG.error("Error in script execution.", ex);
                 throw new IllegalStateException("Error in script execution.", ex);
@@ -133,4 +151,5 @@ public class JSInvoker implements Aggregator, Function {
             throw EXCEPTION;
         }
     }
+
 }
