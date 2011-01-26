@@ -525,7 +525,7 @@ public class TCBucketTest {
     public void testMerge() throws StoreOperationException, UnsupportedEncodingException {
         Key key = new Key("key");
         Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
-        Value merge = new Value("{\"*test\":\"test2\"}".getBytes());
+        Value merge = new Value("{\"*\":{\"test\":\"test2\"}}".getBytes());
         bucket.put(key, value);
         Value merged = bucket.merge(key, merge);
         assertArrayEquals(JSON_MERGED.getBytes("UTF-8"), merged.getBytes());
