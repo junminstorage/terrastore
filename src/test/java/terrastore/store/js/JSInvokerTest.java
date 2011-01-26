@@ -64,7 +64,7 @@ public class JSInvokerTest {
                 + "}";
         values.add(Maps.hash(new String[]{"value"}, new Object[]{1}));
         values.add(Maps.hash(new String[]{"value"}, new Object[]{2}));
-        params.put(JSInvoker.FUNCTION_NAME, f);
+        params.put(JSInvoker.AGGREGATOR_NAME, f);
 
         JSInvoker function = new JSInvoker();
         Map<String, Object> result = function.apply(values, params);
