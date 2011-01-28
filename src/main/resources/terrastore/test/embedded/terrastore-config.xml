@@ -85,16 +85,30 @@
                 <constructor-arg value="terrastore.store.operators.Condition"/>
             </bean>
         </property>
-        <property name="functions">
+        <property name="updaters">
             <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="functions"/>
+                <constructor-arg ref="updaters"/>
                 <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.store.operators.Function"/>
             </bean>
         </property>
-        <property name="aggregators">
+        <property name="mappers">
             <bean class="terrastore.util.annotation.AutowiringMap">
-                <constructor-arg ref="aggregators"/>
+                <constructor-arg ref="mappers"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Function"/>
+            </bean>
+        </property>
+        <property name="combiners">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="combiners"/>
+                <constructor-arg ref="scanner"/>
+                <constructor-arg value="terrastore.store.operators.Aggregator"/>
+            </bean>
+        </property>
+        <property name="reducers">
+            <bean class="terrastore.util.annotation.AutowiringMap">
+                <constructor-arg ref="reducers"/>
                 <constructor-arg ref="scanner"/>
                 <constructor-arg value="terrastore.store.operators.Aggregator"/>
             </bean>

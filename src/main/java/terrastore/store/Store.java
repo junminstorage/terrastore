@@ -126,14 +126,28 @@ public interface Store {
      *
      * @param functions  A map of supported functions.
      */
-    public void setFunctions(Map<String, Function> functions);
+    public void setUpdaters(Map<String, Function> functions);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Function}s by name.
+     *
+     * @param functions  A map of supported functions.
+     */
+    public void setMappers(Map<String, Function> functions);
 
     /**
      * Set all supported {@link terrastore.store.operators.Aggregator}s by name.
      *
      * @param aggregators A map of supported aggregators.
      */
-    public void setAggregators(Map<String, Aggregator> aggregators);
+    public void setCombiners(Map<String, Aggregator> aggregators);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Aggregator}s by name.
+     *
+     * @param aggregators A map of supported aggregators.
+     */
+    public void setReducers(Map<String, Aggregator> aggregators);
 
     /**
      * Set the {@link terrastore.event.EventBus} instance used for publishing events to {@link terrastore.event.EventListener}s.

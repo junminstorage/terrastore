@@ -6,17 +6,7 @@
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
-
-    <!--
-        Configure here your terrastore.store.operators.Aggregator.
-        As an alternative, you may want to annotate your aggregator with terrastore.annotation.AutoDetect: Terrastore
-        will autodetect your annotated class, create an instance and autowire it here.
-
-        Aggregators manually declared here overwrite autodetected ones: this means that if a manually declared aggregator
-        has the same name (entry key) of an autodetected one, the latter will not be wired.
-    -->
-
-    <util:map id="aggregators">
+    <util:map id="combiners">
 
         <entry key="keys">
             <bean class="terrastore.store.aggregators.KeysAggregator"/>
@@ -26,8 +16,34 @@
             <bean class="terrastore.store.aggregators.SizeAggregator"/>
         </entry>
 
-        <entry key="js">
-            <bean class="terrastore.store.js.JSInvoker"/>
+        <entry key="js-combiner">
+            <bean class="terrastore.store.js.JSInvoker">
+                <constructor-arg value="combiner"/>
+            </bean>
+        </entry>
+
+        <entry key="js-reducer">
+            <bean class="terrastore.store.js.JSInvoker">
+                <constructor-arg value="reducer"/>
+            </bean>
+        </entry>
+
+    </util:map>
+
+    <util:map id="reducers">
+
+        <entry key="keys">
+            <bean class="terrastore.store.aggregators.KeysAggregator"/>
+        </entry>
+
+        <entry key="size">
+            <bean class="terrastore.store.aggregators.SizeAggregator"/>
+        </entry>
+
+        <entry key="js-reducer">
+            <bean class="terrastore.store.js.JSInvoker">
+                <constructor-arg value="reducer"/>
+            </bean>
         </entry>
 
     </util:map>

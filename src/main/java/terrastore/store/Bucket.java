@@ -250,7 +250,14 @@ public interface Bucket {
      *
      * @param functions  A map of supported functions.
      */
-    public void setFunctions(Map<String, Function> functions);
+    public void setUpdaters(Map<String, Function> functions);
+
+    /**
+     * Set all supported {@link terrastore.store.operators.Function}s by name.
+     *
+     * @param functions  A map of supported functions.
+     */
+    public void setMappers(Map<String, Function> functions);
 
     /**
      * Set the {@link SnapshotManager} used to compute the snapshot of the keys used in range queries.

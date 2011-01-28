@@ -511,7 +511,7 @@ public class TCBucketTest {
 
         };
 
-        bucket.setFunctions(Maps.hash(new String[]{"function"}, new Function[]{function}));
+        bucket.setUpdaters(Maps.hash(new String[]{"function"}, new Function[]{function}));
 
         Key key = new Key("key");
         Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
@@ -545,7 +545,7 @@ public class TCBucketTest {
 
         Key key = new Key("key");
         Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
-        bucket.setFunctions(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
+        bucket.setMappers(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
         bucket.put(key, value);
         assertEquals(mapResult, bucket.map(key, mapper));
 
@@ -561,7 +561,7 @@ public class TCBucketTest {
         replay(mapFunction);
 
         Key key = new Key("key");
-        bucket.setFunctions(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
+        bucket.setMappers(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
         assertNull(bucket.map(key, mapper));
 
         verify(mapFunction);

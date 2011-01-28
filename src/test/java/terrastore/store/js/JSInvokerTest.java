@@ -41,10 +41,10 @@ public class JSInvokerTest {
                 + "       value['test'] = params.newValue;"
                 + "   return value;"
                 + "}";
-        params.put(JSInvoker.FUNCTION_NAME, f);
+        params.put("function", f);
         params.put("newValue", "test2");
 
-        JSInvoker function = new JSInvoker();
+        JSInvoker function = new JSInvoker("function");
         Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> newMap = function.apply("key", JsonUtils.toModifiableMap(value), params);
 
@@ -64,9 +64,9 @@ public class JSInvokerTest {
                 + "}";
         values.add(Maps.hash(new String[]{"value"}, new Object[]{1}));
         values.add(Maps.hash(new String[]{"value"}, new Object[]{2}));
-        params.put(JSInvoker.AGGREGATOR_NAME, f);
+        params.put("aggregator", f);
 
-        JSInvoker function = new JSInvoker();
+        JSInvoker function = new JSInvoker("aggregator");
         Map<String, Object> result = function.apply(values, params);
 
         assertEquals(3, result.get("result"));
