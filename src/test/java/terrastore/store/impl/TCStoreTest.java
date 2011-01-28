@@ -163,7 +163,7 @@ public class TCStoreTest {
 
         replay(mockedStore, bucket, aggregator);
 
-        mockedStore.setAggregators(Maps.hash(new String[]{"combiner"}, new Aggregator[]{aggregator}));
+        mockedStore.setCombiners(Maps.hash(new String[]{"combiner"}, new Aggregator[]{aggregator}));
         assertEquals(combinerResult, mockedStore.map(bucketName, keys, mapper));
         assertTrue(combinerCapture.getValue().equals(Arrays.asList(mapResult1, mapResult2)) || combinerCapture.getValue().equals(Arrays.asList(mapResult2, mapResult1)));
 
@@ -196,7 +196,7 @@ public class TCStoreTest {
 
         replay(mockedStore, bucket, aggregator);
 
-        mockedStore.setAggregators(Maps.hash(new String[]{"combiner"}, new Aggregator[]{aggregator}));
+        mockedStore.setCombiners(Maps.hash(new String[]{"combiner"}, new Aggregator[]{aggregator}));
         assertEquals(combinerResult, mockedStore.map(bucketName, keys, mapper));
         assertEquals(Arrays.asList(mapResult1), combinerCapture.getValue());
 
@@ -219,7 +219,7 @@ public class TCStoreTest {
 
         replay(mockedStore, aggregator);
 
-        mockedStore.setAggregators(Maps.hash(new String[]{"reducer"}, new Aggregator[]{aggregator}));
+        mockedStore.setReducers(Maps.hash(new String[]{"reducer"}, new Aggregator[]{aggregator}));
         assertEquals(JsonUtils.fromMap(reducerResult), mockedStore.reduce(allResults, reducer));
 
         verify(mockedStore, aggregator);

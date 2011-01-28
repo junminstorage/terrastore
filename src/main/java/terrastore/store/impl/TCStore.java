@@ -74,8 +74,10 @@ public class TCStore implements Store {
     private final ConcurrentMap<String, Bucket> instances;
     private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
     private final Map<String, Condition> conditions = new HashMap<String, Condition>();
-    private final Map<String, Function> functions = new HashMap<String, Function>();
-    private final Map<String, Aggregator> aggregators = new HashMap<String, Aggregator>();
+    private final Map<String, Function> updaters = new HashMap<String, Function>();
+    private final Map<String, Function> mappers = new HashMap<String, Function>();
+    private final Map<String, Aggregator> combiners = new HashMap<String, Aggregator>();
+    private final Map<String, Aggregator> reducers = new HashMap<String, Aggregator>();
     private Comparator defaultComparator = new LexicographicalComparator(true);
     private SnapshotManager snapshotManager;
     private BackupManager backupManager;
@@ -186,8 +188,8 @@ public class TCStore implements Store {
     public Map<String, Object> map(final String bucketName, final Set<Key> keys, final Mapper mapper) throws StoreOperationException {
         Bucket bucket = get(bucketName);
         if (bucket != null) {
-            Aggregator aggregator = getAggregator(mapper.getCombinerName());
             List<Map<String, Object>> mapResults = doMap(bucket, keys, mapper);
+            Aggregator aggregator = getAggregator(combiners, mapper.getCombinerName());
             return doAggregate(mapResults, aggregator, mapper.getTimeoutInMillis(), mapper.getParameters());
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "No bucket found with name: " + bucketName));
@@ -196,7 +198,7 @@ public class TCStore implements Store {
 
     @Override
     public Value reduce(List<Map<String, Object>> values, Reducer reducer) throws StoreOperationException {
-        Aggregator aggregator = getAggregator(reducer.getReducerName());
+        Aggregator aggregator = getAggregator(reducers, reducer.getReducerName());
         Map<String, Object> aggregation = doAggregate(values, aggregator, reducer.getTimeoutInMillis(), reducer.getParameters());
         return JsonUtils.fromMap(aggregation);
     }
@@ -225,9 +227,15 @@ public class TCStore implements Store {
     }
 
     @Override
-    public void setFunctions(Map<String, Function> functions) {
-        this.functions.clear();
-        this.functions.putAll(functions);
+    public void setUpdaters(Map<String, Function> functions) {
+        this.updaters.clear();
+        this.updaters.putAll(functions);
+    }
+
+    @Override
+    public void setMappers(Map<String, Function> functions) {
+        this.mappers.clear();
+        this.mappers.putAll(functions);
     }
 
     @Override
@@ -237,9 +245,15 @@ public class TCStore implements Store {
     }
 
     @Override
-    public void setAggregators(Map<String, Aggregator> aggregators) {
-        this.aggregators.clear();
-        this.aggregators.putAll(aggregators);
+    public void setCombiners(Map<String, Aggregator> aggregators) {
+        this.combiners.clear();
+        this.combiners.putAll(aggregators);
+    }
+
+    @Override
+    public void setReducers(Map<String, Aggregator> aggregators) {
+        this.reducers.clear();
+        this.reducers.putAll(aggregators);
     }
 
     @Override
@@ -268,7 +282,8 @@ public class TCStore implements Store {
         bucket.setDefaultComparator(defaultComparator);
         bucket.setComparators(comparators);
         bucket.setConditions(conditions);
-        bucket.setFunctions(functions);
+        bucket.setUpdaters(updaters);
+        bucket.setMappers(mappers);
         bucket.setSnapshotManager(snapshotManager);
         bucket.setBackupManager(backupManager);
         bucket.setLockManager(lockManager);
@@ -276,7 +291,7 @@ public class TCStore implements Store {
         // TODO: verify this is not a perf problem.
     }
 
-    private Aggregator getAggregator(String aggregatorName) throws StoreOperationException {
+    private Aggregator getAggregator(Map<String, Aggregator> aggregators, String aggregatorName) throws StoreOperationException {
         if (aggregators.containsKey(aggregatorName)) {
             return aggregators.get(aggregatorName);
         } else {

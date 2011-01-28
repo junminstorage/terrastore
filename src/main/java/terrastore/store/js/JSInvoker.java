@@ -29,11 +29,10 @@ import terrastore.store.operators.Aggregator;
 
 /**
  * Invoke Javascript functions to implement {@link terrastore.store.operators.Aggregator}s and {@link terrastore.store.operators.Function}s on-the-fly.
- * This implementation evaluates a JavaScript function passed as a client parameter named "js".
+ * This implementation evaluates a JavaScript function passed as a client parameter whose name/key is configured in the class constructor.
  * <br>
  * <br>
- * In order to work as a {@link terrastore.store.operators.Aggregator}, the function must be passed as a client parameter named "function",
- * and accept the following two parameters and return a json object:
+ * In order to work as a {@link terrastore.store.operators.Aggregator}, the function must accept the following two parameters and return a json object:
  * <ul>
  * <li>The values to aggregate.</li>
  * <li>The user-defined parameters map.</li>
@@ -46,8 +45,7 @@ import terrastore.store.operators.Aggregator;
  * }
  * </pre>
  * <br>
- * In order to work as a {@link terrastore.store.operators.Function}, the function must be passed as a client parameter named "aggregator",
- * and accept the following three parameters and return a json object:
+ * In order to work as a {@link terrastore.store.operators.Function}, the function must accept the following three parameters and return a json object:
  * <ul>
  * <li>The key of the value to update.</li>
  * <li>The value to update</li>
@@ -66,9 +64,6 @@ import terrastore.store.operators.Aggregator;
  */
 public class JSInvoker implements Aggregator, Function {
 
-    public static final String FUNCTION_NAME = "function";
-    public static final String AGGREGATOR_NAME = "aggregator";
-    //
     private static final Logger LOG = LoggerFactory.getLogger(JSInvoker.class);
     //
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
@@ -102,11 +97,17 @@ public class JSInvoker implements Aggregator, Function {
         }
     }
 
+    private final String name;
+
+    public JSInvoker(String name) {
+        this.name = name;
+    }
+
     @Override
     public Map<String, Object> apply(List<Map<String, Object>> values, Map<String, Object> parameters) {
         if (EXCEPTION == null) {
             try {
-                Object fn = parameters.get(AGGREGATOR_NAME);
+                Object fn = parameters.get(name);
                 if (fn != null) {
                     Object result = ((Invocable) ENGINE).invokeFunction("invokeAggregator",
                             ENGINE.eval("(" + fn.toString() + ")"),
@@ -130,7 +131,7 @@ public class JSInvoker implements Aggregator, Function {
     public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) {
         if (EXCEPTION == null) {
             try {
-                Object fn = parameters.get(FUNCTION_NAME);
+                Object fn = parameters.get(name);
                 if (fn != null) {
                     Object result = ((Invocable) ENGINE).invokeFunction("invokeFunction",
                             ENGINE.eval("(" + fn.toString() + ")"),

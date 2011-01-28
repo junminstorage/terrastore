@@ -208,7 +208,7 @@ public class TCBucketEventingTest {
 
         };
 
-        bucket.setFunctions(Maps.hash(new String[]{"function"}, new Function[]{function}));
+        bucket.setUpdaters(Maps.hash(new String[]{"function"}, new Function[]{function}));
 
         Capture<Event> capturedEvent1 = new Capture<Event>();
         Capture<Event> capturedEvent2 = new Capture<Event>();

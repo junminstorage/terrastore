@@ -73,8 +73,9 @@ public class TCBucket implements Bucket {
     private LockManager lockManager;
     private Comparator defaultComparator = new LexicographicalComparator(true);
     private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
-    private final Map<String, Function> functions = new HashMap<String, Function>();
     private final Map<String, Condition> conditions = new HashMap<String, Condition>();
+    private final Map<String, Function> updaters = new HashMap<String, Function>();
+    private final Map<String, Function> mappers = new HashMap<String, Function>();
 
     public TCBucket(String name) {
         this.name = name;
@@ -214,7 +215,7 @@ public class TCBucket implements Bucket {
         try {
             final Value value = doGet(key);
             if (value != null) {
-                final Function function = getFunction(update.getFunctionName());
+                final Function function = getFunction(updaters, update.getFunctionName());
                 task = GlobalExecutor.getUpdateExecutor().submit(new Callable<Value>() {
 
                     @Override
@@ -274,7 +275,7 @@ public class TCBucket implements Bucket {
     public Map<String, Object> map(final Key key, final Mapper mapper) throws StoreOperationException {
         Value value = doGet(key);
         if (value != null) {
-            Function function = getFunction(mapper.getMapperName());
+            Function function = getFunction(mappers, mapper.getMapperName());
             return value.dispatch(key, mapper, function);
         } else {
             return null;
@@ -370,9 +371,15 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public void setFunctions(Map<String, Function> functions) {
-        this.functions.clear();
-        this.functions.putAll(functions);
+    public void setUpdaters(Map<String, Function> functions) {
+        this.updaters.clear();
+        this.updaters.putAll(functions);
+    }
+
+    @Override
+    public void setMappers(Map<String, Function> functions) {
+        this.mappers.clear();
+        this.mappers.putAll(functions);
     }
 
     @Override
@@ -391,7 +398,7 @@ public class TCBucket implements Bucket {
         }
     }
 
-    private Function getFunction(String functionName) throws StoreOperationException {
+    private Function getFunction(Map<String, Function> functions, String functionName) throws StoreOperationException {
         if (functions.containsKey(functionName)) {
             return functions.get(functionName);
         } else {

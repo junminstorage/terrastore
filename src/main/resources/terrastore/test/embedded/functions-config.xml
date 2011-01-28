@@ -7,35 +7,38 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
 
-    <!--
-        Configure here your terrastore.store.operators.Function.
-        As an alternative, you may want to annotate your function with terrastore.annotation.AutoDetect: Terrastore
-        will autodetect your annotated class, create an instance and autowire it here.
-
-        Functions manually declared here overwrite autodetected ones: this means that if a manually declared function
-        has the same name (entry key) of an autodetcted one, the latter will not be wired.
-    -->
-
-    <util:map id="functions">
+    <util:map id="updaters">
 
         <entry key="replace">
             <bean class="terrastore.store.functions.ReplaceFunction"/>
         </entry>
 
         <entry key="counter">
-        	<bean class="terrastore.store.functions.AtomicCounterFunction"/>
+            <bean class="terrastore.store.functions.AtomicCounterFunction"/>
         </entry>
 
+        <entry key="js-updater">
+            <bean class="terrastore.store.js.JSInvoker">
+                <constructor-arg value="updater"/>
+            </bean>
+        </entry>
+
+    </util:map>
+
+    <util:map id="mappers">
+
         <entry key="keys">
-        	<bean class="terrastore.store.functions.KeysMapper"/>
+            <bean class="terrastore.store.functions.KeysMapper"/>
         </entry>
 
         <entry key="size">
-        	<bean class="terrastore.store.functions.SizeMapper"/>
+            <bean class="terrastore.store.functions.SizeMapper"/>
         </entry>
 
-        <entry key="js">
-            <bean class="terrastore.store.js.JSInvoker"/>
+        <entry key="js-mapper">
+            <bean class="terrastore.store.js.JSInvoker">
+                <constructor-arg value="mapper"/>
+            </bean>
         </entry>
 
     </util:map>
