@@ -77,10 +77,9 @@ public class JSInvoker implements Aggregator, Function {
             + "   return JSON.stringify(fn(key, value, params)); "
             + "}";
     //
-    private static ScriptEngine ENGINE;
+    private static final ScriptEngine ENGINE;
     private static IllegalStateException EXCEPTION;
-
-    {
+    static {
         ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
         try {
             if (ENGINE != null && ENGINE.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {

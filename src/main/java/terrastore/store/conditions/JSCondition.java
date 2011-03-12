@@ -54,9 +54,9 @@ public class JSCondition implements Condition {
             + "      return false; "
             + "   }";
     //
-    private static ScriptEngine ENGINE;
+    private static final ScriptEngine ENGINE;
     private static IllegalStateException EXCEPTION;
-    {
+    static {
         ENGINE = new ScriptEngineManager().getEngineByName("JavaScript");
         try {
             if (ENGINE == null) {
