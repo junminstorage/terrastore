@@ -150,7 +150,7 @@ public class TCMaster {
         }
 
         @Override
-        public void evictReadWriteLock(String name) {
+        public synchronized void evictReadWriteLock(String name) {
             locks.remove(name);
         }
 
@@ -166,7 +166,7 @@ public class TCMaster {
         }
 
         @Override
-        public <K, V> ClusteredMap<K, V> getMap(String name, LockType lockType, String lockStrategy) {
+        public synchronized <K, V> ClusteredMap<K, V> getMap(String name, LockType lockType, String lockStrategy) {
             try {
                 if (maps.containsKey(name)) {
                     return maps.get(name);
