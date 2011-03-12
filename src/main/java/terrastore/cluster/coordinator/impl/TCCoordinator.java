@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import org.slf4j.Logger;
@@ -68,7 +67,8 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     private Lock coordinatorLock = TCMaster.getInstance().getReadWriteLock(TCCoordinator.class.getName() + ".coordinatorLock").writeLock();
     private Condition connectCondition = coordinatorLock.newCondition();
     //
-    private final AtomicBoolean connected = new AtomicBoolean(false);
+    private final Object connectionLock = new Object();
+    private volatile boolean connected = false;
     private volatile long reconnectTimeout;
     //
     private volatile Cluster thisCluster;
@@ -220,20 +220,20 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     }
 
     public void operationsEnabled(ClusterEvent event) {
-        synchronized (connected) {
-            connected.set(true);
-            connected.notifyAll();
+        synchronized (connectionLock) {
+            connected = true;
+            connectionLock.notifyAll();
         }
     }
 
     public void operationsDisabled(ClusterEvent event) {
-        if (connected.get()) {
+        if (connected) {
             new Thread() {
 
                 @Override
                 public void run() {
                     attemptReconnection();
-                    if (!connected.get()) {
+                    if (!connected) {
                         try {
                             LOG.info("Disabling this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
                             shutdownEverything();
@@ -385,15 +385,15 @@ public class TCCoordinator implements Coordinator, ClusterListener {
     }
 
     private void attemptReconnection() {
-        synchronized (connected) {
+        synchronized (connectionLock) {
             try {
                 LOG.info("Attempting reconnection for this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
-                connected.set(false);
+                connected = false;
                 long now = System.currentTimeMillis();
                 long waitTime = reconnectTimeout;
                 long startTime = now;
-                while (!connected.get() && waitTime > 0) {
-                    connected.wait(waitTime);
+                while (!connected && waitTime > 0) {
+                    connectionLock.wait(waitTime);
                     now = System.currentTimeMillis();
                     waitTime = waitTime - (now - startTime);
                     startTime = now;
@@ -429,7 +429,7 @@ public class TCCoordinator implements Coordinator, ClusterListener {
 
             @Override
             public void run() {
-                if (connected.get()) {
+                if (connected) {
                     try {
                         LOG.info("Shutting down this node {}:{}", thisCluster.getName(), thisConfiguration.getName());
                         shutdownEverything();
