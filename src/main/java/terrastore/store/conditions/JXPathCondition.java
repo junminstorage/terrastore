@@ -34,6 +34,6 @@ public class JXPathCondition implements Condition {
         JXPathContext context = JXPathContext.newContext(value);
         context.setLenient(true);
         List selection = context.selectNodes(expression);
-        return selection != null & selection.size() > 0;
+        return selection != null && selection.size() > 0;
     }
 }
