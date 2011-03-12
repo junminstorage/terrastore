@@ -304,7 +304,7 @@ public class MemoryEventBusTest {
 
     @Test
     public void testMultithreadedPublishing() throws Exception {
-        int threads = 100;
+        int threads = 25;
 
         final CountDownLatch publishingLatch = new CountDownLatch(threads);
         final String bucket = "bucket";
@@ -345,7 +345,7 @@ public class MemoryEventBusTest {
             });
         }
 
-        assertTrue(publishingLatch.await(threads, TimeUnit.SECONDS));
+        assertTrue(publishingLatch.await(60, TimeUnit.SECONDS));
 
         // Sleep to avoid bad timing between listener answer and mock verification
         Thread.sleep(1000);
