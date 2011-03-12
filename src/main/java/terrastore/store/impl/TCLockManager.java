@@ -89,7 +89,7 @@ public class TCLockManager implements LockManager {
 
     private ReadWriteLock lockFor(String bucket, Key key) {
         String name = bucket + ":" + key;
-        return locks[Math.abs(name.hashCode()) % concurrencyLevel];
+        return locks[(name.hashCode() & Integer.MAX_VALUE) % concurrencyLevel];
     }
 
     private void initLocks(String node, int concurrencyLevel) {
