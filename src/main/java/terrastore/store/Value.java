@@ -142,7 +142,7 @@ public class Value implements MessagePackable, MessageUnpackable, Serializable {
 
     @Override
     public int hashCode() {
-        return bytes.hashCode();
+        return Arrays.hashCode(bytes);
     }
 
     @Override
