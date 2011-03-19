@@ -28,7 +28,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.BulkPutCommand;
+import terrastore.communication.protocol.PutValuesCommand;
 import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.MergeCommand;
 import terrastore.communication.protocol.PutValueCommand;
@@ -154,7 +154,7 @@ public class DefaultUpdateServiceTest {
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
         expectLastCall().andReturn(Maps.hash(new Node[]{node}, new Set[]{Sets.hash(new Key("test1"), new Key("test2"))})).once();
-        node.send(EasyMock.<BulkPutCommand>anyObject());
+        node.send(EasyMock.<PutValuesCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
 
         replay(node, router);
@@ -176,9 +176,9 @@ public class DefaultUpdateServiceTest {
 
         router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
         expectLastCall().andReturn(Maps.hash(new Node[]{goodNode, badNode}, new Set[]{Sets.hash(new Key("test1")), Sets.hash(new Key("test2"))})).once();
-        goodNode.send(EasyMock.<BulkPutCommand>anyObject());
+        goodNode.send(EasyMock.<PutValuesCommand>anyObject());
         expectLastCall().andReturn(Sets.hash(new Key("test1"))).once();
-        badNode.send(EasyMock.<BulkPutCommand>anyObject());
+        badNode.send(EasyMock.<PutValuesCommand>anyObject());
         expectLastCall().andThrow(new CommunicationException(new ErrorMessage())).once();
 
         replay(goodNode, badNode, router);

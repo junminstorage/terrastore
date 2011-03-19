@@ -30,7 +30,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.MergeCommand;
 import terrastore.communication.protocol.PutValueCommand;
-import terrastore.communication.protocol.BulkPutCommand;
+import terrastore.communication.protocol.PutValuesCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.RemoveValuesCommand;
@@ -91,7 +91,7 @@ public class DefaultUpdateService implements UpdateService {
                 try {
                     Node node = nodeToKeysEntry.getKey();
                     Set<Key> nodeKeys = nodeToKeysEntry.getValue();
-                    BulkPutCommand command = new BulkPutCommand(bucket, Maps.slice(values, nodeKeys));
+                    PutValuesCommand command = new PutValuesCommand(bucket, Maps.slice(values, nodeKeys));
                     Set<Key> keys = node.<Set<Key>>send(command);
                     insertedKeys.addAll(keys);
                 } catch (Exception ex) {
