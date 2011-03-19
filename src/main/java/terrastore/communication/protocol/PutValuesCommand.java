@@ -41,17 +41,17 @@ import terrastore.util.io.MsgPackUtils;
 /**
  * @author Sergio Bossa
  */
-public class BulkPutCommand extends AbstractCommand<Set<Key>> {
+public class PutValuesCommand extends AbstractCommand<Set<Key>> {
 
     private String bucketName;
     private Map<Key, Value> values;
 
-    public BulkPutCommand(String bucketName, Map<Key, Value> values) {
+    public PutValuesCommand(String bucketName, Map<Key, Value> values) {
         this.bucketName = bucketName;
         this.values = values;
     }
 
-    public BulkPutCommand() {
+    public PutValuesCommand() {
     }
 
     @Override
@@ -61,7 +61,7 @@ public class BulkPutCommand extends AbstractCommand<Set<Key>> {
         for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
             Node node = nodeToKeysEntry.getKey();
             Set<Key> nodeKeys = nodeToKeysEntry.getValue();
-            BulkPutCommand command = new BulkPutCommand(bucketName, Maps.slice(values, nodeKeys));
+            PutValuesCommand command = new PutValuesCommand(bucketName, Maps.slice(values, nodeKeys));
             result.addAll(node.<Set<Key>>send(command));
         }
         return new KeysResponse(id, result);
