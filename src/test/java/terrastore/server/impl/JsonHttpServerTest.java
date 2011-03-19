@@ -36,6 +36,7 @@ import org.junit.Test;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
 import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.service.BackupService;
 import terrastore.service.QueryService;
 import terrastore.service.StatsService;
@@ -68,6 +69,37 @@ public class JsonHttpServerTest {
     private static final String BUCKETS = "[\"test1\",\"test2\"]";
     private static final String CLUSTER_STATS = "{\"clusters\":[{\"name\":\"cluster-1\",\"status\":\"AVAILABLE\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
 
+    @Test
+    public void testBulkPut() throws Exception {
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+        StatsService statsService = createMock(StatsService.class);
+
+        updateService.bulkPut(eq("bucket"), EasyMock.<Values>anyObject());
+        expectLastCall().andReturn(new Keys(Sets.hash(new Key("test")))).once();
+
+        replay(updateService, queryService, backupService, statsService);
+
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
+        HttpClient client = new HttpClient();
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/bulk");
+        method.setRequestHeader("Content-Type", "application/json");
+        method.setRequestEntity(new StringRequestEntity(JSON_VALUES, "application/json", null));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals("[\"test\"]", method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService, statsService);
+    }
+    
     @Test
     public void testGetStats() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);

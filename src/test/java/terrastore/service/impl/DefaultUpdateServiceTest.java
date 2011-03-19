@@ -28,6 +28,7 @@ import terrastore.communication.Cluster;
 import terrastore.communication.CommunicationException;
 import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
+import terrastore.communication.protocol.BulkPutCommand;
 import terrastore.communication.protocol.KeysInRangeCommand;
 import terrastore.communication.protocol.MergeCommand;
 import terrastore.communication.protocol.PutValueCommand;
@@ -37,6 +38,7 @@ import terrastore.communication.protocol.RemoveValuesCommand;
 import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.Router;
 import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.service.UpdateOperationException;
 import terrastore.store.Key;
 import terrastore.store.ValidationException;
@@ -55,6 +57,7 @@ import static org.junit.Assert.*;
 public class DefaultUpdateServiceTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
+    private static final String JSON_VALUES = "{\"test1\":" + JSON_VALUE + ",\"test2\":" + JSON_VALUE + "}";
     private static final String BAD_JSON_VALUE = "{\"test\"\"test\"}";
 
     @Test
@@ -142,6 +145,51 @@ public class DefaultUpdateServiceTest {
         } finally {
             verify(cluster1, router);
         }
+    }
+
+    @Test
+    public void testBulkPut() throws Exception {
+        Node node = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
+        expectLastCall().andReturn(Maps.hash(new Node[]{node}, new Set[]{Sets.hash(new Key("test1"), new Key("test2"))})).once();
+        node.send(EasyMock.<BulkPutCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash(new Key("test1"), new Key("test2"))).once();
+
+        replay(node, router);
+
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
+        Keys result = service.bulkPut("bucket", new Values(Maps.hash(new Key[]{new Key("test1"), new Key("test2")}, new Value[]{new Value(JSON_VALUE.getBytes()), new Value(JSON_VALUE.getBytes())})));
+        assertEquals(2, result.size());
+        assertTrue(result.contains(new Key("test1")));
+        assertTrue(result.contains(new Key("test2")));
+
+        verify(node, router);
+    }
+
+    @Test
+    public void testBulkPutIgnoresFailingNodes() throws Exception {
+        Node goodNode = createMock(Node.class);
+        Node badNode = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
+        expectLastCall().andReturn(Maps.hash(new Node[]{goodNode, badNode}, new Set[]{Sets.hash(new Key("test1")), Sets.hash(new Key("test2"))})).once();
+        goodNode.send(EasyMock.<BulkPutCommand>anyObject());
+        expectLastCall().andReturn(Sets.hash(new Key("test1"))).once();
+        badNode.send(EasyMock.<BulkPutCommand>anyObject());
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage())).once();
+
+        replay(goodNode, badNode, router);
+
+        DefaultUpdateService service = new DefaultUpdateService(router, new DefaultKeyRangeStrategy());
+        Keys result = service.bulkPut("bucket", new Values(Maps.hash(new Key[]{new Key("test1"), new Key("test2")}, new Value[]{new Value(JSON_VALUE.getBytes()), new Value(JSON_VALUE.getBytes())})));
+        assertEquals(1, result.size());
+        assertTrue(result.contains(new Key("test1")));
+        assertFalse(result.contains(new Key("test2")));
+
+        verify(goodNode, badNode, router);
     }
 
     @Test

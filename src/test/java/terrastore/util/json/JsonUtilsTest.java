@@ -19,6 +19,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import terrastore.store.ValidationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -73,6 +74,8 @@ public class JsonUtilsTest {
     private static final String ERROR_MESSAGE = "{\"message\":\"test\",\"code\":0}";
     private static final String CLUSTER_STATS = "{\"clusters\":[{\"name\":\"cluster-1\",\"status\":\"AVAILABLE\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
     private static final String VALUES = "{\"value\":{\"key\":\"value\"}}";
+    private static final String VALUES_2 = "{\"value1\":{\"key1\":\"value1\"},\"value2\":{\"key2\":\"value2\"}}";
+    private static final String BAD_VALUES = "{\"key\":\"value\"}";
     private static final String PARAMETERS = "{\"key\":\"value\"}";
     private static final String BUCKETS = "[\"1\",\"2\"]";
     private static final String MAPREDUCE_DESCRIPTOR = "{\"range\":{\"startKey\":\"k1\",\"timeToLive\":10000},\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
@@ -214,6 +217,21 @@ public class JsonUtilsTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonUtils.write(buckets, stream);
         assertEquals(BUCKETS, new String(stream.toByteArray()));
+    }
+
+    @Test
+    public void testReadValues() throws Exception {
+        ByteArrayInputStream stream = new ByteArrayInputStream(VALUES_2.getBytes("UTF-8"));
+        Values values = JsonUtils.readValues(stream);
+        assertEquals(2, values.size());
+        assertEquals(new Value("{\"key1\":\"value1\"}".getBytes(Charset.forName("UTF-8"))), values.get(new Key("value1")));
+        assertEquals(new Value("{\"key2\":\"value2\"}".getBytes(Charset.forName("UTF-8"))), values.get(new Key("value2")));
+    }
+
+    @Test(expected = ValidationException.class)
+    public void testReadBadValues() throws Exception {
+        ByteArrayInputStream stream = new ByteArrayInputStream(BAD_VALUES.getBytes("UTF-8"));
+        JsonUtils.readValues(stream);
     }
 
     @Test

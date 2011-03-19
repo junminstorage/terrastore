@@ -38,6 +38,16 @@ public interface Server {
     public void removeBucket(String bucket) throws ServerOperationException;
 
     /**
+     * Execute a bulk put into the given bucket.
+     *
+     * @param bucket The name of the bucket where to bulk put values.
+     * @param values The values to put.
+     * @return The inserted keys.
+     * @throws ServerOperationException If an error occurs.
+     */
+    public Keys bulkPut(String bucket, Values values) throws ServerOperationException;
+
+    /**
      * Put a value in the given bucket under the given key.<br>
      * Conditional put can be executed by providing a predicate expression:
      * in such a case, the new value will be put only if no value existed before, or the existent value satisfies the given predicate.

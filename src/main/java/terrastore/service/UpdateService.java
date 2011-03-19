@@ -19,6 +19,7 @@ import terrastore.communication.CommunicationException;
 import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
 import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.store.Key;
 import terrastore.store.features.Range;
 import terrastore.store.features.Update;
@@ -44,6 +45,18 @@ public interface UpdateService {
      */
     @HandleFailure(exception = CommunicationException.class)
     public void removeBucket(String bucket) throws CommunicationException, UpdateOperationException;
+
+    /**
+     * Execute a bulk put into the given bucket.
+     *
+     * @param bucket The name of the bucket where to bulk put values.
+     * @param values The values to put.
+     * @return The inserted keys.
+     * @throws CommunicationException If unable to perform the operation due to cluster communication errors.
+     * @throws UpdateOperationException If no bucket is found with the given name.
+     */
+    @HandleFailure(exception = CommunicationException.class)
+    public Keys bulkPut(String bucket, Values values) throws CommunicationException, UpdateOperationException;
 
     /**
      * Put a value into the given bucket under the given key, eventually replacing the old value.<br>

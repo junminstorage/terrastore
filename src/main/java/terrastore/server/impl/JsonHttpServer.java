@@ -101,6 +101,14 @@ public class JsonHttpServer {
         return Response.noContent().build();
     }
 
+    @POST
+    @Path("/{bucket}/bulk")
+    @Consumes("application/json")
+    public Response bulkPut(@PathParam("bucket") String bucket, Values values) throws ServerOperationException {
+        Keys insertedKeys = core.bulkPut(bucket, values);
+        return Response.ok().entity(insertedKeys).build();
+    }
+
     @PUT
     @Path("/{bucket}/{key}")
     @Consumes("application/json")
