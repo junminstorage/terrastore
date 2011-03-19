@@ -36,6 +36,7 @@ import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
+import terrastore.server.Buckets;
 import terrastore.server.Keys;
 import terrastore.server.Values;
 import terrastore.service.KeyRangeStrategy;
@@ -71,12 +72,12 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Set<String> getBuckets() throws CommunicationException, QueryOperationException {
+    public Buckets getBuckets() throws CommunicationException, QueryOperationException {
         try {
             GetBucketsCommand command = new GetBucketsCommand();
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
             Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
-            return buckets;
+            return new Buckets(buckets);
         } catch (ParallelExecutionException ex) {
             handleParallelExecutionException(ex);
             return null;
@@ -145,7 +146,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<Key, Value> getAllValues(final String bucket, final int limit) throws CommunicationException, QueryOperationException {
+    public Values getAllValues(final String bucket, final int limit) throws CommunicationException, QueryOperationException {
         try {
             Set<Key> allKeys = Sets.limited(getAllKeysForBucket(bucket), limit);
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
@@ -174,7 +175,7 @@ public class DefaultQueryService implements QueryService {
                         }
 
                     }, GlobalExecutor.getQueryExecutor());
-            return Maps.union(allKeyValues);
+            return new Values(Maps.union(allKeyValues));
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
             return null;
@@ -185,7 +186,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<Key, Value> queryByRange(final String bucket, final Range range, final Predicate predicate) throws CommunicationException, QueryOperationException {
+    public Values queryByRange(final String bucket, final Range range, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
             Set<Key> keysInRange = Sets.limited(keyRangeStrategy.getKeyRangeForBucket(router, bucket, range), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
@@ -219,7 +220,7 @@ public class DefaultQueryService implements QueryService {
                         }
 
                     }, GlobalExecutor.getQueryExecutor());
-            return Maps.composite(keysInRange, allKeyValues);
+            return new Values(Maps.composite(keysInRange, allKeyValues));
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
             return null;
@@ -230,7 +231,7 @@ public class DefaultQueryService implements QueryService {
     }
 
     @Override
-    public Map<Key, Value> queryByPredicate(final String bucket, final Predicate predicate) throws CommunicationException, QueryOperationException {
+    public Values queryByPredicate(final String bucket, final Predicate predicate) throws CommunicationException, QueryOperationException {
         try {
             Set<Key> allKeys = getAllKeysForBucket(bucket);
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, allKeys);
@@ -259,7 +260,7 @@ public class DefaultQueryService implements QueryService {
                         }
 
                     }, GlobalExecutor.getQueryExecutor());
-            return Maps.union(allKeyValues);
+            return new Values(Maps.union(allKeyValues));
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
             return null;

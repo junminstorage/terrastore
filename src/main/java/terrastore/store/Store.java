@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
+import terrastore.server.Buckets;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Reducer;
 import terrastore.store.operators.Aggregator;
@@ -62,7 +63,7 @@ public interface Store {
      * 
      * @return A collection of {@link Bucket} names belonging to this store.
      */
-    public Set<String> buckets();
+    public Buckets buckets();
 
     /**
      * Execute a map operation, as described by the {@link terrastore.store.features.Mapper} object,

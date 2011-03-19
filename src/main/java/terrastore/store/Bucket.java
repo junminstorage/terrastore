@@ -19,6 +19,8 @@ import terrastore.store.features.Update;
 import java.util.Map;
 import java.util.Set;
 import terrastore.event.EventBus;
+import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Predicate;
 import terrastore.store.operators.Function;
@@ -78,7 +80,7 @@ public interface Bucket {
      * @return The values corresponding to the given keys.
      * @throws StoreOperationException If no value is found for the given key.
      */
-    public Map<Key, Value> get(Set<Key> keys) throws StoreOperationException;
+    public Values get(Set<Key> keys) throws StoreOperationException;
 
     /**
      * Get the {@link Value} under the given key if satisfying the given {@link terrastore.store.features.Predicate}.
@@ -99,7 +101,7 @@ public interface Bucket {
      * @return The values corresponding to the given keys and satisfying the given predicate.
      * @throws StoreOperationException If no value is found for the given key.
      */
-    public Map<Key, Value> conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException;
+    public Values conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException;
 
     /**
      * Remove this {@link Value} under the given key under the condition that the provided
@@ -176,7 +178,7 @@ public interface Bucket {
      *
      * @return The set of keys.
      */
-    public Set<Key> keys();
+    public Keys keys();
 
     /**
      * Get a set of all keys falling into the given range, sorted as determined by the given comparator.<br>
@@ -189,7 +191,7 @@ public interface Bucket {
      * @return The sorted set of keys in range.
      * @throws StoreOperationException If errors occur.
      */
-    public Set<Key> keysInRange(Range range) throws StoreOperationException;
+    public Keys keysInRange(Range range) throws StoreOperationException;
 
     /**
      * Flush all key/value entries contained into this bucket.

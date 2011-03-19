@@ -15,7 +15,6 @@
  */
 package terrastore.server.impl;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ClusterStats;
@@ -196,7 +195,7 @@ public class CoreServer implements Server {
     public Buckets getBuckets() throws ServerOperationException {
         try {
             LOG.info("Getting buckets.");
-            return new Buckets(queryService.getBuckets());
+            return queryService.getBuckets();
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -230,7 +229,7 @@ public class CoreServer implements Server {
     public Values getAllValues(String bucket, int limit) throws ServerOperationException {
         try {
             LOG.info("Getting all values from bucket {}", bucket);
-            return new Values(queryService.getAllValues(bucket, limit));
+            return queryService.getAllValues(bucket, limit);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -254,10 +253,9 @@ public class CoreServer implements Server {
             LOG.info("Executing range query from {} to {} ordered by {} on bucket {}", new Object[]{startKey, endKey, comparator, bucket});
             Range range = new Range(startKey, endKey, limit, comparator, timeToLive);
             Predicate predicate = new Predicate(predicateExpression);
-            return new Values(
-                    queryService.queryByRange(bucket,
-                    range,
-                    predicate));
+            return queryService.queryByRange(bucket,
+                   range,
+                   predicate);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
@@ -310,7 +308,7 @@ public class CoreServer implements Server {
             }
             LOG.info("Executing predicate query {} on bucket {}", predicateExpression, bucket);
             Predicate predicate = new Predicate(predicateExpression);
-            return new Values(queryService.queryByPredicate(bucket, predicate));
+            return queryService.queryByPredicate(bucket, predicate);
         } catch (CommunicationException ex) {
             ErrorMessage error = ex.getErrorMessage();
             ErrorLogger.LOG(LOG, error, ex);
