@@ -15,6 +15,7 @@
  */
 package terrastore.service.impl;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,8 @@ import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
+import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.service.KeyRangeStrategy;
 import terrastore.service.QueryOperationException;
 import terrastore.service.QueryService;
@@ -74,6 +77,46 @@ public class DefaultQueryService implements QueryService {
             Map<Cluster, Set<Node>> perClusterNodes = router.broadcastRoute();
             Set<String> buckets = multicastGetBucketsCommand(perClusterNodes, command);
             return buckets;
+        } catch (ParallelExecutionException ex) {
+            handleParallelExecutionException(ex);
+            return null;
+        }
+    }
+
+    @Override
+    public Values bulkGet(final String bucket, final Keys keys) throws CommunicationException, QueryOperationException {
+        try {
+            Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keys);
+            List<Map<Key, Value>> allKeyValues = ParallelUtils.parallelMap(
+                    nodeToKeys.entrySet(),
+                    new MapTask<Map.Entry<Node, Set<Key>>, Map<Key, Value>>() {
+
+                        @Override
+                        public Map<Key, Value> map(Map.Entry<Node, Set<Key>> nodeToKeys) throws ParallelExecutionException {
+                            try {
+                                Node node = nodeToKeys.getKey();
+                                Set<Key> keys = nodeToKeys.getValue();
+                                GetValuesCommand command = new GetValuesCommand(bucket, keys);
+                                return node.<Map<Key, Value>>send(command);
+                            } catch (Exception ex) {
+                                // TODO: what?
+                                return Collections.EMPTY_MAP;
+                            }
+                        }
+
+                    },
+                    new MapCollector<Map<Key, Value>, List<Map<Key, Value>>>() {
+
+                        @Override
+                        public List<Map<Key, Value>> collect(List<Map<Key, Value>> allKeyValues) {
+                            return allKeyValues;
+                        }
+
+                    }, GlobalExecutor.getQueryExecutor());
+            return new Values(Maps.union(allKeyValues));
+        } catch (MissingRouteException ex) {
+            handleMissingRouteException(ex);
+            return null;
         } catch (ParallelExecutionException ex) {
             handleParallelExecutionException(ex);
             return null;

@@ -20,6 +20,9 @@ import java.util.Set;
 import terrastore.communication.CommunicationException;
 import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
+import terrastore.server.Keys;
+import terrastore.server.ServerOperationException;
+import terrastore.server.Values;
 import terrastore.store.Key;
 import terrastore.store.Value;
 import terrastore.store.features.Mapper;
@@ -45,6 +48,17 @@ public interface QueryService {
      */
     @HandleFailure(exception = CommunicationException.class)
     public Set<String> getBuckets() throws CommunicationException, QueryOperationException;
+
+    /**
+     * Execute a bulk get from the given bucket.
+     *
+     * @param bucket The name of the bucket where to bulk get values.
+     * @param keys The keys to get.
+     * @return The values.
+     * @throws ServerOperationException If an error occurs.
+     */
+    @HandleFailure(exception = CommunicationException.class)
+    public Values bulkGet(String bucket, Keys keys) throws CommunicationException, QueryOperationException;
 
     /**
      * Get the value under the given key, contained by the given bucket.<br>

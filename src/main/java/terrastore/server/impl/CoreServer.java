@@ -82,6 +82,22 @@ public class CoreServer implements Server {
     }
 
     @Override
+    public Values bulkGet(String bucket, Keys keys) throws ServerOperationException {
+        try {
+            LOG.info("Bulk get from bucket {}", bucket);
+            return queryService.bulkGet(bucket, keys);
+        } catch (CommunicationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        } catch (QueryOperationException ex) {
+            ErrorMessage error = ex.getErrorMessage();
+            ErrorLogger.LOG(LOG, error, ex);
+            throw new ServerOperationException(error);
+        }
+    }
+
+    @Override
     public Keys bulkPut(String bucket, Values values) throws ServerOperationException {
         try {
             LOG.info("Bulk put to bucket {}", bucket);

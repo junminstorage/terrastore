@@ -45,6 +45,7 @@ public class JsonUtilsTest {
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
     //
     private static final String JSON_KEYS = "[\"key1\",\"key2\",\"key3\"]";
+    private static final String BAD_JSON_KEYS = "[\"key1\",\"key2\",3]";
     private static final String JSON_VALUE = "{\"key\":\"value\","
             + "\"array\":[\"primitive\",{\"nested\":[\"array\"]}],"
             + "\"object\":{\"inner\":\"value\"}}";
@@ -217,6 +218,22 @@ public class JsonUtilsTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonUtils.write(buckets, stream);
         assertEquals(BUCKETS, new String(stream.toByteArray()));
+    }
+
+    @Test
+    public void testReadKeys() throws Exception {
+        ByteArrayInputStream stream = new ByteArrayInputStream(JSON_KEYS.getBytes("UTF-8"));
+        Keys keys = JsonUtils.readKeys(stream);
+        assertEquals(3, keys.size());
+        assertTrue(keys.contains(new Key("key1")));
+        assertTrue(keys.contains(new Key("key2")));
+        assertTrue(keys.contains(new Key("key3")));
+    }
+
+    @Test(expected = ValidationException.class)
+    public void testReadBadKeys() throws Exception {
+        ByteArrayInputStream stream = new ByteArrayInputStream(BAD_JSON_KEYS.getBytes("UTF-8"));
+        JsonUtils.readKeys(stream);
     }
 
     @Test
