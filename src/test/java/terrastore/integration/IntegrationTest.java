@@ -18,6 +18,7 @@ package terrastore.integration;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.httpclient.HttpClient;
@@ -128,6 +129,29 @@ public class IntegrationTest {
         GetMethod getValue = makeGetMethod(NODE1_PORT, bucket + "/value");
         HTTP_CLIENT.executeMethod(getValue);
         assertEquals(HttpStatus.SC_NOT_FOUND, getValue.getStatusCode());
+    }
+
+    @Test
+    public void testBulkPutGet() throws Exception {
+        String bucket = UUID.randomUUID().toString();
+
+        TestValue value1 = new TestValue("value1", 1);
+        TestValue value2 = new TestValue("value2", 2);
+        Map values = new HashMap();
+        values.put("1", value1);
+        values.put("2", value2);
+
+        PostMethod bulkPut = makePostMethodForBulkPut(NODE1_PORT, bucket, fromMapToJson(values));
+        HTTP_CLIENT.executeMethod(bulkPut);
+        assertEquals(HttpStatus.SC_OK, bulkPut.getStatusCode());
+        bulkPut.releaseConnection();
+
+        PostMethod bulkGet = makePostMethodForBulkGet(NODE2_PORT, bucket, "[\"1\",\"2\"]");
+        HTTP_CLIENT.executeMethod(bulkGet);
+        assertEquals(HttpStatus.SC_OK, bulkGet.getStatusCode());
+        Map returned = fromJsonToMap(bulkGet.getResponseBodyAsString());
+        assertEquals(2, returned.size());
+        bulkGet.releaseConnection();
     }
 
     @Test
@@ -773,6 +797,26 @@ public class IntegrationTest {
         }
     }
 
+    private PostMethod makePostMethodForBulkPut(int nodePort, String bucket, String values) {
+        try {
+            PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + bucket + "/bulk/put");
+            method.setRequestEntity(new StringRequestEntity(values, "application/json", "UTF-8"));
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
+    private PostMethod makePostMethodForBulkGet(int nodePort, String bucket, String keys) {
+        try {
+            PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + bucket + "/bulk/get");
+            method.setRequestEntity(new StringRequestEntity(keys, "application/json", "UTF-8"));
+            return method;
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("Unsupported UTF-8 encoding.");
+        }
+    }
+
     private PostMethod makePostMethodForMapReduce(int nodePort, String path, String descriptor) {
         try {
             PostMethod method = new PostMethod("http://" + HOST + ":" + nodePort + "/" + path);
@@ -823,6 +867,13 @@ public class IntegrationTest {
     private TestValue fromJsonToObject(String content) throws Exception {
         ObjectMapper jsonMapper = new ObjectMapper();
         return jsonMapper.<TestValue>readValue(content, TestValue.class);
+    }
+
+    private String fromMapToJson(Map map) throws Exception {
+        ObjectMapper jsonMapper = new ObjectMapper();
+        StringWriter result = new StringWriter();
+        jsonMapper.writeValue(result, map);
+        return result.toString();
     }
 
     private Map<String, Object> fromJsonToMap(String content) throws Exception {
@@ -936,6 +987,7 @@ public class IntegrationTest {
             public int hashCode() {
                 return stringField.hashCode() * numField;
             }
+
         }
     }
 }
