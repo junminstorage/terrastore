@@ -59,9 +59,10 @@ public class JsonValuesProvider implements MessageBodyReader<Values>, MessageBod
     @Override
     public Values readFrom(Class<Values> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         try {
-        return JsonUtils.readValues(entityStream);
-        } catch(ValidationException ex) {
+            return JsonUtils.readValues(entityStream);
+        } catch (ValidationException ex) {
             throw new WebApplicationException(Response.status(ex.getErrorMessage().getCode()).entity(ex.getErrorMessage()).build());
         }
     }
+
 }
