@@ -16,7 +16,6 @@
 package terrastore.service.impl;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -200,7 +199,7 @@ public class DefaultUpdateService implements UpdateService {
         try {
             Set<Key> keysInRange = Sets.limited(keyRangeService.getKeyRangeForBucket(router, bucket, range), range.getLimit());
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, keysInRange);
-            List<Set<Key>> removedKeyMap = ParallelUtils.parallelMap(
+            List<Set<Key>> removedKeys = ParallelUtils.parallelMap(
                     nodeToKeys.entrySet(),
                     new MapTask<Map.Entry<Node, Set<Key>>, Set<Key>>() {
 
@@ -231,13 +230,7 @@ public class DefaultUpdateService implements UpdateService {
 
                     },
                     GlobalExecutor.getUpdateExecutor());
-
-            Set<Key> removedKeys = new HashSet<Key>();
-            for (Set<Key> keysFromNode : removedKeyMap) {
-                removedKeys.addAll(keysFromNode);
-            }
-
-            return new Keys(removedKeys);
+            return new Keys(Sets.union(removedKeys));
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
             return null;
