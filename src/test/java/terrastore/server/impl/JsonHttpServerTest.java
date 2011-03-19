@@ -35,6 +35,7 @@ import org.easymock.classextension.EasyMock;
 import org.junit.Test;
 import terrastore.common.ClusterStats;
 import terrastore.common.ErrorMessage;
+import terrastore.server.Buckets;
 import terrastore.server.Keys;
 import terrastore.server.Values;
 import terrastore.service.BackupService;
@@ -131,7 +132,7 @@ public class JsonHttpServerTest {
 
         verify(updateService, queryService, backupService, statsService);
     }
-    
+
     @Test
     public void testGetStats() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
@@ -332,120 +333,120 @@ public class JsonHttpServerTest {
 
         verify(updateService, queryService, backupService, statsService);
     }
-    
+
     @Test
     public void testRemoveByRangeWithNoComparator() throws Exception {
-    	UpdateService updateService = createMock(UpdateService.class);
+        UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
-        
+
         Range range = new Range(new Key("aaaa"), new Key("ffff"), 0, "", 0);
-        
+
         updateService.removeByRange("bucket", range, new Predicate(null));
         expectLastCall().andReturn(new Keys(Collections.EMPTY_SET)).once();
-        
+
         replay(updateService, queryService, backupService, statsService);
-        
+
         JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
-        
+
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/range?startKey=aaaa&endKey=ffff");
         client.executeMethod(method);
-        
+
         assertEquals(HttpStatus.SC_OK, method.getStatusCode());
-        
+
         method.releaseConnection();
-        
+
         stopServer(server);
-        
+
         verify(updateService, queryService, backupService, statsService);
     }
-    
+
     @Test
     public void testRemoveByRangeWithComparator() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
-        
+
         Range range = new Range(new Key("aaaa"), new Key("ffff"), 0, "lexical-asc", 0);
-        
+
         updateService.removeByRange("bucket", range, new Predicate(null));
         expectLastCall().andReturn(new Keys(Collections.EMPTY_SET)).once();
-        
+
         replay(updateService, queryService, backupService, statsService);
-        
+
         JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
-        
+
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/range?startKey=aaaa&endKey=ffff&comparator=lexical-asc");
         client.executeMethod(method);
-        
+
         assertEquals(HttpStatus.SC_OK, method.getStatusCode());
-        
+
         method.releaseConnection();
-        
+
         stopServer(server);
-        
+
         verify(updateService, queryService, backupService, statsService);
     }
-    
+
     @Test
     public void testRemoveByRangeWithLimit() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
-        
+
         Range range = new Range(new Key("aaaa"), new Key("ffff"), 100, "", 0);
-        
+
         updateService.removeByRange("bucket", range, new Predicate(null));
         expectLastCall().andReturn(new Keys(Collections.EMPTY_SET)).once();
-        
+
         replay(updateService, queryService, backupService, statsService);
-        
+
         JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
-        
+
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/range?startKey=aaaa&endKey=ffff&limit=100");
         client.executeMethod(method);
-        
+
         assertEquals(HttpStatus.SC_OK, method.getStatusCode());
-        
+
         method.releaseConnection();
-        
+
         stopServer(server);
-        
+
         verify(updateService, queryService, backupService, statsService);
     }
-    
+
     @Test
     public void testRemoveByRangeWithPredicate() throws Exception {
         UpdateService updateService = createMock(UpdateService.class);
         QueryService queryService = createMock(QueryService.class);
         BackupService backupService = createMock(BackupService.class);
         StatsService statsService = createMock(StatsService.class);
-        
+
         Range range = new Range(new Key("aaaa"), new Key("ffff"), 100, "", 10000L);
-        
+
         updateService.removeByRange("bucket", range, new Predicate("condition:some"));
         expectLastCall().andReturn(new Keys(Collections.EMPTY_SET)).once();
-        
+
         replay(updateService, queryService, backupService, statsService);
-        
+
         JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
-        
+
         HttpClient client = new HttpClient();
         DeleteMethod method = new DeleteMethod("http://localhost:8080/bucket/range?startKey=aaaa&endKey=ffff&limit=100&timeToLive=10000&predicate=condition:some");
         client.executeMethod(method);
-        
+
         assertEquals(HttpStatus.SC_OK, method.getStatusCode());
-        
+
         method.releaseConnection();
-        
+
         stopServer(server);
-        
+
         verify(updateService, queryService, backupService, statsService);
     }
 
@@ -520,7 +521,7 @@ public class JsonHttpServerTest {
         QueryService queryService = createMock(QueryService.class);
 
         queryService.getAllValues(eq("bucket"), eq(0));
-        expectLastCall().andReturn(values).once();
+        expectLastCall().andReturn(new Values(values)).once();
 
         replay(updateService, queryService, backupService, statsService);
 
@@ -554,7 +555,7 @@ public class JsonHttpServerTest {
         StatsService statsService = createMock(StatsService.class);
 
         queryService.getBuckets();
-        expectLastCall().andReturn(buckets).once();
+        expectLastCall().andReturn(new Buckets(buckets)).once();
 
         replay(updateService, queryService, backupService, statsService);
 
@@ -588,7 +589,7 @@ public class JsonHttpServerTest {
         StatsService statsService = createMock(StatsService.class);
 
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "", 0)), eq(new Predicate(null)));
-        expectLastCall().andReturn(values).once();
+        expectLastCall().andReturn(new Values(values)).once();
 
         replay(updateService, queryService, backupService, statsService);
 
@@ -622,7 +623,7 @@ public class JsonHttpServerTest {
         StatsService statsService = createMock(StatsService.class);
 
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 2, "order", 0)), eq(new Predicate(null)));
-        expectLastCall().andReturn(values).once();
+        expectLastCall().andReturn(new Values(values)).once();
 
         replay(updateService, queryService, backupService, statsService);
 
@@ -656,7 +657,7 @@ public class JsonHttpServerTest {
         StatsService statsService = createMock(StatsService.class);
 
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order", 0)), eq(new Predicate(null)));
-        expectLastCall().andReturn(values).once();
+        expectLastCall().andReturn(new Values(values)).once();
 
         replay(updateService, queryService, backupService, statsService);
 
@@ -690,7 +691,7 @@ public class JsonHttpServerTest {
         StatsService statsService = createMock(StatsService.class);
 
         queryService.queryByRange(eq("bucket"), eq(new Range(new Key("test1"), new Key("test2"), 0, "order", 0)), eq(new Predicate("test:condition")));
-        expectLastCall().andReturn(values).once();
+        expectLastCall().andReturn(new Values(values)).once();
 
         replay(updateService, queryService, backupService, statsService);
 
@@ -724,7 +725,7 @@ public class JsonHttpServerTest {
         StatsService statsService = createMock(StatsService.class);
 
         queryService.queryByPredicate(eq("bucket"), eq(new Predicate("test:condition")));
-        expectLastCall().andReturn(values).once();
+        expectLastCall().andReturn(new Values(values)).once();
 
         replay(updateService, queryService, backupService, statsService);
 

@@ -28,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.server.Keys;
 import terrastore.startup.Constants;
 import terrastore.store.Bucket;
 import terrastore.store.Key;
@@ -53,7 +54,7 @@ public class LocalSnapshotManagerTest {
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(new Key("v"), new Key("c"), new Key("a"))).once();
+        expectLastCall().andReturn(new Keys(Sets.hash(new Key("v"), new Key("c"), new Key("a")))).once();
 
         replay(bucket);
 
@@ -70,7 +71,7 @@ public class LocalSnapshotManagerTest {
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(new Key("v"), new Key("c"), new Key("a"))).once();
+        expectLastCall().andReturn(new Keys(Sets.hash(new Key("v"), new Key("c"), new Key("a")))).once();
 
         replay(bucket);
 
@@ -90,7 +91,7 @@ public class LocalSnapshotManagerTest {
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(new Key("v"), new Key("c"), new Key("a"))).times(2);
+        expectLastCall().andReturn(new Keys(Sets.hash(new Key("v"), new Key("c"), new Key("a")))).times(2);
 
         replay(bucket);
 
@@ -111,7 +112,7 @@ public class LocalSnapshotManagerTest {
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(new Key("v"), new Key("c"), new Key("a"))).times(2);
+        expectLastCall().andReturn(new Keys(Sets.hash(new Key("v"), new Key("c"), new Key("a")))).times(2);
 
         replay(bucket);
 
@@ -135,7 +136,7 @@ public class LocalSnapshotManagerTest {
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(new Key("v"), new Key("c"), new Key("a"))).times(1);
+        expectLastCall().andReturn(new Keys(Sets.hash(new Key("v"), new Key("c"), new Key("a")))).times(1);
         makeThreadSafe(bucket, true);
 
         replay(bucket);
@@ -167,7 +168,7 @@ public class LocalSnapshotManagerTest {
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(new Key("v"), new Key("c"), new Key("a"))).times(nThreads);
+        expectLastCall().andReturn(new Keys(Sets.hash(new Key("v"), new Key("c"), new Key("a")))).times(nThreads);
         makeThreadSafe(bucket, true);
 
         replay(bucket);

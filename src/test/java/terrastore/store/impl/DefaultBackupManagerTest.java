@@ -15,6 +15,7 @@
  */
 package terrastore.store.impl;
 
+import terrastore.server.Keys;
 import java.io.File;
 import java.nio.charset.Charset;
 import org.junit.Before;
@@ -48,7 +49,7 @@ public class DefaultBackupManagerTest {
         Bucket bucket = createMock(Bucket.class);
 
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(KEY_1, KEY_2));
+        expectLastCall().andReturn(new Keys(Sets.hash(KEY_1, KEY_2)));
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.get(KEY_1);
@@ -76,7 +77,7 @@ public class DefaultBackupManagerTest {
         Bucket bucket = createMock(Bucket.class);
 
         bucket.keys();
-        expectLastCall().andReturn(Sets.hash(KEY_1));
+        expectLastCall().andReturn(new Keys(Sets.hash(KEY_1)));
         bucket.getName();
         expectLastCall().andReturn("bucket").anyTimes();
         bucket.get(KEY_1);

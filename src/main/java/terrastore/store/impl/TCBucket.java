@@ -33,6 +33,8 @@ import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
 import terrastore.event.impl.ValueChangedEvent;
 import terrastore.event.impl.ValueRemovedEvent;
+import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.store.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
@@ -150,7 +152,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Map<Key, Value> get(Set<Key> keys) throws StoreOperationException {
+    public Values get(Set<Key> keys) throws StoreOperationException {
         Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
         for (Key key : keys) {
             Value value = doGet(key);
@@ -158,7 +160,7 @@ public class TCBucket implements Bucket {
                 result.put(key, value);
             }
         }
-        return result;
+        return new Values(result);
     }
 
     @Override
@@ -177,7 +179,7 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Map<Key, Value> conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException {
+    public Values conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException {
         Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
         for (Key key : keys) {
             Value value = doGet(key);
@@ -186,7 +188,7 @@ public class TCBucket implements Bucket {
                 result.put(key, value);
             }
         }
-        return result;
+        return new Values(result);
     }
 
     public void remove(Key key) throws StoreOperationException {
@@ -293,15 +295,15 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public Set<Key> keys() {
-        return Sets.transformed(bucket.keySet(), new KeyDeserializer());
+    public Keys keys() {
+        return new Keys(Sets.transformed(bucket.keySet(), new KeyDeserializer()));
     }
 
     @Override
-    public Set<Key> keysInRange(Range keyRange) throws StoreOperationException {
+    public Keys keysInRange(Range keyRange) throws StoreOperationException {
         Comparator keyComparator = getComparator(keyRange.getKeyComparatorName());
         SortedSnapshot snapshot = snapshotManager.getOrComputeSortedSnapshot(this, keyComparator, keyRange.getKeyComparatorName(), keyRange.getTimeToLive());
-        return snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit());
+        return new Keys(snapshot.keysInRange(keyRange.getStartKey(), keyRange.getEndKey(), keyRange.getLimit()));
     }
 
     @Override

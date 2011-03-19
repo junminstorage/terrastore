@@ -20,6 +20,7 @@ import java.util.Set;
 import terrastore.communication.CommunicationException;
 import terrastore.decorator.failure.HandleFailure;
 import terrastore.router.Router;
+import terrastore.server.Buckets;
 import terrastore.server.Keys;
 import terrastore.server.ServerOperationException;
 import terrastore.server.Values;
@@ -47,7 +48,7 @@ public interface QueryService {
      * @throws QueryOperationException If unable to access buckets.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public Set<String> getBuckets() throws CommunicationException, QueryOperationException;
+    public Buckets getBuckets() throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a bulk get from the given bucket.
@@ -84,7 +85,7 @@ public interface QueryService {
      * @throws QueryOperationException If a bucket with the given name doesn't exist.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public Map<Key, Value> getAllValues(String bucket, int limit) throws CommunicationException, QueryOperationException;
+    public Values getAllValues(String bucket, int limit) throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a range query returning all key/value pairs whose key falls into the given range, and whose value satisfies the given predicate (if any).
@@ -105,7 +106,7 @@ public interface QueryService {
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no matching condition is found.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public Map<Key, Value> queryByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, QueryOperationException;
+    public Values queryByRange(String bucket, Range range, Predicate predicate) throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a predicate-based query returning all key/value pairs whose value satisfies the given predicate.
@@ -120,7 +121,7 @@ public interface QueryService {
      * @throws QueryOperationException If a bucket with the given name doesn't exist, or no condition is specified or no matching is found.
      */
     @HandleFailure(exception = CommunicationException.class)
-    public Map<Key, Value> queryByPredicate(String bucket, Predicate predicate) throws CommunicationException, QueryOperationException;
+    public Values queryByPredicate(String bucket, Predicate predicate) throws CommunicationException, QueryOperationException;
 
     /**
      * Execute a map-reduce query over the given bucket and within a given (optional) key {@link terrastore.store.features.Range}, with mapper, combiner and

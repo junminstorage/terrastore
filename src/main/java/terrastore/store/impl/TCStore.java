@@ -36,6 +36,7 @@ import org.terracotta.collections.ClusteredMap;
 import terrastore.common.ErrorMessage;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.EventBus;
+import terrastore.server.Buckets;
 import terrastore.store.comparators.LexicographicalComparator;
 import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
@@ -156,7 +157,7 @@ public class TCStore implements Store {
     }
 
     @Override
-    public Set<String> buckets() {
+    public Buckets buckets() {
         Set<String> result = new HashSet<String>();
         Set<Entry<String, String>> entries = buckets.entrySet();
         for (Entry<String, String> keyValue : entries) {
@@ -181,7 +182,7 @@ public class TCStore implements Store {
                 buckets.unlockEntry(bucket);
             }
         }
-        return result;
+        return new Buckets(result);
     }
 
     @Override
