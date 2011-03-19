@@ -24,6 +24,8 @@ import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -154,6 +156,26 @@ public class JsonUtils {
         }
         jsonGenerator.writeEndObject();
         jsonGenerator.close();
+    }
+
+    public static Keys readKeys(InputStream stream) throws IOException, ValidationException {
+        Set<Key> keys = new LinkedHashSet<Key>();
+        JsonParser jsonParser = new JsonFactory().createJsonParser(stream);
+        JsonToken token = jsonParser.nextToken();
+        if (token != null && token.equals(JsonToken.START_ARRAY)) {
+            token = jsonParser.nextValue();
+            while (token != null && !token.equals(JsonToken.END_ARRAY)) {
+                if (token.equals(JsonToken.VALUE_STRING)) {
+                    keys.add(new Key(jsonParser.getText()));
+                    token = jsonParser.nextValue();
+                } else {
+                    throw new ValidationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json: keys should be all strings."));
+                }
+            }
+        } else {
+            throw new ValidationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json: keys should be a strings array."));
+        }
+        return new Keys(keys);
     }
 
     public static Values readValues(InputStream stream) throws IOException, ValidationException {

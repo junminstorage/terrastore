@@ -16,6 +16,7 @@
 package terrastore.server.impl.support;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -23,15 +24,19 @@ import java.lang.reflect.Type;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 
 import terrastore.server.Keys;
+import terrastore.store.ValidationException;
 import terrastore.util.json.JsonUtils;
 
 /**
  * @author Sven Johansson
+ * @author Sergio Bossa
  */
-public class JsonKeysProvider implements MessageBodyWriter<Keys> {
+public class JsonKeysProvider implements MessageBodyReader<Keys>, MessageBodyWriter<Keys> {
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -46,6 +51,20 @@ public class JsonKeysProvider implements MessageBodyWriter<Keys> {
     @Override
     public void writeTo(Keys keys, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         JsonUtils.write(keys, entityStream);
+    }
+
+    @Override
+    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return Keys.class.isAssignableFrom(type);
+    }
+
+    @Override
+    public Keys readFrom(Class<Keys> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+        try {
+            return JsonUtils.readKeys(entityStream);
+        } catch (ValidationException ex) {
+            throw new WebApplicationException(Response.status(ex.getErrorMessage().getCode()).entity(ex.getErrorMessage()).build());
+        }
     }
 
 }

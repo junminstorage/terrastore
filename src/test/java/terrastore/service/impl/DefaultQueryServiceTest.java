@@ -37,6 +37,8 @@ import terrastore.communication.protocol.GetValuesCommand;
 import terrastore.communication.protocol.MapCommand;
 import terrastore.communication.protocol.ReduceCommand;
 import terrastore.router.Router;
+import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.service.QueryOperationException;
 import terrastore.store.Key;
 import terrastore.store.features.Predicate;
@@ -56,6 +58,51 @@ public class DefaultQueryServiceTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
     private static final String REDUCE_VALUE = "{\"k1\":\"v1\",\"k2\":\"v2\"}";
+
+    @Test
+    public void testBulkGet() throws Exception {
+        Node node = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
+        expectLastCall().andReturn(Maps.hash(new Node[]{node}, new Set[]{Sets.hash(new Key("test1"), new Key("test2"))})).once();
+        node.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(Maps.hash(new Key[]{new Key("test1"), new Key("test2")}, new Value[]{new Value(JSON_VALUE.getBytes()), new Value(JSON_VALUE.getBytes())})).once();
+
+        replay(node, router);
+
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
+        Values result = service.bulkGet("bucket", new Keys(Sets.hash(new Key("test1"), new Key("test2"))));
+        assertEquals(2, result.size());
+        assertEquals(new Value(JSON_VALUE.getBytes()), result.get(new Key("test1")));
+        assertEquals(new Value(JSON_VALUE.getBytes()), result.get(new Key("test2")));
+
+        verify(node, router);
+    }
+
+    @Test
+    public void testBulkGetIgnoresFailingNodes() throws Exception {
+        Node goodNode = createMock(Node.class);
+        Node badNode = createMock(Node.class);
+        Router router = createMock(Router.class);
+
+        router.routeToNodesFor("bucket", Sets.hash(new Key("test1"), new Key("test2")));
+        expectLastCall().andReturn(Maps.hash(new Node[]{goodNode, badNode}, new Set[]{Sets.hash(new Key("test1")), Sets.hash(new Key("test2"))})).once();
+        goodNode.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andReturn(Maps.hash(new Key[]{new Key("test1")}, new Value[]{new Value(JSON_VALUE.getBytes())})).once();
+        badNode.send(EasyMock.<GetValuesCommand>anyObject());
+        expectLastCall().andThrow(new CommunicationException(new ErrorMessage())).once();
+
+        replay(goodNode, badNode, router);
+
+        DefaultQueryService service = new DefaultQueryService(router, new DefaultKeyRangeStrategy());
+        Values result = service.bulkGet("bucket", new Keys(Sets.hash(new Key("test1"), new Key("test2"))));
+        assertEquals(1, result.size());
+        assertEquals(new Value(JSON_VALUE.getBytes()), result.get(new Key("test1")));
+        assertNull(result.get(new Key("test2")));
+
+        verify(goodNode, badNode, router);
+    }
 
     @Test
     public void testGetBuckets() throws Exception {

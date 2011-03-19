@@ -38,6 +38,16 @@ public interface Server {
     public void removeBucket(String bucket) throws ServerOperationException;
 
     /**
+     * Execute a bulk get from the given bucket.
+     *
+     * @param bucket The name of the bucket where to bulk get values.
+     * @param keys The keys to get.
+     * @return The values.
+     * @throws ServerOperationException If an error occurs.
+     */
+    public Values bulkGet(String bucket, Keys keys) throws ServerOperationException;
+
+    /**
      * Execute a bulk put into the given bucket.
      *
      * @param bucket The name of the bucket where to bulk put values.

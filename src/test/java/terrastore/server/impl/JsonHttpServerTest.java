@@ -61,6 +61,7 @@ import static org.junit.Assert.*;
 public class JsonHttpServerTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
+    private static final String JSON_KEYS = "[\"test\"]";
     private static final String JSON_VALUES = "{\"test\":" + JSON_VALUE + "}";
     private static final String JSON_VALUES_x2 = "{\"test1\":" + JSON_VALUE + ",\"test2\":" + JSON_VALUE + "}";
     private static final String MAPREDUCE_WITH_RANGE = "{\"range\":{\"startKey\":\"k1\",\"timeToLive\":10000},\"task\":{\"mapper\":\"mapper\",\"reducer\":\"reducer\",\"timeout\":10000}}";
@@ -84,14 +85,45 @@ public class JsonHttpServerTest {
         JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
 
         HttpClient client = new HttpClient();
-        PostMethod method = new PostMethod("http://localhost:8080/bucket/bulk");
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/bulk/put");
         method.setRequestHeader("Content-Type", "application/json");
         method.setRequestEntity(new StringRequestEntity(JSON_VALUES, "application/json", null));
         client.executeMethod(method);
 
         assertEquals(HttpStatus.SC_OK, method.getStatusCode());
         System.err.println(method.getResponseBodyAsString());
-        assertEquals("[\"test\"]", method.getResponseBodyAsString());
+        assertEquals(JSON_KEYS, method.getResponseBodyAsString());
+
+        method.releaseConnection();
+
+        stopServer(server);
+
+        verify(updateService, queryService, backupService, statsService);
+    }
+
+    @Test
+    public void testBulkGet() throws Exception {
+        UpdateService updateService = createMock(UpdateService.class);
+        QueryService queryService = createMock(QueryService.class);
+        BackupService backupService = createMock(BackupService.class);
+        StatsService statsService = createMock(StatsService.class);
+
+        queryService.bulkGet(eq("bucket"), EasyMock.<Keys>anyObject());
+        expectLastCall().andReturn(new Values(Maps.hash(new Key[]{new Key("test")}, new Value[]{new Value(JSON_VALUE.getBytes())}))).once();
+
+        replay(updateService, queryService, backupService, statsService);
+
+        JsonHttpServer server = startServerWith(updateService, queryService, backupService, statsService);
+
+        HttpClient client = new HttpClient();
+        PostMethod method = new PostMethod("http://localhost:8080/bucket/bulk/get");
+        method.setRequestHeader("Content-Type", "application/json");
+        method.setRequestEntity(new StringRequestEntity(JSON_KEYS, "application/json", null));
+        client.executeMethod(method);
+
+        assertEquals(HttpStatus.SC_OK, method.getStatusCode());
+        System.err.println(method.getResponseBodyAsString());
+        assertEquals(JSON_VALUES, method.getResponseBodyAsString());
 
         method.releaseConnection();
 
