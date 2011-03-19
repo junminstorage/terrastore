@@ -15,6 +15,7 @@
  */
 package terrastore.service.impl;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,25 +84,44 @@ public class DefaultUpdateService implements UpdateService {
     }
 
     @Override
-    public Keys bulkPut(String bucket, Values values) throws CommunicationException, UpdateOperationException {
-        Set<Key> insertedKeys = new HashSet<Key>();
+    public Keys bulkPut(final String bucket, final Values values) throws CommunicationException, UpdateOperationException {
         try {
             Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, values.keySet());
-            for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
-                try {
-                    Node node = nodeToKeysEntry.getKey();
-                    Set<Key> nodeKeys = nodeToKeysEntry.getValue();
-                    PutValuesCommand command = new PutValuesCommand(bucket, Maps.slice(values, nodeKeys));
-                    Set<Key> keys = node.<Set<Key>>send(command);
-                    insertedKeys.addAll(keys);
-                } catch (Exception ex) {
-                    // TODO: what?;
-                }
-            }
+            List<Set<Key>> insertedKeys = ParallelUtils.parallelMap(
+                    nodeToKeys.entrySet(),
+                    new MapTask<Map.Entry<Node, Set<Key>>, Set<Key>>() {
+
+                        @Override
+                        public Set<Key> map(Entry<Node, Set<Key>> nodeToKeys) throws ParallelExecutionException {
+                            try {
+                                Node node = nodeToKeys.getKey();
+                                Set<Key> keys = nodeToKeys.getValue();
+                                PutValuesCommand command = new PutValuesCommand(bucket, Maps.slice(values, keys));
+                                return node.<Set<Key>>send(command);
+                            } catch (Exception ex) {
+                                // TODO: what?
+                                return Collections.EMPTY_SET;
+                            }
+                        }
+
+                    },
+                    new MapCollector<Set<Key>, List<Set<Key>>>() {
+
+                        @Override
+                        public List<Set<Key>> collect(List<Set<Key>> allKeys) {
+                            return allKeys;
+                        }
+
+                    },
+                    GlobalExecutor.getUpdateExecutor());
+            return new Keys(Sets.union(insertedKeys));
         } catch (MissingRouteException ex) {
             handleMissingRouteException(ex);
+            return null;
+        } catch (ParallelExecutionException ex) {
+            handleParallelExecutionException(ex);
+            return null;
         }
-        return new Keys(insertedKeys);
     }
 
     @Override
