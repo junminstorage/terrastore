@@ -51,6 +51,10 @@ public class Maps {
         return new CompositeMap<K, V>(keys, values);
     }
 
+    public static <K, V> Map<K, V> slice(Map<K, V> map, Set<K> keys) {
+        return new SlicedMap<K, V>(map, keys);
+    }
+
     public static <K, V> void fill(Map<K, V> map, K[] keys, V[] values) {
         if (keys.length == values.length) {
             int index = 0;

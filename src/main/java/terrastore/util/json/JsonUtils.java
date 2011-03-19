@@ -20,7 +20,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -151,6 +154,28 @@ public class JsonUtils {
         }
         jsonGenerator.writeEndObject();
         jsonGenerator.close();
+    }
+
+    public static Values readValues(InputStream stream) throws IOException, ValidationException {
+        Map<Key, Value> values = new HashMap<Key, Value>();
+        JsonParser jsonParser = new JsonFactory().createJsonParser(stream);
+        if (jsonParser.nextToken() != null) {
+            JsonToken token = jsonParser.nextValue();
+            while (token != null && !token.equals(JsonToken.END_OBJECT)) {
+                if (token.equals(JsonToken.START_OBJECT)) {
+                    Key key = new Key(jsonParser.getCurrentName());
+                    StringWriter objectWriter = new StringWriter();
+                    JsonGenerator objectGenerator = new JsonFactory().createJsonGenerator(objectWriter);
+                    objectGenerator.copyCurrentStructure(jsonParser);
+                    objectGenerator.close();
+                    values.put(key, new Value(objectWriter.toString().getBytes(Charset.forName("UTF-8"))));
+                    token = jsonParser.nextValue();
+                } else {
+                    throw new ValidationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json: values should be all objects."));
+                }
+            }
+        }
+        return new Values(values);
     }
 
     public static Parameters readParameters(InputStream stream) throws IOException {

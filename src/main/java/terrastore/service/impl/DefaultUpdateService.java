@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorLogger;
@@ -31,6 +30,7 @@ import terrastore.communication.Node;
 import terrastore.communication.ProcessingException;
 import terrastore.communication.protocol.MergeCommand;
 import terrastore.communication.protocol.PutValueCommand;
+import terrastore.communication.protocol.BulkPutCommand;
 import terrastore.communication.protocol.RemoveBucketCommand;
 import terrastore.communication.protocol.RemoveValueCommand;
 import terrastore.communication.protocol.RemoveValuesCommand;
@@ -38,6 +38,7 @@ import terrastore.communication.protocol.UpdateCommand;
 import terrastore.router.MissingRouteException;
 import terrastore.router.Router;
 import terrastore.server.Keys;
+import terrastore.server.Values;
 import terrastore.service.KeyRangeStrategy;
 import terrastore.service.UpdateOperationException;
 import terrastore.service.UpdateService;
@@ -53,6 +54,7 @@ import terrastore.util.collect.parallel.ParallelExecutionException;
 import terrastore.util.collect.parallel.ParallelUtils;
 import terrastore.util.concurrent.GlobalExecutor;
 import terrastore.store.ValidationException;
+import terrastore.util.collect.Maps;
 
 /**
  * @author Sergio Bossa
@@ -69,6 +71,7 @@ public class DefaultUpdateService implements UpdateService {
         this.keyRangeService = keyRangeService;
     }
 
+    @Override
     public void removeBucket(String bucket) throws CommunicationException, UpdateOperationException {
         try {
             RemoveBucketCommand command = new RemoveBucketCommand(bucket);
@@ -79,6 +82,29 @@ public class DefaultUpdateService implements UpdateService {
         }
     }
 
+    @Override
+    public Keys bulkPut(String bucket, Values values) throws CommunicationException, UpdateOperationException {
+        Set<Key> insertedKeys = new HashSet<Key>();
+        try {
+            Map<Node, Set<Key>> nodeToKeys = router.routeToNodesFor(bucket, values.keySet());
+            for (Map.Entry<Node, Set<Key>> nodeToKeysEntry : nodeToKeys.entrySet()) {
+                try {
+                    Node node = nodeToKeysEntry.getKey();
+                    Set<Key> nodeKeys = nodeToKeysEntry.getValue();
+                    BulkPutCommand command = new BulkPutCommand(bucket, Maps.slice(values, nodeKeys));
+                    Set<Key> keys = node.<Set<Key>>send(command);
+                    insertedKeys.addAll(keys);
+                } catch (Exception ex) {
+                    // TODO: what?;
+                }
+            }
+        } catch (MissingRouteException ex) {
+            handleMissingRouteException(ex);
+        }
+        return new Keys(insertedKeys);
+    }
+
+    @Override
     public void putValue(String bucket, Key key, Value value, Predicate predicate) throws CommunicationException, UpdateOperationException, ValidationException {
         Value.ValidationResult validation = value.validate();
         if (validation.isValid()) {
@@ -101,6 +127,7 @@ public class DefaultUpdateService implements UpdateService {
         }
     }
 
+    @Override
     public void removeValue(String bucket, Key key) throws CommunicationException, UpdateOperationException {
         try {
             Node node = router.routeToNodeFor(bucket, key);

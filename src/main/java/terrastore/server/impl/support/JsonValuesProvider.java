@@ -16,6 +16,7 @@
 package terrastore.server.impl.support;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -23,9 +24,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 import terrastore.server.Values;
+import terrastore.store.ValidationException;
 import terrastore.util.json.JsonUtils;
 
 /**
@@ -33,7 +37,7 @@ import terrastore.util.json.JsonUtils;
  */
 @Provider
 @Produces("application/json")
-public class JsonValuesProvider implements MessageBodyWriter<Values> {
+public class JsonValuesProvider implements MessageBodyReader<Values>, MessageBodyWriter<Values> {
 
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return Values.class.isAssignableFrom(type);
@@ -45,5 +49,19 @@ public class JsonValuesProvider implements MessageBodyWriter<Values> {
 
     public long getSize(Values values, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return -1;
+    }
+
+    @Override
+    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return Values.class.isAssignableFrom(type);
+    }
+
+    @Override
+    public Values readFrom(Class<Values> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+        try {
+        return JsonUtils.readValues(entityStream);
+        } catch(ValidationException ex) {
+            throw new WebApplicationException(Response.status(ex.getErrorMessage().getCode()).entity(ex.getErrorMessage()).build());
+        }
     }
 }
