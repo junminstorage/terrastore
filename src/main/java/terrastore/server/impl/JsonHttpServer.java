@@ -104,6 +104,7 @@ public class JsonHttpServer {
     @POST
     @Path("/{bucket}/bulk/put")
     @Consumes("application/json")
+    @Produces("application/json")
     public Response bulkPut(@PathParam("bucket") String bucket, Values values) throws ServerOperationException {
         Keys insertedKeys = core.bulkPut(bucket, values);
         return Response.ok().entity(insertedKeys).build();
@@ -112,6 +113,7 @@ public class JsonHttpServer {
     @POST
     @Path("/{bucket}/bulk/get")
     @Consumes("application/json")
+    @Produces("application/json")
     public Response bulkGet(@PathParam("bucket") String bucket, Keys keys) throws ServerOperationException {
         Values fetchedValues = core.bulkGet(bucket, keys);
         return Response.ok().entity(fetchedValues).build();

@@ -20,14 +20,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-
+import javax.ws.rs.Consumes;
+import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
-
+import javax.ws.rs.ext.Provider;
 import terrastore.server.Keys;
 import terrastore.store.ValidationException;
 import terrastore.util.json.JsonUtils;
@@ -36,6 +37,9 @@ import terrastore.util.json.JsonUtils;
  * @author Sven Johansson
  * @author Sergio Bossa
  */
+@Provider
+@Consumes("application/json")
+@Produces("application/json")
 public class JsonKeysProvider implements MessageBodyReader<Keys>, MessageBodyWriter<Keys> {
 
     @Override
