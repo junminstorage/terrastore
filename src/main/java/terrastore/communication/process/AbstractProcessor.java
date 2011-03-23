@@ -129,6 +129,7 @@ public abstract class AbstractProcessor implements Processor {
                 Response<R> result = commandHandler.handle(command);
                 completionHandler.handleSuccess(result);
             } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
                 if (ex instanceof StoreOperationException) {
                     completionHandler.handleFailure(new ProcessingException(((StoreOperationException) ex).getErrorMessage()));
                 } else if (ex instanceof CommunicationException) {
