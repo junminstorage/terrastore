@@ -64,7 +64,9 @@ public class ErrorMessage implements MessagePackable, MessageUnpackable {
     @Override
     public void messagePack(Packer packer) throws IOException {
         MsgPackUtils.packInt(packer, code);
-        MsgPackUtils.packString(packer, message);
+        if (message != null) {
+            MsgPackUtils.packString(packer, message);
+        }
     }
 
     @Override
