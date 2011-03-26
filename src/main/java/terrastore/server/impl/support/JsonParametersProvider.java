@@ -48,7 +48,7 @@ public class JsonParametersProvider implements MessageBodyReader<Parameters> {
         } catch (Exception ex) {
             throw new WebApplicationException(Response.status(ErrorMessage.BAD_REQUEST_ERROR_CODE).
                     entity("Error: " + ex.getMessage() + "\n\rInput: " + new String(IOUtils.read(entityStream))).
-                    build());
+                    type("application/json").build());
         }
     }
 

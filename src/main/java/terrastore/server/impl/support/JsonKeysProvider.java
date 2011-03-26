@@ -67,7 +67,7 @@ public class JsonKeysProvider implements MessageBodyReader<Keys>, MessageBodyWri
         try {
             return JsonUtils.readKeys(entityStream);
         } catch (ValidationException ex) {
-            throw new WebApplicationException(Response.status(ex.getErrorMessage().getCode()).entity(ex.getErrorMessage()).build());
+            throw new WebApplicationException(Response.status(ex.getErrorMessage().getCode()).entity(ex.getErrorMessage()).type("application/json").build());
         }
     }
 

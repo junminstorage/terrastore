@@ -63,7 +63,7 @@ public class JsonValuesProvider implements MessageBodyReader<Values>, MessageBod
         try {
             return JsonUtils.readValues(entityStream);
         } catch (ValidationException ex) {
-            throw new WebApplicationException(Response.status(ex.getErrorMessage().getCode()).entity(ex.getErrorMessage()).build());
+            throw new WebApplicationException(Response.status(ex.getErrorMessage().getCode()).entity(ex.getErrorMessage()).type("application/json").type("application/json").build());
         }
     }
 
