@@ -60,6 +60,7 @@ public class JsonValueProvider implements MessageBodyReader<Value>, MessageBodyW
             throw new WebApplicationException(Response
                     .status(ErrorMessage.BAD_REQUEST_ERROR_CODE)
                     .entity(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad Json value: " + new String(bytes)))
+                    .type("application/json")
                     .build());
         }
     }

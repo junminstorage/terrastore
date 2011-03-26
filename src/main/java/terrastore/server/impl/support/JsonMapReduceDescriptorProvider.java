@@ -55,7 +55,7 @@ public class JsonMapReduceDescriptorProvider implements MessageBodyReader<MapRed
         } catch (Exception ex) {
             throw new WebApplicationException(Response.status(ErrorMessage.BAD_REQUEST_ERROR_CODE).
                     entity(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Error: " + ex.getMessage() + "\n\rInput: " + new String(IOUtils.read(entityStream)))).
-                    build());
+                    type("application/json").build());
         }
 
     }
