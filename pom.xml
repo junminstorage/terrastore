@@ -14,7 +14,7 @@
         <dependency>
             <groupId>org.msgpack</groupId>
             <artifactId>msgpack</artifactId>
-            <version>0.4.3-devel</version>
+            <version>0.5.1-devel</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -65,12 +65,12 @@
         <dependency>
             <groupId>org.jboss.netty</groupId>
             <artifactId>netty</artifactId>
-            <version>3.2.2.Final</version>
+            <version>3.2.3.Final</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>jaxrs-api</artifactId>
-            <version>2.0.0.GA</version>
+            <version>2.1.0.GA</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
-            <version>2.0.0.GA</version>
+            <version>2.1.0.GA</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -104,7 +104,7 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-spring</artifactId>
-            <version>2.0.0.GA</version>
+            <version>2.1.0.GA</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.jboss.resteasy</groupId>
