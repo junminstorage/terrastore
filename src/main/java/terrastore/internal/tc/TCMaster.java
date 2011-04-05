@@ -28,12 +28,14 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.api.ClusteringToolkit;
+import org.terracotta.api.ClusteringToolkitExtension;
 import org.terracotta.api.TerracottaClient;
 import org.terracotta.cluster.ClusterInfo;
 import org.terracotta.collections.ClusteredMap;
 import org.terracotta.collections.ConcurrentDistributedMap;
 import org.terracotta.coordination.Barrier;
+import org.terracotta.express.Client;
+import org.terracotta.express.ClientFactory;
 import org.terracotta.locking.ClusteredLock;
 import org.terracotta.locking.LockStrategy;
 import org.terracotta.locking.LockType;
@@ -49,48 +51,47 @@ public class TCMaster {
     private static final Logger LOG = LoggerFactory.getLogger(TCMaster.class);
     //
     private static final TCMaster INSTANCE = new TCMaster();
+    private static final String TERRASTORE_SHARED_ROOT = "TERRASTORE_ROOT";
     //
-    private volatile boolean connected;
-    private volatile ClusteringToolkit toolkit;
+    private volatile ClusteringToolkitExtension toolkit;
+    private volatile Client client;
 
     public static TCMaster getInstance() {
         return INSTANCE;
     }
 
     protected TCMaster() {
-        connected = false;
         toolkit = new LocalToolkit();
     }
 
     public boolean connect(String url, long timeout, TimeUnit unit) {
-        if (!connected) {
-            FutureTask<ClusteringToolkit> futureTask = null;
+        if (client == null) {
+            FutureTask<Client> futureTask = null;
             try {
                 futureTask = startConnector(url);
-                toolkit = futureTask.get(timeout, unit);
-                connected = true;
+                client = futureTask.get(timeout, unit);
+                toolkit = ClusteredType.TerracottaToolkit.newInstance(client);
             } catch (InterruptedException ex) {
                 LOG.error(ex.getMessage(), ex);
                 toolkit = new LocalToolkit();
-                connected = false;
             } catch (ExecutionException ex) {
                 LOG.error(ex.getMessage(), ex);
                 toolkit = new LocalToolkit();
-                connected = false;
             } catch (TimeoutException ex) {
                 LOG.error(ex.getMessage(), ex);
                 futureTask.cancel(true);
                 toolkit = new LocalToolkit();
-                connected = false;
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+                toolkit = new LocalToolkit();
             }
         } else {
             throw new IllegalStateException("Already connected!");
         }
-        return connected;
+        return client != null;
     }
 
     public void setupLocally() {
-        connected = false;
         toolkit = new LocalToolkit();
     }
 
@@ -99,15 +100,33 @@ public class TCMaster {
     }
 
     public void evictReadWriteLock(String name) {
-        toolkit.evictReadWriteLock(name);
+        toolkit.unregisterReadWriteLock(name);
     }
 
     public <K, V> ClusteredMap<K, V> getAutolockedMap(String name) {
-        return toolkit.getMap(name, LockType.WRITE, LockStrategy.HASH_CODE);
+        return getOrCreateMap(name, ClusteredType.HashCodeLockStrategy);
     }
 
     public <K, V> ClusteredMap<K, V> getUnlockedMap(String name) {
-        return toolkit.getMap(name, LockType.WRITE, LockStrategy.NULL);
+        return getOrCreateMap(name, ClusteredType.NullLockStrategy);
+    }
+
+    private <K, V> ClusteredMap<K, V> getOrCreateMap(final String name, final ClusteredType lockStrategyType) {
+        ClusteredMap<K, V> value = null;
+        if (client != null) {
+            ClusteredMap<String, ClusteredMap<K, V>> terrastoreRoot = toolkit.getMap(TERRASTORE_SHARED_ROOT);
+            value = terrastoreRoot.get(name);
+            if (value == null) {
+                value = ClusteredType.ConcurrentDistributedServerMap.newInstance(client, LockType.WRITE, lockStrategyType.<LockStrategy<K>>newInstance(client));
+                ClusteredMap<K, V> prev = terrastoreRoot.putIfAbsent(name, value);
+                if (prev != null) {
+                    value = prev;
+                }
+            }
+        } else {
+            value = ((LocalToolkit) toolkit).getMap(name, LockType.WRITE, lockStrategyType.className);
+        }
+        return value;
     }
 
     public ClusteredAtomicLong getLong(String name) {
@@ -118,21 +137,46 @@ public class TCMaster {
         return toolkit.getClusterInfo();
     }
 
-    private FutureTask<ClusteringToolkit> startConnector(final String url) {
-        FutureTask<ClusteringToolkit> futureTask = new FutureTask<ClusteringToolkit>(new Callable<ClusteringToolkit>() {
+    private FutureTask<Client> startConnector(final String url) {
+        FutureTask<Client> futureTask = new FutureTask<Client>(
+                new Callable<Client>() {
 
-            @Override
-            public ClusteringToolkit call() throws Exception {
-                return new TerracottaClient(url).getToolkit();
-            }
+                    @Override
+                    public Client call() throws Exception {
+                        return ClientFactory.getOrCreateClient(url, true, new Class[]{TerracottaClient.class});
+                    }
 
-        });
+                });
         Thread thread = new Thread(futureTask);
         thread.start();
         return futureTask;
     }
 
-    private static class LocalToolkit implements ClusteringToolkit {
+    private enum ClusteredType {
+
+        NullLockStrategy("org.terracotta.locking.strategy.NullLockStrategy"),
+        HashCodeLockStrategy("org.terracotta.locking.strategy.HashcodeLockStrategy"),
+        ConcurrentDistributedServerMap("org.terracotta.collections.ConcurrentDistributedServerMap", new Class[]{LockType.class, LockStrategy.class}),
+        TerracottaToolkit("org.terracotta.api.TerracottaToolkit");
+        private final String className;
+        private final Class[] constructorTypes;
+
+        private ClusteredType(String className, Class... constructorTypes) {
+            this.className = className;
+            this.constructorTypes = constructorTypes;
+        }
+
+        <T> T newInstance(Client client, Object... params) {
+            try {
+                return (T) client.instantiate(className, constructorTypes, params);
+            } catch (Exception e) {
+                throw new RuntimeException("Error instantiating " + className, e);
+            }
+        }
+
+    }
+
+    private static class LocalToolkit implements ClusteringToolkitExtension {
 
         private final Map<String, ReadWriteLock> locks = new HashMap<String, ReadWriteLock>();
         private final Map<String, ClusteredMap> maps = new HashMap<String, ClusteredMap>();
@@ -150,7 +194,7 @@ public class TCMaster {
         }
 
         @Override
-        public synchronized void evictReadWriteLock(String name) {
+        public synchronized void unregisterReadWriteLock(String name) {
             locks.remove(name);
         }
 
@@ -165,7 +209,6 @@ public class TCMaster {
             }
         }
 
-        @Override
         public synchronized <K, V> ClusteredMap<K, V> getMap(String name, LockType lockType, String lockStrategy) {
             try {
                 if (maps.containsKey(name)) {
@@ -224,6 +267,36 @@ public class TCMaster {
 
         @Override
         public ClusteredLock createLock(Object monitor, LockType type) throws IllegalArgumentException, NullPointerException {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void unregisterBarrier(final String s) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void unregisterTextBucket(final String s) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void unregisterBlockingQueue(final String s) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void unregisterAtomicLong(final String s) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void unregisterMap(final String s) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void unregisterList(final String s) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
