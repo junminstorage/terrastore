@@ -117,7 +117,10 @@ public class TCMaster {
             ClusteredMap<String, ClusteredMap<K, V>> terrastoreRoot = toolkit.getMap(TERRASTORE_SHARED_ROOT);
             value = terrastoreRoot.get(name);
             if (value == null) {
-                value = ClusteredType.ConcurrentDistributedServerMap.newInstance(client, LockType.WRITE, lockStrategyType.<LockStrategy<K>>newInstance(client));
+                value = ClusteredType.ConcurrentDistributedServerMap.newInstance(client,
+                        LockType.WRITE,
+                        lockStrategyType.<LockStrategy<K>>newInstance(client),
+                        Integer.valueOf(1));
                 ClusteredMap<K, V> prev = terrastoreRoot.putIfAbsent(name, value);
                 if (prev != null) {
                     value = prev;
@@ -156,7 +159,7 @@ public class TCMaster {
 
         NullLockStrategy("org.terracotta.locking.strategy.NullLockStrategy"),
         HashCodeLockStrategy("org.terracotta.locking.strategy.HashcodeLockStrategy"),
-        ConcurrentDistributedServerMap("org.terracotta.collections.ConcurrentDistributedServerMap", new Class[]{LockType.class, LockStrategy.class}),
+        ConcurrentDistributedServerMap("org.terracotta.collections.ConcurrentDistributedServerMap", new Class[]{LockType.class, LockStrategy.class, Integer.TYPE}),
         TerracottaToolkit("org.terracotta.api.TerracottaToolkit");
         private final String className;
         private final Class[] constructorTypes;
@@ -214,8 +217,9 @@ public class TCMaster {
                 if (maps.containsKey(name)) {
                     return maps.get(name);
                 } else {
-                    ClusteredMap<K, V> map = new ConcurrentDistributedMap<K, V>(lockType, (LockStrategy<? super K>) Class.forName(lockStrategy).
-                            newInstance());
+                    ClusteredMap<K, V> map = new ConcurrentDistributedMap<K, V>(lockType,
+                            (LockStrategy<? super K>) Class.forName(lockStrategy).newInstance(),
+                            Integer.valueOf(1));
                     maps.put(name, map);
                     return map;
                 }
