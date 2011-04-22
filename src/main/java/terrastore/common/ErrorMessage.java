@@ -34,6 +34,10 @@ public class ErrorMessage implements MessagePackable, MessageUnpackable {
     public static final int CONFLICT_ERROR_CODE = 409;
     public static final int INTERNAL_SERVER_ERROR_CODE = 500;
     public static final int UNAVAILABLE_ERROR_CODE = 503;
+    //
+    private static final int USER_ERROR_FAMILY = 400;
+    private static final int SERVER_ERROR_FAMILY = 500;
+    //
     private int code;
     private String message;
 
@@ -43,6 +47,22 @@ public class ErrorMessage implements MessagePackable, MessageUnpackable {
     }
 
     public ErrorMessage() {
+    }
+
+    public boolean isUserError() {
+        if (code >= USER_ERROR_FAMILY && code < SERVER_ERROR_FAMILY) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isServerError() {
+        if (code >= SERVER_ERROR_FAMILY) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public int getCode() {
