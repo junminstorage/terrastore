@@ -72,7 +72,7 @@ public class JsonUtilsTest {
             + "\"array\" : [\"primitive\", {\"nested\":[\"array\"]}], "
             + "\"key\" : {\"bad\":value}}";
     private static final String SIMPLE_JSON_VALUE = "{\"key\":\"value\"}";
-    private static final String ERROR_MESSAGE = "{\"message\":\"test\",\"code\":0}";
+    private static final String ERROR_MESSAGE = "{\"code\":0,\"message\":\"test\"}";
     private static final String CLUSTER_STATS = "{\"clusters\":[{\"name\":\"cluster-1\",\"status\":\"AVAILABLE\",\"nodes\":[{\"name\":\"node-1\",\"host\":\"localhost\",\"port\":8080}]}]}";
     private static final String VALUES = "{\"value\":{\"key\":\"value\"}}";
     private static final String VALUES_2 = "{\"value1\":{\"key1\":\"value1\"},\"value2\":{\"key2\":\"value2\"}}";
