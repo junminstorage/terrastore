@@ -33,6 +33,7 @@ public interface Function {
      * @param value The value to apply the function to.
      * @param parameters The function parameters.
      * @return The result of the function as an associative array.
+     * @throws {@link OperatorException} if something wrong happens during execution.
      */
-    public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters);
+    public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) throws OperatorException;
 }

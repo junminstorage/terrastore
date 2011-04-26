@@ -34,6 +34,7 @@ public interface Condition {
      * @param value The value to evaluate condition on.
      * @param expression The condition expression.
      * @return True if satisfied, false otherwise.
+     * @throws {@link OperatorException} if something wrong happens during execution.
      */
-    public boolean isSatisfied(String key, Map<String, Object> value, String expression);
+    public boolean isSatisfied(String key, Map<String, Object> value, String expression) throws OperatorException;
 }

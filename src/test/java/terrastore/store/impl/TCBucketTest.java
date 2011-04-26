@@ -15,6 +15,8 @@
  */
 package terrastore.store.impl;
 
+import terrastore.store.operators.OperatorException;
+import terrastore.common.ErrorMessage;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
@@ -172,6 +174,47 @@ public class TCBucketTest {
 
         bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
         assertFalse(bucket.conditionalPut(key, updated, predicate));
+    }
+
+    @Test(expected = StoreOperationException.class)
+    public void testConditionalPutFailsBecauseOfOperatorException() throws StoreOperationException {
+        Key key = new Key("key");
+        Value value = new Value(JSON_VALUE.getBytes());
+        Value updated = new Value(JSON_UPDATED.getBytes());
+
+        bucket.put(key, value);
+
+        Predicate predicate = new Predicate("test:unsatisfied");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) throws OperatorException {
+                throw new OperatorException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Test exception"));
+            }
+
+        };
+
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
+        bucket.conditionalPut(key, updated, predicate);
+    }
+
+    @Test(expected = StoreOperationException.class)
+    public void testConditionallyGetValueFailsBecauseOfOperatorException() throws StoreOperationException {
+        Key key = new Key("key");
+        Value value = new Value(JSON_VALUE.getBytes());
+        Predicate predicate = new Predicate("test:test");
+        Condition condition = new Condition() {
+
+            @Override
+            public boolean isSatisfied(String key, Map<String, Object> value, String expression) throws OperatorException {
+                throw new OperatorException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Test exception"));
+            }
+
+        };
+
+        bucket.setConditions(Maps.hash(new String[]{"test"}, new Condition[]{condition}));
+        bucket.put(key, value);
+        bucket.conditionalGet(key, predicate);
     }
 
     @Test
@@ -521,6 +564,29 @@ public class TCBucketTest {
         assertArrayEquals(JSON_UPDATED.getBytes("UTF-8"), bucket.get(key).getBytes());
     }
 
+    @Test(expected = StoreOperationException.class)
+    public void testUpdateFailsBecauseOfOperatorException() throws StoreOperationException, UnsupportedEncodingException {
+        long timeoutInMillis = 1000;
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("p1", "value1");
+        Update update = new Update("function", timeoutInMillis, params);
+        Function function = new Function() {
+
+            @Override
+            public Map<String, Object> apply(String key, Map<String, Object> value, Map<String, Object> parameters) throws OperatorException {
+                throw new OperatorException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Test exception"));
+            }
+
+        };
+
+        bucket.setUpdaters(Maps.hash(new String[]{"function"}, new Function[]{function}));
+
+        Key key = new Key("key");
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        bucket.put(key, value);
+        bucket.update(key, update);
+    }
+
     @Test
     public void testMerge() throws StoreOperationException, UnsupportedEncodingException {
         Key key = new Key("key");
@@ -565,6 +631,23 @@ public class TCBucketTest {
         assertNull(bucket.map(key, mapper));
 
         verify(mapFunction);
+    }
+
+    @Test(expected = StoreOperationException.class)
+    public void testMapFailsBecauseOfOperatorException() throws Exception {
+        Mapper mapper = new Mapper("mapper", "combiner", 60000, Collections.EMPTY_MAP);
+
+        Function mapFunction = createMock(Function.class);
+        mapFunction.apply(eq("key"), eq(Maps.hash(new String[]{"test"}, new Object[]{"test"})), eq(Collections.EMPTY_MAP));
+        expectLastCall().andThrow(new OperatorException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Test exception"))).once();
+
+        replay(mapFunction);
+
+        Key key = new Key("key");
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        bucket.setMappers(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
+        bucket.put(key, value);
+        bucket.map(key, mapper);
     }
 
     @Test

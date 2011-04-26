@@ -494,6 +494,7 @@
                             <classifier>api</classifier>
                             <includes>
                                 <include>terrastore/annotation/*</include>
+                                <include>terrastore/common/ErrorMessage*</include>
                                 <include>terrastore/event/Action*</include>
                                 <include>terrastore/event/Event*</include>
                                 <include>terrastore/partition/Custom*</include>

@@ -54,6 +54,7 @@ import terrastore.store.operators.Aggregator;
 import terrastore.store.operators.Comparator;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
+import terrastore.store.operators.OperatorException;
 import terrastore.util.collect.parallel.MapCollector;
 import terrastore.util.collect.parallel.MapTask;
 import terrastore.util.collect.parallel.ParallelExecutionException;
@@ -312,32 +313,31 @@ public class TCStore implements Store {
                             keys, 1000, // FIXME: make the slice size configurable
                             new MapTask<Key, Map<String, Object>>() {
 
-                                @Override
-                                public Map<String, Object> map(Key input) throws ParallelExecutionException {
-                                    try {
-                                        if (cancelled.get()) {
-                                            throw new ParallelExecutionException(new InterruptedException("Interrupted due to timeout!"));
-                                        } else {
-                                            return bucket.map(input, mapper);
-                                        }
-                                    } catch (StoreOperationException ex) {
-                                        throw new ParallelExecutionException(ex);
-                                    }
+                        @Override
+                        public Map<String, Object> map(Key input) throws ParallelExecutionException {
+                            try {
+                                if (cancelled.get()) {
+                                    throw new ParallelExecutionException(new InterruptedException("Interrupted due to timeout!"));
+                                } else {
+                                    return bucket.map(input, mapper);
                                 }
+                            } catch (StoreOperationException ex) {
+                                throw new ParallelExecutionException(ex);
+                            }
+                        }
 
-                            },
-                            new MapCollector<Map<String, Object>, List<Map<String, Object>>>() {
+                    }, new MapCollector<Map<String, Object>, List<Map<String, Object>>>() {
 
-                                @Override
-                                public List<Map<String, Object>> collect(List<Map<String, Object>> outputs) {
-                                    List<Map<String, Object>> result = new LinkedList<Map<String, Object>>();
-                                    for (Map<String, Object> output : outputs) {
-                                        result.add(output);
-                                    }
-                                    return result;
-                                }
+                        @Override
+                        public List<Map<String, Object>> collect(List<Map<String, Object>> outputs) {
+                            List<Map<String, Object>> result = new LinkedList<Map<String, Object>>();
+                            for (Map<String, Object> output : outputs) {
+                                result.add(output);
+                            }
+                            return result;
+                        }
 
-                            },
+                    },
                             GlobalExecutor.getQueryExecutor());
                     return result;
                 }
@@ -352,7 +352,7 @@ public class TCStore implements Store {
             if (ex.getCause() instanceof StoreOperationException) {
                 throw (StoreOperationException) ex.getCause();
             } else {
-                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getCause().getMessage()));
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
             }
         } catch (Exception ex) {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
@@ -366,7 +366,11 @@ public class TCStore implements Store {
 
                 @Override
                 public Map<String, Object> call() {
-                    return aggregator.apply(values, parameters);
+                    try {
+                        return aggregator.apply(values, parameters);
+                    } catch (OperatorException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
 
             });
@@ -374,6 +378,12 @@ public class TCStore implements Store {
         } catch (TimeoutException ex) {
             task.cancel(true);
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Aggregation cancelled due to long execution time."));
+        } catch (ExecutionException ex) {
+            if (ex.getCause() instanceof RuntimeException && ex.getCause().getCause() instanceof OperatorException) {
+                throw new StoreOperationException(((OperatorException) ex.getCause().getCause()).getErrorMessage());
+            } else {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+            }
         } catch (Exception ex) {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         }
