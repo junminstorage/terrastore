@@ -26,7 +26,14 @@ import java.util.Map;
 public interface Aggregator {
 
     /**
-     * 
+     * Aggregate the given list of values, represented as a map of name -> value pairs, optionally taking into account given parameters,
+     * and returning a map of resulting values.<br>
+     * Maps can contain primitive values (such as integers, strings and alike), nested maps and lists of primitive and nested map values.
+     *
+     * @param values Values to aggregate.
+     * @param parameters Optional parameters.
+     * @return A map of aggregated values.
+     * @throws {@link OperatorException} if something wrong happens during execution.
      */
-    public Map<String, Object> apply(List<Map<String, Object>> values, Map<String, Object> parameters);
+    public Map<String, Object> apply(List<Map<String, Object>> values, Map<String, Object> parameters) throws OperatorException;
 }

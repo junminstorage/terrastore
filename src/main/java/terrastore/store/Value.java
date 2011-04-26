@@ -32,6 +32,7 @@ import terrastore.store.features.Predicate;
 import terrastore.store.features.Update;
 import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
+import terrastore.store.operators.OperatorException;
 import terrastore.util.io.IOUtils;
 import terrastore.util.io.MsgPackUtils;
 import terrastore.util.json.JsonUtils;
@@ -106,15 +107,15 @@ public class Value implements MessagePackable, MessageUnpackable, Serializable {
         return JsonUtils.merge(this, JsonUtils.toModifiableMap(value));
     }
 
-    public final Value dispatch(Key key, Update update, Function function) {
+    public final Value dispatch(Key key, Update update, Function function) throws OperatorException {
         return JsonUtils.fromMap(function.apply(key.toString(), JsonUtils.toModifiableMap(this), update.getParameters()));
     }
 
-    public final Map<String, Object> dispatch(Key key, Mapper mapper, Function function) {
+    public final Map<String, Object> dispatch(Key key, Mapper mapper, Function function) throws OperatorException {
         return function.apply(key.toString(), JsonUtils.toUnmodifiableMap(this), mapper.getParameters());
     }
 
-    public final boolean dispatch(Key key, Predicate predicate, Condition condition) {
+    public final boolean dispatch(Key key, Predicate predicate, Condition condition) throws OperatorException {
         return condition.isSatisfied(key.toString(), JsonUtils.toUnmodifiableMap(this), predicate.getConditionExpression());
     }
 

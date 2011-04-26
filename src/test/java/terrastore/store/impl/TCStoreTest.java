@@ -15,6 +15,7 @@
  */
 package terrastore.store.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.common.ErrorMessage;
 import terrastore.internal.tc.TCMaster;
 import terrastore.store.Bucket;
 import terrastore.store.Key;
@@ -35,6 +37,7 @@ import terrastore.store.StoreOperationException;
 import terrastore.store.features.Mapper;
 import terrastore.store.features.Reducer;
 import terrastore.store.operators.Aggregator;
+import terrastore.store.operators.OperatorException;
 import terrastore.util.collect.Maps;
 import terrastore.util.collect.Sets;
 import terrastore.util.json.JsonUtils;
@@ -100,6 +103,7 @@ public class TCStoreTest {
                         }
                     }
                 }
+
             });
         }
         assertFalse(failed.get());
@@ -152,7 +156,8 @@ public class TCStoreTest {
         expectLastCall().andReturn(mapResult1).once();
         bucket.map(eq(new Key("k2")), same(mapper));
         expectLastCall().andReturn(mapResult2).once();
-        TCStore mockedStore = createMockBuilder(TCStore.class).addMockedMethod(TCStore.class.getDeclaredMethod("get", String.class)).withConstructor().createMock();
+        TCStore mockedStore = createMockBuilder(TCStore.class).addMockedMethod(TCStore.class.getDeclaredMethod("get", String.class)).withConstructor().
+                createMock();
         mockedStore.get(bucketName);
         expectLastCall().andReturn(bucket).once();
         Aggregator aggregator = createMock(Aggregator.class);
@@ -185,7 +190,8 @@ public class TCStoreTest {
         expectLastCall().andReturn(mapResult1).once();
         bucket.map(eq(new Key("k2")), same(mapper));
         expectLastCall().andReturn(mapResult2).once();
-        TCStore mockedStore = createMockBuilder(TCStore.class).addMockedMethod(TCStore.class.getDeclaredMethod("get", String.class)).withConstructor().createMock();
+        TCStore mockedStore = createMockBuilder(TCStore.class).addMockedMethod(TCStore.class.getDeclaredMethod("get", String.class)).withConstructor().
+                createMock();
         mockedStore.get(bucketName);
         expectLastCall().andReturn(bucket).once();
         Aggregator aggregator = createMock(Aggregator.class);
@@ -224,4 +230,22 @@ public class TCStoreTest {
 
         verify(mockedStore, aggregator);
     }
+
+    @Test(expected = StoreOperationException.class)
+    public void testReduceWithOperatorException() throws Exception {
+        List<Map<String, Object>> allResults = new ArrayList<Map<String, Object>>();
+        Reducer reducer = new Reducer("reducer", 60000, Collections.EMPTY_MAP);
+
+        TCStore mockedStore = createMockBuilder(TCStore.class).withConstructor().createMock();
+        Aggregator aggregator = createMock(Aggregator.class);
+        makeThreadSafe(aggregator, true);
+        aggregator.apply(same(allResults), eq(Collections.EMPTY_MAP));
+        expectLastCall().andThrow(new OperatorException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Test exception"))).once();
+
+        replay(mockedStore, aggregator);
+
+        mockedStore.setReducers(Maps.hash(new String[]{"reducer"}, new Aggregator[]{aggregator}));
+        mockedStore.reduce(allResults, reducer);
+    }
+
 }

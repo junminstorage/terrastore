@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -55,6 +56,7 @@ import terrastore.store.operators.Condition;
 import terrastore.store.operators.Function;
 import terrastore.store.features.Range;
 import terrastore.store.operators.Comparator;
+import terrastore.store.operators.OperatorException;
 import terrastore.util.collect.Sets;
 import terrastore.util.collect.Transformer;
 import terrastore.util.concurrent.GlobalExecutor;
@@ -117,6 +119,8 @@ public class TCBucket implements Bucket {
             } else {
                 return false;
             }
+        } catch (OperatorException ex) {
+            throw new StoreOperationException(ex.getErrorMessage());
         } finally {
             unlockWrite(key);
         }
@@ -137,6 +141,8 @@ public class TCBucket implements Bucket {
             } else {
                 return false;
             }
+        } catch (OperatorException ex) {
+            throw new StoreOperationException(ex.getErrorMessage());
         } finally {
             unlockWrite(key);
         }
@@ -167,11 +173,15 @@ public class TCBucket implements Bucket {
     public Value conditionalGet(Key key, Predicate predicate) throws StoreOperationException {
         Value value = doGet(key);
         if (value != null) {
-            Condition condition = getCondition(predicate.getConditionType());
-            if (value.dispatch(key, predicate, condition)) {
-                return value;
-            } else {
-                return null;
+            try {
+                Condition condition = getCondition(predicate.getConditionType());
+                if (value.dispatch(key, predicate, condition)) {
+                    return value;
+                } else {
+                    return null;
+                }
+            } catch (OperatorException ex) {
+                throw new StoreOperationException(ex.getErrorMessage());
             }
         } else {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.NOT_FOUND_ERROR_CODE, "Key not found: " + key));
@@ -182,10 +192,14 @@ public class TCBucket implements Bucket {
     public Values conditionalGet(Set<Key> keys, Predicate predicate) throws StoreOperationException {
         Map<Key, Value> result = new HashMap<Key, Value>(keys.size());
         for (Key key : keys) {
-            Value value = doGet(key);
-            Condition condition = getCondition(predicate.getConditionType());
-            if (value.dispatch(key, predicate, condition)) {
-                result.put(key, value);
+            try {
+                Value value = doGet(key);
+                Condition condition = getCondition(predicate.getConditionType());
+                if (value.dispatch(key, predicate, condition)) {
+                    result.put(key, value);
+                }
+            } catch (OperatorException ex) {
+                throw new StoreOperationException(ex.getErrorMessage());
             }
         }
         return new Values(result);
@@ -222,7 +236,11 @@ public class TCBucket implements Bucket {
 
                     @Override
                     public Value call() {
-                        return value.dispatch(key, update, function);
+                        try {
+                            return value.dispatch(key, update, function);
+                        } catch (OperatorException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     }
 
                 });
@@ -240,6 +258,12 @@ public class TCBucket implements Bucket {
         } catch (TimeoutException ex) {
             task.cancel(true);
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, "Update cancelled due to long execution time."));
+        } catch (ExecutionException ex) {
+            if (ex.getCause() instanceof RuntimeException && ex.getCause().getCause() instanceof OperatorException) {
+                throw new StoreOperationException(((OperatorException) ex.getCause().getCause()).getErrorMessage());
+            } else {
+                throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+            }
         } catch (Exception ex) {
             throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         } finally {
@@ -277,8 +301,12 @@ public class TCBucket implements Bucket {
     public Map<String, Object> map(final Key key, final Mapper mapper) throws StoreOperationException {
         Value value = doGet(key);
         if (value != null) {
-            Function function = getFunction(mappers, mapper.getMapperName());
-            return value.dispatch(key, mapper, function);
+            try {
+                Function function = getFunction(mappers, mapper.getMapperName());
+                return value.dispatch(key, mapper, function);
+            } catch (OperatorException ex) {
+                throw new StoreOperationException(ex.getErrorMessage());
+            }
         } else {
             return null;
         }
