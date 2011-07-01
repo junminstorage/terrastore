@@ -29,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.cluster.ClusterInfo;
 import org.terracotta.collections.ClusteredMap;
+import terrastore.backup.BackupExporter;
+import terrastore.backup.BackupException;
 import terrastore.internal.tc.TCMaster;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
@@ -37,7 +39,6 @@ import terrastore.event.impl.ValueRemovedEvent;
 import terrastore.server.Keys;
 import terrastore.server.Values;
 import terrastore.store.comparators.LexicographicalComparator;
-import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCallback;
 import terrastore.store.FlushCondition;
@@ -73,8 +74,8 @@ public class TCBucket implements Bucket {
     private boolean compressedDocuments;
     private EventBus eventBus;
     private SnapshotManager snapshotManager;
-    private BackupManager backupManager;
     private LockManager lockManager;
+    private BackupExporter backupExporter;
     private Comparator defaultComparator = new LexicographicalComparator(true);
     private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
     private final Map<String, Condition> conditions = new HashMap<String, Condition>();
@@ -356,12 +357,11 @@ public class TCBucket implements Bucket {
 
     @Override
     public void exportBackup(String destination) throws StoreOperationException {
-        backupManager.exportBackup(this, destination);
-    }
-
-    @Override
-    public void importBackup(String source) throws StoreOperationException {
-        backupManager.importBackup(this, source);
+        try {
+            backupExporter.exportBackup(this, destination);
+        } catch (BackupException ex) {
+            throw new StoreOperationException(ex.getErrorMessage());
+        }
     }
 
     @Override
@@ -380,8 +380,8 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public void setBackupManager(BackupManager backupManager) {
-        this.backupManager = backupManager;
+    public void setBackupExporter(BackupExporter backupExporter) {
+        this.backupExporter = backupExporter;
     }
 
     @Override

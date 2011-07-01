@@ -17,7 +17,6 @@ package terrastore.store.impl;
 
 import terrastore.store.operators.OperatorException;
 import terrastore.common.ErrorMessage;
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,12 +25,12 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
+import terrastore.backup.impl.DefaultBackupExporter;
 import terrastore.event.ActionExecutor;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.Event;
 import terrastore.event.EventBus;
 import terrastore.event.EventListener;
-import terrastore.startup.Constants;
 import terrastore.store.Key;
 import terrastore.store.StoreOperationException;
 import terrastore.store.features.Predicate;
@@ -64,7 +63,7 @@ public class TCBucketTest {
         bucket = new TCBucket("bucket");
         bucket.setLockManager(new TCLockManager("test", 128));
         bucket.setSnapshotManager(new LocalSnapshotManager());
-        bucket.setBackupManager(new DefaultBackupManager());
+        bucket.setBackupExporter(new DefaultBackupExporter());
         bucket.setEventBus(new DisabledEventBus());
     }
 
@@ -648,33 +647,6 @@ public class TCBucketTest {
         bucket.setMappers(Maps.hash(new String[]{"mapper"}, new Function[]{mapFunction}));
         bucket.put(key, value);
         bucket.map(key, mapper);
-    }
-
-    @Test
-    public void testBackupImportDoesNotDeleteExistentData() throws StoreOperationException {
-        System.setProperty(Constants.TERRASTORE_HOME, System.getProperty("java.io.tmpdir"));
-        new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + Constants.BACKUPS_DIR).mkdir();
-
-        Key key1 = new Key("key1");
-        Value value1 = new Value(JSON_VALUE.getBytes());
-        Key key2 = new Key("key2");
-        Value value2 = new Value(JSON_VALUE.getBytes());
-        Key key3 = new Key("key3");
-        Value value3 = new Value(JSON_VALUE.getBytes());
-
-        bucket.put(key1, value1);
-        bucket.put(key2, value2);
-
-        assertTrue(bucket.keys().contains(key1));
-        assertTrue(bucket.keys().contains(key2));
-        bucket.exportBackup("test.bak");
-        bucket.put(key3, value3);
-        assertTrue(bucket.keys().contains(key3));
-
-        bucket.importBackup("test.bak");
-        assertTrue(bucket.keys().contains(key1));
-        assertTrue(bucket.keys().contains(key2));
-        assertTrue(bucket.keys().contains(key3));
     }
 
     private static class DisabledEventBus implements EventBus {

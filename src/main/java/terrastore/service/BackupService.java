@@ -15,6 +15,7 @@
  */
 package terrastore.service;
 
+import terrastore.backup.BackupImporter;
 import terrastore.communication.CommunicationException;
 import terrastore.router.Router;
 
@@ -63,4 +64,11 @@ public interface BackupService {
      * @return The router instance.
      */
     public Router getRouter();
+
+    /**
+     * Get the {@link terrastore.backup.BackupImporter} used to import entries.
+     *
+     * @param backupImporter The {@link terrastore.backup.BackupImporter} instance.
+     */
+    public BackupImporter getBackupImporter();
 }

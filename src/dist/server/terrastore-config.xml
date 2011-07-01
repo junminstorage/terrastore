@@ -60,6 +60,7 @@
     <bean id="keyRangeStrategy" class="terrastore.service.impl.DefaultKeyRangeStrategy" />
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
+        <constructor-arg ref="backupImporter"/>
         <constructor-arg ref="router"/>
         <constructor-arg value="SECRET-KEY"/>
     </bean>
@@ -146,7 +147,7 @@
         </property>
         <property name="defaultComparator" ref="defaultComparator"/>
         <property name="snapshotManager" ref="snapshotManager"/>
-        <property name="backupManager" ref="backupManager"/>
+        <property name="backupExporter" ref="backupExporter"/>
         <property name="lockManager" ref="lockManager"/>
         <property name="eventBus" ref="${eventBus.impl}EventBus"/>
     </bean>
@@ -158,9 +159,12 @@
 
     <bean id="snapshotManager" class="terrastore.store.impl.LocalSnapshotManager"/>
 
-    <bean id="backupManager" class="terrastore.store.impl.DefaultBackupManager"/>
-
     <bean id="scanner" class="terrastore.util.annotation.AnnotationScanner"/>
+
+    <!-- Backup -->
+
+    <bean id="backupExporter" class="terrastore.backup.impl.DefaultBackupExporter"/>
+    <bean id="backupImporter" class="terrastore.backup.impl.DefaultBackupImporter"/>
 
     <!-- Events -->
 

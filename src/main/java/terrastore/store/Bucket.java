@@ -18,6 +18,7 @@ package terrastore.store;
 import terrastore.store.features.Update;
 import java.util.Map;
 import java.util.Set;
+import terrastore.backup.BackupExporter;
 import terrastore.event.EventBus;
 import terrastore.server.Keys;
 import terrastore.server.Values;
@@ -205,21 +206,11 @@ public interface Bucket {
 
     /**
      * Perform the export of this bucket entries.<br>
-     * See {@link BackupManager#exportBackup(Bucket, String)}.
      *
      * @param destination The destination resource where to write exported entries.
      * @throws StoreOperationException If errors occur during export.
      */
     public void exportBackup(String destination) throws StoreOperationException;
-
-    /**
-     * Import entries into this bucket.<br>
-     * See {@link BackupManager#importBackup(Bucket, String)}.
-     *
-     * @param source The source resource where to read entries from.
-     * @throws StoreOperationException If errors occur during import.
-     */
-    public void importBackup(String source) throws StoreOperationException;
 
     /**
      * Set to true for compressing documents, false otherwise.
@@ -269,13 +260,6 @@ public interface Bucket {
     public void setSnapshotManager(SnapshotManager snapshotManager);
 
     /**
-     * Set the {@link BackupManager} used to execute export and import of entries.
-     *
-     * @param backupManager The {@link BackupManager} instance.
-     */
-    public void setBackupManager(BackupManager backupManager);
-
-    /**
      * Set the {@link LockManager} used to lock read/write document operations.
      *
      * @param lockManager  The {@link LockManager} instance.
@@ -288,5 +272,12 @@ public interface Bucket {
      * @param eventBus The event bus instance.
      */
     public void setEventBus(EventBus eventBus);
+
+    /**
+     * Set the {@link terrastore.backup.BackupExporter} used to export entries.
+     *
+     * @param backupExporter The {@link terrastore.backup.BackupExporter} instance.
+     */
+    public void setBackupExporter(BackupExporter backupExporter);
 
 }

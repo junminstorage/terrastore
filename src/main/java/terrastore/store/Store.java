@@ -18,6 +18,7 @@ package terrastore.store;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import terrastore.backup.BackupExporter;
 import terrastore.event.EventBus;
 import terrastore.server.Buckets;
 import terrastore.store.features.Mapper;
@@ -165,16 +166,16 @@ public interface Store {
     public void setSnapshotManager(SnapshotManager snapshotManager);
 
     /**
-     * Set the {@link BackupManager} used to execute export and import of entries from/to buckets.
-     *
-     * @param backupManager The {@link BackupManager} instance.
-     */
-    public void setBackupManager(BackupManager backupManager);
-
-    /**
      * Set the {@link LockManager} used to lock read/write document operations.
      *
      * @param lockManager  The {@link LockManager} instance.
      */
     public void setLockManager(LockManager lockManager);
+
+    /**
+     * Set the {@link terrastore.backup.BackupExporter} used to export entries.
+     *
+     * @param backupExporter The {@link terrastore.backup.BackupExporter} instance.
+     */
+    public void setBackupExporter(BackupExporter backupExporter);
 }
