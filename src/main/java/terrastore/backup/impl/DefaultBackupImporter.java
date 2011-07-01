@@ -13,90 +13,51 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package terrastore.store.impl;
+package terrastore.backup.impl;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import terrastore.backup.BackupImporter;
+import terrastore.backup.BackupException;
 import terrastore.common.ErrorMessage;
-import terrastore.store.BackupManager;
-import terrastore.store.Bucket;
+import terrastore.communication.Node;
+import terrastore.communication.protocol.PutValueCommand;
+import terrastore.router.Router;
 import terrastore.store.Key;
-import terrastore.store.StoreOperationException;
 import terrastore.store.Value;
 import static terrastore.startup.Constants.*;
 
 /**
- * Default {@link terrastore.store.BackupManager} implementation, exporting/importing
- * backups to/from files into the "backups" directory under Terrastore home
- * (see {@link terrastore.startup.Constants#TERRASTORE_HOME} and {@link terrastore.startup.Constants#BACKUPS_DIR}).
+ * Default {@link terrastore.backup.BackupImporter} implementation, importing
+ * backups from provided source files.
  *
  * @author Sergio Bossa
  */
-public class DefaultBackupManager implements BackupManager {
+public class DefaultBackupImporter implements BackupImporter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultBackupManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultBackupImporter.class);
     //
-    private final BiMap<Byte, Class> types = HashBiMap.create();
+    private final Map<Byte, Class> types = new HashMap<Byte, Class>();
     private final Map<Class, ValueFactory> factories = new HashMap<Class, ValueFactory>();
 
-    public DefaultBackupManager() {
-        configureJsonValue();
+    public DefaultBackupImporter() {
+        configureJsonValues();
     }
 
     @Override
-    public void exportBackup(Bucket bucket, String destination) throws StoreOperationException {
-        DataOutputStream dataStream = null;
-        try {
-            File resource = getResource(destination);
-            LOG.debug("Exporting bucket {} to {}", bucket.getName(), resource.getAbsolutePath());
-            dataStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(resource)));
-            for (Key key : bucket.keys()) {
-                Value value = bucket.get(key);
-                if (value != null) {
-                    byte[] content = value.getBytes();
-                    // Write key:
-                    dataStream.writeUTF(key.toString());
-                    // Write value:
-                    dataStream.writeInt(content.length);
-                    dataStream.write(content, 0, content.length);
-                    // Write value type:
-                    dataStream.writeByte(types.inverse().get(value.getClass()));
-                }
-            }
-        } catch (IOException ex) {
-            LOG.error(ex.getMessage(), ex);
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
-        } finally {
-            if (dataStream != null) {
-                try {
-                    dataStream.close();
-                } catch (IOException ex) {
-                    LOG.error(ex.getMessage(), ex);
-                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
-                }
-            }
-        }
-    }
-
-    @Override
-    public void importBackup(Bucket bucket, String source) throws StoreOperationException {
+    public void importBackup(Router router, String bucket, String source) throws BackupException {
         DataInputStream dataStream = null;
         try {
             File resource = getResource(source);
-            LOG.debug("Importing bucket {} from {}", bucket.getName(), resource.getAbsolutePath());
+            LOG.debug("Importing bucket {} from {}", bucket, resource.getAbsolutePath());
             dataStream = new DataInputStream(new BufferedInputStream(new FileInputStream(resource)));
             while (true) {
                 // Read key:
@@ -112,26 +73,27 @@ public class DefaultBackupManager implements BackupManager {
                 ValueFactory valueFactory = factories.get(valueClazz);
                 Value value = valueFactory.create(content);
                 // Put:
-                bucket.put(key, value);
+                Node node = router.routeToNodeFor(bucket, key);
+                node.send(new PutValueCommand(bucket, key, value));
             }
         } catch (EOFException ex) {
             LOG.info("EOF reached.");
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
-            throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+            throw new BackupException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
         } finally {
             if (dataStream != null) {
                 try {
                     dataStream.close();
                 } catch (IOException ex) {
                     LOG.error(ex.getMessage(), ex);
-                    throw new StoreOperationException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
+                    throw new BackupException(new ErrorMessage(ErrorMessage.INTERNAL_SERVER_ERROR_CODE, ex.getMessage()));
                 }
             }
         }
     }
 
-    private void configureJsonValue() {
+    private void configureJsonValues() {
         types.put(new Byte((byte) 1), Value.class);
         factories.put(Value.class, new ValueFactory() {
 
@@ -139,6 +101,7 @@ public class DefaultBackupManager implements BackupManager {
             public Value create(byte[] bytes) {
                 return new Value(bytes);
             }
+
         });
     }
 
@@ -155,5 +118,6 @@ public class DefaultBackupManager implements BackupManager {
     private static interface ValueFactory {
 
         public Value create(byte[] bytes);
+
     }
 }

@@ -17,9 +17,9 @@ package terrastore.service.impl;
 
 import org.easymock.classextension.EasyMock;
 import org.junit.Test;
+import terrastore.backup.BackupImporter;
 import terrastore.communication.Node;
 import terrastore.communication.protocol.ExportBackupCommand;
-import terrastore.communication.protocol.ImportBackupCommand;
 import terrastore.router.Router;
 import terrastore.service.BackupOperationException;
 import static org.easymock.classextension.EasyMock.*;
@@ -31,33 +31,32 @@ public class DefaultBackupServiceTest {
 
     @Test
     public void testImportBackup() throws Exception {
-        Node node = createMock(Node.class);
         Router router = createMock(Router.class);
+        BackupImporter backupImporter = createMock(BackupImporter.class);
 
-        router.routeToLocalNode();
-        expectLastCall().andReturn(node).once();
-        node.send(EasyMock.<ImportBackupCommand>anyObject());
-        expectLastCall().andReturn(null).once();
+        backupImporter.importBackup(router, "bucket", "source");
+        expectLastCall().once();
 
-        replay(node, router);
+        replay(router, backupImporter);
 
-        DefaultBackupService service = new DefaultBackupService(router, "secret");
+        DefaultBackupService service = new DefaultBackupService(backupImporter, router, "secret");
         service.importBackup("bucket", "source", "secret");
 
-        verify(node, router);
+        verify(router, backupImporter);
     }
 
     @Test(expected = BackupOperationException.class)
     public void testImportBackupWithBadSecret() throws Exception {
         Router router = createMock(Router.class);
+        BackupImporter backupImporter = createMock(BackupImporter.class);
 
-        replay(router);
+        replay(router, backupImporter);
 
-        DefaultBackupService service = new DefaultBackupService(router, "secret");
+        DefaultBackupService service = new DefaultBackupService(backupImporter, router, "secret");
         try {
             service.importBackup("bucket", "source", "bad");
         } finally {
-            verify(router);
+            verify(router, backupImporter);
         }
     }
 
@@ -73,7 +72,7 @@ public class DefaultBackupServiceTest {
 
         replay(node, router);
 
-        DefaultBackupService service = new DefaultBackupService(router, "secret");
+        DefaultBackupService service = new DefaultBackupService(createMock(BackupImporter.class), router, "secret");
         service.exportBackup("bucket", "destination", "secret");
 
         verify(node, router);
@@ -85,11 +84,12 @@ public class DefaultBackupServiceTest {
 
         replay(router);
 
-        DefaultBackupService service = new DefaultBackupService(router, "secret");
+        DefaultBackupService service = new DefaultBackupService(createMock(BackupImporter.class), router, "secret");
         try {
             service.exportBackup("bucket", "destination", "bad");
         } finally {
             verify(router);
         }
     }
+
 }

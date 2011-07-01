@@ -33,12 +33,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.collections.ClusteredMap;
+import terrastore.backup.BackupExporter;
 import terrastore.common.ErrorMessage;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.EventBus;
 import terrastore.server.Buckets;
 import terrastore.store.comparators.LexicographicalComparator;
-import terrastore.store.BackupManager;
 import terrastore.store.Bucket;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
@@ -82,7 +82,7 @@ public class TCStore implements Store {
     private final Map<String, Aggregator> reducers = new HashMap<String, Aggregator>();
     private Comparator defaultComparator = new LexicographicalComparator(true);
     private SnapshotManager snapshotManager;
-    private BackupManager backupManager;
+    private BackupExporter backupExporter;
     private LockManager lockManager;
     private EventBus eventBus;
     private boolean compressedDocuments;
@@ -264,8 +264,8 @@ public class TCStore implements Store {
     }
 
     @Override
-    public void setBackupManager(BackupManager backupManager) {
-        this.backupManager = backupManager;
+    public void setBackupExporter(BackupExporter backupExporter) {
+        this.backupExporter = backupExporter;
     }
 
     @Override
@@ -287,8 +287,8 @@ public class TCStore implements Store {
         bucket.setUpdaters(updaters);
         bucket.setMappers(mappers);
         bucket.setSnapshotManager(snapshotManager);
-        bucket.setBackupManager(backupManager);
         bucket.setLockManager(lockManager);
+        bucket.setBackupExporter(backupExporter);
         bucket.setEventBus(eventBus);
         // TODO: verify this is not a perf problem.
     }
