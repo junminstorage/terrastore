@@ -22,12 +22,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,12 +45,19 @@ public class IntegrationTest {
     private static final int NODE1_PORT = 8080;
     private static final int NODE2_PORT = 8081;
     private static final int SETUP_TIME = 90000;
-    private HttpClient HTTP_CLIENT = new HttpClient();
+    private static final HttpClient HTTP_CLIENT = new HttpClient();
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         System.err.println("Waiting " + SETUP_TIME + " millis for system to set up ...");
         Thread.sleep(SETUP_TIME);
+        //
+        HttpConnectionManagerParams httpParams = new HttpConnectionManagerParams();
+        httpParams.setDefaultMaxConnectionsPerHost(100);
+        httpParams.setMaxTotalConnections(100);
+        HttpConnectionManager httpManager = new MultiThreadedHttpConnectionManager();
+        httpManager.setParams(httpParams);
+        HTTP_CLIENT.setHttpConnectionManager(httpManager);
     }
 
     @Test

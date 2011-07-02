@@ -15,6 +15,8 @@
  */
 package terrastore.metrics;
 
+import org.apache.commons.httpclient.HttpConnectionManager;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import java.io.StringWriter;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -40,7 +42,7 @@ public class PerformanceTest {
     private static final String HOST = "127.0.0.1";
     private static final int NODE1_PORT = 8080;
     private static final int SETUP_TIME = 60000;
-    private static final int CONCURRENCY = 8;
+    private static final int CONCURRENCY = 25;
     private static final HttpClient HTTP_CLIENT = new HttpClient();
 
     @BeforeClass
@@ -48,6 +50,13 @@ public class PerformanceTest {
         HTTP_CLIENT.setHttpConnectionManager(new MultiThreadedHttpConnectionManager());
         System.err.println("Waiting " + SETUP_TIME + " millis for system to set up ...");
         Thread.sleep(SETUP_TIME);
+        //
+        HttpConnectionManagerParams httpParams = new HttpConnectionManagerParams();
+        httpParams.setDefaultMaxConnectionsPerHost(100);
+        httpParams.setMaxTotalConnections(100);
+        HttpConnectionManager httpManager = new MultiThreadedHttpConnectionManager();
+        httpManager.setParams(httpParams);
+        HTTP_CLIENT.setHttpConnectionManager(httpManager);
     }
 
     @Test
