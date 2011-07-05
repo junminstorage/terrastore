@@ -28,6 +28,9 @@
             <statistics>tc-data/server-statistics</statistics>
             <dso>
                 <client-reconnect-window>30</client-reconnect-window>
+                <persistence>
+                    <mode>permanent-store</mode>
+                </persistence>
             </dso>
         </server>
         <update-check>
