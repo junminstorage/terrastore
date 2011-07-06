@@ -546,6 +546,7 @@
             <plugin>
                 <groupId>org.terracotta.maven.plugins</groupId>
                 <artifactId>tc-maven-plugin</artifactId>
+                <version>1.6.2</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.terracotta</groupId>
