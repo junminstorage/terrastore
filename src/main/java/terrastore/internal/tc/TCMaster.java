@@ -111,10 +111,31 @@ public class TCMaster {
         return getOrCreateMap(name, ClusteredType.NullLockStrategy);
     }
 
+    private <K, V> ClusteredMap<K, V> getOrCreateRoot() {
+        ClusteredMap<K, V> innerRoot = null;
+        if (client != null) {
+            ClusteredMap<String, ClusteredMap<K, V>> topRoot = toolkit.getMap(TERRASTORE_SHARED_ROOT);
+            innerRoot = topRoot.get(TERRASTORE_SHARED_ROOT);
+            if (innerRoot == null) {
+                innerRoot = ClusteredType.ConcurrentDistributedServerMap.newInstance(client,
+                        LockType.SYNCHRONOUS_WRITE,
+                        ClusteredType.HashCodeLockStrategy.<LockStrategy<K>>newInstance(client),
+                        Integer.valueOf(1));
+                ClusteredMap<K, V> prev = topRoot.putIfAbsent(TERRASTORE_SHARED_ROOT, innerRoot);
+                if (prev != null) {
+                    innerRoot = prev;
+                }
+            }
+        } else {
+            throw new IllegalStateException("Should be connected to a Terracotta cluster to get the shared root!");
+        }
+        return innerRoot;
+    }
+
     private <K, V> ClusteredMap<K, V> getOrCreateMap(final String name, final ClusteredType lockStrategyType) {
         ClusteredMap<K, V> value = null;
         if (client != null) {
-            ClusteredMap<String, ClusteredMap<K, V>> terrastoreRoot = toolkit.getMap(TERRASTORE_SHARED_ROOT);
+            ClusteredMap<String, ClusteredMap<K, V>> terrastoreRoot = getOrCreateRoot();
             value = terrastoreRoot.get(name);
             if (value == null) {
                 value = ClusteredType.ConcurrentDistributedServerMap.newInstance(client,
