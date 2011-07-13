@@ -41,7 +41,7 @@ public class PerformanceTest {
 
     private static final String HOST = "127.0.0.1";
     private static final int NODE1_PORT = 8080;
-    private static final int SETUP_TIME = 60000;
+    private static final int SETUP_TIME = 90000;
     private static final int CONCURRENCY = 25;
     private static final HttpClient HTTP_CLIENT = new HttpClient();
 
