@@ -1,0 +1,1 @@
+function f(key, value, params) {return {'result':'f'};}

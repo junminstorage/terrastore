@@ -1,0 +1,1 @@
+function a(values, params) {return {'result':'a'};}
