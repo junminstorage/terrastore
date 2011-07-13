@@ -19,14 +19,27 @@ import com.ning.compress.lzf.LZFInputStream;
 import com.ning.compress.lzf.LZFOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import static terrastore.startup.Constants.*;
 
 /**
  * @author Sergio Bossa
  */
 public class IOUtils {
+
+    public static File getFileFromTerrastoreHome(String path) {
+        String homeDir = System.getenv(TERRASTORE_HOME) != null ? System.getenv(TERRASTORE_HOME) : System.getProperty(TERRASTORE_HOME);
+        if (homeDir != null) {
+            String separator = System.getProperty("file.separator");
+            File file = new File(homeDir + separator + path);
+            return file;
+        } else {
+            throw new IllegalStateException("Terrastore home directory is not set!");
+        }
+    }
 
     public static byte[] read(InputStream input) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();

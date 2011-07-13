@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.junit.Before;
+import terrastore.startup.Constants;
 import terrastore.util.collect.Maps;
 import static org.junit.Assert.*;
 
@@ -33,22 +35,54 @@ public class JSInvokerTest {
 
     private static final String JSON_VALUE = "{\"test\":\"test\"}";
 
+    @Before
+    public void before() {
+        System.setProperty(Constants.TERRASTORE_HOME, this.getClass().getClassLoader().getResource("home").getFile());
+    }
+
     @Test
     public void testWithFunction() throws Exception {
         Map<String, Object> params = new HashMap<String, Object>();
         String f = "function(key, value, params) {"
-                + "   if(value['test'] == 'test')"
-                + "       value['test'] = params.newValue;"
-                + "   return value;"
+                + "    result = {};"
+                + "    result[key] = params.newValue;"
+                + "    return result;"
                 + "}";
         params.put("function", f);
         params.put("newValue", "test2");
 
         JSInvoker function = new JSInvoker("function");
         Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        Map<String, Object> newMap = function.apply("1", JsonUtils.toModifiableMap(value), params);
+
+        assertEquals("test2", newMap.get("1"));
+    }
+
+    @Test
+    public void testWithFunctionOnFile() throws Exception {
+        Map<String, Object> params = new HashMap<String, Object>();
+        String f = "function.js";
+        params.put("function", f);
+
+        JSInvoker function = new JSInvoker("function");
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
         Map<String, Object> newMap = function.apply("key", JsonUtils.toModifiableMap(value), params);
 
-        assertEquals("test2", newMap.get("test"));
+        assertEquals("f", newMap.get("result"));
+    }
+
+    @Test
+    public void testWithFunctionOnFileWithRefresh() throws Exception {
+        Map<String, Object> params = new HashMap<String, Object>();
+        String f = "function.js";
+        params.put("function", f);
+        params.put("refresh", true);
+
+        JSInvoker function = new JSInvoker("function");
+        Value value = new Value(JSON_VALUE.getBytes("UTF-8"));
+        Map<String, Object> newMap = function.apply("1", JsonUtils.toModifiableMap(value), params);
+
+        assertEquals("f", newMap.get("result"));
     }
 
     @Test
@@ -71,4 +105,36 @@ public class JSInvokerTest {
 
         assertEquals(3, result.get("result"));
     }
+
+    @Test
+    public void testWithAggregatorOnFile() throws Exception {
+        List<Map<String, Object>> values = new LinkedList<Map<String, Object>>();
+        values.add(new HashMap<String, Object>());
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        String f = "aggregator.js";
+        params.put("aggregator", f);
+
+        JSInvoker function = new JSInvoker("aggregator");
+        Map<String, Object> newMap = function.apply(values, params);
+
+        assertEquals("a", newMap.get("result"));
+    }
+
+    @Test
+    public void testWithAggregatorOnFileWithRefresh() throws Exception {
+        List<Map<String, Object>> values = new LinkedList<Map<String, Object>>();
+        values.add(new HashMap<String, Object>());
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        String f = "aggregator.js";
+        params.put("aggregator", f);
+        params.put("refresh", true);
+
+        JSInvoker function = new JSInvoker("aggregator");
+        Map<String, Object> newMap = function.apply(values, params);
+
+        assertEquals("a", newMap.get("result"));
+    }
+
 }

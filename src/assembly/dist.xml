@@ -85,6 +85,10 @@
             <source>src/dist/server/backups/README.txt</source>
         </file>
         <file>
+            <outputDirectory>terrastore-server/javascript</outputDirectory>
+            <source>src/dist/server/javascript/README.txt</source>
+        </file>
+        <file>
             <outputDirectory>terrastore-server/extensions</outputDirectory>
             <source>src/dist/server/extensions/README.txt</source>
         </file>
