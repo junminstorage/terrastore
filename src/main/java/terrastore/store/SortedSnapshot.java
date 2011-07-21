@@ -19,9 +19,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -147,6 +149,7 @@ public class SortedSnapshot {
             public boolean isEstimatedSizeSupported() {
                 return true;
             }
+
         });
 
         SortedIndex<String, String> index = indexFactory.create(pageFactory.getPageFile());
@@ -167,6 +170,7 @@ public class SortedSnapshot {
         // Remove old keys still in index:
         int surplus = index.size() - keys.size();
         if (surplus > 0) {
+            List<String> toRemove = new ArrayList<String>(surplus);
             Iterator<Entry<String, String>> iterator = index.iterator(new Predicate<String>() {
 
                 @Override
@@ -178,10 +182,14 @@ public class SortedSnapshot {
                 public boolean isInterestedInKey(String key, Comparator comparator) {
                     return !keys.contains(new Key(key));
                 }
+
             });
             while (iterator.hasNext() && surplus-- > 0) {
                 Entry<String, String> entry = iterator.next();
-                index.remove(entry.getKey());
+                toRemove.add(entry.getKey());
+            }
+            for (String key : toRemove) {
+                index.remove(key);
             }
         }
         //
@@ -207,4 +215,5 @@ public class SortedSnapshot {
         }
         return result;
     }
+
 }
