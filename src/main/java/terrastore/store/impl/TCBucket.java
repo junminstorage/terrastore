@@ -15,7 +15,6 @@
  */
 package terrastore.store.impl;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -27,8 +26,8 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.cluster.ClusterInfo;
 import org.terracotta.collections.ClusteredMap;
+import org.terracotta.collections.ConcurrentDistributedServerMap;
 import terrastore.backup.BackupExporter;
 import terrastore.backup.BackupException;
 import terrastore.internal.tc.TCMaster;
@@ -40,7 +39,6 @@ import terrastore.server.Keys;
 import terrastore.server.Values;
 import terrastore.store.comparators.LexicographicalComparator;
 import terrastore.store.Bucket;
-import terrastore.store.FlushCallback;
 import terrastore.store.FlushCondition;
 import terrastore.store.FlushStrategy;
 import terrastore.store.Key;
@@ -69,8 +67,11 @@ public class TCBucket implements Bucket {
 
     private static final Logger LOG = LoggerFactory.getLogger(TCBucket.class);
     //
+    private static final String BUCKET_LOCK_KEY_PREFIX = TCBucket.class.getName() + ".BUCKET_LOCK_KEY.";
+    //
     private final String name;
     private final ClusteredMap<String, byte[]> bucket;
+    private final Key bucketLockKey;
     private boolean compressedDocuments;
     private EventBus eventBus;
     private SnapshotManager snapshotManager;
@@ -85,6 +86,7 @@ public class TCBucket implements Bucket {
     public TCBucket(String name) {
         this.name = name;
         this.bucket = TCMaster.getInstance().getUnlockedMap(TCBucket.class.getName() + ".bucket." + name);
+        this.bucketLockKey = new Key(BUCKET_LOCK_KEY_PREFIX + name);
     }
 
     public String getName() {
@@ -337,19 +339,18 @@ public class TCBucket implements Bucket {
 
     @Override
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition) {
-        ClusterInfo cluster = TCMaster.getInstance().getClusterInfo();
-        if (cluster != null) {
-            Collection<Key> keys = Sets.transformed(cluster.<String>getKeysForLocalValues(bucket), new KeyDeserializer());
-            LOG.warn("Request to flush {} keys on bucket {}", keys.size(), name);
-            flushStrategy.flush(this, keys, flushCondition, new FlushCallback() {
-
-                @Override
-                public void doFlush(Key key) {
-                    Value value = doGet(key);
-                    bucket.flush(key, value);
-                }
-
-            });
+        // TODO / WARN: ConcurrentDistributedServerMap doesn't allow to selectively flush keys anymore ... but let's keep this
+        // signature in case flush gets implemented later.
+        if (bucket.getClass().getName().equals(ConcurrentDistributedServerMap.class.getName())) {
+            lockWrite(bucketLockKey);
+            try {
+                LOG.warn("Request to flush on bucket {}", name);
+                bucket.getClass().getMethod("clearLocalCache").invoke(bucket);
+            } catch (Exception ex) {
+                throw new IllegalStateException(ex.getMessage(), ex);
+            } finally {
+                unlockWrite(bucketLockKey);
+            }
         } else {
             LOG.warn("Running outside of cluster, no keys to flush!");
         }
