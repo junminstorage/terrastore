@@ -47,8 +47,8 @@ public class JSCondition implements Condition {
 
     private static final Logger LOG = LoggerFactory.getLogger(JSCondition.class);
     private static final String WRAPPER = ""
-            + "   function wrapper(key, value) { "
-            + "      if(#condition#) {"
+            + "   function wrapper(key, value, conditionFn) { "
+            + "      if(conditionFn(key, value)) {"
             + "         return true;"
             + "      }"
             + "      return false; "
@@ -63,6 +63,8 @@ public class JSCondition implements Condition {
                 EXCEPTION = new IllegalStateException("No JavaScript engine found.");
             } else if (!ENGINE.getFactory().getParameter("THREADING").equals("MULTITHREADED")) {
                 EXCEPTION = new IllegalStateException("The JavaScript engine is not thread-safe.");
+            } else {
+                ENGINE.eval(WRAPPER);
             }
         } catch (Exception ex) {
             EXCEPTION = new IllegalStateException("Error in script execution.", ex);
@@ -73,11 +75,11 @@ public class JSCondition implements Condition {
     public boolean isSatisfied(String key, Map<String, Object> value, String expression) {
         if (EXCEPTION == null) {
             try {
-                ENGINE.eval(WRAPPER.replaceFirst("#condition#", expression));
                 return (Boolean) ((Invocable) ENGINE).invokeFunction(
                         "wrapper",
                         key,
-                        ENGINE.eval("(" + JsonUtils.fromMap(value).toString() + ")"));
+                        ENGINE.eval("(" + JsonUtils.fromMap(value).toString() + ")"),
+                        ENGINE.eval("(function(key, value) { return " + expression + "; })"));
             } catch (Exception ex) {
                 LOG.error("Error in script execution.", ex);
                 throw new IllegalStateException("Error in script execution.", ex);
