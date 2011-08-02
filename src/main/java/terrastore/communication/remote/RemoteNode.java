@@ -240,8 +240,13 @@ public class RemoteNode implements Node {
         private void signalCommandResponse(String commandId, Response response) {
             try {
                 SynchronousQueue<Response> channel = rendezvous.remove(commandId);
-                // Heuristically waits for 1 sec in case response arrived prior to the sending thread started listening for it:
-                boolean offered = channel.offer(response, 1000, TimeUnit.MILLISECONDS);
+                boolean offered = false;
+                if (channel != null) {
+                    // Heuristically waits for 1 sec in case response arrived prior to the sending thread started listening for it:
+                    offered = channel.offer(response, 1000, TimeUnit.MILLISECONDS);
+                } else {
+                    offered = false;
+                }
                 if (!offered) {
                     LOG.warn("No consumer thread found, response for command {} is going to be ignored.", commandId);
                 }
