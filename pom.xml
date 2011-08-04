@@ -36,11 +36,13 @@
                     <artifactId>spring-osgi-core</artifactId>
                 </exclusion>
             </exclusions>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>activemq-pool</artifactId>
             <version>5.4.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>jsr166y</groupId>
