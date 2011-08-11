@@ -16,10 +16,9 @@
 package terrastore.backup;
 
 import terrastore.router.Router;
-import terrastore.store.*;
 
 /**
- * Execute import of {@link Bucket} entries.<br>
+ * Execute import of bucket entries.<br>
  *
  * @author Sergio Bossa
  */

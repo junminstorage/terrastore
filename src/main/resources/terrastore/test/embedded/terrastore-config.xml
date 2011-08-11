@@ -41,6 +41,7 @@
 
     <bean id="backupService" class="terrastore.service.impl.DefaultBackupService">
         <constructor-arg ref="backupImporter"/>
+        <constructor-arg ref="backupExporter"/>
         <constructor-arg ref="router"/>
         <constructor-arg value="SECRET-KEY"/>
     </bean>
@@ -117,7 +118,6 @@
         <property name="defaultComparator" ref="defaultComparator"/>
         <property name="snapshotManager" ref="snapshotManager"/>
         <property name="lockManager" ref="lockManager"/>
-        <property name="backupExporter" ref="backupExporter"/>
         <property name="eventBus" ref="memoryEventBus"/>
     </bean>
 

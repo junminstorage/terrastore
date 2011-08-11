@@ -15,11 +15,11 @@
  */
 package terrastore.backup;
 
-import terrastore.store.Bucket;
-import terrastore.store.StoreOperationException;
+import terrastore.router.Router;
+import terrastore.service.BackupOperationException;
 
 /**
- * Execute export of {@link Bucket} entries.<br>
+ * Execute export of bucket entries.<br>
  *
  * @author Sergio Bossa
  */
@@ -29,9 +29,10 @@ public interface BackupExporter {
      * Backup export.<br>
      * Must not interrupt other bucket operations.
      *
-     * @param bucket Bucket whose entries must be exported.
+     * @param router Router to use for exporting data.
+     * @param bucket Name of the bucket whose entries must be exported.
      * @param destination The destination resource where to write exported entries.
      * @throws BackupOperationException If errors occur.
      */
-    public void exportBackup(Bucket bucket, String destination) throws BackupException;
+    public void exportBackup(Router router, String bucket, String destination) throws BackupException;
 }
