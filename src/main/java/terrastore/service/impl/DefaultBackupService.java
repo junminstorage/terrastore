@@ -18,12 +18,10 @@ package terrastore.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.backup.BackupException;
+import terrastore.backup.BackupExporter;
 import terrastore.backup.BackupImporter;
 import terrastore.common.ErrorMessage;
 import terrastore.communication.CommunicationException;
-import terrastore.communication.Node;
-import terrastore.communication.ProcessingException;
-import terrastore.communication.protocol.ExportBackupCommand;
 import terrastore.router.Router;
 import terrastore.service.BackupOperationException;
 import terrastore.service.BackupService;
@@ -35,11 +33,13 @@ public class DefaultBackupService implements BackupService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultBackupService.class);
     private final BackupImporter backupImporter;
+    private final BackupExporter backupExporter;
     private final Router router;
     private final String secret;
 
-    public DefaultBackupService(BackupImporter backupImporter, Router router, String secret) {
+    public DefaultBackupService(BackupImporter backupImporter, BackupExporter backupExporter, Router router, String secret) {
         this.backupImporter = backupImporter;
+        this.backupExporter = backupExporter;
         this.router = router;
         this.secret = secret;
     }
@@ -65,13 +65,11 @@ public class DefaultBackupService implements BackupService {
         try {
             if (secret.equals(this.secret)) {
                 LOG.debug("Exporting backup for bucket {} to {}", bucket, destination);
-                Node node = router.routeToLocalNode();
-                ExportBackupCommand command = new ExportBackupCommand(bucket, destination);
-                node.send(command);
+                backupExporter.exportBackup(router, bucket, destination);
             } else {
                 throw new BackupOperationException(new ErrorMessage(ErrorMessage.BAD_REQUEST_ERROR_CODE, "Bad secret: " + secret));
             }
-        } catch (ProcessingException ex) {
+        } catch (BackupException ex) {
             LOG.error(ex.getMessage(), ex);
             ErrorMessage error = ex.getErrorMessage();
             throw new BackupOperationException(error);
@@ -90,5 +88,9 @@ public class DefaultBackupService implements BackupService {
 
     public BackupImporter getBackupImporter() {
         return backupImporter;
+    }
+
+    public BackupExporter getBackupExporter() {
+        return backupExporter;
     }
 }

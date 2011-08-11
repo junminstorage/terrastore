@@ -18,7 +18,6 @@ package terrastore.store;
 import terrastore.store.features.Update;
 import java.util.Map;
 import java.util.Set;
-import terrastore.backup.BackupExporter;
 import terrastore.event.EventBus;
 import terrastore.server.Keys;
 import terrastore.server.Values;
@@ -205,14 +204,6 @@ public interface Bucket {
     public void flush(FlushStrategy flushStrategy, FlushCondition flushCondition);
 
     /**
-     * Perform the export of this bucket entries.<br>
-     *
-     * @param destination The destination resource where to write exported entries.
-     * @throws StoreOperationException If errors occur during export.
-     */
-    public void exportBackup(String destination) throws StoreOperationException;
-
-    /**
      * Set to true for compressing documents, false otherwise.
      */
     public void setCompressDocuments(boolean compressed);
@@ -272,12 +263,5 @@ public interface Bucket {
      * @param eventBus The event bus instance.
      */
     public void setEventBus(EventBus eventBus);
-
-    /**
-     * Set the {@link terrastore.backup.BackupExporter} used to export entries.
-     *
-     * @param backupExporter The {@link terrastore.backup.BackupExporter} instance.
-     */
-    public void setBackupExporter(BackupExporter backupExporter);
 
 }

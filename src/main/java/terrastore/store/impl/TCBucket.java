@@ -28,8 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.collections.ClusteredMap;
 import org.terracotta.collections.ConcurrentDistributedServerMap;
-import terrastore.backup.BackupExporter;
-import terrastore.backup.BackupException;
 import terrastore.internal.tc.TCMaster;
 import terrastore.common.ErrorMessage;
 import terrastore.event.EventBus;
@@ -76,7 +74,6 @@ public class TCBucket implements Bucket {
     private EventBus eventBus;
     private SnapshotManager snapshotManager;
     private LockManager lockManager;
-    private BackupExporter backupExporter;
     private Comparator defaultComparator = new LexicographicalComparator(true);
     private final Map<String, Comparator> comparators = new HashMap<String, Comparator>();
     private final Map<String, Condition> conditions = new HashMap<String, Condition>();
@@ -357,15 +354,6 @@ public class TCBucket implements Bucket {
     }
 
     @Override
-    public void exportBackup(String destination) throws StoreOperationException {
-        try {
-            backupExporter.exportBackup(this, destination);
-        } catch (BackupException ex) {
-            throw new StoreOperationException(ex.getErrorMessage());
-        }
-    }
-
-    @Override
     public void setCompressDocuments(boolean compressed) {
         this.compressedDocuments = compressed;
     }
@@ -378,11 +366,6 @@ public class TCBucket implements Bucket {
     @Override
     public void setSnapshotManager(SnapshotManager snapshotManager) {
         this.snapshotManager = snapshotManager;
-    }
-
-    @Override
-    public void setBackupExporter(BackupExporter backupExporter) {
-        this.backupExporter = backupExporter;
     }
 
     @Override

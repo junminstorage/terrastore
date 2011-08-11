@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
-import terrastore.backup.impl.DefaultBackupExporter;
 import terrastore.event.ActionExecutor;
 import terrastore.internal.tc.TCMaster;
 import terrastore.event.Event;
@@ -63,7 +62,6 @@ public class TCBucketTest {
         bucket = new TCBucket("bucket");
         bucket.setLockManager(new TCLockManager("test", 128));
         bucket.setSnapshotManager(new LocalSnapshotManager());
-        bucket.setBackupExporter(new DefaultBackupExporter());
         bucket.setEventBus(new DisabledEventBus());
     }
 

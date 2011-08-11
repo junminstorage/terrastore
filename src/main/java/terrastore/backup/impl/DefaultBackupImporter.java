@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.backup.BackupImporter;
@@ -58,7 +59,7 @@ public class DefaultBackupImporter implements BackupImporter {
         try {
             File resource = getResource(source);
             LOG.debug("Importing bucket {} from {}", bucket, resource.getAbsolutePath());
-            dataStream = new DataInputStream(new BufferedInputStream(new FileInputStream(resource)));
+            dataStream = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(resource))));
             while (true) {
                 // Read key:
                 Key key = new Key(dataStream.readUTF());

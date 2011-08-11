@@ -23,11 +23,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.zip.GZIPOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import terrastore.common.ErrorMessage;
 import terrastore.backup.BackupExporter;
-import terrastore.store.Bucket;
+import terrastore.communication.Node;
+import terrastore.communication.protocol.GetKeysCommand;
+import terrastore.communication.protocol.GetValueCommand;
+import terrastore.router.Router;
 import terrastore.store.Key;
 import terrastore.store.Value;
 import static terrastore.startup.Constants.*;
@@ -50,14 +55,16 @@ public class DefaultBackupExporter implements BackupExporter {
     }
 
     @Override
-    public void exportBackup(Bucket bucket, String destination) throws BackupException {
+    public void exportBackup(Router router, String bucket, String destination) throws BackupException {
         DataOutputStream dataStream = null;
         try {
             File resource = getResource(destination);
-            LOG.debug("Exporting bucket {} to {}", bucket.getName(), resource.getAbsolutePath());
-            dataStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(resource)));
-            for (Key key : bucket.keys()) {
-                Value value = bucket.get(key);
+            LOG.debug("Exporting bucket {} to {}", bucket, resource.getAbsolutePath());
+            Node node = router.routeToLocalNode();
+            Set<Key> keys = node.<Set<Key>>send(new GetKeysCommand(bucket));
+            dataStream = new DataOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(resource))));
+            for (Key key : keys) {
+                Value value = router.routeToNodeFor(bucket, key).<Value>send(new GetValueCommand(bucket, key));
                 if (value != null) {
                     byte[] content = value.getBytes();
                     // Write key:
