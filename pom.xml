@@ -7,8 +7,8 @@
     <version>0.8.2-SNAPSHOT</version>
     <name>terrastore</name>
     <scm>
-        <connection>scm:hg:https://terrastore.googlecode.com/hg</connection>
-        <developerConnection>scm:hg:https://terrastore.googlecode.com/hg</developerConnection>
+        <connection>scm:hg:https://code.google.com/p/terrastore/</connection>
+        <developerConnection>scm:hg:https://code.google.com/p/terrastore/</developerConnection>
     </scm>
     <dependencies>
         <dependency>
