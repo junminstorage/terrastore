@@ -4,7 +4,7 @@
     <groupId>terrastore</groupId>
     <artifactId>terrastore</artifactId>
     <packaging>jar</packaging>
-    <version>0.8.2-SNAPSHOT</version>
+    <version>0.8.2</version>
     <name>terrastore</name>
     <scm>
         <connection>scm:hg:https://code.google.com/p/terrastore/</connection>
