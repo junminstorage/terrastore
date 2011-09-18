@@ -17,3 +17,5 @@ src/dist/server/snapshots/.+\.hdb
 .classpath
 .settings
 .project
+c1.json
+c2.json
